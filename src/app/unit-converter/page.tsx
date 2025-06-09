@@ -8,12 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRightLeft, Copy } from 'lucide-react';
+import { ArrowRightLeft, Copy, PanelLeft } from 'lucide-react';
+import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { SidebarContent } from "@/components/sidebar-content";
+import { ThemeToggleButton } from "@/components/theme-toggle-button";
 
 interface Unit {
   value: string;
   label: string;
-  factor: number; // Factor to convert to a base unit (e.g., meters for length)
+  factor: number; 
 }
 
 interface UnitCategory {
@@ -48,7 +51,6 @@ const unitCategories: UnitCategory[] = [
         { value: 'ounce', label: 'Ounces (oz)', factor: 0.0283495},
     ]
   },
-  // Add more categories like Weight, Temperature etc.
 ];
 
 export default function UnitConverterPage() {
@@ -66,7 +68,6 @@ export default function UnitConverterPage() {
   }, [inputValue, fromUnit, toUnit, selectedCategory]);
   
   useEffect(() => {
-    // Reset units when category changes
     setFromUnit(currentCategory.units[0].value);
     setToUnit(currentCategory.units.length > 1 ? currentCategory.units[1].value : currentCategory.units[0].value);
   }, [selectedCategory, currentCategory.units]);
@@ -90,7 +91,6 @@ export default function UnitConverterPage() {
     const valueInBaseUnit = val * fromUnitData.factor;
     const result = valueInBaseUnit / toUnitData.factor;
     
-    // Format result to a reasonable number of decimal places
     setOutputValue(result.toFixed(6).replace(/\.?0*$/, ''));
   };
 
@@ -113,83 +113,101 @@ export default function UnitConverterPage() {
     }
   };
 
-
   return (
-    <div className="container mx-auto py-8">
-      <Card className="w-full max-w-lg mx-auto shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline">Unit Converter</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {unitCategories.map(cat => (
-                  <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="flex h-screen bg-background">
+      <Sidebar collapsible="icon" variant="sidebar" side="left">
+        <SidebarContent />
+        <SidebarRail />
+      </Sidebar>
+      <SidebarInset>
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger className="md:hidden">
+              <PanelLeft />
+            </SidebarTrigger>
+            <h1 className="text-xl font-semibold font-headline">Unit Converter</h1>
           </div>
+          <ThemeToggleButton />
+        </header>
+        <main className="flex flex-1 flex-col p-4 md:p-6">
+          <div className="flex flex-1 items-center justify-center">
+            <Card className="w-full max-w-lg mx-auto shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl font-headline">Unit Converter</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unitCategories.map(cat => (
+                        <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-end gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="fromValue">From</Label>
-              <Input
-                id="fromValue"
-                type="number"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Enter value"
-              />
-              <Select value={fromUnit} onValueChange={setFromUnit}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currentCategory.units.map(unit => (
-                    <SelectItem key={unit.value} value={unit.value}>{unit.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-end gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fromValue">From</Label>
+                    <Input
+                      id="fromValue"
+                      type="number"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder="Enter value"
+                    />
+                    <Select value={fromUnit} onValueChange={setFromUnit}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currentCategory.units.map(unit => (
+                          <SelectItem key={unit.value} value={unit.value}>{unit.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <Button variant="ghost" size="icon" onClick={handleSwapUnits} className="self-center mt-5 md:mt-0" title="Swap units">
-              <ArrowRightLeft className="h-5 w-5" />
-            </Button>
+                  <Button variant="ghost" size="icon" onClick={handleSwapUnits} className="self-center mt-5 md:mt-0" title="Swap units">
+                    <ArrowRightLeft className="h-5 w-5" />
+                  </Button>
 
-            <div className="space-y-2">
-              <Label htmlFor="toValue">To</Label>
-              <Input
-                id="toValue"
-                type="text"
-                value={outputValue}
-                readOnly
-                placeholder="Result"
-                className="bg-muted/50"
-              />
-              <Select value={toUnit} onValueChange={setToUnit}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currentCategory.units.map(unit => (
-                    <SelectItem key={unit.value} value={unit.value}>{unit.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="toValue">To</Label>
+                    <Input
+                      id="toValue"
+                      type="text"
+                      value={outputValue}
+                      readOnly
+                      placeholder="Result"
+                      className="bg-muted/50"
+                    />
+                    <Select value={toUnit} onValueChange={setToUnit}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currentCategory.units.map(unit => (
+                          <SelectItem key={unit.value} value={unit.value}>{unit.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end">
+                 <Button onClick={handleCopy} title="Copy result" disabled={!outputValue}>
+                  <Copy className="mr-2 h-4 w-4" /> Copy Result
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-end">
-           <Button onClick={handleCopy} title="Copy result" disabled={!outputValue}>
-            <Copy className="mr-2 h-4 w-4" /> Copy Result
-          </Button>
-        </CardFooter>
-      </Card>
+        </main>
+      </SidebarInset>
     </div>
   );
 }
