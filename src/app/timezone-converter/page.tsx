@@ -12,8 +12,9 @@ import { PanelLeft, CalendarIcon, ClockIcon } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { format, parseISO, toDate } from 'date-fns';
-import { utcToZonedTime, zonedTimeToUtc, formatInTimeZone } from 'date-fns-tz';
+import { format, parseISO } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
+import zonedTimeToUtc from 'date-fns-tz/zonedTimeToUtc';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -54,7 +55,7 @@ export default function TimezoneConverterPage() {
     }
     try {
       const utcDate = zonedTimeToUtc(sourceDateTime, sourceTimezone);
-      const targetDate = utcToZonedTime(utcDate, targetTimezone);
+      const targetDate = toZonedTime(utcDate, targetTimezone);
       setConvertedDateTime(format(targetDate, "yyyy-MM-dd HH:mm:ss (zzz)"));
       toast({ title: 'Time Converted', description: `Converted to ${targetTimezone}` });
     } catch (error) {
@@ -169,3 +170,4 @@ export default function TimezoneConverterPage() {
     </>
   );
 }
+
