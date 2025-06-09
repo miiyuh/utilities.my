@@ -33,10 +33,30 @@ export default function TimezoneConverterPage() {
   const [targetTimezone, setTargetTimezone] = useState<string>('UTC');
   const [convertedDateTime, setConvertedDateTime] = useState<string>('');
 
+  const convertTime = React.useCallback(() => {
+    if (!sourceDateTime || !sourceTimezone || !targetTimezone) {
+      setConvertedDateTime('Please select all fields.');
+      return;
+    }
+    try {
+      // When creating dayjs object from existing dayjs object for timezone conversion,
+      // it's important to ensure the original local time is preserved if that's the intent.
+      // tz(timezone, true) keeps the local time and applies the new timezone.
+      const sourceInSourceTz = dayjs(sourceDateTime.format("YYYY-MM-DD HH:mm:ss")).tz(sourceTimezone, true);
+      const targetInTargetTz = sourceInSourceTz.tz(targetTimezone);
+      setConvertedDateTime(targetInTargetTz.format("YYYY-MM-DD HH:mm:ss (z)"));
+      // Toast might be too frequent with auto-update, consider removing or making it less obtrusive.
+      // toast({ title: 'Time Converted', description: `Converted to ${targetTimezone}` });
+    } catch (error) {
+      setConvertedDateTime('Error during conversion.');
+      toast({ title: 'Conversion Error', description: String(error), variant: 'destructive' });
+    }
+  }, [sourceDateTime, sourceTimezone, targetTimezone, toast]);
+
   useEffect(() => {
     convertTime();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourceDateTime, sourceTimezone, targetTimezone]);
+  }, [convertTime]);
+
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
@@ -60,21 +80,13 @@ export default function TimezoneConverterPage() {
     setSourceDateTime(newDateTime);
   };
 
-  const convertTime = () => {
-    if (!sourceDateTime || !sourceTimezone || !targetTimezone) {
-      setConvertedDateTime('Please select all fields.');
-      return;
+  // Manual convert function for the button, though auto-update is now primary
+  const manualConvertTime = () => {
+    convertTime(); // convertTime already shows a toast on error
+    if (sourceDateTime && sourceTimezone && targetTimezone) {
+        toast({ title: 'Time Re-calculated', description: `Converted to ${targetTimezone}` });
     }
-    try {
-      const sourceInSourceTz = dayjs(sourceDateTime).tz(sourceTimezone, true); // true to keep local time
-      const targetInTargetTz = sourceInSourceTz.tz(targetTimezone);
-      setConvertedDateTime(targetInTargetTz.format("YYYY-MM-DD HH:mm:ss (z)"));
-      toast({ title: 'Time Converted', description: `Converted to ${targetTimezone}` });
-    } catch (error) {
-      setConvertedDateTime('Error during conversion.');
-      toast({ title: 'Conversion Error', description: String(error), variant: 'destructive' });
-    }
-  };
+  }
 
 
   return (
@@ -162,7 +174,7 @@ export default function TimezoneConverterPage() {
                   </Select>
                 </div>
                 
-                <Button onClick={convertTime} className="w-full">Convert Time</Button>
+                <Button onClick={manualConvertTime} className="w-full">Convert Time</Button>
 
                 {convertedDateTime && (
                   <div className="space-y-2 pt-4 border-t">
@@ -173,7 +185,7 @@ export default function TimezoneConverterPage() {
               </CardContent>
               <CardFooter>
                 <p className="text-xs text-muted-foreground w-full text-center">
-                  Uses your browser's current time as a default. Time input includes seconds.
+                  Time updates automatically. Date & Time input includes seconds.
                 </p>
               </CardFooter>
             </Card>
