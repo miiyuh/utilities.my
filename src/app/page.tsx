@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Download, PanelLeft, ExternalLink } from "lucide-react";
+import { PanelLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { tools } from "@/lib/tools";
 
@@ -36,56 +36,7 @@ export default function Home() {
           </header>
           <main className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Input Panel Example</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    This is an example input panel. Place forms or input elements here.
-                  </p>
-                  <div className="mt-4 flex gap-2">
-                    <Button
-                      onClick={() =>
-                        toast({
-                          title: "Text Copied!",
-                          description: "Example input has been copied.",
-                          variant: "default",
-                        })
-                      }
-                    >
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy Text
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Output Panel Example</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    This is an example output panel. Display results here.
-                  </p>
-                  <div className="mt-4 flex gap-2">
-                    <Button
-                      variant="secondary"
-                      onClick={() =>
-                        toast({
-                          title: "File Downloaded!",
-                          description: "Example file has been downloaded.",
-                          variant: "default",
-                        })
-                      }
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download File
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-               <Card className="lg:col-span-1">
+               <Card className="lg:col-span-3"> {/* Adjusted to full width if it's the only one here */}
                 <CardHeader>
                   <CardTitle>Welcome to UtilityBelt!</CardTitle>
                 </CardHeader>
