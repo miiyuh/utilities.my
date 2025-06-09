@@ -5,28 +5,18 @@
 import * as React from "react";
 import {
   SidebarHeader,
-  SidebarInput,
   SidebarContent as SidebarScrollableContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarGroup,
-  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { BadgeCheck, Palette, FileJson, CaseSensitive, Ruler, Search, Settings, Home } from "lucide-react";
+import { Settings, Search, BadgeCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const tools = [
-  { name: "Home", path: "/", icon: Home },
-  { name: "Text Case Converter", path: "/text-case", icon: CaseSensitive },
-  { name: "JSON Formatter", path: "/json-formatter", icon: FileJson },
-  { name: "Color Picker", path: "/color-picker", icon: Palette },
-  { name: "Unit Converter", path: "/unit-converter", icon: Ruler },
-  // Add more tools here
-];
+import { tools } from "@/lib/tools"; // Updated import
 
 export function SidebarContent() {
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -58,7 +48,7 @@ export function SidebarContent() {
           <SidebarMenu className="p-2">
             {filteredTools.map((tool) => (
               <SidebarMenuItem key={tool.path}>
-                <SidebarMenuButton
+                 <SidebarMenuButton
                   asChild
                   isActive={pathname === tool.path}
                   className="w-full justify-start"
