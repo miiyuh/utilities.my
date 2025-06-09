@@ -161,7 +161,7 @@ export default function ColorPickerPage() {
           </div>
           <ThemeToggleButton />
         </header>
-        <main className="flex flex-1 flex-col p-4 md:p-6">
+        <div className="flex flex-1 flex-col p-4 md:p-6">
           <div className="flex flex-1 items-center justify-center">
             <Card className="w-full max-w-md mx-auto shadow-lg">
               <CardHeader>
@@ -260,9 +260,8 @@ export default function ColorPickerPage() {
               </CardFooter>
             </Card>
           </div>
-        </main>
+        </div>
       </SidebarInset>
     </div>
   );
 }
-

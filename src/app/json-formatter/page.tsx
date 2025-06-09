@@ -88,7 +88,7 @@ export default function JsonFormatterPage() {
           </div>
           <ThemeToggleButton />
         </header>
-        <main className="flex flex-1 flex-col p-4 md:p-6">
+        <div className="flex flex-1 flex-col p-4 md:p-6">
           <div className="flex flex-1 items-center justify-center">
             <Card className="w-full max-w-3xl mx-auto shadow-lg">
               <CardHeader>
@@ -147,7 +147,7 @@ export default function JsonFormatterPage() {
               </CardFooter>
             </Card>
           </div>
-        </main>
+        </div>
       </SidebarInset>
     </div>
   );

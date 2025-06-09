@@ -76,8 +76,7 @@ export default function TextCaseConverterPage() {
           </div>
           <ThemeToggleButton />
         </header>
-        <main className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 flex-col items-center justify-center p-4 md:p-6">
             <Card className="w-full max-w-2xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Text Case Converter</CardTitle>
@@ -123,8 +122,7 @@ export default function TextCaseConverterPage() {
                 </Button>
               </CardFooter>
             </Card>
-          </div>
-        </main>
+        </div>
       </SidebarInset>
     </div>
   );
