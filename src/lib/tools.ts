@@ -1,6 +1,9 @@
 // src/lib/tools.ts
 import type { LucideIcon } from "lucide-react";
-import { CaseSensitive, FileJson, Palette, Ruler, Home } from "lucide-react";
+import { 
+  CaseSensitive, FileJson, Palette, Ruler, Home, 
+  FileText, QrCode, Timer, Globe, CalendarRange, FileArchive, Baseline, ArrowDownUp 
+} from "lucide-react";
 
 export interface Tool {
   name: string;
@@ -15,5 +18,12 @@ export const tools: Tool[] = [
   { name: "JSON Formatter", path: "/json-formatter", icon: FileJson, description: "Format and validate JSON data." },
   { name: "Color Picker", path: "/color-picker", icon: Palette, description: "Pick colors and get their codes in various formats." },
   { name: "Unit Converter", path: "/unit-converter", icon: Ruler, description: "Convert between different units of measurement." },
-  // Add more tools here
+  { name: "Markdown Previewer", path: "/markdown-previewer", icon: FileText, description: "Write Markdown and see a live preview." },
+  { name: "QR Code Generator", path: "/qr-code-generator", icon: QrCode, description: "Generate QR codes from text or URLs." },
+  { name: "Unix Timestamp Converter", path: "/unix-timestamp-converter", icon: Timer, description: "Convert Unix timestamps to human-readable dates and vice-versa." },
+  { name: "Timezone Converter", path: "/timezone-converter", icon: Globe, description: "Convert times between different timezones." },
+  { name: "Date Difference Calculator", path: "/date-diff-calculator", icon: CalendarRange, description: "Calculate the difference between two dates." },
+  { name: "File Compressor (ZIP)", path: "/file-compressor", icon: FileArchive, description: "Compress multiple files into a single ZIP archive." },
+  { name: "Text Statistics", path: "/text-statistics", icon: Baseline, description: "Analyze text for word count, character count, and more." },
+  { name: "Sorter", path: "/sorter", icon: ArrowDownUp, description: "Sort lines of text alphabetically or numerically." },
 ];
