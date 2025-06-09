@@ -73,7 +73,7 @@ export default function JsonFormatterPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />
@@ -149,6 +149,6 @@ export default function JsonFormatterPage() {
           </div>
         </div>
       </SidebarInset>
-    </div>
+    </>
   );
 }

@@ -19,7 +19,7 @@ export default function Home() {
   const { toast } = useToast();
 
   return (
-      <div className="flex h-screen bg-background">
+      <>
         <Sidebar collapsible="icon" variant="sidebar" side="left">
           <SidebarContent />
           <SidebarRail />
@@ -34,9 +34,9 @@ export default function Home() {
             </div>
             <ThemeToggleButton />
           </header>
-          <main className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-6">
+          <div className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-               <Card className="lg:col-span-3"> {/* Adjusted to full width if it's the only one here */}
+               <Card className="lg:col-span-3">
                 <CardHeader>
                   <CardTitle>Welcome to UtilityBelt!</CardTitle>
                 </CardHeader>
@@ -81,8 +81,8 @@ export default function Home() {
                 Press <kbd className="rounded-md border bg-muted px-1.5 py-0.5 font-code">Ctrl/Cmd + B</kbd> to toggle the sidebar.
               </p>
             </div>
-          </main>
+          </div>
         </SidebarInset>
-      </div>
+      </>
   );
 }

@@ -70,6 +70,7 @@ export default function UnitConverterPage() {
   useEffect(() => {
     setFromUnit(currentCategory.units[0].value);
     setToUnit(currentCategory.units.length > 1 ? currentCategory.units[1].value : currentCategory.units[0].value);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, currentCategory.units]);
 
 
@@ -114,7 +115,7 @@ export default function UnitConverterPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />
@@ -208,6 +209,6 @@ export default function UnitConverterPage() {
           </div>
         </div>
       </SidebarInset>
-    </div>
+    </>
   );
 }
