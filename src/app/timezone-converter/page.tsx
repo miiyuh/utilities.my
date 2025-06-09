@@ -13,8 +13,7 @@ import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { format, parseISO } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
-import zonedTimeToUtc from 'date-fns-tz/zonedTimeToUtc';
+import { toZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -170,4 +169,3 @@ export default function TimezoneConverterPage() {
     </>
   );
 }
-
