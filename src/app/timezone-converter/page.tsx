@@ -12,18 +12,24 @@ import { PanelLeft, CalendarIcon, ClockIcon } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { format, parseISO } from 'date-fns';
-import { toZonedTime, zonedTimeToUtc } from 'date-fns-tz';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
 
 const defaultTimezones = Intl.supportedValuesOf('timeZone');
 
 export default function TimezoneConverterPage() {
   const { toast } = useToast();
-  const [sourceDateTime, setSourceDateTime] = useState<Date>(new Date());
-  const [sourceTimezone, setSourceTimezone] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [sourceDateTime, setSourceDateTime] = useState<dayjs.Dayjs>(dayjs());
+  const [sourceTimezone, setSourceTimezone] = useState<string>(dayjs.tz.guess());
   const [targetTimezone, setTargetTimezone] = useState<string>('UTC');
   const [convertedDateTime, setConvertedDateTime] = useState<string>('');
 
@@ -34,16 +40,23 @@ export default function TimezoneConverterPage() {
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
-        const newDateTime = new Date(sourceDateTime);
-        newDateTime.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+        const newDatePart = dayjs(date);
+        const newDateTime = sourceDateTime
+            .year(newDatePart.year())
+            .month(newDatePart.month())
+            .date(newDatePart.date());
         setSourceDateTime(newDateTime);
     }
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [hours, minutes] = e.target.value.split(':').map(Number);
-    const newDateTime = new Date(sourceDateTime);
-    newDateTime.setHours(hours, minutes, 0, 0); // Reset seconds and milliseconds
+    const timeValue = e.target.value; // HH:mm or HH:mm:ss
+    const parts = timeValue.split(':').map(Number);
+    const hours = parts[0] || 0;
+    const minutes = parts[1] || 0;
+    const seconds = parts[2] || 0;
+    
+    const newDateTime = sourceDateTime.hour(hours).minute(minutes).second(seconds).millisecond(0);
     setSourceDateTime(newDateTime);
   };
 
@@ -53,9 +66,9 @@ export default function TimezoneConverterPage() {
       return;
     }
     try {
-      const utcDate = zonedTimeToUtc(sourceDateTime, sourceTimezone);
-      const targetDate = toZonedTime(utcDate, targetTimezone);
-      setConvertedDateTime(format(targetDate, "yyyy-MM-dd HH:mm:ss (zzz)"));
+      const sourceInSourceTz = dayjs(sourceDateTime).tz(sourceTimezone, true); // true to keep local time
+      const targetInTargetTz = sourceInSourceTz.tz(targetTimezone);
+      setConvertedDateTime(targetInTargetTz.format("YYYY-MM-DD HH:mm:ss (z)"));
       toast({ title: 'Time Converted', description: `Converted to ${targetTimezone}` });
     } catch (error) {
       setConvertedDateTime('Error during conversion.');
@@ -100,13 +113,13 @@ export default function TimezoneConverterPage() {
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {sourceDateTime ? format(sourceDateTime, "PPP") : <span>Pick a date</span>}
+                          {sourceDateTime ? sourceDateTime.format("MMM D, YYYY") : <span>Pick a date</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={sourceDateTime}
+                          selected={sourceDateTime.toDate()}
                           onSelect={handleDateChange}
                           initialFocus
                         />
@@ -116,9 +129,10 @@ export default function TimezoneConverterPage() {
                         <ClockIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type="time"
-                            value={format(sourceDateTime, "HH:mm")}
+                            value={sourceDateTime.format("HH:mm:ss")}
                             onChange={handleTimeChange}
                             className="pl-10"
+                            step="1"
                         />
                     </div>
                   </div>
@@ -159,7 +173,7 @@ export default function TimezoneConverterPage() {
               </CardContent>
               <CardFooter>
                 <p className="text-xs text-muted-foreground w-full text-center">
-                  Uses your browser's current time as a default.
+                  Uses your browser's current time as a default. Time input includes seconds.
                 </p>
               </CardFooter>
             </Card>
