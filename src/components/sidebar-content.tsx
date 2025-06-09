@@ -1,3 +1,4 @@
+
 // src/components/sidebar-content.tsx
 "use client";
 
@@ -57,19 +58,17 @@ export function SidebarContent() {
           <SidebarMenu className="p-2">
             {filteredTools.map((tool) => (
               <SidebarMenuItem key={tool.path}>
-                <Link href={tool.path} passHref legacyBehavior>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === tool.path}
-                    className="w-full justify-start"
-                    tooltip={tool.name}
-                  >
-                    <a>
-                      <tool.icon className="h-4 w-4" />
-                      <span>{tool.name}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </Link>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === tool.path}
+                  className="w-full justify-start"
+                  tooltip={tool.name}
+                >
+                  <Link href={tool.path}>
+                    <tool.icon className="h-4 w-4" />
+                    <span>{tool.name}</span>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -78,14 +77,17 @@ export function SidebarContent() {
       <SidebarGroup className="border-t">
          <SidebarMenu className="p-2">
             <SidebarMenuItem>
-                <Link href="/settings" passHref legacyBehavior>
-                    <SidebarMenuButton asChild isActive={pathname === "/settings"} className="w-full justify-start" tooltip="Settings">
-                        <a>
-                            <Settings className="h-4 w-4" />
-                            <span>Settings</span>
-                        </a>
-                    </SidebarMenuButton>
-                </Link>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/settings"}
+                  className="w-full justify-start"
+                  tooltip="Settings"
+                >
+                  <Link href="/settings">
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
             </SidebarMenuItem>
          </SidebarMenu>
       </SidebarGroup>
