@@ -58,7 +58,7 @@ export default function TextCaseConverterPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto flex min-h-screen flex-col items-center justify-center py-8">
       <Card className="w-full max-w-2xl mx-auto shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-headline">Text Case Converter</CardTitle>
