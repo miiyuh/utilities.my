@@ -40,6 +40,10 @@ export default function QrCodeGeneratorPage() {
     }
   };
 
+  const isValidHexColor = (color: string): boolean => {
+    return /^#[0-9A-Fa-f]{6}$/.test(color);
+  };
+
   return (
     <>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -104,14 +108,46 @@ export default function QrCodeGeneratorPage() {
                       onValueChange={(value) => setQrSize(value[0])}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="fgColor">Foreground Color</Label>
-                      <Input id="fgColor" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="h-10"/>
+                      <Label htmlFor="fgColorText">Foreground Color</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="fgColorText"
+                          type="text"
+                          value={fgColor}
+                          onChange={(e) => setFgColor(e.target.value)}
+                          placeholder="#000000"
+                          className="font-mono flex-grow"
+                        />
+                        <Input
+                          id="fgColorSwatch"
+                          type="color"
+                          value={isValidHexColor(fgColor) ? fgColor : '#000000'}
+                          onChange={(e) => setFgColor(e.target.value)}
+                          className="h-10 w-12 min-w-[3rem] p-1 cursor-pointer flex-shrink-0"
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="bgColor">Background Color</Label>
-                      <Input id="bgColor" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="h-10"/>
+                      <Label htmlFor="bgColorText">Background Color</Label>
+                       <div className="flex items-center gap-2">
+                        <Input
+                          id="bgColorText"
+                          type="text"
+                          value={bgColor}
+                          onChange={(e) => setBgColor(e.target.value)}
+                          placeholder="#FFFFFF"
+                          className="font-mono flex-grow"
+                        />
+                        <Input
+                          id="bgColorSwatch"
+                          type="color"
+                          value={isValidHexColor(bgColor) ? bgColor : '#FFFFFF'}
+                          onChange={(e) => setBgColor(e.target.value)}
+                          className="h-10 w-12 min-w-[3rem] p-1 cursor-pointer flex-shrink-0"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

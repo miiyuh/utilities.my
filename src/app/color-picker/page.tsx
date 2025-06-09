@@ -64,15 +64,27 @@ export default function ColorPickerPage() {
   }, [hexColor]);
 
   const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newHex = e.target.value;
-    if (!newHex.startsWith('#')) {
-        newHex = '#' + newHex;
+    let textValue = e.target.value;
+    let newHexOutput = textValue;
+
+    // If user types 6 hex chars without #, prepend # for the color input compatibility
+    if (/^[0-9a-fA-F]{6}$/.test(textValue)) {
+      newHexOutput = '#' + textValue;
     }
-    setHexColor(newHex);
+    // If user types 3 hex chars without #, expand and prepend #
+    else if (/^[0-9a-fA-F]{3}$/.test(textValue)) {
+        newHexOutput = '#' + textValue.split('').map(char => char + char).join('');
+    }
+    // If user includes # but with 3 chars, expand it
+    else if (/^#[0-9a-fA-F]{3}$/.test(textValue)) {
+        newHexOutput = '#' + textValue.substring(1).split('').map(char => char + char).join('');
+    }
+    
+    setHexColor(newHexOutput);
   };
   
   const handleColorInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHexColor(e.target.value);
+    setHexColor(e.target.value); // This value is already in #RRGGBB format
   };
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -173,7 +185,7 @@ export default function ColorPickerPage() {
                   <Input
                     id="color-picker-input"
                     type="color"
-                    value={hexColor}
+                    value={(/^#[0-9a-fA-F]{6}$/i.test(hexColor) || /^#[0-9a-fA-F]{3}$/i.test(hexColor)) ? hexColor : '#000000'}
                     onChange={handleColorInputChange}
                     className="h-20 w-full cursor-pointer p-1"
                   />
@@ -187,7 +199,7 @@ export default function ColorPickerPage() {
                   <div>
                     <Label htmlFor="hex-value">HEX</Label>
                     <div className="flex items-center gap-2">
-                      <Input id="hex-value" value={hexColor} onChange={handleHexChange} className="font-code" />
+                      <Input id="hex-value" value={hexColor} onChange={handleHexChange} className="font-mono" placeholder="#RRGGBB or RRGGBB"/>
                       <Button variant="outline" size="icon" onClick={() => copyToClipboard(hexColor, 'HEX')} title="Copy HEX">
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -200,7 +212,7 @@ export default function ColorPickerPage() {
                       <Input
                         readOnly
                         value={rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : 'N/A'}
-                        className="font-code bg-muted/30"
+                        className="font-mono bg-muted/30"
                       />
                       <Button variant="outline" size="icon" onClick={() => copyToClipboard(rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : '', 'RGB')} title="Copy RGB" disabled={!rgbColor}>
                         <Copy className="h-4 w-4" />
@@ -214,7 +226,7 @@ export default function ColorPickerPage() {
                       <Input
                         readOnly
                         value={hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : 'N/A'}
-                        className="font-code bg-muted/30"
+                        className="font-mono bg-muted/30"
                       />
                       <Button variant="outline" size="icon" onClick={() => copyToClipboard(hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : '', 'HSL')} title="Copy HSL" disabled={!hslColor}>
                         <Copy className="h-4 w-4" />
@@ -255,7 +267,7 @@ export default function ColorPickerPage() {
               </CardContent>
               <CardFooter>
                   <p className="text-xs text-muted-foreground w-full text-center">
-                      Tip: You can also type a HEX value directly into the input field.
+                      Tip: You can also type a HEX value (e.g., #RRGGBB or RRGGBB) directly.
                   </p>
               </CardFooter>
             </Card>
