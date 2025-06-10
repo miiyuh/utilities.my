@@ -54,6 +54,18 @@ interface HourSlot {
 let locationIdCounter = 0;
 const generateLocationId = () => `loc-${locationIdCounter++}-${Date.now()}`;
 
+const isValidTz = (tzName: string): boolean => {
+  if (!tzName) return false;
+  try {
+    // Attempting to use the timezone will throw an error if it's invalid
+    // or if the timezone plugin isn't working correctly for that name.
+    // We also check if the resulting Dayjs object is valid.
+    return dayjs().tz(tzName).isValid();
+  } catch (e) {
+    return false;
+  }
+};
+
 export default function TimezoneConverterPage() {
   const { toast } = useToast();
   const [referenceDateTime, setReferenceDateTime] = useState<dayjs.Dayjs>(dayjs.utc());
@@ -75,7 +87,7 @@ export default function TimezoneConverterPage() {
   useEffect(() => {
     setIsMounted(true);
     const guessedTimezone = dayjs.tz.guess();
-    setReferenceDateTime(dayjs()); // Set to user's current local time initially
+    setReferenceDateTime(dayjs()); 
 
     setLocations(prevLocs => {
       let newLocs = [...prevLocs];
@@ -85,7 +97,6 @@ export default function TimezoneConverterPage() {
         newLocs = [{ id: generateLocationId(), selectedTimezone: guessedTimezone }, ...newLocs.slice(1)];
       }
       
-      // Ensure default secondary and tertiary timezones are different from guessed and each other
       const defaultTz2 = 'America/New_York';
       const defaultTz3 = 'Europe/London';
 
@@ -138,10 +149,7 @@ export default function TimezoneConverterPage() {
   };
 
   const handleSetAsReference = (locationTimezone: string) => {
-    if (!referenceDateTime || !isMounted || !dayjs.tz.zone(locationTimezone)) return;
-    // Use the current referenceDateTime's UTC instant, but interpret it in the target location's timezone
-    // This means the *absolute point in time* doesn't change, but the *local wall clock time* for referenceDateTime changes
-    // to match what it would be in locationTimezone.
+    if (!referenceDateTime || !isMounted || !isValidTz(locationTimezone)) return;
     const newGlobalReference = referenceDateTime.tz(locationTimezone); 
     setReferenceDateTime(newGlobalReference);
     toast({ title: "Reference Updated", description: `Timeline now centered around current time in ${locationTimezone.replace(/_/g, ' ')}.`});
@@ -189,7 +197,7 @@ export default function TimezoneConverterPage() {
   };
 
   const generateHourSlots = useCallback((locationTimezone: string): HourSlot[] => {
-    if (!referenceDateTime || !isMounted || !dayjs(referenceDateTime).isValid() || !dayjs.tz.zone(locationTimezone)) return [];
+    if (!referenceDateTime || !isMounted || !dayjs(referenceDateTime).isValid() || !isValidTz(locationTimezone)) return [];
 
     const baseTimeInLocation = referenceDateTime.tz(locationTimezone);
     const slots: HourSlot[] = [];
@@ -243,7 +251,7 @@ export default function TimezoneConverterPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="p-4 border rounded-md shadow-sm bg-muted/20">
-                <div className="flex flex-col items-center gap-2 md:flex-row md:flex-wrap md:justify-between md:gap-3 lg:gap-4">
+                 <div className="flex flex-col items-center gap-2 md:flex-row md:flex-wrap md:justify-between md:gap-3 lg:gap-4">
                   <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
                     <Label className="text-base font-medium whitespace-nowrap md:text-lg">Reference:</Label>
                     <Popover>
@@ -282,7 +290,7 @@ export default function TimezoneConverterPage() {
 
               <div className="space-y-4">
                 {locations.map((loc) => {
-                  if (!loc || !loc.selectedTimezone || !referenceDateTime || !dayjs.tz.zone(loc.selectedTimezone)) return null;
+                  if (!loc || !loc.selectedTimezone || !referenceDateTime || !isValidTz(loc.selectedTimezone)) return null;
                   const localTimeForRow = referenceDateTime.tz(loc.selectedTimezone);
                   if (!localTimeForRow.isValid()) return null;
 
@@ -302,7 +310,7 @@ export default function TimezoneConverterPage() {
                           </Button>
                         </div>
 
-                        <div className="flex-grow md:w-1/4 lg:w-1/5 space-y-1 pr-3 border-b md:border-b-0 md:border-r pb-3 md:pb-0 mb-3 md:mb-0 shrink-0">
+                        <div className="flex-grow md:w-1/4 lg:w-1/5 space-y-0.5 pr-3 border-b md:border-b-0 md:border-r pb-3 md:pb-0 mb-3 md:mb-0 shrink-0">
                           <TimezoneCombobox
                             value={loc.selectedTimezone}
                             onValueChange={(tz) => handleLocationTimezoneChange(loc.id, tz)}
