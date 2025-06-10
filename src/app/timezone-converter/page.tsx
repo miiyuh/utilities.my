@@ -32,9 +32,9 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(advancedFormat);
 
 const MAX_LOCATIONS = 10;
-const HOURS_AROUND_REFERENCE = 7; // Approx 15 slots (7 before, 1 current, 7 after)
-const DAY_START_HOUR = 7; // 7 AM
-const DAY_END_HOUR = 18; // 6 PM (exclusive, so up to 5:59 PM is day)
+const HOURS_AROUND_REFERENCE = 7; 
+const DAY_START_HOUR = 7; 
+const DAY_END_HOUR = 18;
 
 
 interface Location {
@@ -68,9 +68,7 @@ export default function TimezoneConverterPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    // Set initial reference to client's current time
     setReferenceDateTime(dayjs());
-    // Attempt to set the first location to the user's guessed timezone
     setLocations(prevLocs => {
       const newLocs = [...prevLocs];
       const guessedTimezone = dayjs.tz.guess();
@@ -80,7 +78,6 @@ export default function TimezoneConverterPage() {
         newLocs.unshift({ id: generateLocationId(), selectedTimezone: guessedTimezone });
       }
 
-      // Ensure unique default timezones if guessed is one of the subsequent defaults
       const defaultTz2 = 'America/New_York';
       const defaultTz3 = 'Europe/London';
 
@@ -131,19 +128,14 @@ export default function TimezoneConverterPage() {
 
   const handleSetAsReference = (locationTimezone: string) => {
     if (!referenceDateTime || !isMounted) return;
-    // The reference point is the *current* local time displayed for that row's *reference hour slot*
-    // which is `referenceDateTime.tz(locationTimezone)`
     const newGlobalReference = referenceDateTime.tz(locationTimezone);
-    setReferenceDateTime(newGlobalReference); // This updates the global reference
+    setReferenceDateTime(newGlobalReference);
     toast({ title: "Reference Updated", description: `Timeline now centered around current time in ${locationTimezone.replace(/_/g, ' ')}.`});
   };
 
 
   const handleHourSlotClick = (slotDateTime: dayjs.Dayjs) => {
-    // slotDateTime is already the correct Dayjs object representing the local time for that slot.
-    // We want to make this the new global reference.
     setReferenceDateTime(slotDateTime); 
-    // Removed toast: toast({ title: "Reference Time Updated", description: `Timeline centered on ${slotDateTime.format('MMM D, YYYY h:mm A')}` });
   };
 
   const handleAddLocation = () => {
@@ -153,7 +145,7 @@ export default function TimezoneConverterPage() {
     }
     const newLocationId = generateLocationId();
     const existingTimezones = locations.map(l => l.selectedTimezone);
-    let defaultNewTimezone = 'Asia/Tokyo'; // Default if all common are taken
+    let defaultNewTimezone = 'Asia/Tokyo'; 
     const commonTimezones = ['Australia/Sydney', 'Europe/Paris', 'America/Los_Angeles', 'Asia/Dubai', 'Pacific/Honolulu', 'Africa/Johannesburg', 'Asia/Kolkata', 'America/Chicago', 'Asia/Shanghai'];
     for (const tz of commonTimezones) {
         if (!existingTimezones.includes(tz)) {
@@ -161,10 +153,9 @@ export default function TimezoneConverterPage() {
             break;
         }
     }
-    // If all common are taken, pick first available from all supported
     if (existingTimezones.includes(defaultNewTimezone)) {
          const allSupported = Intl.supportedValuesOf('timeZone');
-         defaultNewTimezone = allSupported.find(tz => !existingTimezones.includes(tz)) || 'UTC'; // Fallback to UTC if somehow all are taken
+         defaultNewTimezone = allSupported.find(tz => !existingTimezones.includes(tz)) || 'UTC';
     }
     setLocations(prev => [...prev, { id: newLocationId, selectedTimezone: defaultNewTimezone }]);
   };
@@ -236,7 +227,7 @@ export default function TimezoneConverterPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="p-4 border rounded-md shadow-sm bg-muted/20">
-                <div className="flex flex-col items-center gap-3 md:flex-row md:flex-wrap md:justify-between">
+                <div className="flex flex-col items-center gap-2 md:flex-row md:flex-wrap md:justify-between md:gap-3 lg:gap-4">
                   
                   <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
                     <Label className="text-base font-medium whitespace-nowrap md:text-lg">Reference:</Label>
@@ -301,19 +292,22 @@ export default function TimezoneConverterPage() {
                             placeholder="Select timezone"
                             className="text-sm font-semibold w-full"
                           />
-                          <p className="text-xs text-muted-foreground truncate">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
-                          <p className="text-xs text-muted-foreground">{timezoneAbbr} (GMT{utcOffset})</p>
+                          <p className="text-xs text-muted-foreground truncate mt-1">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{timezoneAbbr} (GMT{utcOffset})</p>
 
-                          <p className="text-2xl font-bold pt-1">
+                          <p className="text-2xl font-bold pt-2">
                             {localTimeForRow.format(timeFormat === '12h' ? 'h:mm' : 'HH:mm')}
                             {timeFormat === '12h' && <span className="text-lg font-normal">{localTimeForRow.format('A')}</span>}
                           </p>
-                          <p className="text-sm text-muted-foreground">{localTimeForRow.format('ddd, MMM D')}</p>
+                          <p className="text-sm text-muted-foreground">{localTimeForRow.format('ddd, MMM D, YYYY')}</p>
                         </div>
 
                         <div className="flex-grow md:w-3/4 lg:w-4/5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
                           <div className="flex space-x-0.5 min-w-max">
-                            {hourSlots.map(slot => (
+                            {hourSlots.map(slot => {
+                               const showFullDateInfo = slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow || slot.isRefHour;
+                               const isSameDayAsRow = !slot.isDifferentDayFromRow && !slot.isDifferentMonthFromRow;
+                              return (
                               <div
                                 key={slot.key}
                                 onClick={() => handleHourSlotClick(slot.dateTime)}
@@ -327,22 +321,28 @@ export default function TimezoneConverterPage() {
                                   ],
                                   !slot.isRefHour && [
                                     slot.isDayTime
-                                      ? "bg-background text-foreground dark:bg-muted/30 dark:text-foreground" // Daytime
-                                      : "bg-muted/60 text-muted-foreground dark:bg-muted/50 dark:text-muted-foreground", // Nighttime
-                                    (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && "opacity-75"
+                                      ? "bg-background text-foreground dark:bg-muted/30 dark:text-foreground"
+                                      : "bg-muted/60 text-muted-foreground dark:bg-muted/50 dark:text-muted-foreground", 
+                                    (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && "opacity-80 dark:opacity-75"
                                   ]
                                 )}
                               >
-                                <span className={cn("font-medium uppercase", (slot.isDifferentDayFromRow) ? "opacity-80" : "opacity-90")}>{slot.dateTime.format('ddd')}</span>
-                                <span className={cn("uppercase", slot.isDifferentMonthFromRow ? "font-semibold" : "", (slot.isDifferentDayFromRow) ? "opacity-80" : "opacity-90")}>
-                                  {slot.isDifferentMonthFromRow || slot.isDifferentDayFromRow || slot.isRefHour ? slot.dateTime.format('MMM D') : ""}
-                                </span>
+                                <span className={cn("font-medium uppercase", (isSameDayAsRow && !slot.isRefHour) ? "opacity-70" : "opacity-90")}>{slot.dateTime.format('ddd')}</span>
+                                
+                                {showFullDateInfo ? (
+                                    <span className={cn("uppercase", slot.isDifferentMonthFromRow ? "font-semibold" : "", "opacity-90")}>
+                                    {slot.dateTime.format('MMM D')}
+                                    </span>
+                                ) : (
+                                    <span className="h-[1em] opacity-90">{slot.dateTime.format('D')}</span> 
+                                )}
+                                
                                 <span className={cn("text-base font-semibold mt-0.5", (slot.isDifferentDayFromRow && !slot.isRefHour) ? "opacity-70" : "")}>
                                   {slot.dateTime.format(timeFormat === '12h' ? 'h' : 'H')}
                                 </span>
-                                {timeFormat === '12h' && <span className={cn("uppercase", (slot.isDifferentDayFromRow) ? "opacity-80" : "opacity-90")}>{slot.dateTime.format('A')}</span>}
+                                {timeFormat === '12h' && <span className={cn("uppercase opacity-90", (slot.isDifferentDayFromRow) ? "opacity-80" : "")}>{slot.dateTime.format('A')}</span>}
                               </div>
-                            ))}
+                            )})}
                           </div>
                         </div>
                       </div>
