@@ -45,8 +45,8 @@ export default function DateDiffCalculatorPage() {
     let newDate = datePart ? new Date(datePart) : new Date(originalDate); 
     
     if (timePart) {
-        const [hours, minutes] = timePart.split(':').map(Number);
-        newDate.setHours(hours || 0, minutes || 0, 0, 0); 
+        const [hours, minutes, seconds] = timePart.split(':').map(Number);
+        newDate.setHours(hours || 0, minutes || 0, seconds || 0, 0); 
     } else if (datePart) { 
         newDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds(), originalDate.getMilliseconds());
     }
@@ -145,7 +145,7 @@ export default function DateDiffCalculatorPage() {
                         <Calendar 
                             mode="single" 
                             selected={startDate} 
-                            onSelect={(d) => handleDateTimeChange(d, format(startDate, "HH:mm"), setStartDate, startDate)} 
+                            onSelect={(d) => handleDateTimeChange(d, format(startDate, "HH:mm:ss"), setStartDate, startDate)} 
                             initialFocus 
                             captionLayout="dropdown-buttons"
                             fromYear={CURRENT_YEAR - 100}
@@ -153,7 +153,7 @@ export default function DateDiffCalculatorPage() {
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input type="time" value={format(startDate, "HH:mm")} onChange={(e) => handleDateTimeChange(startDate, e.target.value, setStartDate, startDate)} />
+                    <Input type="time" value={format(startDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(startDate, e.target.value, setStartDate, startDate)} step="1" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="endDateInput">End Date & Time</Label>
@@ -168,7 +168,7 @@ export default function DateDiffCalculatorPage() {
                         <Calendar 
                             mode="single" 
                             selected={endDate} 
-                            onSelect={(d) => handleDateTimeChange(d, format(endDate, "HH:mm"), setEndDate, endDate)} 
+                            onSelect={(d) => handleDateTimeChange(d, format(endDate, "HH:mm:ss"), setEndDate, endDate)} 
                             initialFocus 
                             captionLayout="dropdown-buttons"
                             fromYear={CURRENT_YEAR - 100}
@@ -176,7 +176,7 @@ export default function DateDiffCalculatorPage() {
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input type="time" value={format(endDate, "HH:mm")} onChange={(e) => handleDateTimeChange(endDate, e.target.value, setEndDate, endDate)} />
+                    <Input type="time" value={format(endDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(endDate, e.target.value, setEndDate, endDate)} step="1" />
                   </div>
                 </div>
 
