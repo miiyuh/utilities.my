@@ -13,7 +13,7 @@ import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import timezonePlugin from 'dayjs/plugin/timezone';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -29,7 +29,7 @@ import { TimezoneCombobox } from "@/components/ui/timezone-combobox";
 import { cn } from "@/lib/utils";
 
 dayjs.extend(utc);
-dayjs.extend(timezone);
+dayjs.extend(timezonePlugin);
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
@@ -42,10 +42,9 @@ dayjs.extend(duration);
 const MAX_LOCATIONS = 10;
 const DAY_START_HOUR = 7; 
 const DAY_END_HOUR = 19; 
-const SLOT_WIDTH = 36; // For hourly slots
+const SLOT_WIDTH = 36; 
 const DAY_MARKER_SLOT_WIDTH = 48; 
 const SLOT_SPACING = 1; // Corresponds to space-x-px
-const SLOTS_PER_DAY = 24; // Hourly slots
 
 interface Location {
   id: string;
@@ -55,11 +54,11 @@ interface Location {
 
 interface TimeSlot {
   key: string;
-  dateTime: dayjs.Dayjs;
+  dateTime: dayjs.Dayjs; // This dateTime is always in the timezone of its row
   hourNumber: number;
   isDayTime: boolean;
   isWeekend: boolean;
-  isStartOfNewDayMarker: boolean; // True if this slot represents a day transition label
+  isStartOfNewDayMarker: boolean;
 }
 
 let locationIdCounter = 0;
@@ -68,8 +67,8 @@ const generateLocationId = () => `loc-${locationIdCounter++}-${Date.now()}`;
 const isValidTz = (tzName: string): boolean => {
   if (!tzName) return false;
   try {
-    const testDate = dayjs().tz(tzName);
-    return testDate.isValid();
+    dayjs().tz(tzName); // Test conversion
+    return true;
   } catch (e) {
     return false;
   }
@@ -77,7 +76,6 @@ const isValidTz = (tzName: string): boolean => {
 
 export default function TimezoneConverterPage() {
   const { toast } = useToast();
-  const [referenceDateTime, setReferenceDateTime] = useState<dayjs.Dayjs>(dayjs().startOf('hour'));
   const [isMounted, setIsMounted] = useState(false);
   const scrollableContainerRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [isProgrammaticScroll, setIsProgrammaticScroll] = useState(false);
@@ -86,12 +84,10 @@ export default function TimezoneConverterPage() {
 
   const [selectedRange, setSelectedRange] = useState<{ start: dayjs.Dayjs; end: dayjs.Dayjs } | null>(() => {
     const now = dayjs().startOf('hour');
-    return { start: now, end: now.add(1, 'hour') }; // Default to 1 hour selection
+    return { start: now.utc(), end: now.add(1, 'hour').utc() }; // Default to 1 hour selection, in UTC
   });
   const [isDraggingSelection, setIsDraggingSelection] = useState(false);
-  const [dragAnchorSlotTime, setDragAnchorSlotTime] = useState<dayjs.Dayjs | null>(null);
-  const [dragOriginalLocationId, setDragOriginalLocationId] = useState<string | null>(null);
-
+  const [dragAnchorSlotTime, setDragAnchorSlotTime] = useState<dayjs.Dayjs | null>(null); // Anchor time in UTC
 
   const initialLocations = (): Location[] => {
     const guessedTimezone = dayjs.tz.guess();
@@ -100,7 +96,7 @@ export default function TimezoneConverterPage() {
       { id: generateLocationId(), selectedTimezone: validGuessedTz, isPinned: true },
       { id: generateLocationId(), selectedTimezone: 'America/New_York' },
       { id: generateLocationId(), selectedTimezone: 'Europe/London' },
-    ].filter(Boolean).slice(0, MAX_LOCATIONS);
+    ].filter(loc => loc && isValidTz(loc.selectedTimezone)).slice(0, MAX_LOCATIONS);
   };
   const [locations, setLocations] = useState<Location[]>(initialLocations());
 
@@ -109,8 +105,8 @@ export default function TimezoneConverterPage() {
     const guessedTimezone = dayjs.tz.guess();
     const validGuessedTz = isValidTz(guessedTimezone) ? guessedTimezone : 'UTC';
     
-    setReferenceDateTime(dayjs().startOf('hour')); 
-    setSelectedRange({ start: dayjs().startOf('hour'), end: dayjs().add(1, 'hour').startOf('hour')});
+    const now = dayjs().startOf('hour');
+    setSelectedRange({ start: now.utc(), end: now.add(1, 'hour').utc() });
 
     setLocations(prevLocs => {
       let newLocs = prevLocs.map(loc => ({...loc, selectedTimezone: isValidTz(loc.selectedTimezone) ? loc.selectedTimezone : 'UTC'}));
@@ -125,7 +121,6 @@ export default function TimezoneConverterPage() {
         newLocs = [{ id: generateLocationId(), selectedTimezone: validGuessedTz, isPinned: true }];
       }
       
-      // Ensure other default locations are unique
       const defaultTimezones = ['America/New_York', 'Europe/London', 'Asia/Tokyo', 'Australia/Sydney'];
       let defaultIdx = 0;
       for (let i = 0; i < newLocs.length; i++) {
@@ -147,59 +142,60 @@ export default function TimezoneConverterPage() {
       }
       return newLocs.filter(loc => loc && isValidTz(loc.selectedTimezone)).slice(0, MAX_LOCATIONS);
     });
-
   }, []);
 
  useEffect(() => {
-    if (!isMounted || !selectedRange || !selectedRange.start.isValid() || locations.length === 0) return;
+    if (!isMounted || !selectedRange || !selectedRange.start.isValid() || locations.length === 0 || isDraggingSelection) return;
+    
     setIsProgrammaticScroll(true);
-    const pinnedLocation = locations.find(l => l.isPinned) || locations[0];
 
     locations.forEach(loc => {
       if (loc && loc.selectedTimezone && isValidTz(loc.selectedTimezone)) {
         const container = scrollableContainerRefs.current[loc.id];
         if (container) {
-          // Calculate scroll based on the start of the selected range in the pinned/primary timezone
-          const primarySelectionStartInLocTZ = selectedRange.start.tz(loc.selectedTimezone);
-          const referenceSlotIndex = primarySelectionStartInLocTZ.hour();
+          const localSelectionStart = selectedRange.start.tz(loc.selectedTimezone);
+          // Determine the first slot's time in this strip based on how generateTimeSlots works
+          // generateTimeSlots centers around selectedRange.start, usually startOf('day').subtract(1, 'day')
+          const firstSlotDateTimeInStrip = selectedRange.start.tz(loc.selectedTimezone).startOf('day').subtract(1, 'day');
           
-          // Calculate needed scroll. Consider if a day marker is before this slot.
-          let pixelsToScroll = 0;
-          for(let i=0; i < referenceSlotIndex; i++) {
-              const slotTime = primarySelectionStartInLocTZ.startOf('day').add(i, 'hour');
-              if (slotTime.hour() === 0 && i !== 0) { // is a day marker (but not the very first slot)
-                  pixelsToScroll += (DAY_MARKER_SLOT_WIDTH + SLOT_SPACING);
+          let scrollOffset = 0;
+          let currentHourIter = firstSlotDateTimeInStrip;
+
+          // Calculate offset to the target slot (start of the selected hour)
+          while(currentHourIter.isBefore(localSelectionStart.startOf('hour'), 'hour')) {
+              if (currentHourIter.hour() === 0 && !currentHourIter.isSame(firstSlotDateTimeInStrip, 'hour')) {
+                  scrollOffset += (DAY_MARKER_SLOT_WIDTH + SLOT_SPACING);
               } else {
-                  pixelsToScroll += (SLOT_WIDTH + SLOT_SPACING);
+                  scrollOffset += (SLOT_WIDTH + SLOT_SPACING);
               }
+              currentHourIter = currentHourIter.add(1, 'hour');
           }
-          const targetScrollLeft = pixelsToScroll - (container.clientWidth / 4); // Center-ish
-          container.scrollLeft = Math.max(0, targetScrollLeft);
+          
+          // Try to center the target or at least bring it into view from the left
+          const targetScrollLeft = Math.max(0, scrollOffset - (container.clientWidth / 3));
+          container.scrollLeft = targetScrollLeft;
         }
       }
     });
 
-    const timer = setTimeout(() => {
-      setIsProgrammaticScroll(false);
-    }, 200); 
+    const timer = setTimeout(() => setIsProgrammaticScroll(false), 250); 
     return () => clearTimeout(timer);
-  }, [selectedRange, locations, isMounted]);
+  }, [selectedRange, locations, isMounted, isDraggingSelection]);
 
 
   const handleGlobalDateChange = (date: Date | undefined) => {
     if (date && selectedRange && dayjs(date).isValid()) {
-      const newDatePart = dayjs(date);
-      const oldStartDate = selectedRange.start;
+      const newDatePart = dayjs(date); // This is in local timezone of the calendar
+      const oldStartUTC = selectedRange.start;
       const duration = dayjs.duration(selectedRange.end.diff(selectedRange.start));
 
-      const newStartDate = oldStartDate
-        .year(newDatePart.year())
-        .month(newDatePart.month())
-        .date(newDatePart.date());
-      const newEndDate = newStartDate.add(duration);
+      // Preserve time of day from oldStartUTC, but change the date part based on newDatePart
+      // Convert newDatePart to UTC first based on user's local timezone (where calendar was clicked)
+      const newStartDateUTC = dayjs(newDatePart).hour(oldStartUTC.hour()).minute(oldStartUTC.minute()).second(oldStartUTC.second()).utc();
       
-      setReferenceDateTime(newStartDate);
-      setSelectedRange({ start: newStartDate, end: newEndDate });
+      const newEndDateUTC = newStartDateUTC.add(duration);
+      
+      setSelectedRange({ start: newStartDateUTC, end: newEndDateUTC });
     }
   };
   
@@ -209,12 +205,11 @@ export default function TimezoneConverterPage() {
             ...loc,
             isPinned: loc.id === idToPin,
         }));
-        // Ensure the pinned location is at the top
         const pinnedItem = newLocs.find(loc => loc.isPinned);
         if (pinnedItem) {
             return [pinnedItem, ...newLocs.filter(loc => !loc.isPinned)];
         }
-        return newLocs; // Should not happen if an item was found
+        return newLocs;
     });
     const newPinnedTz = locations.find(l => l.id === idToPin)?.selectedTimezone;
     if(newPinnedTz) toast({ title: "Primary Location Set", description: `${newPinnedTz.replace(/_/g, ' ')} is now primary.`});
@@ -250,7 +245,7 @@ export default function TimezoneConverterPage() {
     setLocations(prev => {
       const newLocs = prev.filter(l => l.id !== idToRemove);
       if (removedIsPinned && newLocs.length > 0) {
-        newLocs[0].isPinned = true; // Pin the new top one
+        newLocs[0].isPinned = true; 
       }
       if (scrollableContainerRefs.current[idToRemove]) {
         delete scrollableContainerRefs.current[idToRemove];
@@ -281,23 +276,18 @@ export default function TimezoneConverterPage() {
     return () => clearTimeout(timer);
   };
 
-  const handleSlotMouseDown = (slotDateTimeInOriginalTz: dayjs.Dayjs, originalLocId: string) => {
+  const handleSlotMouseDown = (slotDateTimeInOriginalTz: dayjs.Dayjs) => {
     setIsDraggingSelection(true);
-    setDragAnchorSlotTime(slotDateTimeInOriginalTz); // Anchor time in its original timezone
-    setDragOriginalLocationId(originalLocId);
-    
-    // Convert anchor to UTC for consistent range setting
     const anchorUTC = slotDateTimeInOriginalTz.utc();
+    setDragAnchorSlotTime(anchorUTC);
     setSelectedRange({ start: anchorUTC, end: anchorUTC.add(1, 'hour') }); // Initial 1hr selection
   };
 
   const handleSlotMouseEnter = (slotDateTimeInOriginalTz: dayjs.Dayjs) => {
-    if (isDraggingSelection && dragAnchorSlotTime && dragOriginalLocationId) {
+    if (isDraggingSelection && dragAnchorSlotTime) {
       const currentSlotUTC = slotDateTimeInOriginalTz.utc();
-      const anchorUTC = dragAnchorSlotTime.utc(); // Convert anchor to UTC here too for comparison
-      
-      const newStartUTC = dayjs.min(anchorUTC, currentSlotUTC);
-      const newEndUTC = dayjs.max(anchorUTC, currentSlotUTC).add(1, 'hour'); // Ranges are inclusive start, exclusive end (1hr per slot)
+      const newStartUTC = dayjs.min(dragAnchorSlotTime, currentSlotUTC);
+      const newEndUTC = dayjs.max(dragAnchorSlotTime, currentSlotUTC).add(1, 'hour'); 
       setSelectedRange({ start: newStartUTC, end: newEndUTC });
     }
   };
@@ -306,35 +296,46 @@ export default function TimezoneConverterPage() {
     if (isDraggingSelection) {
       setIsDraggingSelection(false);
       setDragAnchorSlotTime(null); 
-      setDragOriginalLocationId(null);
     }
   }, [isDraggingSelection]);
+
+  const handleSingleSlotSelect = (slotDateTimeInOriginalTz: dayjs.Dayjs) => {
+    const startUTC = slotDateTimeInOriginalTz.utc();
+    const endUTC = startUTC.add(1, 'hour');
+    setSelectedRange({ start: startUTC, end: endUTC });
+    setIsDraggingSelection(false); 
+    setDragAnchorSlotTime(null);
+  };
 
   useEffect(() => {
     if (isDraggingSelection) {
       document.addEventListener('mouseup', handleGlobalMouseUp);
-      return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('mouseleave', handleGlobalMouseUp); // Handle mouse leaving window
+      return () => {
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        document.removeEventListener('mouseleave', handleGlobalMouseUp);
+      }
     }
   }, [isDraggingSelection, handleGlobalMouseUp]);
 
   const handleTimeStripArrowScroll = (locId: string, direction: 'prev' | 'next') => {
     const container = scrollableContainerRefs.current[locId];
     if (container) {
-      const scrollAmount = container.clientWidth * 0.75 * (direction === 'prev' ? -1 : 1);
+      const scrollAmount = container.clientWidth * 0.50 * (direction === 'prev' ? -1 : 1); // Scroll by half viewport
       container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
-  const generateTimeSlots = useCallback((locationTimezone: string): TimeSlot[] => {
-    if (!isMounted || !isValidTz(locationTimezone) || !selectedRange) return [];
+  const generateTimeSlots = useCallback((locationTimezone: string, viewCenterTimeInUTC: dayjs.Dayjs): TimeSlot[] => {
+    if (!isMounted || !isValidTz(locationTimezone) || !viewCenterTimeInUTC.isValid()) return [];
 
     const slots: TimeSlot[] = [];
-    // Generate slots for a window around the current view, e.g., -24 to +48 hours from selection start in this TZ
-    const viewCenterTime = selectedRange.start.tz(locationTimezone);
-    const stripStartTime = viewCenterTime.subtract(24, 'hour').startOf('day');
+    const localViewCenter = viewCenterTimeInUTC.tz(locationTimezone);
+    // Generate slots for previous day, current day, and next day relative to the view center
+    const stripStartTime = localViewCenter.startOf('day').subtract(1, 'day');
     const totalHoursToGenerate = 72; // 3 days worth of slots
 
-    for (let i = 0; i < totalHoursToGenerate * SLOTS_PER_DAY / 24; i++) { 
+    for (let i = 0; i < totalHoursToGenerate; i++) { 
       const slotTimeInLocationTZ = stripStartTime.add(i, 'hour');
       const hourOfDay = slotTimeInLocationTZ.hour();
       const dayOfWeek = slotTimeInLocationTZ.day(); 
@@ -342,6 +343,7 @@ export default function TimezoneConverterPage() {
       const isDay = hourOfDay >= DAY_START_HOUR && hourOfDay < DAY_END_HOUR;
       const isWknd = dayOfWeek === 0 || dayOfWeek === 6; 
       
+      // A slot is a day marker if it's the first hour of the day (00:00)
       const isNewDayMarker = hourOfDay === 0;
 
       slots.push({
@@ -354,7 +356,7 @@ export default function TimezoneConverterPage() {
       });
     }
     return slots;
-  }, [isMounted, selectedRange]); 
+  }, [isMounted]); 
   
   if (!isMounted || !selectedRange || !selectedRange.start.isValid()) {
     return (
@@ -363,6 +365,8 @@ export default function TimezoneConverterPage() {
       </div>
     );
   }
+
+  const referenceDateForCalendar = selectedRange.start.toDate(); // Use UTC start for calendar default
 
   return (
     <>
@@ -380,156 +384,165 @@ export default function TimezoneConverterPage() {
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <Card className="w-full max-w-full mx-auto shadow-lg"> {/* Changed to max-w-full */}
-            <CardHeader>
-              <CardTitle className="text-2xl font-headline text-center">World Time View</CardTitle>
+        <div className="flex flex-1 flex-col p-2 md:p-4 lg:p-6">
+          <Card className="w-full max-w-full mx-auto shadow-lg"> {/* Max width full for better space usage */}
+            <CardHeader className="pb-3 pt-4 px-3 md:px-4">
+              <CardTitle className="text-xl md:text-2xl font-headline text-center">World Time View</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-2 border rounded-md shadow-sm bg-muted/20 space-y-3">
-                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2 md:gap-4">
-                    <div className="flex items-center gap-2">
+            <CardContent className="space-y-3 p-2 md:p-3 lg:p-4">
+              <div className="p-2 border rounded-md shadow-sm bg-muted/20 space-y-2.5">
+                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
                         <Popover>
                           <PopoverTrigger asChild>
-                            <Button variant={"outline"} size="icon" className="shrink-0">
-                              <CalendarIcon className="h-5 w-5" />
+                            <Button variant={"outline"} size="icon" className="shrink-0 h-8 w-8 md:h-9 md:w-9">
+                              <CalendarIcon className="h-4 w-4 md:h-5 md:w-5" />
                                <span className="sr-only">Open Calendar</span>
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
-                            <Calendar mode="single" selected={selectedRange.start.toDate()} onSelect={handleGlobalDateChange} initialFocus />
+                            <Calendar mode="single" selected={referenceDateForCalendar} onSelect={handleGlobalDateChange} initialFocus />
                           </PopoverContent>
                         </Popover>
-                        <p className="text-sm font-medium">
-                            {selectedRange.start.format('ddd, MMM D, YYYY')}
+                        <p className="text-xs md:text-sm font-medium whitespace-nowrap">
+                            {selectedRange.start.format('ddd, MMM D, YYYY')} (UTC)
                         </p>
                     </div>
-                     <div className="flex items-center space-x-2">
+                     <div className="flex items-center space-x-1.5">
                         <Switch
                             id="time-format-toggle"
                             checked={timeFormat === '12h'}
                             onCheckedChange={(checked) => setTimeFormat(checked ? '12h' : '24h')}
+                            className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
                         />
-                        <Label htmlFor="time-format-toggle" className="text-xs whitespace-nowrap">12-hour</Label>
+                        <Label htmlFor="time-format-toggle" className="text-xs md:text-sm whitespace-nowrap">12-hour</Label>
                     </div>
                  </div>
-                 <div className="flex items-center gap-2 px-1">
+                 <div className="flex items-center gap-1.5">
                     <TimezoneCombobox 
                         value={adderTimezoneValue}
                         onValueChange={setAdderTimezoneValue}
                         placeholder="Search and add timezone..."
-                        className="flex-grow"
+                        className="flex-grow h-9 text-xs md:text-sm"
                     />
-                    <Button onClick={handleAddLocationFromSearch} size="sm">
-                        <PlusCircle className="h-4 w-4 mr-1 md:mr-2" /> Add
+                    <Button onClick={handleAddLocationFromSearch} size="sm" className="h-9 px-3 text-xs md:text-sm">
+                        <PlusCircle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" /> Add
                     </Button>
                  </div>
               </div>
 
-              <div className="space-y-1.5"> {/* Reduced space between location rows */}
+              <div className="space-y-1.5">
                 {locations.map((loc) => {
                   if (!loc || !loc.selectedTimezone || !isValidTz(loc.selectedTimezone)) return null;
                   
-                  const localSelectionStart = selectedRange.start.tz(loc.selectedTimezone);
-                  const localSelectionEnd = selectedRange.end.tz(loc.selectedTimezone);
-                  if (!localSelectionStart.isValid() || !localSelectionEnd.isValid()) return null;
+                  const localSelectedStart = selectedRange.start.tz(loc.selectedTimezone);
+                  const localSelectedEnd = selectedRange.end.tz(loc.selectedTimezone);
+                  if (!localSelectedStart.isValid() || !localSelectedEnd.isValid()) return null;
 
-                  const timeSlots = generateTimeSlots(loc.selectedTimezone);
+                  const timeSlots = generateTimeSlots(loc.selectedTimezone, selectedRange.start);
                   const timeFormatString = timeFormat === '12h' ? 'h:mm A' : 'HH:mm';
+                  const dateFormatString = "ddd, MMM D";
 
                   return (
-                    <div key={loc.id} className="py-2 border-b last:border-b-0"> {/* Minimal padding, border between rows */}
-                      <div className="flex items-stretch gap-x-2"> {/* Use items-stretch */}
+                    <div key={loc.id} className="py-1.5 border-b last:border-b-0">
+                      <div className="flex flex-col md:flex-row items-stretch gap-x-2 gap-y-1.5">
                         {/* Left: Controls and Timezone Info */}
-                        <div className="flex flex-col w-[180px] sm:w-[200px] md:w-[240px] shrink-0 pr-2 space-y-0.5">
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => handlePinLocation(loc.id)} title={`Set ${loc.selectedTimezone.split('/').pop()?.replace(/_/g, ' ')} as primary`} 
-                                    className={cn("h-6 w-6 p-0.5", loc.isPinned ? "text-primary" : "text-muted-foreground hover:text-primary")}>
-                                {loc.isPinned ? <Home className="h-4 w-4"/> : <Pin className="h-4 w-4" />}
-                            </Button>
-                            <div className="flex-grow min-w-0">
+                        <div className="w-full md:w-[200px] lg:w-[240px] shrink-0 pr-1 md:pr-2 space-y-0.5 flex-col">
+                          <div className="flex items-center gap-1 justify-between">
+                            <div className="flex items-center gap-1 flex-grow min-w-0">
+                                <Button variant="ghost" size="icon" onClick={() => handlePinLocation(loc.id)} title={`Set ${loc.selectedTimezone.split('/').pop()?.replace(/_/g, ' ')} as primary`} 
+                                        className={cn("h-6 w-6 p-0.5 shrink-0", loc.isPinned ? "text-primary" : "text-muted-foreground hover:text-primary")}>
+                                    {loc.isPinned ? <Home className="h-4 w-4"/> : <Pin className="h-4 w-4" />}
+                                </Button>
                                 <TimezoneCombobox
                                   value={loc.selectedTimezone}
                                   onValueChange={(tz) => handleLocationTimezoneChange(loc.id, tz)}
                                   placeholder="Select timezone"
-                                  className="text-sm font-semibold w-full h-8"
+                                  className="text-xs font-semibold w-full h-7 truncate"
                                 />
                             </div>
-                            <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-6 w-6 p-0.5">
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-6 w-6 p-0.5 shrink-0">
                                 <XCircle className="h-4 w-4" />
                             </Button>
                           </div>
-                          <p className="text-xs text-muted-foreground truncate ml-1">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
-                          <p className="text-sm font-semibold ml-1 mt-1">
-                            {localSelectionStart.format(timeFormatString)} - {localSelectionEnd.format(timeFormatString)}
+                          <p className="text-[10px] text-muted-foreground truncate ml-1">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
+                          <p className="text-xs font-semibold ml-1 mt-0.5 truncate">
+                            {localSelectedStart.format(timeFormatString)} - {localSelectedEnd.format(timeFormatString)}
                           </p>
-                          <p className="text-xs text-muted-foreground ml-1">
-                            {localSelectionStart.format('ddd, MMM D')}
-                            {!localSelectionStart.isSame(localSelectionEnd.subtract(1, 'hour'), 'day') ? ` - ${localSelectionEnd.subtract(1, 'hour').format('ddd, MMM D')}` : ''}
+                          <p className="text-[10px] text-muted-foreground ml-1 truncate">
+                            {localSelectedStart.format(dateFormatString)}
+                            {!localSelectedStart.isSame(localSelectedEnd.subtract(1, 'millisecond'), 'day') ? ` - ${localSelectedEnd.subtract(1, 'millisecond').format(dateFormatString)}` : ''}
                           </p>
                         </div>
                         
                         {/* Right: Time Slot Panel */}
                         <div className="flex-grow flex items-center min-w-0">
-                           <Button variant="ghost" size="icon" className="h-full w-8 shrink-0 opacity-70 hover:opacity-100" onClick={() => handleTimeStripArrowScroll(loc.id, 'prev')}>
-                               <ChevronLeft/>
+                           <Button variant="ghost" size="icon" className="h-full w-7 shrink-0 opacity-60 hover:opacity-100 rounded-none" onClick={() => handleTimeStripArrowScroll(loc.id, 'prev')}>
+                               <ChevronLeft className="h-4 w-4"/>
                            </Button>
                            <div
                             ref={el => scrollableContainerRefs.current[loc.id] = el}
                             onScroll={(e) => handleStripScroll(loc.id, e)}
-                            className="overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-muted/20 flex-grow h-full" // Ensure div takes height for centering items
+                            className="overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-muted/20 flex-grow h-full"
                             style={{ cursor: isDraggingSelection ? 'grabbing': 'default'}}
                           >
-                            <div className="flex space-x-px min-w-max h-full"> {/* h-full for child centering */}
+                            <div className="flex space-x-px min-w-max h-full items-stretch"> {/* items-stretch for consistent height */}
                               {timeSlots.map(slot => {
-                                const isSelected = slot.dateTime.isBetween(selectedRange.start.tz(loc.selectedTimezone), selectedRange.end.tz(loc.selectedTimezone), 'hour', '[)');
-                                const slotCurrentWidth = slot.isStartOfNewDayMarker ? DAY_MARKER_SLOT_WIDTH : SLOT_WIDTH;
+                                const isSlotInRange = slot.dateTime.isBetween(localSelectedStart, localSelectedEnd, 'hour', '[)');
                                 
-                                const slotBgColor = isSelected
+                                const slotBgColor = isSlotInRange
                                   ? "bg-primary/30 dark:bg-primary/40 border-primary/50"
-                                  : slot.isWeekend
-                                    ? (slot.isDayTime ? "bg-amber-100 dark:bg-amber-700/20" : "bg-amber-200/30 dark:bg-amber-800/20")
-                                    : (slot.isDayTime ? "bg-sky-100 dark:bg-sky-700/20" : "bg-slate-100 dark:bg-slate-700/20");
+                                  : slot.isStartOfNewDayMarker 
+                                    ? "bg-muted dark:bg-muted/40"
+                                    : slot.isWeekend
+                                      ? (slot.isDayTime ? "bg-amber-100 dark:bg-amber-700/10" : "bg-amber-200/20 dark:bg-amber-800/10")
+                                      : (slot.isDayTime ? "bg-sky-100 dark:bg-sky-700/10" : "bg-slate-100 dark:bg-slate-700/10");
                                 
-                                const slotTextColor = isSelected
+                                const slotTextColor = isSlotInRange
                                   ? "text-primary-foreground dark:text-primary-foreground" 
-                                  : slot.isWeekend
-                                    ? (slot.isDayTime ? "text-amber-700 dark:text-amber-300" : "text-amber-600 dark:text-amber-400")
-                                    : (slot.isDayTime ? "text-sky-700 dark:text-sky-300" : "text-slate-600 dark:text-slate-400");
+                                  : slot.isStartOfNewDayMarker
+                                    ? "text-foreground"
+                                    : slot.isWeekend
+                                      ? (slot.isDayTime ? "text-amber-700 dark:text-amber-300" : "text-amber-600 dark:text-amber-400")
+                                      : (slot.isDayTime ? "text-sky-700 dark:text-sky-300" : "text-slate-600 dark:text-slate-400");
 
+                                const currentSlotWidth = slot.isStartOfNewDayMarker ? DAY_MARKER_SLOT_WIDTH : SLOT_WIDTH;
 
                                 return (
                                 <div
                                   key={slot.key}
-                                  onMouseDown={() => handleSlotMouseDown(slot.dateTime, loc.id)}
+                                  onMouseDown={() => handleSlotMouseDown(slot.dateTime)}
                                   onMouseEnter={() => handleSlotMouseEnter(slot.dateTime)}
+                                  onClick={() => handleSingleSlotSelect(slot.dateTime)}
                                   className={cn(
                                     "flex flex-col items-center justify-center rounded-sm border cursor-grab select-none",
-                                    "leading-tight transition-colors duration-100 h-full", // h-full here
-                                    "hover:border-primary/70 hover:bg-primary/10 dark:hover:bg-white/10",
+                                    "leading-tight transition-colors duration-75 h-full py-0.5", 
+                                    "hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-white/5",
                                     slotBgColor,
                                     slotTextColor
                                   )}
-                                  style={{width: `${slotCurrentWidth}px`}}
+                                  style={{width: `${currentSlotWidth}px`}}
                                 >
                                   {slot.isStartOfNewDayMarker ? (
                                     <>
-                                      <span className="text-[10px] font-medium uppercase">{slot.dateTime.format('ddd')}</span>
-                                      <span className="text-xs uppercase">{slot.dateTime.format('MMM D')}</span>
+                                      <span className="text-[9px] font-medium uppercase tracking-wider">{slot.dateTime.format('ddd')}</span>
+                                      <span className="text-[10px] font-bold uppercase">{slot.dateTime.format('MMM D')}</span>
                                     </>
                                   ) : (
-                                    <span className={cn("text-sm font-medium", isSelected ? "font-bold" : "")}>
+                                    <>
+                                    <span className={cn("text-xs md:text-sm font-medium", isSlotInRange ? "font-bold" : "")}>
                                       {slot.dateTime.format(timeFormat === '12h' ? 'h' : 'H')}
-                                      {timeFormat === '12h' && <span className="text-[9px] opacity-80 ml-px">{slot.dateTime.format('A')}</span>}
                                     </span>
+                                    {timeFormat === '12h' && <span className="text-[8px] md:text-[9px] opacity-80 -mt-0.5">{slot.dateTime.format('A')}</span>}
+                                    </>
                                   )}
                                 </div>
                               );
                             })}
                             </div>
                           </div>
-                           <Button variant="ghost" size="icon" className="h-full w-8 shrink-0 opacity-70 hover:opacity-100" onClick={() => handleTimeStripArrowScroll(loc.id, 'next')}>
-                               <ChevronRight/>
+                           <Button variant="ghost" size="icon" className="h-full w-7 shrink-0 opacity-60 hover:opacity-100 rounded-none" onClick={() => handleTimeStripArrowScroll(loc.id, 'next')}>
+                               <ChevronRight className="h-4 w-4"/>
                            </Button>
                         </div>
                       </div>
@@ -538,8 +551,8 @@ export default function TimezoneConverterPage() {
                 })}
               </div>
             </CardContent>
-             <CardFooter>
-                <p className="text-xs text-muted-foreground w-full text-center">
+             <CardFooter className="pt-2 pb-3 px-3 md:px-4">
+                <p className="text-[10px] md:text-xs text-muted-foreground w-full text-center">
                   Drag on time strips to select a range. Pin a location to make it primary. Click calendar to change date.
                 </p>
               </CardFooter>
