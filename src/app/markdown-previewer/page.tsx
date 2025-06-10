@@ -25,26 +25,32 @@ You can make text **bold**, *italic*, or even ***both***!
 Strikethrough uses two tildes: ~~scratch this.~~
 
 ## Lists
-1. First ordered list item
-2. Another item
-  - Unordered sub-list.
-3. Actual numbers don't matter, just that it's a number
-  1. Ordered sub-list
-    - Deeper unordered sub-sub-list.
 
-Paragraphs in lists:
-1.  This is the first list item.
+**Ordered List:**
+1. First item.
+2. Second item.
+   1. Sub-item 1 (indented 2 spaces).
+   2. Sub-item 2.
+      - Further nested unordered item (indented 4 spaces relative to "Sub-item 2").
+3. Third item.
 
-    You can include paragraphs in list items.
-    Make sure the paragraph is indented to align with the text of the list item. It will have its own spacing.
+**Unordered List:**
+- An item.
+- Another item.
+  - Sub-item A (indented 2 spaces).
+    * Deeper sub-item (indented 2 spaces relative to "Sub-item A", so 4 from main list item).
+  - Sub-item B.
+- Yet another item.
 
-2.  Second item.
+**List with Paragraphs (Loose List):**
+- This is the first item.
 
-- Unordered list
-  - Can use asterisks
-  * Or minuses
-  + Or pluses
-    - With deeper nesting too.
+  This is a paragraph belonging to the first item.
+  It must be indented (e.g., 2 or 4 spaces) to align with the item's content.
+
+- This is the second item, creating a loose list due to the blank line above.
+  It can also contain
+  multiple lines of text.
 
 ## Links
 [Visit Firebase](https://firebase.google.com)
@@ -82,8 +88,31 @@ const markdownExamples = [
     content: `*This text will be italic*\n_This will also be italic_\n\n**This text will be bold**\n__This will also be bold__\n\n~~This text will be strikethrough~~\n\n***Bold and italic***`,
   },
   {
-    title: "Lists",
-    content: `Ordered List:\n1. First item\n2. Second item\n3. Third item\n  1. Indented item (2 spaces)\n    - Further indented (4 spaces)\n\nUnordered List:\n- Item 1\n- Item 2\n  - Sub-item 2.1 (2 spaces)\n  - Sub-item 2.2 (2 spaces)\n\n- List item with a paragraph:\n\n  This is a paragraph inside a list item. It should be indented.\n\n- Another item.`,
+    title: "Lists (Ordered, Unordered, Nested, Paragraphs)",
+    content: `**Ordered List (Tight):**
+1. Item 1
+2. Item 2
+   1. Sub-item 2.1 (2 spaces indent)
+   2. Sub-item 2.2
+      - Deeper Unordered Sub-item 2.2.1 (4 spaces indent from start of "Sub-item 2.2" line)
+3. Item 3
+
+**Unordered List (Tight):**
+- Main item A
+- Main item B
+  - Sub-item B.1 (2 spaces indent)
+  * Sub-item B.2 (using asterisk)
+    + Sub-sub-item B.2.1 (2 spaces indent from start of "Sub-item B.2" line)
+
+**Loose List (with paragraphs):**
+- First list item in a loose list.
+
+  This is a paragraph associated with the first list item.
+  It's indented to be part of the item.
+
+- Second list item. This list is "loose" because of the blank line separating items or complex content within items.
+
+  Another paragraph for the second item.`,
   },
   {
     title: "Links & Images",
@@ -106,13 +135,11 @@ export default function MarkdownPreviewerPage() {
 
   useEffect(() => {
     const generateHtml = async () => {
-      // Configure marked to handle line breaks (gfm: true implies breaks: true, but explicitly setting can be clearer)
-      // and to use GitHub Flavored Markdown.
-      const rawMarkup = await marked.parse(markdownText, { 
-        gfm: true, 
-        breaks: true, // Ensures <br> for single newlines within paragraphs
-        mangle: false, // Recommended for security with untrusted input, but usually false for simple previewers.
-        headerIds: false, // Avoids generating ids for headers if not needed.
+      const rawMarkup = await marked.parse(markdownText, {
+        gfm: true,
+        breaks: true,
+        mangle: false,
+        headerIds: false,
       });
       setHtmlOutput(rawMarkup);
     };
@@ -159,7 +186,7 @@ export default function MarkdownPreviewerPage() {
                   id="markdownInput"
                   value={markdownText}
                   onChange={(e) => setMarkdownText(e.target.value)}
-                  className="flex-grow resize-none font-code" 
+                  className="flex-grow resize-none font-code"
                   placeholder="Type your Markdown here..."
                 />
               </CardContent>
