@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, CalendarIcon, PlusCircle, XCircle, Pin, ChevronLeft, ChevronRight, Home, RotateCcw } from 'lucide-react';
+import { PanelLeft, CalendarIcon, PlusCircle, XCircle, Pin, Home, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -42,11 +42,8 @@ dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
 const MAX_LOCATIONS = 10;
-const DAY_START_HOUR = 7; 
-const DAY_END_HOUR = 19; 
 const SLOT_WIDTH = 36; 
-const DAY_MARKER_SLOT_WIDTH = 48; 
-const SLOT_SPACING = 1; 
+const SLOT_SPACING = 1; // from space-x-px
 const NUM_NAV_DAYS_EACH_SIDE = 2;
 
 
@@ -56,13 +53,12 @@ interface Location {
   isPinned?: boolean;
 }
 
-interface TimeSlot {
+interface TimeSlotData {
   key: string;
   dateTime: dayjs.Dayjs; 
   hourNumber: number;
   isDayTime: boolean;
   isWeekend: boolean;
-  isStartOfNewDayMarker: boolean;
 }
 
 let locationIdCounter = 0;
@@ -158,27 +154,21 @@ export default function TimezoneConverterPage() {
         const container = scrollableContainerRefs.current[loc.id];
         if (container) {
           const localSelectionStart = selectedRange.start.tz(loc.selectedTimezone);
-          const firstSlotDateTimeInStrip = localSelectionStart.startOf('day');
+          const targetHourIndex = localSelectionStart.hour(); // 0-23 hour
           
-          let scrollOffset = 0;
-          let currentHourIter = firstSlotDateTimeInStrip;
-
-          while(currentHourIter.isBefore(localSelectionStart.startOf('hour'), 'hour')) {
-              if (currentHourIter.hour() === 0 && !currentHourIter.isSame(firstSlotDateTimeInStrip, 'hour')) {
-                  scrollOffset += (DAY_MARKER_SLOT_WIDTH + SLOT_SPACING);
-              } else {
-                  scrollOffset += (SLOT_WIDTH + SLOT_SPACING);
-              }
-              currentHourIter = currentHourIter.add(1, 'hour');
-          }
+          const effectiveSlotWidth = SLOT_WIDTH + SLOT_SPACING;
+          const scrollOffsetToTargetSlotStart = targetHourIndex * effectiveSlotWidth;
           
-          const targetScrollLeft = Math.max(0, scrollOffset - (container.clientWidth / 3));
-          container.scrollLeft = targetScrollLeft;
+          // Attempt to position the target slot as the second slot in view (if possible)
+          // by scrolling one slot's width less than the offset to the target slot itself.
+          const desiredScrollPosition = Math.max(0, scrollOffsetToTargetSlotStart - effectiveSlotWidth); 
+          
+          container.scrollLeft = desiredScrollPosition;
         }
       }
     });
 
-    const timer = setTimeout(() => setIsProgrammaticScroll(false), 250); 
+    const timer = setTimeout(() => setIsProgrammaticScroll(false), 150); 
     return () => clearTimeout(timer);
   }, [selectedRange, locations, isMounted, isDraggingSelection]);
 
@@ -283,14 +273,15 @@ export default function TimezoneConverterPage() {
     setIsDraggingSelection(true);
     const anchorUTC = slotDateTimeInOriginalTz.utc();
     setDragAnchorSlotTime(anchorUTC);
+    // Initial selection is just the clicked slot (1 hour duration)
     setSelectedRange({ start: anchorUTC, end: anchorUTC.add(1, 'hour') });
   };
 
   const handleSlotMouseEnter = (slotDateTimeInOriginalTz: dayjs.Dayjs) => {
     if (isDraggingSelection && dragAnchorSlotTime) {
       const currentSlotUTC = slotDateTimeInOriginalTz.utc();
-      const newStartUTC = dayjs.min(dragAnchorSlotTime, currentSlotUTC);
-      const newEndUTC = dayjs.max(dragAnchorSlotTime, currentSlotUTC).add(1, 'hour'); 
+      let newStartUTC = dayjs.min(dragAnchorSlotTime, currentSlotUTC);
+      let newEndUTC = dayjs.max(dragAnchorSlotTime, currentSlotUTC).add(1, 'hour'); // End is inclusive of the hour
       setSelectedRange({ start: newStartUTC, end: newEndUTC });
     }
   };
@@ -329,21 +320,21 @@ export default function TimezoneConverterPage() {
     }
   };
   
-  const generateTimeSlots = useCallback((locationTimezone: string, viewCenterTimeInUTC: dayjs.Dayjs): TimeSlot[] => {
-    if (!isMounted || !isValidTz(locationTimezone) || !viewCenterTimeInUTC.isValid()) return [];
+  const generateTimeSlots = useCallback((locationTimezone: string, displayDateUTC: dayjs.Dayjs): TimeSlotData[] => {
+    if (!isMounted || !isValidTz(locationTimezone) || !displayDateUTC.isValid()) return [];
 
-    const slots: TimeSlot[] = [];
-    const localViewStartOfDay = viewCenterTimeInUTC.tz(locationTimezone).startOf('day');
-    const totalHoursToGenerate = 24; 
+    const slots: TimeSlotData[] = [];
+    const localDisplayDayStart = displayDateUTC.tz(locationTimezone).startOf('day');
+    const DAY_START_HOUR = 7; 
+    const DAY_END_HOUR = 19; 
 
-    for (let i = 0; i < totalHoursToGenerate; i++) { 
-      const slotTimeInLocationTZ = localViewStartOfDay.add(i, 'hour');
+    for (let i = 0; i < 24; i++) { // Generate 24 hourly slots for the single day
+      const slotTimeInLocationTZ = localDisplayDayStart.add(i, 'hour');
       const hourOfDay = slotTimeInLocationTZ.hour();
       const dayOfWeek = slotTimeInLocationTZ.day(); 
       
       const isDay = hourOfDay >= DAY_START_HOUR && hourOfDay < DAY_END_HOUR;
       const isWknd = dayOfWeek === 0 || dayOfWeek === 6; 
-      const isNewDayMarker = hourOfDay === 0;
 
       slots.push({
         key: `${locationTimezone}-${slotTimeInLocationTZ.toISOString()}-${i}`,
@@ -351,7 +342,6 @@ export default function TimezoneConverterPage() {
         hourNumber: hourOfDay,
         isDayTime: isDay,
         isWeekend: isWknd,
-        isStartOfNewDayMarker: isNewDayMarker,
       });
     }
     return slots;
@@ -506,9 +496,9 @@ export default function TimezoneConverterPage() {
                             </Button>
                           </div>
                           <p className="text-[10px] text-muted-foreground truncate ml-1">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
-                          <div className="mt-1 pt-1 border-t md:border-none">
+                          <div className="mt-1 pt-1 md:border-t">
                             <p className="text-sm font-semibold ml-1 truncate">
-                                {localSelectedStart.format(timeFormatString)} - {localSelectedEnd.format(timeFormatString)}
+                                {localSelectedStart.format(timeFormatString)} - {localSelectedEnd.subtract(1, 'millisecond').format(timeFormatString)}
                             </p>
                             <p className="text-[10px] text-muted-foreground ml-1 truncate">
                                 {localSelectedStart.format(dateFormatString)}
@@ -534,21 +524,15 @@ export default function TimezoneConverterPage() {
                                 
                                 const slotBgColor = isSlotInRange
                                   ? "bg-primary/30 dark:bg-primary/40 border-primary/50"
-                                  : slot.isStartOfNewDayMarker && slot.dateTime.hour() === 0
-                                    ? "bg-muted dark:bg-muted/40 border-r-2 border-foreground/10" // Day marker for 00:00
-                                    : slot.isWeekend
-                                      ? (slot.isDayTime ? "bg-amber-100/70 dark:bg-amber-900/30" : "bg-amber-200/20 dark:bg-amber-800/10")
-                                      : (slot.isDayTime ? "bg-sky-100/70 dark:bg-sky-900/30" : "bg-slate-100/70 dark:bg-slate-800/20");
+                                  : slot.isWeekend
+                                    ? (slot.isDayTime ? "bg-amber-100/70 dark:bg-amber-900/30" : "bg-amber-200/20 dark:bg-amber-800/10")
+                                    : (slot.isDayTime ? "bg-sky-100/70 dark:bg-sky-900/30" : "bg-slate-100/70 dark:bg-slate-800/20");
                                 
                                 const slotTextColor = isSlotInRange
                                   ? "text-primary-foreground dark:text-primary-foreground" 
-                                  : slot.isStartOfNewDayMarker && slot.dateTime.hour() === 0
-                                    ? "text-foreground font-semibold"
-                                    : slot.isWeekend
-                                      ? (slot.isDayTime ? "text-amber-700 dark:text-amber-300" : "text-amber-600 dark:text-amber-400")
-                                      : (slot.isDayTime ? "text-sky-700 dark:text-sky-300" : "text-slate-600 dark:text-slate-400");
-
-                                const currentSlotWidth = slot.isStartOfNewDayMarker && slot.dateTime.hour() === 0 ? DAY_MARKER_SLOT_WIDTH : SLOT_WIDTH;
+                                  : slot.isWeekend
+                                    ? (slot.isDayTime ? "text-amber-700 dark:text-amber-300" : "text-amber-600 dark:text-amber-400")
+                                    : (slot.isDayTime ? "text-sky-700 dark:text-sky-300" : "text-slate-600 dark:text-slate-400");
 
                                 return (
                                 <div
@@ -563,21 +547,12 @@ export default function TimezoneConverterPage() {
                                     slotBgColor,
                                     slotTextColor
                                   )}
-                                  style={{width: `${currentSlotWidth}px`}}
+                                  style={{width: `${SLOT_WIDTH}px`}}
                                 >
-                                  {slot.isStartOfNewDayMarker && slot.dateTime.hour() === 0 ? (
-                                    <>
-                                      <span className="text-[9px] font-medium uppercase tracking-wider">{slot.dateTime.format('ddd')}</span>
-                                      <span className="text-[10px] font-bold uppercase">{slot.dateTime.format('MMM D')}</span>
-                                    </>
-                                  ) : (
-                                    <>
                                     <span className={cn("text-sm md:text-base font-medium", isSlotInRange ? "font-bold" : "")}>
                                       {slot.dateTime.format(timeFormat === '12h' ? 'h' : 'H')}
                                     </span>
                                     {timeFormat === '12h' && <span className="text-[8px] md:text-[9px] opacity-80 -mt-0.5">{slot.dateTime.format('A')}</span>}
-                                    </>
-                                  )}
                                 </div>
                               );
                             })}
