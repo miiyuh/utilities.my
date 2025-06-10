@@ -43,12 +43,44 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
   return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
+function rgbToCmyk(r: number, g: number, b: number): { c: number; m: number; y: number; k: number } {
+  const rPrime = r / 255;
+  const gPrime = g / 255;
+  const bPrime = b / 255;
+
+  let kVal = 1 - Math.max(rPrime, gPrime, bPrime);
+
+  // Handle the case for pure white where kVal would be 0, to avoid division by zero if 1-kVal is used as denominator.
+  // For pure black (r=0,g=0,b=0), kVal will be 1.
+  // For pure white (r=255,g=255,b=255), kVal will be 0.
+  
+  if (kVal === 1) { // Pure black
+    return { c: 0, m: 0, y: 0, k: 100 };
+  }
+
+  // If kVal is very close to 1 (e.g. for very dark colors that are not pure black),
+  // (1 - kVal) can be very small, potentially leading to precision issues or large C,M,Y values.
+  // However, the typical formula proceeds.
+  
+  const cVal = (1 - rPrime - kVal) / (1 - kVal);
+  const mVal = (1 - gPrime - kVal) / (1 - kVal);
+  const yVal = (1 - bPrime - kVal) / (1 - kVal);
+
+  return {
+    c: Math.round(cVal * 100),
+    m: Math.round(mVal * 100),
+    y: Math.round(yVal * 100),
+    k: Math.round(kVal * 100),
+  };
+}
+
 
 export default function ColorPickerPage() {
   const { toast } = useToast();
   const [hexColor, setHexColor] = useState('#1a1a1a'); 
   const [rgbColor, setRgbColor] = useState<{ r: number; g: number; b: number } | null>(null);
   const [hslColor, setHslColor] = useState<{ h: number; s: number; l: number } | null>(null);
+  const [cmykColor, setCmykColor] = useState<{ c: number; m: number; y: number; k: number } | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,8 +90,10 @@ export default function ColorPickerPage() {
     setRgbColor(rgb);
     if (rgb) {
       setHslColor(rgbToHsl(rgb.r, rgb.g, rgb.b));
+      setCmykColor(rgbToCmyk(rgb.r, rgb.g, rgb.b));
     } else {
       setHslColor(null);
+      setCmykColor(null);
     }
   }, [hexColor]);
 
@@ -67,15 +101,12 @@ export default function ColorPickerPage() {
     let textValue = e.target.value;
     let newHexOutput = textValue;
 
-    // If user types 6 hex chars without #, prepend # for the color input compatibility
     if (/^[0-9a-fA-F]{6}$/.test(textValue)) {
       newHexOutput = '#' + textValue;
     }
-    // If user types 3 hex chars without #, expand and prepend #
     else if (/^[0-9a-fA-F]{3}$/.test(textValue)) {
         newHexOutput = '#' + textValue.split('').map(char => char + char).join('');
     }
-    // If user includes # but with 3 chars, expand it
     else if (/^#[0-9a-fA-F]{3}$/.test(textValue)) {
         newHexOutput = '#' + textValue.substring(1).split('').map(char => char + char).join('');
     }
@@ -84,7 +115,7 @@ export default function ColorPickerPage() {
   };
   
   const handleColorInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHexColor(e.target.value); // This value is already in #RRGGBB format
+    setHexColor(e.target.value);
   };
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -180,32 +211,43 @@ export default function ColorPickerPage() {
                 <CardTitle className="text-2xl font-headline">Color Picker</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex flex-col items-center space-y-4">
-                  <Label htmlFor="color-picker-input" className="text-lg">Select Color</Label>
-                  <Input
-                    id="color-picker-input"
-                    type="color"
-                    value={(/^#[0-9a-fA-F]{6}$/i.test(hexColor) || /^#[0-9a-fA-F]{3}$/i.test(hexColor)) ? hexColor : '#000000'}
-                    onChange={handleColorInputChange}
-                    className="h-20 w-full cursor-pointer p-1"
-                  />
-                  <div
-                    className="w-full h-24 rounded-md border border-border"
-                    style={{ backgroundColor: hexColor }}
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="hex-value">HEX</Label>
+                
+                <div className="space-y-4">
+                  <Label htmlFor="hex-value" className="text-center block text-lg">Input HEX or Pick Visually</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      id="color-picker-swatch"
+                      type="color"
+                      value={(/^#[0-9a-fA-F]{6}$/i.test(hexColor) || /^#[0-9a-fA-F]{3}$/i.test(hexColor)) ? hexColor : '#000000'}
+                      onChange={handleColorInputChange}
+                      className="h-16 w-16 md:h-20 md:w-20 shrink-0 cursor-pointer p-0.5 border-0 rounded-md overflow-hidden shadow-sm"
+                      aria-label="Visual color picker"
+                    />
+                    <div
+                      className="flex-grow h-16 md:h-20 rounded-md border border-input shadow-inner"
+                      style={{ backgroundColor: hexColor }}
+                      aria-label={`Current color preview: ${hexColor}`}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="hex-value-input">HEX Value</Label>
                     <div className="flex items-center gap-2">
-                      <Input id="hex-value" value={hexColor} onChange={handleHexChange} className="font-mono" placeholder="#RRGGBB or RRGGBB"/>
+                      <Input 
+                        id="hex-value-input" 
+                        value={hexColor} 
+                        onChange={handleHexChange} 
+                        className="font-mono" 
+                        placeholder="#RRGGBB, fff, #abc..."
+                      />
                       <Button variant="outline" size="icon" onClick={() => copyToClipboard(hexColor, 'HEX')} title="Copy HEX">
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
+                </div>
 
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-md font-medium text-muted-foreground">Derived Color Codes</h3>
                   <div>
                     <Label>RGB</Label>
                     <div className="flex items-center gap-2">
@@ -233,10 +275,24 @@ export default function ColorPickerPage() {
                       </Button>
                     </div>
                   </div>
+                  
+                  <div>
+                    <Label>CMYK</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        readOnly
+                        value={cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : 'N/A'}
+                        className="font-mono bg-muted/30"
+                      />
+                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : '', 'CMYK')} title="Copy CMYK" disabled={!cmykColor}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-3 pt-4 border-t mt-4">
-                  <Label htmlFor="image-upload-button" className="text-lg">Pick Color from Image</Label>
+                <div className="space-y-4 pt-6 border-t">
+                  <Label htmlFor="image-upload-button" className="text-lg block text-center">Pick Color from Image</Label>
                   <Button
                     id="image-upload-button"
                     variant="outline"
@@ -277,3 +333,4 @@ export default function ColorPickerPage() {
     </>
   );
 }
+
