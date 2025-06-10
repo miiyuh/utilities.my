@@ -33,7 +33,7 @@ dayjs.extend(advancedFormat);
 const MAX_LOCATIONS = 10;
 const HOURS_AROUND_REFERENCE = 7; 
 const DAY_START_HOUR = 7; 
-const DAY_END_HOUR = 18; // Up to 6:59 PM is considered day time
+const DAY_END_HOUR = 18; 
 
 
 interface Location {
@@ -66,7 +66,6 @@ export default function TimezoneConverterPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    // Client-side only: set to user's local time and guessed timezone
     setReferenceDateTime(dayjs()); 
     setLocations(prevLocs => {
       const newLocs = [...prevLocs];
@@ -77,7 +76,6 @@ export default function TimezoneConverterPage() {
         newLocs[0] = { id: generateLocationId(), selectedTimezone: guessedTimezone };
       }
       
-      // Ensure the second and third default locations are different from the guessed one and each other
       const defaultTz2 = 'America/New_York';
       const defaultTz3 = 'Europe/London';
       
@@ -96,7 +94,7 @@ export default function TimezoneConverterPage() {
       } else if (newLocs.length < 3) {
         newLocs.push({id: generateLocationId(), selectedTimezone: defaultTz3 === guessedTimezone || defaultTz3 === newLocs[1]?.selectedTimezone ? 'Australia/Sydney' : defaultTz3 });
       }
-      return newLocs.filter(Boolean).slice(0, MAX_LOCATIONS); // Ensure we don't exceed MAX_LOCATIONS initially
+      return newLocs.filter(Boolean).slice(0, MAX_LOCATIONS);
     });
   }, []);
 
@@ -127,20 +125,14 @@ export default function TimezoneConverterPage() {
 
   const handleSetAsReference = (locationTimezone: string) => {
     if (!referenceDateTime || !isMounted) return;
-  
-    // Find the reference hour for this location based on the current global referenceDateTime
     const baseTimeInLocation = referenceDateTime.tz(locationTimezone);
-    // This baseTimeInLocation IS the current time in that location, which aligns with its "0" hour slot.
-    // So we set the global reference to this exact moment.
     setReferenceDateTime(baseTimeInLocation); 
-  
     toast({ title: "Reference Updated", description: `Timeline now centered around current time in ${locationTimezone.replace(/_/g, ' ')}.`});
   };
   
 
   const handleHourSlotClick = (slotDateTime: dayjs.Dayjs) => {
-    setReferenceDateTime(slotDateTime); // slotDateTime is already correctly zoned
-    toast({ title: "Reference Time Updated", description: `Timeline now centered around ${slotDateTime.format('h:mm A, MMM D')} in ${slotDateTime.tz()?.format('z')}.` });
+    setReferenceDateTime(slotDateTime);
   };
 
   const handleAddLocation = () => {
@@ -187,7 +179,7 @@ export default function TimezoneConverterPage() {
     for (let i = -HOURS_AROUND_REFERENCE; i <= HOURS_AROUND_REFERENCE; i++) {
       const slotTime = baseTimeInLocation.add(i, 'hour');
       const hourOfDay = slotTime.hour();
-      const isDay = hourOfDay >= DAY_START_HOUR && hourOfDay < DAY_END_HOUR; // DAY_END_HOUR is exclusive (e.g., 18 means up to 17:59)
+      const isDay = hourOfDay >= DAY_START_HOUR && hourOfDay < DAY_END_HOUR; 
       
       slots.push({
         key: `${locationTimezone}-${slotTime.toISOString()}-${i}`,
@@ -309,8 +301,8 @@ export default function TimezoneConverterPage() {
                                   ],
                                   !slot.isRefHour && [
                                     slot.isDayTime 
-                                      ? "bg-background text-foreground dark:bg-muted/30" 
-                                      : "bg-muted/60 text-muted-foreground dark:bg-muted/50",
+                                      ? "bg-background text-foreground dark:bg-muted/30 dark:text-foreground" 
+                                      : "bg-muted/60 text-muted-foreground dark:bg-muted/50 dark:text-muted-foreground",
                                     (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && "opacity-75"
                                   ]
                                 )}
