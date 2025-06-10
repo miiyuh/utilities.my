@@ -59,7 +59,7 @@ export function SidebarContent() {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === tool.path}
-                  className="w-full justify-start"
+                  className={cn("w-full", "justify-start group-data-[collapsible=icon]:justify-center")}
                   tooltip={tool.name}
                 >
                   <Link href={tool.path}>
@@ -78,7 +78,7 @@ export function SidebarContent() {
               <SidebarMenuButton
                 asChild
                 isActive={pathname === "/settings"}
-                className="w-full justify-start"
+                className={cn("w-full", "justify-start group-data-[collapsible=icon]:justify-center")}
                 tooltip="Settings"
               >
                 <Link href="/settings">
@@ -91,7 +91,7 @@ export function SidebarContent() {
               <SidebarMenuButton
                 asChild
                 isActive={pathname === "/about"}
-                className="w-full justify-start"
+                className={cn("w-full", "justify-start group-data-[collapsible=icon]:justify-center")}
                 tooltip="About"
               >
                 <Link href="/about">
@@ -104,7 +104,7 @@ export function SidebarContent() {
               <SidebarMenuButton
                 asChild
                 isActive={pathname === "/privacy"}
-                className="w-full justify-start"
+                className={cn("w-full", "justify-start group-data-[collapsible=icon]:justify-center")}
                 tooltip="Privacy Policy"
               >
                 <Link href="/privacy">
@@ -117,7 +117,7 @@ export function SidebarContent() {
               <SidebarMenuButton
                 asChild
                 isActive={pathname === "/terms"}
-                className="w-full justify-start"
+                className={cn("w-full", "justify-start group-data-[collapsible=icon]:justify-center")}
                 tooltip="Terms of Service"
               >
                 <Link href="/terms">
