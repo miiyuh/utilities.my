@@ -184,17 +184,17 @@ export default function DateDiffCalculatorPage() {
 
                 {diffResult && (
                   <div className="space-y-4 pt-4 border-t">
-                    <h3 className="text-lg font-semibold text-center md:text-left">Result:</h3>
-                    <p className="text-md text-muted-foreground text-center md:text-left font-['Noto_Serif'] italic">
+                    <h3 className="text-xl font-semibold text-center md:text-left">Result:</h3>
+                    <p className="text-lg text-muted-foreground text-center md:text-left font-['Noto_Serif'] italic">
                       The difference is: <br className="sm:hidden"/>
-                      <span className="text-lg font-semibold text-foreground not-italic">{diffResult.years}</span> years, <span className="text-lg font-semibold text-foreground not-italic">{diffResult.months}</span> months, <span className="text-lg font-semibold text-foreground not-italic">{diffResult.days}</span> days, <br className="hidden sm:inline md:hidden lg:inline"/>
-                      <span className="text-lg font-semibold text-foreground not-italic">{diffResult.hours}</span> hours, <span className="text-lg font-semibold text-foreground not-italic">{diffResult.minutes}</span> minutes, and <span className="text-lg font-semibold text-foreground not-italic">{diffResult.seconds}</span> seconds.
+                      <span className="text-2xl font-semibold text-primary not-italic">{diffResult.years}</span> years, <span className="text-2xl font-semibold text-primary not-italic">{diffResult.months}</span> months, <span className="text-2xl font-semibold text-primary not-italic">{diffResult.days}</span> days, <br className="hidden sm:inline md:hidden lg:inline"/>
+                      <span className="text-2xl font-semibold text-primary not-italic">{diffResult.hours}</span> hours, <span className="text-2xl font-semibold text-primary not-italic">{diffResult.minutes}</span> minutes, and <span className="text-2xl font-semibold text-primary not-italic">{diffResult.seconds}</span> seconds.
                     </p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm pt-2 border-t">
-                        <p>Total Days: <span className="font-semibold text-foreground">{diffResult.totalDays.toLocaleString()}</span></p>
-                        <p>Total Hours: <span className="font-semibold text-foreground">{diffResult.totalHours.toLocaleString()}</span></p>
-                        <p>Total Minutes: <span className="font-semibold text-foreground">{diffResult.totalMinutes.toLocaleString()}</span></p>
-                        <p>Total Seconds: <span className="font-semibold text-foreground">{diffResult.totalSeconds.toLocaleString()}</span></p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-base pt-2 border-t">
+                        <p>Total Days: <span className="font-semibold text-primary">{diffResult.totalDays.toLocaleString()}</span></p>
+                        <p>Total Hours: <span className="font-semibold text-primary">{diffResult.totalHours.toLocaleString()}</span></p>
+                        <p>Total Minutes: <span className="font-semibold text-primary">{diffResult.totalMinutes.toLocaleString()}</span></p>
+                        <p>Total Seconds: <span className="font-semibold text-primary">{diffResult.totalSeconds.toLocaleString()}</span></p>
                     </div>
                   </div>
                 )}
