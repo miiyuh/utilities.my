@@ -14,6 +14,7 @@ import { format, differenceInYears, differenceInMonths, differenceInDays, differ
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 interface DateDiff {
@@ -185,17 +186,51 @@ export default function DateDiffCalculatorPage() {
                 {diffResult && (
                   <div className="space-y-4 pt-4 border-t">
                     <h3 className="text-xl font-semibold text-center md:text-left">Result:</h3>
-                    <p className="text-lg text-muted-foreground text-center md:text-left font-['Noto_Serif'] italic">
-                      The difference is: <br className="sm:hidden"/>
-                      <span className="text-2xl font-semibold text-primary not-italic">{diffResult.years}</span> years, <span className="text-2xl font-semibold text-primary not-italic">{diffResult.months}</span> months, <span className="text-2xl font-semibold text-primary not-italic">{diffResult.days}</span> days, <br className="hidden sm:inline md:hidden lg:inline"/>
-                      <span className="text-2xl font-semibold text-primary not-italic">{diffResult.hours}</span> hours, <span className="text-2xl font-semibold text-primary not-italic">{diffResult.minutes}</span> minutes, and <span className="text-2xl font-semibold text-primary not-italic">{diffResult.seconds}</span> seconds.
-                    </p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-base pt-2 border-t">
-                        <p>Total Days: <span className="font-semibold text-primary">{diffResult.totalDays.toLocaleString()}</span></p>
-                        <p>Total Hours: <span className="font-semibold text-primary">{diffResult.totalHours.toLocaleString()}</span></p>
-                        <p>Total Minutes: <span className="font-semibold text-primary">{diffResult.totalMinutes.toLocaleString()}</span></p>
-                        <p>Total Seconds: <span className="font-semibold text-primary">{diffResult.totalSeconds.toLocaleString()}</span></p>
-                    </div>
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground">Years</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.years}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground">Months</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.months}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground">Days</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.days}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground">Hours</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.hours}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground">Minutes</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.minutes}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground">Seconds</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.seconds}</TableCell>
+                        </TableRow>
+                        
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground pt-4 border-t">Total Days</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right pt-4 border-t">{diffResult.totalDays.toLocaleString()}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground">Total Hours</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.totalHours.toLocaleString()}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground">Total Minutes</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.totalMinutes.toLocaleString()}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium text-md text-muted-foreground">Total Seconds</TableCell>
+                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.totalSeconds.toLocaleString()}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
                   </div>
                 )}
               </CardContent>
