@@ -27,19 +27,31 @@ Strikethrough uses two tildes: ~~scratch this.~~
 ## Lists
 1. First ordered list item
 2. Another item
-   - Unordered sub-list.
-1. Actual numbers don't matter, just that it's a number
-   1. Ordered sub-list
+  - Unordered sub-list.
+3. Actual numbers don't matter, just that it's a number
+  1. Ordered sub-list
+    - Deeper unordered sub-sub-list.
 
-- Unordered list can use asterisks
-* Or minuses
-- Or pluses
+- Unordered list
+  - Can use asterisks
+  * Or minuses
+  + Or pluses
+    - With deeper nesting too.
+
+Paragraphs in lists:
+1.  This is the first list item.
+
+    You can include paragraphs in list items.
+    Make sure the paragraph is indented to align with the text of the list item.
+
+2.  Second item.
+
 
 ## Links
 [Visit Firebase](https://firebase.google.com)
 
 ## Images
-![Alt text for a placeholder image](https://placehold.co/300x200.png)
+![Alt text for a placeholder image](https://placehold.co/300x200.png "Placeholder Image")
 
 ## Code
 Inline \`code\` has \`back-ticks around\` it.
@@ -54,6 +66,8 @@ greet("World");
 
 ## Blockquotes
 > Dorothy followed her through many of the beautiful rooms in her castle.
+>
+> This is a second paragraph in the blockquote.
 
 ## Horizontal Rule
 ---
@@ -70,7 +84,7 @@ const markdownExamples = [
   },
   {
     title: "Lists",
-    content: `Ordered List:\n1. First item\n2. Second item\n3. Third item\n   1. Indented item\n\nUnordered List:\n- Item 1\n- Item 2\n  - Sub-item 2.1\n  - Sub-item 2.2`,
+    content: `Ordered List:\n1. First item\n2. Second item\n3. Third item\n  1. Indented item (2 spaces)\n    - Further indented (4 spaces)\n\nUnordered List:\n- Item 1\n- Item 2\n  - Sub-item 2.1 (2 spaces)\n  - Sub-item 2.2 (2 spaces)`,
   },
   {
     title: "Links & Images",
