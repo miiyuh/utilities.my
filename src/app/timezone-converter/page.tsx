@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -400,6 +400,7 @@ export default function TimezoneConverterPage() {
           <Card className="w-full max-w-full mx-auto shadow-lg">
             <CardHeader className="pb-3 pt-4 px-3 md:px-4">
               <CardTitle className="text-xl md:text-2xl font-headline text-center">World Time View</CardTitle>
+              <CardDescription className="text-center">Visually compare times across multiple timezones. Select a date and time range to see corresponding local times worldwide.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 p-2 md:p-3 lg:p-4">
               {/* Global Controls Wrapper */}
@@ -605,4 +606,3 @@ export default function TimezoneConverterPage() {
     </>
   );
 }
-

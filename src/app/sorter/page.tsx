@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -99,6 +99,7 @@ export default function SorterPage() {
             <Card className="w-full max-w-2xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Sorter</CardTitle>
+                <CardDescription>Sort lines of text alphabetically or numerically, in ascending or descending order. Options for case sensitivity and removing duplicates.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -176,4 +177,3 @@ export default function SorterPage() {
     </>
   );
 }
-

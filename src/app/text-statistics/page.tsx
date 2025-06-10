@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { PanelLeft, Type, RemoveFormatting, WrapText, ScanLine, Pilcrow, Clock } from 'lucide-react';
@@ -87,6 +87,7 @@ export default function TextStatisticsPage() {
             <Card className="w-full max-w-2xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Text Statistics</CardTitle>
+                <CardDescription>Analyze your text to get statistics like character count (with and without spaces), word count, sentence count, paragraph count, and estimated reading time.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -125,4 +126,3 @@ export default function TextStatisticsPage() {
     </>
   );
 }
-

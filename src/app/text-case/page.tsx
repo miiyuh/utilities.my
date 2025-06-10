@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -80,6 +80,7 @@ export default function TextCaseConverterPage() {
             <Card className="w-full max-w-2xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Text Case Converter</CardTitle>
+                <CardDescription>Easily convert blocks of text between different letter cases: UPPERCASE, lowercase, Title Case, and Sentence case.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { PanelLeft, FileText, Eye, Info, Trash2 } from 'lucide-react';
@@ -256,6 +256,13 @@ export default function MarkdownPreviewerPage() {
           <ThemeToggleButton />
         </header>
         <div className="flex flex-1 flex-col p-4 md:p-6">
+          <Card className="w-full shadow-lg mb-6">
+            <CardHeader>
+              <CardTitle className="text-2xl font-headline">Markdown Editor & Previewer</CardTitle>
+              <CardDescription>Write and preview Markdown text in real-time. See how your Markdown syntax translates to formatted HTML content. A quick reference guide is available below.</CardDescription>
+            </CardHeader>
+          </Card>
+        
           <div className="grid flex-1 gap-6 md:grid-cols-2">
             {/* Markdown Input Card */}
             <Card className="shadow-lg flex flex-col">

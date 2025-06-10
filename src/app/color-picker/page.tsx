@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -273,6 +273,7 @@ export default function ColorPickerPage() {
             <Card className="w-full max-w-4xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Color Picker</CardTitle>
+                <CardDescription>Pick colors using a visual selector, input HEX values, or extract colors from an uploaded image. View corresponding RGB, HSL, and CMYK values.</CardDescription>
               </CardHeader>
               <CardContent className="p-4 md:p-6">
                 <div className="grid md:grid-cols-2 md:gap-x-8 lg:gap-x-12">

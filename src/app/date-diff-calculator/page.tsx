@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -133,6 +133,7 @@ export default function DateDiffCalculatorPage() {
             <Card className="w-full max-w-2xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Date Difference Calculator</CardTitle>
+                <CardDescription>Calculate the duration between two dates and times, displayed in various units like years, months, days, hours, minutes, and seconds.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -249,4 +250,3 @@ export default function DateDiffCalculatorPage() {
     </>
   );
 }
-

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -73,6 +73,7 @@ export default function FileCompressorPage() {
             <Card className="w-full max-w-lg mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">File Compressor (ZIP)</CardTitle>
+                <CardDescription>Select one or more files to compress into a single downloadable ZIP archive. Useful for reducing file sizes for storage or sharing.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -83,7 +84,7 @@ export default function FileCompressorPage() {
                     multiple
                     ref={fileInputRef}
                     onChange={handleFileChange}
-                    className="hidden" // Changed from pt-2 to hidden
+                    className="hidden" 
                   />
                    <Button 
                     id="fileUploadButton"

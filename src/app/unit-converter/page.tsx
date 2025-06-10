@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,7 +65,7 @@ export default function UnitConverterPage() {
 
   useEffect(() => {
     convertUnits();
-  }, [inputValue, fromUnit, toUnit, selectedCategory, currentCategory]); // Added currentCategory
+  }, [inputValue, fromUnit, toUnit, selectedCategory, currentCategory]); 
   
   useEffect(() => {
     setFromUnit(currentCategory.units[0].value);
@@ -134,6 +134,7 @@ export default function UnitConverterPage() {
             <Card className="w-full max-w-lg mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Unit Converter</CardTitle>
+                <CardDescription>Convert values between various units of measurement, including length (meters, feet, miles, etc.) and weight (kilograms, pounds, ounces, etc.).</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -211,4 +212,3 @@ export default function UnitConverterPage() {
     </>
   );
 }
-
