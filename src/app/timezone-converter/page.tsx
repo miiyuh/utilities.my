@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { PanelLeft, CalendarIcon, PlusCircle, XCircle, PinIcon } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
@@ -17,7 +18,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
-import isoWeek from 'dayjs/plugin/isoWeek'; // For day() to get day of week consistently
+import isoWeek from 'dayjs/plugin/isoWeek';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { TimezoneCombobox } from "@/components/ui/timezone-combobox";
@@ -31,11 +32,10 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(advancedFormat);
 dayjs.extend(isoWeek);
 
-
 const MAX_LOCATIONS = 10;
 const DAY_START_HOUR = 7; 
-const DAY_END_HOUR = 19; // Up to 18:59 is daytime
-const VISIBLE_DAYS_IN_NAV = 7; // e.g., 3 before, current, 3 after
+const DAY_END_HOUR = 19; 
+const VISIBLE_DAYS_IN_NAV = 7;
 
 interface Location {
   id: string;
@@ -49,8 +49,7 @@ interface HourSlot {
   isDayTime: boolean;
   isWeekend: boolean;
   isReferenceHour: boolean;
-  displayDayDateLabel: boolean; // True if this is the first hour of a new day relative to the previous slot
-  previousSlotDateTime?: dayjs.Dayjs; // To help determine if day changed
+  displayDayAbbrOnly: boolean; 
 }
 
 let locationIdCounter = 0;
@@ -59,7 +58,6 @@ const generateLocationId = () => `loc-${locationIdCounter++}-${Date.now()}`;
 const isValidTz = (tzName: string): boolean => {
   if (!tzName) return false;
   try {
-    // Attempting a conversion is a more robust check than dayjs.tz.zone
     const testDate = dayjs().tz(tzName);
     return testDate.isValid();
   } catch (e) {
@@ -73,6 +71,8 @@ export default function TimezoneConverterPage() {
   const [isMounted, setIsMounted] = useState(false);
   const scrollableContainerRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [isProgrammaticScroll, setIsProgrammaticScroll] = useState(false);
+  const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('12h');
+
 
   const initialLocations = (): Location[] => {
     const guessedTimezone = dayjs.tz.guess();
@@ -148,10 +148,8 @@ export default function TimezoneConverterPage() {
   const handleSetAsReference = (locationTimezone: string) => {
     if (!referenceDateTime || !isMounted || !isValidTz(locationTimezone)) return;
     
-    // Get the current referenceDateTime, but interpreted in the target location's timezone
-    // Then convert this moment back to the system's default/UTC to store as the new global reference
-    const newGlobalReference = referenceDateTime.tz(locationTimezone); 
-    setReferenceDateTime(newGlobalReference);
+    const currentRefTimeInTargetTz = referenceDateTime.tz(locationTimezone);
+    setReferenceDateTime(currentRefTimeInTargetTz);
     toast({ title: "Reference Updated", description: `Timeline now centered around current time in ${locationTimezone.replace(/_/g, ' ')}.`});
   };
 
@@ -233,40 +231,27 @@ export default function TimezoneConverterPage() {
     if (!isMounted || !isValidTz(locationTimezone) || !globalRefDateTime.isValid()) return [];
 
     const slots: HourSlot[] = [];
-    // Start from the beginning of the day of the globalRefDateTime in the *location's timezone*
-    // and show 24 hours from there.
     const startOfStripDayInLocationTZ = globalRefDateTime.tz(locationTimezone).startOf('day');
+    const dateBarDay = startOfStripDayInLocationTZ.day(); 
 
-    for (let i = 0; i < 24; i++) { // Generate 24 slots for the day
+    for (let i = 0; i < 24; i++) { 
       const slotTimeInLocationTZ = startOfStripDayInLocationTZ.add(i, 'hour');
       const hourOfDay = slotTimeInLocationTZ.hour();
-      const dayOfWeek = slotTimeInLocationTZ.day(); // 0 for Sunday, 6 for Saturday
+      const dayOfWeek = slotTimeInLocationTZ.day(); 
 
       const isDay = hourOfDay >= DAY_START_HOUR && hourOfDay < DAY_END_HOUR;
       const isWknd = dayOfWeek === 0 || dayOfWeek === 6;
-
-      // Check if this slotTimeInLocationTZ corresponds to the globalRefDateTime's exact hour
       const isRef = slotTimeInLocationTZ.isSame(globalRefDateTime.tz(locationTimezone), 'hour');
+      const isDifferentDayThanDateBar = slotTimeInLocationTZ.day() !== dateBarDay;
       
-      let displayDayDate = false;
-      if (i === 0) { // First slot always shows its date info
-        displayDayDate = true;
-      } else {
-        const prevSlotTime = startOfStripDayInLocationTZ.add(i - 1, 'hour');
-        if (!slotTimeInLocationTZ.isSame(prevSlotTime, 'day')) {
-          displayDayDate = true;
-        }
-      }
-
       slots.push({
         key: `${locationTimezone}-${slotTimeInLocationTZ.toISOString()}-${i}`,
-        dateTime: slotTimeInLocationTZ, // This is the actual time of the slot in its own TZ
+        dateTime: slotTimeInLocationTZ, 
         hourNumber: hourOfDay,
         isDayTime: isDay,
         isWeekend: isWknd,
         isReferenceHour: isRef,
-        displayDayDateLabel: displayDayDate,
-        previousSlotDateTime: i > 0 ? startOfStripDayInLocationTZ.add(i-1, 'hour') : undefined
+        displayDayAbbrOnly: isDifferentDayThanDateBar,
       });
     }
     return slots;
@@ -309,7 +294,7 @@ export default function TimezoneConverterPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="p-2 border rounded-md shadow-sm bg-muted/20">
-                 <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant={"outline"} size="icon" className="shrink-0">
@@ -329,15 +314,23 @@ export default function TimezoneConverterPage() {
                                 size="sm"
                                 onClick={() => handleDateNavClick(dateItem)}
                                 className={cn(
-                                    "flex flex-col items-center justify-center h-auto px-2 py-1.5 leading-tight text-xs min-w-[40px]",
+                                    "flex flex-col items-center justify-center h-auto px-2 py-1.5 leading-tight text-xs min-w-[45px]",
                                     dateItem.isSame(referenceDateTime, 'day') ? "shadow-md" : ""
                                 )}
                             >
                                 <span>{dateItem.format('ddd')}</span>
                                 <span>{dateItem.format('D')}</span>
-                                {dateItem.day() === 0 || dateItem.day() === 6 ? <span className="text-[8px] opacity-80">{dateItem.format('MMM')}</span> : null}
+                                {dateItem.day() === 0 || dateItem.day() === 6 ? <span className="text-[8px] opacity-80">{dateItem.format('MMM')}</span> : <span className="text-[8px] opacity-80 invisible">blank</span>}
                             </Button>
                         ))}
+                    </div>
+                     <div className="flex items-center space-x-2">
+                        <Switch
+                            id="time-format-toggle"
+                            checked={timeFormat === '24h'}
+                            onCheckedChange={(checked) => setTimeFormat(checked ? '24h' : '12h')}
+                        />
+                        <Label htmlFor="time-format-toggle" className="text-xs whitespace-nowrap">24-hour</Label>
                     </div>
                  </div>
               </div>
@@ -346,69 +339,90 @@ export default function TimezoneConverterPage() {
                 {locations.map((loc) => {
                   if (!loc || !loc.selectedTimezone || !referenceDateTime || !isValidTz(loc.selectedTimezone)) return null;
                   
+                  const localTimeForRow = referenceDateTime.tz(loc.selectedTimezone);
+                  if (!localTimeForRow.isValid()) return null;
+
                   const hourSlots = generateHourSlots(loc.selectedTimezone, referenceDateTime);
-                  const currentLocalTimeForFirstSlot = hourSlots.length > 0 ? hourSlots[0].dateTime : dayjs().tz(loc.selectedTimezone); // Fallback for safety
-                  const utcOffset = currentLocalTimeForFirstSlot.format('Z');
-                  const timezoneAbbr = currentLocalTimeForFirstSlot.format('z');
+                  const utcOffset = localTimeForRow.format('Z');
+                  const timezoneAbbr = localTimeForRow.format('z');
 
                   return (
                     <div key={loc.id} className="p-3 border rounded-md shadow-sm">
-                      <div className="flex flex-col md:flex-row items-stretch gap-3">
+                      <div className="flex flex-col md:flex-row items-stretch gap-x-3">
                         {/* Left: Controls and Timezone Info */}
-                        <div className="flex md:flex-col items-center justify-start md:justify-center gap-1 md:w-auto py-1 md:py-0 shrink-0 md:pr-2 md:border-r">
-                           <Button variant="ghost" size="icon" onClick={() => handleSetAsReference(loc.selectedTimezone)} title={`Set reference to ${loc.selectedTimezone.replace(/_/g, ' ')}`} className="text-muted-foreground hover:text-primary h-6 w-6 p-1">
-                            <PinIcon className="h-3.5 w-3.5" />
-                          </Button>
-                           <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-6 w-6 p-1">
-                            <XCircle className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-
-                        <div className="flex-grow md:w-1/4 lg:w-1/5 space-y-0.5 pr-3 border-b md:border-b-0 md:border-r pb-3 md:pb-0 mb-3 md:mb-0 shrink-0">
-                          <TimezoneCombobox
-                            value={loc.selectedTimezone}
-                            onValueChange={(tz) => handleLocationTimezoneChange(loc.id, tz)}
-                            placeholder="Select timezone"
-                            className="text-sm font-semibold w-full"
-                          />
-                          <p className="text-xs text-muted-foreground truncate mt-1">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{timezoneAbbr} (GMT{utcOffset})</p>
+                        <div className="flex flex-col md:w-[220px] lg:w-[260px] shrink-0 pr-3 md:border-r pb-3 md:pb-0 mb-3 md:mb-0">
+                          <div className="flex items-start justify-between mb-1">
+                            <div className="flex-grow space-y-0.5 min-w-0">
+                              <TimezoneCombobox
+                                value={loc.selectedTimezone}
+                                onValueChange={(tz) => handleLocationTimezoneChange(loc.id, tz)}
+                                placeholder="Select timezone"
+                                className="text-sm font-semibold w-full"
+                              />
+                              <p className="text-xs text-muted-foreground truncate mt-1">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{timezoneAbbr} (GMT{utcOffset})</p>
+                            </div>
+                            <div className="flex flex-col items-center gap-0.5 ml-2 shrink-0">
+                               <Button variant="ghost" size="icon" onClick={() => handleSetAsReference(loc.selectedTimezone)} title={`Set reference to ${loc.selectedTimezone.replace(/_/g, ' ')}`} className="text-muted-foreground hover:text-primary h-6 w-6 p-1">
+                                <PinIcon className="h-3.5 w-3.5" />
+                              </Button>
+                               <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-6 w-6 p-1">
+                                <XCircle className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="mt-1 pt-1 border-t">
+                             <p className="text-xl font-semibold text-primary">{localTimeForRow.format(timeFormat === '12h' ? 'h:mm A' : 'HH:mm')}</p>
+                             <p className="text-xs text-muted-foreground">{localTimeForRow.format('dddd, MMMM D, YYYY')}</p>
+                          </div>
                         </div>
                         
-                        {/* Right: Hour Strip */}
-                        <div className="flex-grow md:w-3/4 lg:w-4/5 flex flex-col">
+                        {/* Right: Hour Strip Panel */}
+                        <div className="flex-grow flex flex-col min-w-0">
+                           <div className="text-center text-sm font-medium text-muted-foreground mb-1 py-1 bg-muted/30 rounded-sm">
+                             {localTimeForRow.format('dddd, MMMM D, YYYY')}
+                           </div>
                            <div
                             ref={el => scrollableContainerRefs.current[loc.id] = el}
                             onScroll={(e) => handleStripScroll(loc.id, e)}
                             className="overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
                           >
-                            <div className="flex space-x-px min-w-max py-1"> {/* Use space-x-px for minimal gap */}
+                            <div className="flex space-x-px min-w-max py-1">
                               {hourSlots.map(slot => (
                                 <div
                                   key={slot.key}
                                   onClick={() => handleHourSlotClick(slot.dateTime)}
                                   className={cn(
-                                    "flex flex-col items-center justify-center p-1 rounded-sm w-[38px] h-[48px] text-center border cursor-pointer relative",
-                                    "leading-tight transition-colors duration-100 text-xs",
+                                    "flex flex-col items-center justify-center p-1 rounded-sm w-[40px] h-[52px] text-center border cursor-pointer relative",
+                                    "leading-tight transition-colors duration-100",
                                     "hover:border-primary/70 hover:bg-primary/10 dark:hover:bg-white/10",
-                                    slot.isReferenceHour && "border-2 border-primary ring-2 ring-primary/50 shadow-md z-10",
-                                    !slot.isReferenceHour && [
-                                      slot.isWeekend 
-                                        ? (slot.isDayTime ? "bg-amber-100 dark:bg-amber-800/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700" 
-                                                          : "bg-amber-200/60 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400/80 border-amber-300/70 dark:border-amber-800/60")
-                                        : (slot.isDayTime ? "bg-sky-100 dark:bg-sky-800/30 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-700" 
-                                                          : "bg-slate-200 dark:bg-slate-700/40 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-600")
-                                    ]
+                                    slot.isReferenceHour 
+                                      ? "border-2 border-primary dark:border-accent ring-2 ring-primary/50 dark:ring-accent/50 shadow-md z-10 bg-primary/20 dark:bg-accent/30"
+                                      : [
+                                        slot.isWeekend 
+                                          ? (slot.isDayTime ? "bg-amber-100 dark:bg-amber-800/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700" 
+                                                            : "bg-amber-200/60 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400/80 border-amber-300/70 dark:border-amber-800/60")
+                                          : (slot.isDayTime ? "bg-sky-100 dark:bg-sky-800/30 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-700" 
+                                                            : "bg-slate-200 dark:bg-slate-700/40 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-600")
+                                      ]
                                   )}
                                 >
-                                  {slot.displayDayDateLabel && (
-                                      <div className="absolute -top-4 left-0 w-full text-[9px] font-medium text-muted-foreground whitespace-nowrap">
-                                          {slot.dateTime.format('ddd MMM D')}
-                                      </div>
-                                  )}
-                                  <span className={cn("text-base font-medium", slot.isReferenceHour && "text-primary dark:text-accent-foreground")}>
-                                    {slot.hourNumber}
+                                  <span className={cn(
+                                      "text-base font-medium", 
+                                      slot.isReferenceHour ? "text-primary-foreground dark:text-accent-foreground" : (slot.isWeekend ? (slot.isDayTime ? "text-amber-900 dark:text-amber-200" : "text-amber-800 dark:text-amber-300") : (slot.isDayTime ? "text-sky-900 dark:text-sky-200" : "text-slate-700 dark:text-slate-300"))
+                                    )}>
+                                    {timeFormat === '12h' ? slot.dateTime.format('h') : slot.dateTime.format('H')}
                                   </span>
+                                  {timeFormat === '12h' && (
+                                    <span className={cn("text-[10px] opacity-80 -mt-0.5", slot.isReferenceHour ? "text-primary-foreground/80 dark:text-accent-foreground/80" : "text-current/80")}>
+                                      {slot.dateTime.format('A')}
+                                    </span>
+                                  )}
+                                  {slot.displayDayAbbrOnly && (
+                                      <span className="text-[9px] opacity-70 mt-0.5 absolute bottom-0.5">
+                                          {slot.dateTime.format('ddd').toUpperCase()}
+                                      </span>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -434,3 +448,4 @@ export default function TimezoneConverterPage() {
     </>
   );
 }
+
