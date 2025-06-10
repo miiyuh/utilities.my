@@ -32,12 +32,12 @@ function Calendar({
           props.captionLayout?.includes("dropdown") && "hidden" 
         ),
         caption_dropdowns: cn(
-          "flex items-center gap-2", // Changed from gap-1.5
+          "flex items-center gap-2", 
           "mx-8" 
         ),
         dropdown: cn( 
           buttonVariants({ variant: "outline" }),
-          "h-7 text-sm px-2 py-1 font-normal", // Changed from py-0.5
+          "h-7 text-sm px-2 py-1 font-normal", 
           "text-foreground bg-transparent hover:bg-accent hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-0 focus:ring-offset-0"
         ),
         dropdown_month: "rdp-dropdown_month", 
@@ -58,10 +58,10 @@ function Calendar({
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+          "text-muted-foreground rounded-md flex-1 font-normal text-[0.8rem] text-center", // Changed w-9 to flex-1, added text-center
         row: "flex w-full mt-2",
         cell: cn(
-          "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+          "h-9 flex-1 text-center text-sm p-0 relative focus-within:relative focus-within:z-20", // Changed w-9 to flex-1
           "first:[&:has([aria-selected])]:rounded-l-md",
           "last:[&:has([aria-selected])]:rounded-r-md",
           "[&:has([aria-selected].day-range-end)]:rounded-r-md",
@@ -69,7 +69,7 @@ function Calendar({
         ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100" // Day button itself remains w-9 h-9
         ),
         day_range_start: "day-range-start",
         day_range_end: "day-range-end",
@@ -85,10 +85,10 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ className: iconClassName, ...iconProps }) => ( // Renamed className to avoid conflict
+        IconLeft: ({ className: iconClassName, ...iconProps }) => ( 
           <ChevronLeft className={cn("h-4 w-4", iconClassName)} {...iconProps} />
         ),
-        IconRight: ({ className: iconClassName, ...iconProps }) => ( // Renamed className to avoid conflict
+        IconRight: ({ className: iconClassName, ...iconProps }) => ( 
           <ChevronRight className={cn("h-4 w-4", iconClassName)} {...iconProps} />
         ),
       }}
