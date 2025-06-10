@@ -53,7 +53,7 @@ export default function Home() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {tools.filter(tool => tool.path !== "/").map((tool) => (
                   <Card key={tool.path} className="flex flex-col">
-                    <CardHeader className="flex flex-col items-center text-center p-6 gap-3">
+                    <CardHeader className="flex flex-col p-6 gap-3">
                       <tool.icon className="h-8 w-8 text-primary" />
                       <CardTitle>{tool.name}</CardTitle>
                     </CardHeader>
