@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -194,6 +195,13 @@ body {
     padding-left: 2em;
     margin-top: 0;
     margin-bottom: 1em;
+    list-style-position: outside; /* Ensure markers are outside */
+  }
+  .prose ul {
+    list-style-type: disc; /* Default bullet for unordered lists */
+  }
+  .prose ol {
+    list-style-type: decimal; /* Default numbering for ordered lists */
   }
   .prose li {
     margin-bottom: 0.25em;
@@ -206,6 +214,10 @@ body {
     margin-top: 0.25em;
     margin-bottom: 0.25em;
   }
+  /* Style for nested lists (example: disc -> circle -> square for ul) */
+  .prose ul ul { list-style-type: circle; }
+  .prose ul ul ul { list-style-type: square; }
+
 
   .prose hr {
     height: 0.25em;
@@ -250,6 +262,11 @@ body {
     color: hsl(var(--muted-foreground));
     border-left-color: hsl(var(--border));
   }
+
+  /* Ensure list markers in dark mode use appropriate colors if needed */
+  /* For Tailwind Prose, it often uses ::marker pseudo-element with CSS variables */
+  /* Example: .dark .prose ul > li::marker { color: hsl(var(--muted-foreground)); } */
+  /* However, the default color based on text-foreground should usually be fine */
 
   .dark .prose hr {
     background-color: hsl(var(--border));
