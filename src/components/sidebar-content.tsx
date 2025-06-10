@@ -39,7 +39,7 @@ export function SidebarContent() {
           width={79} 
           height={20} 
           priority
-          className="object-contain"
+          className="object-contain mr-1"
         />
         <span 
           className="text-xl font-semibold font-headline tracking-tight ml-1 group-data-[collapsible=icon]:hidden"
