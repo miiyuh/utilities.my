@@ -17,6 +17,7 @@ import { Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { tools as originalTools, type Tool } from "@/lib/tools";
+import { cn } from "@/lib/utils";
 
 export function SidebarContent() {
   const pathname = usePathname();
@@ -39,7 +40,10 @@ export function SidebarContent() {
           width={79} 
           height={20} 
           priority
-          className="object-contain mr-1"
+          className={cn(
+            "object-contain",
+            "group-data-[state=expanded]:mr-1" 
+          )}
         />
         <span 
           className="text-xl font-semibold font-headline tracking-tight ml-1 group-data-[collapsible=icon]:hidden"
