@@ -482,33 +482,6 @@ export default function QrCodeGeneratorPage() {
                           </div>
                       )}
                   </div>
-                  
-                  {/* Output Section */}
-                  <div className="space-y-4 pt-6 border-t">
-                    <h3 className="text-lg font-medium">Output</h3>
-                     <div className="space-y-2">
-                        <Label htmlFor="outputFormat">File Type</Label>
-                        <Select value={outputFormat} onValueChange={(value) => setOutputFormat(value as OutputFormat)}>
-                            <SelectTrigger id="outputFormat"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                            <SelectItem value="png">PNG</SelectItem>
-                            <SelectItem value="svg">SVG</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="downloadFilename">Download Filename</Label>
-                        <Input 
-                            id="downloadFilename" 
-                            value={downloadFilename} 
-                            onChange={(e) => setDownloadFilename(e.target.value)}
-                            placeholder={`qrcode.${outputFormat}`}
-                        />
-                    </div>
-                    <Button onClick={handleCopyHtmlEmbed} variant="outline" className="w-full">
-                        <Copy className="mr-2 h-4 w-4" /> Copy HTML Embed Code
-                    </Button>
-                  </div>
                 </div>
 
                 {/* Right Panel: Preview & Download */}
@@ -529,6 +502,36 @@ export default function QrCodeGeneratorPage() {
                       <span>Enter data to generate QR Code</span>
                     </div>
                   )}
+
+                  {/* Output Section - MOVED HERE */}
+                  <div className="w-full max-w-xs space-y-4">
+                    <h3 className="text-lg font-medium text-center md:text-left">Output</h3>
+                    <div className="flex items-end gap-2">
+                       <div className="flex-1 space-y-1">
+                          <Label htmlFor="outputFormat">File Type</Label>
+                          <Select value={outputFormat} onValueChange={(value) => setOutputFormat(value as OutputFormat)}>
+                              <SelectTrigger id="outputFormat"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                              <SelectItem value="png">PNG</SelectItem>
+                              <SelectItem value="svg">SVG</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="flex-1 space-y-1">
+                          <Label htmlFor="downloadFilename">Download Filename</Label>
+                          <Input 
+                              id="downloadFilename" 
+                              value={downloadFilename} 
+                              onChange={(e) => setDownloadFilename(e.target.value)}
+                              placeholder={`qrcode.${outputFormat}`}
+                          />
+                      </div>
+                    </div>
+                    <Button onClick={handleCopyHtmlEmbed} variant="outline" className="w-full">
+                        <Copy className="mr-2 h-4 w-4" /> Copy HTML Embed Code
+                    </Button>
+                  </div>
+                  
                   <Button onClick={handleDownload} disabled={!qrValue} className="w-full max-w-xs">
                     <Download className="mr-2 h-4 w-4" /> Download QR Code ({outputFormat.toUpperCase()})
                   </Button>
@@ -542,3 +545,5 @@ export default function QrCodeGeneratorPage() {
   );
 }
 
+
+    
