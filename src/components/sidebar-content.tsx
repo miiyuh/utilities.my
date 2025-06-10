@@ -31,7 +31,7 @@ export function SidebarContent() {
   return (
     <>
       <SidebarHeader 
-        className="border-b h-16 flex flex-row items-center p-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+        className="border-b h-16 flex flex-row items-center p-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2"
       >
         <Image
           src="https://miiyuh.com/_next/image?url=%2Fassets%2Fimg%2Flogo_miiyuh_text_white_v2.png&w=384&q=75"
