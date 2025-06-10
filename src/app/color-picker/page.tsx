@@ -44,24 +44,20 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
 }
 
 function rgbToCmyk(r: number, g: number, b: number): { c: number; m: number; y: number; k: number } {
+  if (r === 0 && g === 0 && b === 0) {
+    return { c: 0, m: 0, y: 0, k: 100 };
+  }
+  
   const rPrime = r / 255;
   const gPrime = g / 255;
   const bPrime = b / 255;
 
   let kVal = 1 - Math.max(rPrime, gPrime, bPrime);
-
-  // Handle the case for pure white where kVal would be 0, to avoid division by zero if 1-kVal is used as denominator.
-  // For pure black (r=0,g=0,b=0), kVal will be 1.
-  // For pure white (r=255,g=255,b=255), kVal will be 0.
   
-  if (kVal === 1) { // Pure black
-    return { c: 0, m: 0, y: 0, k: 100 };
+  if (1 - kVal === 0) { // Avoid division by zero for very dark colors close to black
+    return { c: 0, m: 0, y: 0, k: Math.round(kVal * 100) };
   }
 
-  // If kVal is very close to 1 (e.g. for very dark colors that are not pure black),
-  // (1 - kVal) can be very small, potentially leading to precision issues or large C,M,Y values.
-  // However, the typical formula proceeds.
-  
   const cVal = (1 - rPrime - kVal) / (1 - kVal);
   const mVal = (1 - gPrime - kVal) / (1 - kVal);
   const yVal = (1 - bPrime - kVal) / (1 - kVal);
@@ -74,6 +70,8 @@ function rgbToCmyk(r: number, g: number, b: number): { c: number; m: number; y: 
   };
 }
 
+const MAGNIFIER_SIZE = 120;
+const MAGNIFIER_ZOOM = 4;
 
 export default function ColorPickerPage() {
   const { toast } = useToast();
@@ -81,9 +79,16 @@ export default function ColorPickerPage() {
   const [rgbColor, setRgbColor] = useState<{ r: number; g: number; b: number } | null>(null);
   const [hslColor, setHslColor] = useState<{ h: number; s: number; l: number } | null>(null);
   const [cmykColor, setCmykColor] = useState<{ c: number; m: number; y: number; k: number } | null>(null);
+  
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [magnifierVisible, setMagnifierVisible] = useState(false);
+  const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
+  const [magnifiedColor, setMagnifiedColor] = useState('#000000');
+  const [mouseOnCanvasPosition, setMouseOnCanvasPosition] = useState({ x: 0, y: 0 });
+  const magnifierCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const rgb = hexToRgb(hexColor);
@@ -103,11 +108,9 @@ export default function ColorPickerPage() {
 
     if (/^[0-9a-fA-F]{6}$/.test(textValue)) {
       newHexOutput = '#' + textValue;
-    }
-    else if (/^[0-9a-fA-F]{3}$/.test(textValue)) {
+    } else if (/^[0-9a-fA-F]{3}$/.test(textValue)) {
         newHexOutput = '#' + textValue.split('').map(char => char + char).join('');
-    }
-    else if (/^#[0-9a-fA-F]{3}$/.test(textValue)) {
+    } else if (/^#[0-9a-fA-F]{3}$/.test(textValue)) {
         newHexOutput = '#' + textValue.substring(1).split('').map(char => char + char).join('');
     }
     
@@ -134,6 +137,7 @@ export default function ColorPickerPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         setUploadedImage(e.target?.result as string);
+        setMagnifierVisible(false); // Hide magnifier if a new image is uploaded
       };
       reader.readAsDataURL(file);
     }
@@ -146,7 +150,7 @@ export default function ColorPickerPage() {
       if (ctx) {
         const img = new Image();
         img.onload = () => {
-          const MAX_WIDTH = 400; 
+          const MAX_WIDTH = canvas.parentElement?.clientWidth ? Math.min(400, canvas.parentElement.clientWidth - 20) : 380; // Ensure it fits parent
           const MAX_HEIGHT = 300;
           let { width, height } = img;
 
@@ -188,6 +192,66 @@ export default function ColorPickerPage() {
     }
   };
 
+  const handleMouseMoveOnCanvas = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || !uploadedImage) return;
+    const mainCanvas = canvasRef.current;
+    const rect = mainCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    setMouseOnCanvasPosition({ x, y });
+    // Position magnifier relative to canvas container, offset from cursor
+    setMagnifierPosition({ x: x + 15, y: y + 15 }); 
+
+    const ctx = mainCanvas.getContext('2d');
+    if (ctx) {
+      const pixel = ctx.getImageData(x, y, 1, 1).data;
+      const r = pixel[0];
+      const g = pixel[1];
+      const b = pixel[2];
+      setMagnifiedColor(`#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`);
+    }
+  };
+
+  const handleMouseEnterCanvas = () => {
+    if (uploadedImage) setMagnifierVisible(true);
+  };
+
+  const handleMouseLeaveCanvas = () => {
+    setMagnifierVisible(false);
+  };
+
+  useEffect(() => {
+    if (!magnifierVisible || !canvasRef.current || !magnifierCanvasRef.current || !uploadedImage) return;
+
+    const mainCanvas = canvasRef.current;
+    const mainCtx = mainCanvas.getContext('2d');
+    const magnCanvas = magnifierCanvasRef.current;
+    const magnCtx = magnCanvas.getContext('2d');
+
+    if (!mainCtx || !magnCtx) return;
+
+    magnCtx.imageSmoothingEnabled = false;
+    magnCtx.clearRect(0, 0, MAGNIFIER_SIZE, MAGNIFIER_SIZE);
+
+    const sourceRectSize = MAGNIFIER_SIZE / MAGNIFIER_ZOOM;
+    const sourceX = mouseOnCanvasPosition.x - sourceRectSize / 2;
+    const sourceY = mouseOnCanvasPosition.y - sourceRectSize / 2;
+    
+    magnCtx.drawImage(
+      mainCanvas,
+      sourceX,
+      sourceY,
+      sourceRectSize,
+      sourceRectSize,
+      0,
+      0,
+      MAGNIFIER_SIZE,
+      MAGNIFIER_SIZE
+    );
+  }, [magnifierVisible, mouseOnCanvasPosition, uploadedImage]);
+
+
   return (
     <>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -206,124 +270,159 @@ export default function ColorPickerPage() {
         </header>
         <div className="flex flex-1 flex-col p-4 md:p-6">
           <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-md mx-auto shadow-lg">
+            <Card className="w-full max-w-4xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Color Picker</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                
-                <div className="space-y-4">
-                  <Label htmlFor="hex-value" className="text-center block text-lg">Input HEX or Pick Visually</Label>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      id="color-picker-swatch"
-                      type="color"
-                      value={(/^#[0-9a-fA-F]{6}$/i.test(hexColor) || /^#[0-9a-fA-F]{3}$/i.test(hexColor)) ? hexColor : '#000000'}
-                      onChange={handleColorInputChange}
-                      className="h-16 w-16 md:h-20 md:w-20 shrink-0 cursor-pointer p-0.5 border-0 rounded-md overflow-hidden shadow-sm"
-                      aria-label="Visual color picker"
-                    />
-                    <div
-                      className="flex-grow h-16 md:h-20 rounded-md border border-input shadow-inner"
-                      style={{ backgroundColor: hexColor }}
-                      aria-label={`Current color preview: ${hexColor}`}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="hex-value-input">HEX Value</Label>
-                    <div className="flex items-center gap-2">
-                      <Input 
-                        id="hex-value-input" 
-                        value={hexColor} 
-                        onChange={handleHexChange} 
-                        className="font-mono" 
-                        placeholder="#RRGGBB, fff, #abc..."
-                      />
-                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(hexColor, 'HEX')} title="Copy HEX">
-                        <Copy className="h-4 w-4" />
-                      </Button>
+              <CardContent className="p-4 md:p-6">
+                <div className="grid md:grid-cols-2 md:gap-x-8 lg:gap-x-12">
+                  {/* Left Panel: Color Inputs & Derived Codes */}
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <Label htmlFor="hex-value" className="text-center block text-lg font-medium">Input HEX or Pick Visually</Label>
+                      <div className="flex items-center gap-4">
+                        <Input
+                          id="color-picker-swatch"
+                          type="color"
+                          value={(/^#[0-9a-fA-F]{6}$/i.test(hexColor) || /^#[0-9a-fA-F]{3}$/i.test(hexColor)) ? hexColor : '#000000'}
+                          onChange={handleColorInputChange}
+                          className="h-16 w-16 md:h-20 md:w-20 shrink-0 cursor-pointer p-0.5 border-0 rounded-md overflow-hidden shadow-sm"
+                          aria-label="Visual color picker"
+                        />
+                        <div
+                          className="flex-grow h-16 md:h-20 rounded-md border border-input shadow-inner"
+                          style={{ backgroundColor: hexColor }}
+                          aria-label={`Current color preview: ${hexColor}`}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="hex-value-input">HEX Value</Label>
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            id="hex-value-input" 
+                            value={hexColor} 
+                            onChange={handleHexChange} 
+                            className="font-mono" 
+                            placeholder="#RRGGBB, fff, #abc..."
+                          />
+                          <Button variant="outline" size="icon" onClick={() => copyToClipboard(hexColor, 'HEX')} title="Copy HEX">
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-md font-medium text-muted-foreground">Derived Color Codes</h3>
-                  <div>
-                    <Label>RGB</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        readOnly
-                        value={rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : 'N/A'}
-                        className="font-mono bg-muted/30"
-                      />
-                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : '', 'RGB')} title="Copy RGB" disabled={!rgbColor}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
+                    <div className="space-y-4 pt-4 border-t">
+                      <h3 className="text-md font-medium text-muted-foreground">Derived Color Codes</h3>
+                      <div>
+                        <Label>RGB</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            readOnly
+                            value={rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : 'N/A'}
+                            className="font-mono bg-muted/30"
+                          />
+                          <Button variant="outline" size="icon" onClick={() => copyToClipboard(rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : '', 'RGB')} title="Copy RGB" disabled={!rgbColor}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label>HSL</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            readOnly
+                            value={hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : 'N/A'}
+                            className="font-mono bg-muted/30"
+                          />
+                          <Button variant="outline" size="icon" onClick={() => copyToClipboard(hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : '', 'HSL')} title="Copy HSL" disabled={!hslColor}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label>CMYK</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            readOnly
+                            value={cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : 'N/A'}
+                            className="font-mono bg-muted/30"
+                          />
+                          <Button variant="outline" size="icon" onClick={() => copyToClipboard(cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : '', 'CMYK')} title="Copy CMYK" disabled={!cmykColor}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <Label>HSL</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        readOnly
-                        value={hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : 'N/A'}
-                        className="font-mono bg-muted/30"
-                      />
-                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : '', 'HSL')} title="Copy HSL" disabled={!hslColor}>
-                        <Copy className="h-4 w-4" />
+                  {/* Right Panel: Pick from Image & Magnifier */}
+                  <div className="space-y-6 mt-8 md:mt-0">
+                    <div className="space-y-4 pt-6 border-t md:border-t-0 md:pt-0">
+                      <Label htmlFor="image-upload-button" className="text-lg block text-center font-medium">Pick Color from Image</Label>
+                      <Button
+                        id="image-upload-button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full"
+                      >
+                        <Upload className="mr-2 h-4 w-4" /> Upload Image
                       </Button>
+                      <Input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      {uploadedImage && (
+                        <div className="mt-4 flex flex-col items-center space-y-2 relative">
+                          <p className="text-sm text-muted-foreground">Click on the image to pick a color. Hover to magnify.</p>
+                          <canvas
+                            ref={canvasRef}
+                            onMouseMove={handleMouseMoveOnCanvas}
+                            onMouseEnter={handleMouseEnterCanvas}
+                            onMouseLeave={handleMouseLeaveCanvas}
+                            onClick={handleCanvasClick}
+                            className="rounded-md border border-border cursor-crosshair max-w-full shadow-sm"
+                            style={{ touchAction: 'none' }} 
+                          />
+                          {magnifierVisible && (
+                            <div
+                              style={{
+                                left: `${magnifierPosition.x}px`,
+                                top: `${magnifierPosition.y}px`,
+                                width: `${MAGNIFIER_SIZE}px`,
+                                height: `${MAGNIFIER_SIZE}px`,
+                              }}
+                              className="absolute z-50 pointer-events-none border-2 border-primary bg-background/90 shadow-lg rounded-full flex flex-col items-center justify-center overflow-hidden"
+                            >
+                              <canvas
+                                ref={magnifierCanvasRef}
+                                width={MAGNIFIER_SIZE}
+                                height={MAGNIFIER_SIZE}
+                                className="absolute inset-0"
+                              />
+                              {/* Crosshair */}
+                              <div style={{width: '1px', height: '100%'}} className="absolute left-1/2 bg-red-500/70 -translate-x-1/2"></div>
+                              <div style={{height: '1px', width: '100%'}} className="absolute top-1/2 bg-red-500/70 -translate-y-1/2"></div>
+                              
+                              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 bg-black/70 text-white px-2 py-0.5 rounded text-[10px] font-mono shadow">
+                                {magnifiedColor}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  
-                  <div>
-                    <Label>CMYK</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        readOnly
-                        value={cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : 'N/A'}
-                        className="font-mono bg-muted/30"
-                      />
-                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : '', 'CMYK')} title="Copy CMYK" disabled={!cmykColor}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-6 border-t">
-                  <Label htmlFor="image-upload-button" className="text-lg block text-center">Pick Color from Image</Label>
-                  <Button
-                    id="image-upload-button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full"
-                  >
-                    <Upload className="mr-2 h-4 w-4" /> Upload Image
-                  </Button>
-                  <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  {uploadedImage && (
-                    <div className="mt-4 flex flex-col items-center space-y-2">
-                      <p className="text-sm text-muted-foreground">Click on the image to pick a color.</p>
-                      <canvas
-                        ref={canvasRef}
-                        onClick={handleCanvasClick}
-                        className="rounded-md border border-border cursor-crosshair max-w-full"
-                        style={{ touchAction: 'none' }} 
-                      />
-                    </div>
-                  )}
                 </div>
               </CardContent>
               <CardFooter>
                   <p className="text-xs text-muted-foreground w-full text-center">
-                      Tip: You can also type a HEX value (e.g., #RRGGBB or RRGGBB) directly.
+                      Tip: Type a HEX value (e.g., #RRGGBB or RRGGBB) or use the visual picker.
                   </p>
               </CardFooter>
             </Card>
@@ -333,4 +432,3 @@ export default function ColorPickerPage() {
     </>
   );
 }
-
