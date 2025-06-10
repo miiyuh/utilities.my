@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, Copy, Trash2, ArrowDownUp } from 'lucide-react';
+import { PanelLeft, Copy, Trash2, ArrowDownUp, ALargeSmall, FilterX } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -33,14 +33,16 @@ export default function SorterPage() {
     let lines = inputText.split('\n');
 
     if (removeDuplicates) {
-      lines = Array.from(new Set(lines.map(line => caseSensitive ? line : line.toLowerCase()))).map(uniqueLine => {
-        // Find original casing if not case sensitive
-        if (!caseSensitive) {
-            const original = lines.find(l => l.toLowerCase() === uniqueLine);
-            return original || uniqueLine;
+      const seen = new Map<string, string>();
+      const uniqueLines: string[] = [];
+      for (const line of lines) {
+        const key = caseSensitive ? line : line.toLowerCase();
+        if (!seen.has(key)) {
+          seen.set(key, line); // Store the original casing
+          uniqueLines.push(line);
         }
-        return uniqueLine;
-      });
+      }
+      lines = uniqueLines;
     }
     
     lines.sort((a, b) => {
@@ -134,13 +136,19 @@ export default function SorterPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="caseSensitive" checked={caseSensitive} onCheckedChange={(checked) => setCaseSensitive(Boolean(checked))} />
-                  <Label htmlFor="caseSensitive" className="font-normal">Case Sensitive</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="removeDuplicates" checked={removeDuplicates} onCheckedChange={(checked) => setRemoveDuplicates(Boolean(checked))} />
-                  <Label htmlFor="removeDuplicates" className="font-normal">Remove Duplicates</Label>
+                <div className="space-y-3 pt-4 border-t border-dashed">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id="caseSensitive" checked={caseSensitive} onCheckedChange={(checked) => setCaseSensitive(Boolean(checked))} />
+                        <Label htmlFor="caseSensitive" className="font-normal flex items-center">
+                            <ALargeSmall className="mr-2 h-4 w-4 text-muted-foreground" /> Case Sensitive
+                        </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id="removeDuplicates" checked={removeDuplicates} onCheckedChange={(checked) => setRemoveDuplicates(Boolean(checked))} />
+                        <Label htmlFor="removeDuplicates" className="font-normal flex items-center">
+                            <FilterX className="mr-2 h-4 w-4 text-muted-foreground" /> Remove Duplicates
+                        </Label>
+                    </div>
                 </div>
                 
                 <Button onClick={handleSort} className="w-full"><ArrowDownUp className="mr-2 h-4 w-4"/> Sort Text</Button>
@@ -168,3 +176,4 @@ export default function SorterPage() {
     </>
   );
 }
+
