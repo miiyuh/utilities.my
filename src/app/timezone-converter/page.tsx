@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { PanelLeft, CalendarIcon, ClockIcon, PlusCircle, XCircle, PinIcon } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
@@ -31,9 +32,9 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(advancedFormat);
 
 const MAX_LOCATIONS = 10;
-const HOURS_AROUND_REFERENCE = 7; 
-const DAY_START_HOUR = 7; 
-const DAY_END_HOUR = 18; 
+const HOURS_AROUND_REFERENCE = 7;
+const DAY_START_HOUR = 7;
+const DAY_END_HOUR = 18;
 
 
 interface Location {
@@ -57,6 +58,8 @@ export default function TimezoneConverterPage() {
   const { toast } = useToast();
   const [referenceDateTime, setReferenceDateTime] = useState<dayjs.Dayjs>(dayjs.utc());
   const [isMounted, setIsMounted] = useState(false);
+  const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('12h');
+
 
   const [locations, setLocations] = useState<Location[]>([
     { id: generateLocationId(), selectedTimezone: 'UTC' },
@@ -66,7 +69,7 @@ export default function TimezoneConverterPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    setReferenceDateTime(dayjs()); 
+    setReferenceDateTime(dayjs());
     setLocations(prevLocs => {
       const newLocs = [...prevLocs];
       const guessedTimezone = dayjs.tz.guess();
@@ -75,10 +78,10 @@ export default function TimezoneConverterPage() {
       } else {
         newLocs[0] = { id: generateLocationId(), selectedTimezone: guessedTimezone };
       }
-      
+
       const defaultTz2 = 'America/New_York';
       const defaultTz3 = 'Europe/London';
-      
+
       if (newLocs.length >= 2 && newLocs[1]) {
          if (newLocs[1].selectedTimezone === guessedTimezone) {
             newLocs[1].selectedTimezone = defaultTz2 === guessedTimezone ? 'Asia/Tokyo' : defaultTz2;
@@ -117,7 +120,7 @@ export default function TimezoneConverterPage() {
       const hours = parts[0] !== undefined ? parts[0] : referenceDateTime.hour();
       const minutes = parts[1] !== undefined ? parts[1] : referenceDateTime.minute();
       const seconds = parts[2] !== undefined ? parts[2] : referenceDateTime.second();
-      
+
       const newDateTime = referenceDateTime.hour(hours).minute(minutes).second(seconds).millisecond(0);
       setReferenceDateTime(newDateTime);
     }
@@ -126,10 +129,10 @@ export default function TimezoneConverterPage() {
   const handleSetAsReference = (locationTimezone: string) => {
     if (!referenceDateTime || !isMounted) return;
     const baseTimeInLocation = referenceDateTime.tz(locationTimezone);
-    setReferenceDateTime(baseTimeInLocation); 
+    setReferenceDateTime(baseTimeInLocation);
     toast({ title: "Reference Updated", description: `Timeline now centered around current time in ${locationTimezone.replace(/_/g, ' ')}.`});
   };
-  
+
 
   const handleHourSlotClick = (slotDateTime: dayjs.Dayjs) => {
     setReferenceDateTime(slotDateTime);
@@ -168,19 +171,18 @@ export default function TimezoneConverterPage() {
   const handleLocationTimezoneChange = (idToUpdate: string, newTimezone: string) => {
     setLocations(prev => prev.map(l => l.id === idToUpdate ? { ...l, selectedTimezone: newTimezone } : l));
   };
-  
+
   const generateHourSlots = useCallback((locationTimezone: string): HourSlot[] => {
     if (!referenceDateTime || !isMounted) return [];
 
     const baseTimeInLocation = referenceDateTime.tz(locationTimezone);
     const slots: HourSlot[] = [];
-    const totalSlots = HOURS_AROUND_REFERENCE * 2 + 1; 
 
     for (let i = -HOURS_AROUND_REFERENCE; i <= HOURS_AROUND_REFERENCE; i++) {
       const slotTime = baseTimeInLocation.add(i, 'hour');
       const hourOfDay = slotTime.hour();
-      const isDay = hourOfDay >= DAY_START_HOUR && hourOfDay < DAY_END_HOUR; 
-      
+      const isDay = hourOfDay >= DAY_START_HOUR && hourOfDay < DAY_END_HOUR;
+
       slots.push({
         key: `${locationTimezone}-${slotTime.toISOString()}-${i}`,
         dateTime: slotTime,
@@ -249,16 +251,24 @@ export default function TimezoneConverterPage() {
                     <Input type="time" value={referenceDateTime.format("HH:mm:ss")} onChange={handleGlobalTimeChange} className="pl-10" step="1" />
                   </div>
                 </div>
+                <div className="flex items-center justify-center space-x-2 pt-2">
+                  <Switch
+                    id="time-format-toggle"
+                    checked={timeFormat === '24h'}
+                    onCheckedChange={(checked) => setTimeFormat(checked ? '24h' : '12h')}
+                  />
+                  <Label htmlFor="time-format-toggle">Use 24-hour format</Label>
+                </div>
               </div>
 
               <div className="space-y-4">
                 {locations.map((loc) => {
-                  if (!loc || !loc.selectedTimezone || !referenceDateTime) return null; 
+                  if (!loc || !loc.selectedTimezone || !referenceDateTime) return null;
                   const localTimeForRow = referenceDateTime.tz(loc.selectedTimezone);
                   const hourSlots = generateHourSlots(loc.selectedTimezone);
-                  const utcOffset = localTimeForRow.format('Z'); 
-                  const timezoneAbbr = localTimeForRow.format('z'); 
-                  
+                  const utcOffset = localTimeForRow.format('Z');
+                  const timezoneAbbr = localTimeForRow.format('z');
+
                   return (
                     <div key={loc.id} className="p-3 border rounded-md shadow-sm">
                       <div className="flex flex-col md:flex-row items-stretch gap-3">
@@ -280,8 +290,11 @@ export default function TimezoneConverterPage() {
                           />
                           <p className="text-xs text-muted-foreground truncate">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
                           <p className="text-xs text-muted-foreground">{timezoneAbbr} (GMT{utcOffset})</p>
-                          
-                          <p className="text-2xl font-bold pt-1">{localTimeForRow.format('h:mm')}<span className="text-lg font-normal">{localTimeForRow.format('A')}</span></p>
+
+                          <p className="text-2xl font-bold pt-1">
+                            {localTimeForRow.format(timeFormat === '12h' ? 'h:mm' : 'HH:mm')}
+                            {timeFormat === '12h' && <span className="text-lg font-normal">{localTimeForRow.format('A')}</span>}
+                          </p>
                           <p className="text-sm text-muted-foreground">{localTimeForRow.format('ddd, MMM D')}</p>
                         </div>
 
@@ -300,8 +313,8 @@ export default function TimezoneConverterPage() {
                                     "bg-primary/20 text-primary-foreground dark:bg-accent dark:text-accent-foreground",
                                   ],
                                   !slot.isRefHour && [
-                                    slot.isDayTime 
-                                      ? "bg-background text-foreground dark:bg-muted/30 dark:text-foreground" 
+                                    slot.isDayTime
+                                      ? "bg-background text-foreground dark:bg-muted/30 dark:text-foreground"
                                       : "bg-muted/60 text-muted-foreground dark:bg-muted/50 dark:text-muted-foreground",
                                     (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && "opacity-75"
                                   ]
@@ -311,8 +324,10 @@ export default function TimezoneConverterPage() {
                                 <span className={cn("uppercase", slot.isDifferentMonthFromRow ? "font-semibold" : "", (slot.isDifferentDayFromRow) ? "opacity-80" : "opacity-90")}>
                                   {slot.isDifferentMonthFromRow || slot.isDifferentDayFromRow || slot.isRefHour ? slot.dateTime.format('MMM D') : ""}
                                 </span>
-                                <span className={cn("text-base font-semibold mt-0.5", (slot.isDifferentDayFromRow && !slot.isRefHour) ? "opacity-70" : "")}>{slot.dateTime.format('h')}</span>
-                                <span className={cn("uppercase", (slot.isDifferentDayFromRow) ? "opacity-80" : "opacity-90")}>{slot.dateTime.format('A')}</span>
+                                <span className={cn("text-base font-semibold mt-0.5", (slot.isDifferentDayFromRow && !slot.isRefHour) ? "opacity-70" : "")}>
+                                  {slot.dateTime.format(timeFormat === '12h' ? 'h' : 'H')}
+                                </span>
+                                {timeFormat === '12h' && <span className={cn("uppercase", (slot.isDifferentDayFromRow) ? "opacity-80" : "opacity-90")}>{slot.dateTime.format('A')}</span>}
                               </div>
                             ))}
                           </div>
@@ -337,4 +352,3 @@ export default function TimezoneConverterPage() {
     </>
   );
 }
-
