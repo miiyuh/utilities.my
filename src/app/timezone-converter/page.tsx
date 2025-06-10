@@ -15,8 +15,8 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import isSameOrBefore from 'dayjs/plugin/isSameOrAfter'; // Corrected import, though not directly used, good for consistency
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'; // Corrected import
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -31,9 +31,9 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(advancedFormat);
 
 const MAX_LOCATIONS = 10;
-const HOURS_AROUND_REFERENCE = 7; // e.g., 7 before + current + 7 after = 15 slots
-const DAY_START_HOUR = 7; // 7 AM
-const DAY_END_HOUR = 18; // 6 PM (inclusive, so up to 18:59)
+const HOURS_AROUND_REFERENCE = 7; 
+const DAY_START_HOUR = 7; 
+const DAY_END_HOUR = 18;
 
 
 interface Location {
@@ -66,41 +66,30 @@ export default function TimezoneConverterPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    setReferenceDateTime(dayjs()); // Set to client's local time AFTER mount
+    setReferenceDateTime(dayjs()); 
     setLocations(prevLocs => {
       const newLocs = [...prevLocs];
       const guessedTimezone = dayjs.tz.guess();
-      if (newLocs.length > 0) {
+      if (newLocs.length > 0 && newLocs[0]) {
         newLocs[0].selectedTimezone = guessedTimezone;
       } else {
-        newLocs.push({ id: generateLocationId(), selectedTimezone: guessedTimezone });
+        newLocs[0] = { id: generateLocationId(), selectedTimezone: guessedTimezone };
       }
-      // Ensure initial 3 locations are distinct if possible
-      if (newLocs.length >= 3) {
-          const tzSet = new Set<string>();
-          tzSet.add(newLocs[0].selectedTimezone);
+      
+      if (newLocs.length >= 2 && newLocs[1]) {
+         if (newLocs[1].selectedTimezone === guessedTimezone) newLocs[1].selectedTimezone = 'America/New_York' === guessedTimezone ? 'Asia/Tokyo' : 'America/New_York';
+      } else if (newLocs.length < 2) {
+         newLocs[1] = {id: generateLocationId(), selectedTimezone: 'America/New_York' === guessedTimezone ? 'Asia/Tokyo' : 'America/New_York'}
+      }
 
-          if (!tzSet.has('America/New_York')) {
-              newLocs[1].selectedTimezone = 'America/New_York';
-              tzSet.add('America/New_York');
-          } else if (!tzSet.has('Europe/London')) {
-              newLocs[1].selectedTimezone = 'Europe/London';
-              tzSet.add('Europe/London');
-          } else {
-              newLocs[1].selectedTimezone = 'Asia/Tokyo'; // fallback
-              tzSet.add('Asia/Tokyo');
-          }
-          
-          if (!tzSet.has('Europe/London')) {
-              newLocs[2].selectedTimezone = 'Europe/London';
-          } else if (!tzSet.has('Asia/Tokyo')) {
-              newLocs[2].selectedTimezone = 'Asia/Tokyo';
-          } else {
-               newLocs[2].selectedTimezone = 'Australia/Sydney'; // fallback
-          }
+      if (newLocs.length >= 3 && newLocs[2]) {
+         if (newLocs[2].selectedTimezone === guessedTimezone || newLocs[2].selectedTimezone === newLocs[1].selectedTimezone) newLocs[2].selectedTimezone = 'Europe/London' === guessedTimezone || 'Europe/London' === newLocs[1].selectedTimezone ? 'Australia/Sydney' : 'Europe/London';
+      } else if (newLocs.length < 3) {
+        newLocs[2] = {id: generateLocationId(), selectedTimezone: 'Europe/London' === guessedTimezone || 'Europe/London' === newLocs[1].selectedTimezone ? 'Australia/Sydney' : 'Europe/London'}
       }
-      return newLocs;
+      return newLocs.filter(Boolean); // Clean out any potentially undefined elements if logic was complex
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -130,12 +119,8 @@ export default function TimezoneConverterPage() {
 
   const handleSetAsReference = (locationTimezone: string) => {
     if (!referenceDateTime) return;
-    // The referenceDateTime already represents an instant.
-    // We want the new referenceDateTime to be such that the local time in `locationTimezone` *at its reference hour slot*
-    // becomes the anchor. The reference hour slot for any row is `referenceDateTime.tz(locationTimezone)`.
-    // So, we are effectively re-centering on the current time of that location.
     const newRef = referenceDateTime.tz(locationTimezone);
-    setReferenceDateTime(newRef); // This sets the new reference to be the local time of the pinned zone
+    setReferenceDateTime(newRef); 
     toast({ title: "Reference Updated", description: `Timeline now centered around current time in ${locationTimezone.replace(/_/g, ' ')}.`});
   };
 
@@ -152,14 +137,13 @@ export default function TimezoneConverterPage() {
     const newLocationId = generateLocationId();
     const existingTimezones = locations.map(l => l.selectedTimezone);
     let defaultNewTimezone = 'Asia/Tokyo';
-    const commonTimezones = ['Australia/Sydney', 'Europe/Paris', 'America/Los_Angeles', 'Asia/Dubai', 'Pacific/Honolulu'];
+    const commonTimezones = ['Australia/Sydney', 'Europe/Paris', 'America/Los_Angeles', 'Asia/Dubai', 'Pacific/Honolulu', 'Africa/Johannesburg', 'Asia/Kolkata'];
     for (const tz of commonTimezones) {
         if (!existingTimezones.includes(tz)) {
             defaultNewTimezone = tz;
             break;
         }
     }
-    // Fallback if all common are used
     if (existingTimezones.includes(defaultNewTimezone)) {
          const allSupported = Intl.supportedValuesOf('timeZone');
          defaultNewTimezone = allSupported.find(tz => !existingTimezones.includes(tz)) || 'UTC';
@@ -263,10 +247,11 @@ export default function TimezoneConverterPage() {
 
               <div className="space-y-4">
                 {locations.map((loc) => {
+                  if (!loc || !loc.selectedTimezone) return null; 
                   const localTimeForRow = referenceDateTime.tz(loc.selectedTimezone);
                   const hourSlots = generateHourSlots(loc.selectedTimezone);
-                  const utcOffset = localTimeForRow.format('Z'); // e.g. +08:00
-                  const timezoneAbbr = localTimeForRow.format('z'); // e.g. MYT
+                  const utcOffset = localTimeForRow.format('Z'); 
+                  const timezoneAbbr = localTimeForRow.format('z'); 
                   
                   return (
                     <div key={loc.id} className="p-3 border rounded-md shadow-sm">
@@ -302,13 +287,19 @@ export default function TimezoneConverterPage() {
                                 onClick={() => handleHourSlotClick(slot.dateTime)}
                                 className={cn(
                                   "flex flex-col items-center justify-center p-1.5 rounded-md w-[60px] h-[65px] text-[10px] border cursor-pointer",
-                                  "leading-tight transition-colors duration-150 hover:border-primary/70 hover:bg-primary/5",
-                                  slot.isRefHour ? "border-primary ring-1 ring-primary shadow-md bg-primary/10" 
-                                                : slot.isDayTime ? "bg-background dark:bg-muted/20" : "bg-muted/50 dark:bg-muted/40",
-                                  (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && !slot.isRefHour ? "opacity-75" : "",
-                                  slot.isDayTime ? "text-foreground" : "text-muted-foreground",
-                                  slot.isRefHour && slot.isDayTime ? "text-primary-foreground dark:text-primary font-semibold" : "",
-                                  slot.isRefHour && !slot.isDayTime ? "text-primary-foreground dark:text-primary font-semibold": "",
+                                  "leading-tight transition-colors duration-150",
+                                  "hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-white/5",
+                                  slot.isRefHour && [
+                                    "border-primary ring-1 ring-primary shadow-md",
+                                    "bg-primary/20 dark:bg-accent",
+                                    "text-primary-foreground dark:text-accent-foreground font-semibold"
+                                  ],
+                                  !slot.isRefHour && [
+                                    slot.isDayTime 
+                                      ? "bg-background dark:bg-muted/30 text-foreground" 
+                                      : "bg-muted/60 dark:bg-muted/50 text-muted-foreground",
+                                    (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && "opacity-75"
+                                  ]
                                 )}
                               >
                                 <span className={cn("font-medium uppercase", (slot.isDifferentDayFromRow) ? "opacity-80" : "opacity-90")}>{slot.dateTime.format('ddd')}</span>
@@ -341,3 +332,4 @@ export default function TimezoneConverterPage() {
     </>
   );
 }
+
