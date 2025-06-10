@@ -23,18 +23,22 @@ export function SidebarContent() {
 
   return (
     <>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center gap-1.5 p-2.5">
-          <Image
-            src="https://miiyuh.com/_next/image?url=%2Fassets%2Fimg%2Flogo_miiyuh_text_white_v2.png&w=384&q=75"
-            alt="Miiyuh"
-            width={79} 
-            height={20} 
-            priority
-            className="object-contain"
-          />
-          <span className="text-xl font-semibold font-headline tracking-tight">'s utilities</span>
-        </div>
+      <SidebarHeader 
+        className="border-b h-16 flex flex-row items-center p-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+      >
+        <Image
+          src="https://miiyuh.com/_next/image?url=%2Fassets%2Fimg%2Flogo_miiyuh_text_white_v2.png&w=384&q=75"
+          alt="Miiyuh"
+          width={79} 
+          height={20} 
+          priority
+          className="object-contain"
+        />
+        <span 
+          className="text-xl font-semibold font-headline tracking-tight ml-1.5 group-data-[collapsible=icon]:hidden"
+        >
+          's utilities
+        </span>
       </SidebarHeader>
       <SidebarScrollableContent className="flex-1">
         <ScrollArea className="h-full">
