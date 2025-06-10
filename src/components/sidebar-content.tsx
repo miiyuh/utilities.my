@@ -1,3 +1,4 @@
+
 // src/components/sidebar-content.tsx
 "use client";
 
@@ -12,19 +13,13 @@ import {
   SidebarGroup,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Settings, Search } from "lucide-react"; // BadgeCheck removed
+import { Settings } from "lucide-react"; 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { tools } from "@/lib/tools";
 
 export function SidebarContent() {
-  const [searchTerm, setSearchTerm] = React.useState("");
   const pathname = usePathname();
-
-  const filteredTools = tools.filter((tool) =>
-    tool.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <>
@@ -33,27 +28,18 @@ export function SidebarContent() {
           <Image
             src="https://miiyuh.com/_next/image?url=%2Fassets%2Fimg%2Flogo_miiyuh_text_white_v2.png&w=384&q=75"
             alt="Miiyuh"
-            width={110}
-            height={28}
+            width={79} 
+            height={20} 
             priority
             className="object-contain"
           />
           <span className="text-xl font-semibold font-headline tracking-tight">'s utilities</span>
         </div>
-        <div className="relative p-2">
-          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search tools..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
       </SidebarHeader>
       <SidebarScrollableContent className="flex-1">
         <ScrollArea className="h-full">
           <SidebarMenu className="p-2">
-            {filteredTools.map((tool) => (
+            {tools.map((tool) => (
                <SidebarMenuItem key={tool.path}>
                 <SidebarMenuButton
                   asChild
