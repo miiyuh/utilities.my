@@ -89,4 +89,64 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Custom styles for .prose elements to look more like GitHub */
+  .prose h1 {
+    @apply border-b border-border pb-[0.3em] mb-[0.8em] mt-[1em];
+  }
+  .prose h2 {
+    @apply border-b border-border pb-[0.3em] mb-[0.6em] mt-[1em];
+  }
+  .prose h3 {
+    @apply mb-[0.5em] mt-[1em];
+  }
+
+  .prose pre {
+    @apply bg-muted/20 border border-border rounded-md p-4 text-sm overflow-x-auto my-[1em];
+  }
+  .prose code:not(pre > code) {
+    @apply bg-muted/30 text-foreground rounded-[6px] px-[0.4em] py-[0.2em] text-[0.875em] font-code;
+  }
+  .prose pre code {
+    @apply bg-transparent p-0 border-none rounded-none text-inherit; 
+    font-size: inherit; 
+  }
+  
+  .prose blockquote {
+    @apply border-l-[0.25em] border-border pl-6 pr-2 my-[1em] italic text-muted-foreground;
+    quotes: none;
+  }
+  .prose blockquote p:first-of-type::before {
+    content: none; 
+  }
+  .prose blockquote p:last-of-type::after {
+    content: none; 
+  }
+
+  /* Dark mode specifics for GitHub-like styling */
+  .dark .prose h1 {
+    @apply border-b border-border pb-[0.3em] mb-[0.8em] mt-[1em];
+  }
+  .dark .prose h2 {
+    @apply border-b border-border pb-[0.3em] mb-[0.6em] mt-[1em];
+  }
+  .dark .prose h3 {
+    @apply mb-[0.5em] mt-[1em];
+  }
+
+  .dark .prose pre {
+    @apply bg-muted/20 border border-border rounded-md p-4 text-sm;
+  }
+  .dark .prose code:not(pre > code) {
+    @apply bg-muted/30 text-foreground rounded-[6px] px-[0.4em] py-[0.2em] text-[0.875em] font-code;
+  }
+  .dark .prose pre code {
+     @apply bg-transparent p-0 border-none rounded-none text-inherit;
+     font-size: inherit;
+  }
+  
+  .dark .prose blockquote {
+    @apply border-l-[0.25em] border-border pl-6 pr-2 italic text-muted-foreground;
+     quotes: none;
+  }
 }
