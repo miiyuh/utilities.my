@@ -16,10 +16,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Settings } from "lucide-react"; 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { tools } from "@/lib/tools";
+import { tools as originalTools, type Tool } from "@/lib/tools";
 
 export function SidebarContent() {
   const pathname = usePathname();
+
+  const sortedTools = React.useMemo(() => {
+    const homeTool = originalTools.find(tool => tool.path === "/");
+    const otherTools = originalTools.filter(tool => tool.path !== "/");
+    otherTools.sort((a, b) => a.name.localeCompare(b.name));
+    return homeTool ? [homeTool, ...otherTools] : otherTools;
+  }, []);
 
   return (
     <>
@@ -43,7 +50,7 @@ export function SidebarContent() {
       <SidebarScrollableContent className="flex-1">
         <ScrollArea className="h-full">
           <SidebarMenu className="p-2">
-            {tools.map((tool) => (
+            {sortedTools.map((tool) => (
                <SidebarMenuItem key={tool.path}>
                 <SidebarMenuButton
                   asChild
@@ -81,3 +88,4 @@ export function SidebarContent() {
     </>
   );
 }
+
