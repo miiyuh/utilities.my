@@ -32,9 +32,9 @@ export default function QrCodeGeneratorPage() {
   const { toast } = useToast();
   
   // QR Value and Payload States
-  const [qrValue, setQrValue] = useState('https://example.com'); // Default to a valid URL
+  const [qrValue, setQrValue] = useState(''); 
   const [payloadType, setPayloadType] = useState<PayloadType>('url');
-  const [urlInput, setUrlInput] = useState('https://example.com');
+  const [urlInput, setUrlInput] = useState('');
   const [plainTextInput, setPlainTextInput] = useState('');
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
@@ -99,7 +99,7 @@ export default function QrCodeGeneratorPage() {
   // Effect to update filename extension when output format changes
   useEffect(() => {
     setDownloadFilename(prev => {
-      const nameWithoutExtension = prev.substring(0, prev.lastIndexOf('.')) || prev;
+      const nameWithoutExtension = prev.substring(0, prev.lastIndexOf('.')) || prev || "qrcode";
       return `${nameWithoutExtension}.${outputFormat}`;
     });
   }, [outputFormat]);
@@ -111,7 +111,7 @@ export default function QrCodeGeneratorPage() {
       return;
     }
 
-    const finalFilename = downloadFilename.endsWith(`.${outputFormat}`) ? downloadFilename : `${downloadFilename}.${outputFormat}`;
+    const finalFilename = downloadFilename.endsWith(`.${outputFormat}`) ? downloadFilename : `${downloadFilename || 'qrcode'}.${outputFormat}`;
     let downloadLink = document.createElement('a');
 
     if (outputFormat === 'png') {
@@ -503,7 +503,7 @@ export default function QrCodeGeneratorPage() {
                     </div>
                   )}
 
-                  {/* Output Section - MOVED HERE */}
+                  {/* Output Section */}
                   <div className="w-full max-w-xs space-y-4">
                     <h3 className="text-lg font-medium text-center md:text-left">Output</h3>
                     <div className="flex items-end gap-2">
