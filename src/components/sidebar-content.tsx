@@ -13,7 +13,7 @@ import {
   SidebarGroup,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Settings } from "lucide-react"; 
+import { Settings, Info, ShieldCheck, BookOpenText } from "lucide-react"; 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { tools as originalTools, type Tool } from "@/lib/tools";
@@ -87,9 +87,47 @@ export function SidebarContent() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === "/about"}
+                className="w-full justify-start"
+                tooltip="About"
+              >
+                <Link href="/about">
+                  <Info className="h-4 w-4" />
+                  <span>About</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === "/privacy"}
+                className="w-full justify-start"
+                tooltip="Privacy Policy"
+              >
+                <Link href="/privacy">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Privacy Policy</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === "/terms"}
+                className="w-full justify-start"
+                tooltip="Terms of Service"
+              >
+                <Link href="/terms">
+                  <BookOpenText className="h-4 w-4" />
+                  <span>Terms of Service</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
          </SidebarMenu>
       </SidebarGroup>
     </>
   );
 }
-
