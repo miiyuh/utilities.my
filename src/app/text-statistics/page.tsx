@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { PanelLeft } from 'lucide-react';
+import { PanelLeft, Type, RemoveFormatting, WrapText, ScanLine, Pilcrow, Clock } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -17,6 +17,13 @@ interface TextStats {
   sentences: number;
   paragraphs: number;
   readingTimeMinutes: number;
+}
+
+interface StatDisplayItem {
+  id: keyof TextStats;
+  label: string;
+  icon: React.ElementType;
+  value?: number | string;
 }
 
 export default function TextStatisticsPage() {
@@ -33,11 +40,10 @@ export default function TextStatisticsPage() {
     const charactersNoSpaces = inputText.replace(/\s/g, '').length;
     const words = inputText.trim().split(/\s+/).filter(Boolean).length;
     
-    // Naive sentence count, can be improved
     const sentences = (inputText.match(/[.!?]+/g) || []).length || (words > 0 ? 1 : 0); 
     const paragraphs = inputText.split(/\n\s*\n/).filter(Boolean).length || (words > 0 ? 1: 0);
 
-    const wordsPerMinute = 200; // Average reading speed
+    const wordsPerMinute = 200; 
     const readingTimeMinutes = Math.ceil(words / wordsPerMinute);
 
     setStats({
@@ -49,6 +55,16 @@ export default function TextStatisticsPage() {
       readingTimeMinutes,
     });
   }, [inputText]);
+
+  const statItems: StatDisplayItem[] = stats ? [
+    { id: 'characters', label: 'Characters (incl. spaces)', icon: Type, value: stats.characters },
+    { id: 'charactersNoSpaces', label: 'Characters (no spaces)', icon: RemoveFormatting, value: stats.charactersNoSpaces },
+    { id: 'words', label: 'Words', icon: WrapText, value: stats.words },
+    { id: 'sentences', label: 'Sentences', icon: ScanLine, value: stats.sentences },
+    { id: 'paragraphs', label: 'Paragraphs', icon: Pilcrow, value: stats.paragraphs },
+    { id: 'readingTimeMinutes', label: 'Est. Reading Time', icon: Clock, value: `~${stats.readingTimeMinutes} min(s)` },
+  ] : [];
+
 
   return (
     <>
@@ -86,15 +102,18 @@ export default function TextStatisticsPage() {
                 </div>
 
                 {stats && (
-                  <div className="space-y-3 pt-4 border-t">
-                    <h3 className="text-lg font-medium">Statistics:</h3>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                      <p>Characters (with spaces): <span className="font-semibold text-primary">{stats.characters}</span></p>
-                      <p>Characters (no spaces): <span className="font-semibold text-primary">{stats.charactersNoSpaces}</span></p>
-                      <p>Words: <span className="font-semibold text-primary">{stats.words}</span></p>
-                      <p>Sentences: <span className="font-semibold text-primary">{stats.sentences}</span></p>
-                      <p>Paragraphs: <span className="font-semibold text-primary">{stats.paragraphs}</span></p>
-                      <p>Estimated Reading Time: <span className="font-semibold text-primary">~{stats.readingTimeMinutes} min(s)</span></p>
+                  <div className="space-y-4 pt-4 border-t">
+                    <h3 className="text-xl font-semibold mb-3">Statistics:</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {statItems.map((item) => (
+                        <div key={item.id} className="flex items-center p-4 rounded-lg border bg-card shadow-sm">
+                          <item.icon className="h-8 w-8 text-primary mr-4 shrink-0" />
+                          <div>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</p>
+                            <p className="text-2xl font-bold text-foreground">{item.value}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -106,3 +125,4 @@ export default function TextStatisticsPage() {
     </>
   );
 }
+
