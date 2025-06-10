@@ -14,12 +14,13 @@ import { PanelLeft, Download, Settings2, Upload, Trash2, QrCode as QrCodeIcon, C
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { QRCodeCanvas } from 'qrcode.react';
+import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import { Slider } from '@/components/ui/slider';
 
 type PayloadType = "url" | "text" | "email" | "sms" | "tel" | "wifi";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type WifiEncryption = "WPA" | "WEP" | "nopass";
+type OutputFormat = "png" | "svg";
 
 
 // Helper function to validate HEX color
@@ -31,9 +32,9 @@ export default function QrCodeGeneratorPage() {
   const { toast } = useToast();
   
   // QR Value and Payload States
-  const [qrValue, setQrValue] = useState('');
+  const [qrValue, setQrValue] = useState('https://example.com'); // Default to a valid URL
   const [payloadType, setPayloadType] = useState<PayloadType>('url');
-  const [urlInput, setUrlInput] = useState('');
+  const [urlInput, setUrlInput] = useState('https://example.com');
   const [plainTextInput, setPlainTextInput] = useState('');
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
@@ -58,9 +59,12 @@ export default function QrCodeGeneratorPage() {
   const logoFileInputRef = useRef<HTMLInputElement>(null);
 
   // Output States
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>('png');
   const [downloadFilename, setDownloadFilename] = useState('qrcode.png');
 
-  const qrRef = useRef<HTMLDivElement>(null);
+  const qrCanvasRef = useRef<HTMLDivElement>(null);
+  const qrSvgRef = useRef<SVGSVGElement>(null);
+
 
   // Effect to update qrValue based on payloadType and its fields
   useEffect(() => {
@@ -84,8 +88,6 @@ export default function QrCodeGeneratorPage() {
         newQrValue = `tel:${telNumber}`;
         break;
       case 'wifi':
-        // Format: WIFI:T:<encryption>;S:<ssid>;P:<password>;H:<hidden;>;
-        // For simplicity, 'hidden' is not an option here.
         newQrValue = `WIFI:T:${wifiEncryption};S:${wifiSsid};P:${wifiPassword};;`;
         break;
       default:
@@ -94,28 +96,57 @@ export default function QrCodeGeneratorPage() {
     setQrValue(newQrValue);
   }, [payloadType, urlInput, plainTextInput, emailTo, emailSubject, emailBody, smsNumber, smsMessage, telNumber, wifiSsid, wifiPassword, wifiEncryption]);
 
+  // Effect to update filename extension when output format changes
+  useEffect(() => {
+    setDownloadFilename(prev => {
+      const nameWithoutExtension = prev.substring(0, prev.lastIndexOf('.')) || prev;
+      return `${nameWithoutExtension}.${outputFormat}`;
+    });
+  }, [outputFormat]);
+
 
   const handleDownload = () => {
     if (!qrValue) {
       toast({ title: 'Input Empty', description: 'Please enter data to generate a QR code.', variant: 'destructive' });
       return;
     }
-    if (qrRef.current) {
-      const canvas = qrRef.current.querySelector('canvas');
-      if (canvas) {
-        const pngUrl = canvas
-          .toDataURL('image/png')
-          .replace('image/png', 'image/octet-stream');
-        let downloadLink = document.createElement('a');
-        downloadLink.href = pngUrl;
-        downloadLink.download = downloadFilename.endsWith('.png') ? downloadFilename : `${downloadFilename}.png`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        URL.revokeObjectURL(downloadLink.href);
-        toast({ title: 'QR Code Downloaded', description: `${downloadLink.download} has been downloaded.` });
-      }
+
+    const finalFilename = downloadFilename.endsWith(`.${outputFormat}`) ? downloadFilename : `${downloadFilename}.${outputFormat}`;
+    let downloadLink = document.createElement('a');
+
+    if (outputFormat === 'png') {
+        if (qrCanvasRef.current) {
+            const canvas = qrCanvasRef.current.querySelector('canvas');
+            if (canvas) {
+                const pngUrl = canvas.toDataURL('image/png');
+                downloadLink.href = pngUrl;
+            } else {
+                 toast({ title: 'Download Error', description: 'Could not find QR code canvas.', variant: 'destructive' });
+                 return;
+            }
+        }
+    } else if (outputFormat === 'svg') {
+        if (qrSvgRef.current) {
+            const svgString = new XMLSerializer().serializeToString(qrSvgRef.current);
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            downloadLink.href = URL.createObjectURL(blob);
+        } else {
+            toast({ title: 'Download Error', description: 'Could not find QR code SVG element.', variant: 'destructive' });
+            return;
+        }
+    } else {
+        toast({ title: 'Unsupported Format', description: 'Selected format is not supported for download.', variant: 'destructive' });
+        return;
     }
+    
+    downloadLink.download = finalFilename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    if (outputFormat === 'svg') {
+      URL.revokeObjectURL(downloadLink.href);
+    }
+    toast({ title: 'QR Code Downloaded', description: `${finalFilename} has been downloaded.` });
   };
   
   const getFinalBgColor = (): string => {
@@ -158,20 +189,30 @@ export default function QrCodeGeneratorPage() {
   };
 
   const handleCopyHtmlEmbed = async () => {
-    if (!qrValue || !qrRef.current) {
+    if (!qrValue) {
         toast({ title: 'Cannot Copy', description: 'Generate a QR code first.', variant: 'destructive' });
         return;
     }
-    const canvas = qrRef.current.querySelector('canvas');
-    if (canvas) {
-        const dataUrl = canvas.toDataURL('image/png');
-        const embedCode = `<img src="${dataUrl}" alt="QR Code" width="${qrSize}" height="${qrSize}">`;
+    let embedCode = '';
+    if (outputFormat === 'png' && qrCanvasRef.current) {
+        const canvas = qrCanvasRef.current.querySelector('canvas');
+        if (canvas) {
+            const dataUrl = canvas.toDataURL('image/png');
+            embedCode = `<img src="${dataUrl}" alt="QR Code" width="${qrSize}" height="${qrSize}">`;
+        }
+    } else if (outputFormat === 'svg' && qrSvgRef.current) {
+        embedCode = qrSvgRef.current.outerHTML;
+    }
+
+    if (embedCode) {
         try {
             await navigator.clipboard.writeText(embedCode);
-            toast({ title: 'HTML Embed Copied!', description: '<img> tag copied to clipboard.' });
+            toast({ title: 'HTML Embed Copied!', description: `${outputFormat === 'svg' ? '<svg> markup' : '<img> tag'} copied to clipboard.` });
         } catch (err) {
-            toast({ title: 'Copy Failed', description: 'Could not copy HTML embed code.', variant: 'destructive' });
+            toast({ title: 'Copy Failed', description: `Could not copy HTML embed code. Error: ${err}`, variant: 'destructive' });
         }
+    } else {
+        toast({ title: 'Cannot Copy', description: `Could not generate embed code for ${outputFormat.toUpperCase()}.`, variant: 'destructive' });
     }
   };
 
@@ -255,6 +296,20 @@ export default function QrCodeGeneratorPage() {
       default:
         return null;
     }
+  };
+  
+  const commonQrProps = {
+    value: qrValue,
+    size: qrSize,
+    fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
+    bgColor: getFinalBgColor(),
+    level: errorCorrectionLevel,
+    imageSettings: logoSrc ? {
+      src: logoSrc,
+      height: qrSize * logoSize,
+      width: qrSize * logoSize,
+      excavate: true,
+    } : undefined,
   };
 
   return (
@@ -431,13 +486,23 @@ export default function QrCodeGeneratorPage() {
                   {/* Output Section */}
                   <div className="space-y-4 pt-6 border-t">
                     <h3 className="text-lg font-medium">Output</h3>
+                     <div className="space-y-2">
+                        <Label htmlFor="outputFormat">File Type</Label>
+                        <Select value={outputFormat} onValueChange={(value) => setOutputFormat(value as OutputFormat)}>
+                            <SelectTrigger id="outputFormat"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                            <SelectItem value="png">PNG</SelectItem>
+                            <SelectItem value="svg">SVG</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="downloadFilename">Download Filename</Label>
                         <Input 
                             id="downloadFilename" 
                             value={downloadFilename} 
                             onChange={(e) => setDownloadFilename(e.target.value)}
-                            placeholder="qrcode.png"
+                            placeholder={`qrcode.${outputFormat}`}
                         />
                     </div>
                     <Button onClick={handleCopyHtmlEmbed} variant="outline" className="w-full">
@@ -449,20 +514,14 @@ export default function QrCodeGeneratorPage() {
                 {/* Right Panel: Preview & Download */}
                 <div className="md:col-span-1 flex flex-col items-center space-y-6 md:pt-10">
                   {qrValue ? (
-                    <div ref={qrRef} className="p-4 bg-white dark:bg-muted/20 rounded-md inline-block shadow-md">
-                      <QRCodeCanvas
-                        value={qrValue}
-                        size={qrSize}
-                        fgColor={isValidHexColor(fgColor) ? fgColor : '#000000'}
-                        bgColor={getFinalBgColor()}
-                        level={errorCorrectionLevel} 
-                        imageSettings={logoSrc ? {
-                          src: logoSrc,
-                          height: qrSize * logoSize,
-                          width: qrSize * logoSize,
-                          excavate: true,
-                        } : undefined}
-                      />
+                    <div className="p-4 bg-white dark:bg-muted/20 rounded-md inline-block shadow-md">
+                      {outputFormat === 'png' ? (
+                        <div ref={qrCanvasRef}>
+                           <QRCodeCanvas {...commonQrProps} />
+                        </div>
+                      ) : (
+                        <QRCodeSVG {...commonQrProps} ref={qrSvgRef} />
+                      )}
                     </div>
                   ) : (
                     <div className="w-full max-w-[288px] aspect-square bg-muted/30 rounded-md flex flex-col items-center justify-center text-muted-foreground p-6 shadow">
@@ -471,7 +530,7 @@ export default function QrCodeGeneratorPage() {
                     </div>
                   )}
                   <Button onClick={handleDownload} disabled={!qrValue} className="w-full max-w-xs">
-                    <Download className="mr-2 h-4 w-4" /> Download QR Code (PNG)
+                    <Download className="mr-2 h-4 w-4" /> Download QR Code ({outputFormat.toUpperCase()})
                   </Button>
                 </div>
               </CardContent>
