@@ -24,7 +24,18 @@ function Calendar({
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
+        caption_label: cn(
+          "text-sm font-medium",
+          props.captionLayout?.includes("dropdown") && "hidden" // Hide if dropdowns are present
+        ),
+        caption_dropdowns: "flex items-center gap-1.5", // Styles for the dropdown container
+        dropdown: cn( // Styles for individual select elements (month/year)
+          buttonVariants({ variant: "outline" }),
+          "h-7 text-sm px-2 py-0.5 font-normal",
+          "text-foreground bg-transparent hover:bg-accent hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-0 focus:ring-offset-0"
+        ),
+        dropdown_month: "rdp-dropdown_month", // You can add specific classes if needed
+        dropdown_year: "rdp-dropdown_year",   // You can add specific classes if needed
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -39,13 +50,11 @@ function Calendar({
         row: "flex w-full mt-2",
         cell: cn(
           "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+          // "[&:has([aria-selected])]:bg-accent", // Removed to prevent accent from showing behind selected day
+          "first:[&:has([aria-selected])]:rounded-l-md",
+          "last:[&:has([aria-selected])]:rounded-r-md",
           "[&:has([aria-selected].day-range-end)]:rounded-r-md",
-          "[&:has([aria-selected].day-range-start)]:rounded-l-md",
-          "[&:has([aria-selected])]:bg-accent", // Keep this for range middle by default, day_selected button will override.
-          "[&:has([aria-selected][aria-current=date])]:bg-accent", // If today is selected in a range.
-          "[&:has([aria-selected]:not([aria-current=date]))]:bg-accent", // If selected is not today (for ranges).
-          "first:[&:has([aria-selected])]:rounded-l-md", // ensures start of range is rounded
-          "last:[&:has([aria-selected])]:rounded-r-md" // ensures end of range is rounded
+          "[&:has([aria-selected].day-range-start)]:rounded-l-md"
         ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
@@ -60,7 +69,7 @@ function Calendar({
           "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
         day_range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
+          "aria-selected:bg-accent aria-selected:text-accent-foreground", // This should apply to middle of range
         day_hidden: "invisible",
         ...classNames,
       }}
