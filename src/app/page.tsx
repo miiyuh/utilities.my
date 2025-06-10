@@ -50,11 +50,11 @@ export default function Home() {
 
             <div>
               <h2 className="text-2xl font-semibold font-headline mb-4">Available Tools</h2>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {tools.filter(tool => tool.path !== "/").map((tool) => (
                   <Card key={tool.path} className="flex flex-col">
-                    <CardHeader className="flex flex-row items-center gap-3">
-                      <tool.icon className="h-6 w-6 text-primary" />
+                    <CardHeader className="flex flex-col items-center text-center p-6 gap-3">
+                      <tool.icon className="h-8 w-8 text-primary" />
                       <CardTitle>{tool.name}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex-grow">
