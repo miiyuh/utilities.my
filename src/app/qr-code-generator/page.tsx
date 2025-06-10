@@ -132,9 +132,9 @@ export default function QrCodeGeneratorPage() {
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">QR Code Generator</CardTitle>
               </CardHeader>
-              <CardContent className="grid md:grid-cols-3 gap-8">
+              <CardContent className="p-6 grid md:grid-cols-3 gap-8">
                 {/* Left Panel: Inputs & Customization */}
-                <div className="md:col-span-2 space-y-6">
+                <div className="md:col-span-2 space-y-8">
                   <div className="space-y-2">
                     <Label htmlFor="qrText">Text or URL</Label>
                     <Input
@@ -225,18 +225,18 @@ export default function QrCodeGeneratorPage() {
                               accept="image/png, image/jpeg, image/svg+xml"
                               onChange={handleLogoUpload}
                               ref={logoFileInputRef}
-                              className="pt-2"
+                              className="hidden"
                           />
                            <Button 
                               variant="outline" 
-                              className="w-full mt-2" 
+                              className="w-full" 
                               onClick={() => logoFileInputRef.current?.click()}
                             >
                               <Upload className="mr-2 h-4 w-4" /> Choose Logo
                             </Button>
                       </div>
                       {logoSrc && (
-                          <>
+                          <div className="space-y-3 pt-3">
                               <div className="flex justify-center">
                                   <img src={logoSrc} alt="Logo preview" className="max-h-20 border rounded-md p-1" />
                               </div>
@@ -254,7 +254,7 @@ export default function QrCodeGeneratorPage() {
                               <Button variant="outline" onClick={clearLogo} className="w-full text-destructive hover:text-destructive">
                                   <Trash2 className="mr-2 h-4 w-4" /> Clear Logo
                               </Button>
-                          </>
+                          </div>
                       )}
                   </div>
                 </div>
@@ -278,7 +278,7 @@ export default function QrCodeGeneratorPage() {
                       />
                     </div>
                   ) : (
-                    <div className="w-full max-w-[288px] aspect-square bg-muted/20 rounded-md flex flex-col items-center justify-center text-muted-foreground p-4 shadow">
+                    <div className="w-full max-w-[288px] aspect-square bg-muted/20 rounded-md flex flex-col items-center justify-center text-muted-foreground p-6 shadow">
                       <QrCodeIcon className="h-16 w-16 mb-2" />
                       <span>Enter text to generate QR Code</span>
                     </div>
