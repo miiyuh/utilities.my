@@ -18,64 +18,168 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from '@/components/ui/button';
 
-const initialMarkdown = `# Welcome to Markdown Previewer!
+const initialMarkdown = `# Markdown Comprehensive Demo
 
-## Basic Syntax
-You can make text **bold**, *italic*, or even ***both***!
-Strikethrough uses two tildes: ~~scratch this.~~
+This document demonstrates a wide variety of Markdown features.
 
-## Lists
+## 1. Headings
 
-**Ordered List:**
-1. First item.
-2. Second item.
-   1. Sub-item 1 (indented 2 spaces).
-   2. Sub-item 2.
-      - Further nested unordered item (indented 4 spaces relative to "Sub-item 2").
-3. Third item.
+# Heading 1 (H1)
+## Heading 2 (H2)
+### Heading 3 (H3)
+#### Heading 4 (H4)
+##### Heading 5 (H5)
+###### Heading 6 (H6)
 
-**Unordered List:**
-- An item.
-- Another item.
-  - Sub-item A (indented 2 spaces).
-    * Deeper sub-item (indented 2 spaces relative to "Sub-item A", so 4 from main list item).
-  - Sub-item B.
-- Yet another item.
+## 2. Emphasis
 
-**List with Paragraphs (Loose List):**
-- This is the first item.
+You can make text **bold** using double asterisks or double underscores: __bold__.
+You can make text *italic* using single asterisks or single underscores: _italic_.
+You can combine them for ***bold and italic*** or ___bold and italic___.
+You can also use ~~strikethrough~~.
 
-  This is a paragraph belonging to the first item.
-  It must be indented (e.g., 2 or 4 spaces) to align with the item's content.
+## 3. Lists
 
-- This is the second item, creating a loose list due to the blank line above.
-  It can also contain
-  multiple lines of text.
+### Unordered Lists
+- Item A
+- Item B
+  - Sub-item B1 (indent 2 spaces)
+  - Sub-item B2
+    * Deeper sub-item B2a (indent 4 spaces, can use \`*\`)
+    * Deeper sub-item B2b
+- Item C
 
-## Links
-[Visit Firebase](https://firebase.google.com)
+### Ordered Lists
+1. First item
+2. Second item
+   1. Sub-item 1 (indent 2 spaces)
+   2. Sub-item 2
+      i. Roman numeral sub-item (Note: GFM might not style this distinctively without specific CSS)
+      ii. Another Roman numeral
+3. Third item
 
-## Images
-![Alt text for a placeholder image](https://placehold.co/300x200.png "Placeholder Image")
+### Task Lists (GFM)
+- [x] Completed task: Review feature specifications
+- [ ] Incomplete task: Implement new login flow
+- [ ] Another task: Write unit tests
+  - [x] Sub-task completed: Draft test cases
+  - [ ] Sub-task pending: Execute tests
 
-## Code
-Inline \`code\` has \`back-ticks around\` it.
+### Lists with Paragraphs (Loose Lists)
+- This is the first item in a loose list.
 
+  This is a paragraph belonging to the first item. It must be indented to align with the item's content (e.g., 2 or 4 spaces from the start of the line).
+
+- This is the second item.
+
+  It also contains multiple lines of text, forming a paragraph. This list becomes "loose" because of the blank line separating items or because items contain block-level content like paragraphs.
+
+## 4. Links
+
+### Inline Links
+Visit [Google](https://www.google.com "Google's Homepage").
+You can also create links with [relative paths](/about).
+
+### Reference-style Links
+Here's a link to [Firebase][fb].
+And another to the [Mozilla Developer Network][mdn].
+
+[fb]: https://firebase.google.com/ "Firebase - Develop Apps"
+[mdn]: https://developer.mozilla.org/ "MDN Web Docs - Resources for Developers"
+
+## 5. Images
+
+![A placeholder image for demonstration](https://placehold.co/400x200.png "Placeholder Image 400x200")
+
+Images can also be linked using reference style:
+![Another placeholder][placeholder-img]
+
+[placeholder-img]: https://placehold.co/300x150.png "Placeholder Image 300x150"
+
+## 6. Code
+
+### Inline Code
+Use backticks for inline code, for example, to reference a variable like \`userCount\` or a function \`getUser()_new\`.
+
+### Fenced Code Blocks
+You can specify the language for syntax highlighting:
 \`\`\`javascript
-// Code block
+// JavaScript code example
 function greet(name) {
-  console.log("Hello, " + name + "!");
+  console.log(\`Hello, \${name}!\`);
 }
-greet("World");
+greet("Developer");
 \`\`\`
 
-## Blockquotes
-> Dorothy followed her through many of the beautiful rooms in her castle.
->
-> This is a second paragraph in the blockquote.
+\`\`\`python
+# Python code example
+def hello_world():
+  print("Hello from Python!")
 
-## Horizontal Rule
+hello_world()
+\`\`\`
+
+\`\`\`html
+<!-- HTML code example -->
+<div>
+  <p class="greeting">This is an HTML code block.</p>
+</div>
+\`\`\`
+
+\`\`\`
+A code block without a language specified.
+Plain text or data can go here.
+  Indentation is preserved.
+\`\`\`
+
+## 7. Blockquotes
+
+> This is a blockquote.
+> It can span multiple lines, and subsequent lines are part of the same quote.
+>
+> > Nested blockquotes are also possible by adding more \`>\` symbols.
+> > This allows for quoting conversations or different sources.
+>
+> Back to the first level of blockquote.
+
+## 8. Horizontal Rules
+
+You can create a horizontal rule using three or more hyphens, asterisks, or underscores on a line by themselves:
+
 ---
+
+***
+
+___
+
+
+## 9. Tables (GFM)
+
+| Feature         | Support Level | Notes                                   |
+| :-------------- | :-----------: | :-------------------------------------- |
+| Headings        |    Full       | H1 to H6                                |
+| Emphasis        |    Full       | Bold, Italic, Strikethrough             |
+| Lists           |    Full       | Ordered, Unordered, Task, Nested        |
+| Links           |    Full       | Inline, Reference                       |
+| Code Blocks     |    Full       | Fenced, with language highlighting      |
+| Tables          |    Full       | Requires header and separator row       |
+| Alignment (Col) |    Full       | Use colons in the separator row         |
+
+## 10. Footnotes (GFM Style - rendering depends on processor)
+
+Here's some text that requires a footnote for more details.[^1]
+You can have multiple footnotes in your document.[^note-id]
+
+[^1]: This is the detailed explanation for the first footnote.
+[^note-id]: This is another footnote, identified by 'note-id'. It can be longer and might even contain multiple paragraphs if your Markdown processor supports it.
+
+## 11. Escaping Characters
+
+To display literal characters that have special meaning in Markdown syntax, use a backslash (\\\`\\\`) before the character:
+\\*This is not italic\\*
+\\[This is not a link label\\]
+\\\`This is not inline code\\\`
+\\# This is not a heading
 `;
 
 const markdownExamples = [
@@ -88,44 +192,29 @@ const markdownExamples = [
     content: `*This text will be italic*\n_This will also be italic_\n\n**This text will be bold**\n__This will also be bold__\n\n~~This text will be strikethrough~~\n\n***Bold and italic***`,
   },
   {
-    title: "Lists (Ordered, Unordered, Nested, Paragraphs)",
-    content: `**Ordered List (Tight):**
-1. Item 1
-2. Item 2
-   1. Sub-item 2.1 (2 spaces indent)
-   2. Sub-item 2.2
-      - Deeper Unordered Sub-item 2.2.1 (4 spaces indent from start of "Sub-item 2.2" line)
-3. Item 3
-
-**Unordered List (Tight):**
-- Main item A
-- Main item B
-  - Sub-item B.1 (2 spaces indent)
-  * Sub-item B.2 (using asterisk)
-    + Sub-sub-item B.2.1 (2 spaces indent from start of "Sub-item B.2" line)
-
-**Loose List (with paragraphs):**
-- First list item in a loose list.
-
-  This is a paragraph associated with the first list item.
-  It's indented to be part of the item.
-
-- Second list item. This list is "loose" because of the blank line separating items or complex content within items.
-
-  Another paragraph for the second item.`,
+    title: "Task Lists (GFM)",
+    content: `- [x] Finish project proposal\n- [ ] Schedule team meeting\n- [ ] Review pull requests`,
   },
   {
     title: "Links & Images",
     content: `[I'm an inline-style link](https://www.google.com)\n\n![alt text](https://placehold.co/100x50.png "Logo Title Text 1")`,
   },
   {
-    title: "Code",
-    content: "Inline `code` has `back-ticks around` it.\n\n```javascript\n// Code block\nvar s = \"JavaScript syntax highlighting\";\nalert(s);\n```",
+    title: "Code (Inline & Fenced)",
+    content: "Inline \`code\` has \`back-ticks around\` it.\n\n\`\`\`javascript\n// Code block\nvar s = \"JavaScript syntax highlighting\";\nalert(s);\n\`\`\`",
   },
   {
     title: "Blockquotes & Horizontal Rules",
-    content: `> Blockquotes are very handy in email to emulate reply text.\n> This line is part of the same quote.\n\nThree or more...\n\n---\n\nHyphens\n\n***\n\nAsterisks\n\n___\n\nUnderscores`,
+    content: `> Blockquotes are very handy in email to emulate reply text.\n> This line is part of the same quote.\n\n---\n\n***\n\n___`,
   },
+  {
+    title: "Tables (GFM)",
+    content: `| Header 1 | Header 2 | Header 3 |\n| :------- | :------: | -------: |\n| Left     | Center   | Right    |\n| Cell A   | Cell B   | Cell C   |`,
+  },
+  {
+    title: "Lists (Ordered, Unordered, Nested)",
+    content: `**Ordered List:**\n1. Item 1\n2. Item 2\n   1. Sub-item 2.1\n   2. Sub-item 2.2\n3. Item 3\n\n**Unordered List:**\n- Item A\n- Item B\n  - Sub-item B.1\n  - Sub-item B.2\n    * Deeper Sub B.2.a\n- Item C`
+  }
 ];
 
 
@@ -219,7 +308,7 @@ export default function MarkdownPreviewerPage() {
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
-                {markdownExamples.map((example, index) => (
+                {markdownExamples.sort((a,b) => a.title.localeCompare(b.title)).map((example, index) => (
                   <AccordionItem value={`item-${index}`} key={index}>
                     <AccordionTrigger>{example.title}</AccordionTrigger>
                     <AccordionContent>
