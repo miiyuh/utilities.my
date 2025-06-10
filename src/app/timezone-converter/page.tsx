@@ -33,7 +33,7 @@ dayjs.extend(advancedFormat);
 const MAX_LOCATIONS = 10;
 const HOURS_AROUND_REFERENCE = 7; 
 const DAY_START_HOUR = 7; 
-const DAY_END_HOUR = 18;
+const DAY_END_HOUR = 18; // Up to 6:59 PM is considered day time
 
 
 interface Location {
@@ -66,6 +66,7 @@ export default function TimezoneConverterPage() {
 
   useEffect(() => {
     setIsMounted(true);
+    // Client-side only: set to user's local time and guessed timezone
     setReferenceDateTime(dayjs()); 
     setLocations(prevLocs => {
       const newLocs = [...prevLocs];
@@ -76,20 +77,27 @@ export default function TimezoneConverterPage() {
         newLocs[0] = { id: generateLocationId(), selectedTimezone: guessedTimezone };
       }
       
+      // Ensure the second and third default locations are different from the guessed one and each other
+      const defaultTz2 = 'America/New_York';
+      const defaultTz3 = 'Europe/London';
+      
       if (newLocs.length >= 2 && newLocs[1]) {
-         if (newLocs[1].selectedTimezone === guessedTimezone) newLocs[1].selectedTimezone = 'America/New_York' === guessedTimezone ? 'Asia/Tokyo' : 'America/New_York';
+         if (newLocs[1].selectedTimezone === guessedTimezone) {
+            newLocs[1].selectedTimezone = defaultTz2 === guessedTimezone ? 'Asia/Tokyo' : defaultTz2;
+         }
       } else if (newLocs.length < 2) {
-         newLocs[1] = {id: generateLocationId(), selectedTimezone: 'America/New_York' === guessedTimezone ? 'Asia/Tokyo' : 'America/New_York'}
+         newLocs.push({id: generateLocationId(), selectedTimezone: defaultTz2 === guessedTimezone ? 'Asia/Tokyo' : defaultTz2 });
       }
 
       if (newLocs.length >= 3 && newLocs[2]) {
-         if (newLocs[2].selectedTimezone === guessedTimezone || newLocs[2].selectedTimezone === newLocs[1].selectedTimezone) newLocs[2].selectedTimezone = 'Europe/London' === guessedTimezone || 'Europe/London' === newLocs[1].selectedTimezone ? 'Australia/Sydney' : 'Europe/London';
+         if (newLocs[2].selectedTimezone === guessedTimezone || newLocs[2].selectedTimezone === newLocs[1]?.selectedTimezone) {
+            newLocs[2].selectedTimezone = defaultTz3 === guessedTimezone || defaultTz3 === newLocs[1]?.selectedTimezone ? 'Australia/Sydney' : defaultTz3;
+         }
       } else if (newLocs.length < 3) {
-        newLocs[2] = {id: generateLocationId(), selectedTimezone: 'Europe/London' === guessedTimezone || 'Europe/London' === newLocs[1].selectedTimezone ? 'Australia/Sydney' : 'Europe/London'}
+        newLocs.push({id: generateLocationId(), selectedTimezone: defaultTz3 === guessedTimezone || defaultTz3 === newLocs[1]?.selectedTimezone ? 'Australia/Sydney' : defaultTz3 });
       }
-      return newLocs.filter(Boolean); // Clean out any potentially undefined elements if logic was complex
+      return newLocs.filter(Boolean).slice(0, MAX_LOCATIONS); // Ensure we don't exceed MAX_LOCATIONS initially
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -118,15 +126,21 @@ export default function TimezoneConverterPage() {
   };
 
   const handleSetAsReference = (locationTimezone: string) => {
-    if (!referenceDateTime) return;
-    const newRef = referenceDateTime.tz(locationTimezone);
-    setReferenceDateTime(newRef); 
+    if (!referenceDateTime || !isMounted) return;
+  
+    // Find the reference hour for this location based on the current global referenceDateTime
+    const baseTimeInLocation = referenceDateTime.tz(locationTimezone);
+    // This baseTimeInLocation IS the current time in that location, which aligns with its "0" hour slot.
+    // So we set the global reference to this exact moment.
+    setReferenceDateTime(baseTimeInLocation); 
+  
     toast({ title: "Reference Updated", description: `Timeline now centered around current time in ${locationTimezone.replace(/_/g, ' ')}.`});
   };
+  
 
   const handleHourSlotClick = (slotDateTime: dayjs.Dayjs) => {
-    setReferenceDateTime(slotDateTime);
-    toast({ title: "Reference Time Updated", description: `Timeline now centered around ${slotDateTime.format('h:mm A, MMM D')} in ${slotDateTime.tz()?.format('Z z')}.` });
+    setReferenceDateTime(slotDateTime); // slotDateTime is already correctly zoned
+    toast({ title: "Reference Time Updated", description: `Timeline now centered around ${slotDateTime.format('h:mm A, MMM D')} in ${slotDateTime.tz()?.format('z')}.` });
   };
 
   const handleAddLocation = () => {
@@ -173,7 +187,7 @@ export default function TimezoneConverterPage() {
     for (let i = -HOURS_AROUND_REFERENCE; i <= HOURS_AROUND_REFERENCE; i++) {
       const slotTime = baseTimeInLocation.add(i, 'hour');
       const hourOfDay = slotTime.hour();
-      const isDay = hourOfDay >= DAY_START_HOUR && hourOfDay <= DAY_END_HOUR;
+      const isDay = hourOfDay >= DAY_START_HOUR && hourOfDay < DAY_END_HOUR; // DAY_END_HOUR is exclusive (e.g., 18 means up to 17:59)
       
       slots.push({
         key: `${locationTimezone}-${slotTime.toISOString()}-${i}`,
@@ -213,7 +227,7 @@ export default function TimezoneConverterPage() {
           <ThemeToggleButton />
         </header>
         <div className="flex flex-1 flex-col p-4 md:p-6">
-          <Card className="w-full max-w-7xl mx-auto shadow-lg">
+          <Card className="w-full max-w-5xl mx-auto shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl font-headline text-center">World Time View</CardTitle>
             </CardHeader>
@@ -247,7 +261,7 @@ export default function TimezoneConverterPage() {
 
               <div className="space-y-4">
                 {locations.map((loc) => {
-                  if (!loc || !loc.selectedTimezone) return null; 
+                  if (!loc || !loc.selectedTimezone || !referenceDateTime) return null; 
                   const localTimeForRow = referenceDateTime.tz(loc.selectedTimezone);
                   const hourSlots = generateHourSlots(loc.selectedTimezone);
                   const utcOffset = localTimeForRow.format('Z'); 
@@ -290,14 +304,13 @@ export default function TimezoneConverterPage() {
                                   "leading-tight transition-colors duration-150",
                                   "hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-white/5",
                                   slot.isRefHour && [
-                                    "border-primary ring-1 ring-primary shadow-md",
-                                    "bg-primary/20 dark:bg-accent",
-                                    "text-primary-foreground dark:text-accent-foreground font-semibold"
+                                    "border-primary ring-1 ring-primary shadow-md font-semibold",
+                                    "bg-primary/20 text-primary-foreground dark:bg-accent dark:text-accent-foreground",
                                   ],
                                   !slot.isRefHour && [
                                     slot.isDayTime 
-                                      ? "bg-background dark:bg-muted/30 text-foreground" 
-                                      : "bg-muted/60 dark:bg-muted/50 text-muted-foreground",
+                                      ? "bg-background text-foreground dark:bg-muted/30" 
+                                      : "bg-muted/60 text-muted-foreground dark:bg-muted/50",
                                     (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && "opacity-75"
                                   ]
                                 )}
