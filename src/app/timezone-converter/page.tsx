@@ -24,6 +24,8 @@ import isBetween from 'dayjs/plugin/isBetween';
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
+import arraySupport from 'dayjs/plugin/arraySupport';
+
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -42,11 +44,12 @@ dayjs.extend(isBetween);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
+dayjs.extend(arraySupport);
 
 
 const MAX_LOCATIONS = 10;
 const SLOT_WIDTH = 36; 
-const SLOT_SPACING = 1; // from space-x-px
+const SLOT_SPACING = 1; // from space-x-px, treated as 1px for calculation
 const NUM_NAV_DAYS_EACH_SIDE = 2;
 
 
@@ -62,7 +65,7 @@ interface TimeSlotData {
   hourNumber: number; // 0-23
   isDayTime: boolean;
   isWeekend: boolean;
-  isStartOfNewDay?: boolean; // For day transition markers
+  isStartOfNewDay?: boolean; 
 }
 
 let locationIdCounter = 0;
@@ -86,12 +89,10 @@ export default function TimezoneConverterPage() {
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('24h'); 
   const [adderTimezoneValue, setAdderTimezoneValue] = useState('');
 
-  const [selectedRange, setSelectedRange] = useState<{ start: dayjs.Dayjs; end: dayjs.Dayjs }>(() => {
-    const now = dayjs().startOf('hour');
-    return { start: now.utc(), end: now.add(1, 'hour').utc() };
-  });
+  const [selectedRange, setSelectedRange] = useState<{ start: dayjs.Dayjs; end: dayjs.Dayjs }>({ start: dayjs().utc().startOf('hour'), end: dayjs().utc().startOf('hour').add(1, 'hour') });
   const [isDraggingSelection, setIsDraggingSelection] = useState(false);
   const [dragAnchorSlotTime, setDragAnchorSlotTime] = useState<dayjs.Dayjs | null>(null); 
+  
 
   const initialLocations = (): Location[] => {
     const guessedTimezone = dayjs.tz.guess();
@@ -109,8 +110,8 @@ export default function TimezoneConverterPage() {
     const guessedTimezone = dayjs.tz.guess();
     const validGuessedTz = isValidTz(guessedTimezone) ? guessedTimezone : 'UTC';
     
-    const now = dayjs().startOf('hour');
-    setSelectedRange({ start: now.utc(), end: now.add(1, 'hour').utc() });
+    const now = dayjs().utc().startOf('hour');
+    setSelectedRange({ start: now, end: now.add(1, 'hour') });
 
     setLocations(prevLocs => {
       let newLocs = prevLocs.map(loc => ({...loc, selectedTimezone: isValidTz(loc.selectedTimezone) ? loc.selectedTimezone : 'UTC'}));
@@ -139,8 +140,9 @@ export default function TimezoneConverterPage() {
           }
       }
       while (newLocs.length < 3 && defaultIdx < defaultTimezones.length) {
-          if (!newLocs.some(l => l.selectedTimezone === defaultTimezones[defaultIdx])) {
-              newLocs.push({id: generateLocationId(), selectedTimezone: defaultTimezones[defaultIdx]});
+          const tzToAdd = defaultTimezones[defaultIdx];
+          if (tzToAdd && !newLocs.some(l => l.selectedTimezone === tzToAdd)) {
+              newLocs.push({id: generateLocationId(), selectedTimezone: tzToAdd});
           }
           defaultIdx++;
       }
@@ -152,16 +154,14 @@ export default function TimezoneConverterPage() {
     if (!isMounted || !selectedRange || !selectedRange.start.isValid() || locations.length === 0 || isDraggingSelection) return;
     
     setIsProgrammaticScroll(true);
+    const effectiveSlotWidth = SLOT_WIDTH + SLOT_SPACING;
 
     locations.forEach(loc => {
       if (loc && loc.selectedTimezone && isValidTz(loc.selectedTimezone)) {
         const container = scrollableContainerRefs.current[loc.id];
         if (container) {
           const localSelectionStart = selectedRange.start.tz(loc.selectedTimezone);
-          const targetHourIndex = localSelectionStart.hour(); // 0-23 hour
-          
-          const effectiveSlotWidth = SLOT_WIDTH + SLOT_SPACING;
-          // Scroll to position the target slot as the first slot in view.
+          const targetHourIndex = localSelectionStart.hour(); 
           const desiredScrollPosition = targetHourIndex * effectiveSlotWidth;
           
           if (container.scrollLeft !== desiredScrollPosition) {
@@ -171,13 +171,13 @@ export default function TimezoneConverterPage() {
       }
     });
 
-    const timer = setTimeout(() => setIsProgrammaticScroll(false), 200); // Increased timeout slightly
+    const timer = setTimeout(() => setIsProgrammaticScroll(false), 200); 
     return () => clearTimeout(timer);
   }, [selectedRange, locations, isMounted, isDraggingSelection]);
 
 
   const handleGlobalDateChange = (date: Date | undefined) => {
-    if (date && selectedRange && dayjs(date).isValid()) {
+    if (date && selectedRange && selectedRange.start.isValid() && dayjs(date).isValid()) {
       const newDatePart = dayjs(date); 
       const oldStartUTC = selectedRange.start;
       const duration = dayjs.duration(selectedRange.end.diff(selectedRange.start));
@@ -196,8 +196,8 @@ export default function TimezoneConverterPage() {
   };
 
   const handleGoToToday = () => {
-    const now = dayjs().startOf('hour');
-    setSelectedRange({ start: now.utc(), end: now.add(1, 'hour').utc() });
+    const now = dayjs().utc().startOf('hour');
+    setSelectedRange({ start: now, end: now.add(1, 'hour') });
     toast({title: "View Reset", description: "Showing current time."});
   };
   
@@ -217,7 +217,7 @@ export default function TimezoneConverterPage() {
     if(newPinnedTz) toast({ title: "Primary Location Set", description: `${newPinnedTz.replace(/_/g, ' ')} is now primary.`});
   };
 
-  const handleAddLocationFromSearch = () => {
+  const handleAddTimezoneFromSearch = () => {
     if (!adderTimezoneValue || !isValidTz(adderTimezoneValue)) {
       toast({ title: 'Invalid Timezone', description: 'Please select a valid timezone to add.', variant: 'destructive'});
       return;
@@ -357,7 +357,7 @@ export default function TimezoneConverterPage() {
 
   const dateNavItems = React.useMemo(() => {
     if (!selectedRange || !selectedRange.start.isValid()) return [];
-    const currentDayForNav = selectedRange.start.startOf('day'); // Use UTC start of day for nav consistency
+    const currentDayForNav = selectedRange.start.startOf('day'); 
     const items = [];
     for (let i = -NUM_NAV_DAYS_EACH_SIDE; i <= NUM_NAV_DAYS_EACH_SIDE; i++) {
       const day = currentDayForNav.add(i, 'day');
@@ -402,8 +402,8 @@ export default function TimezoneConverterPage() {
               <CardTitle className="text-xl md:text-2xl font-headline text-center">World Time View</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 p-2 md:p-3 lg:p-4">
-              {/* Global Controls: Date Nav, Add TZ, 12/24h */}
-              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-2 border rounded-md shadow-sm bg-muted/20">
+              {/* Global Controls Wrapper */}
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 p-2 border rounded-md shadow-sm bg-muted/20">
                 {/* Date Navigation Group */}
                 <div className="flex items-center gap-1 flex-wrap">
                     <Popover>
@@ -452,28 +452,31 @@ export default function TimezoneConverterPage() {
                         ))}
                     </div>
                 </div>
-                {/* 12/24h Toggle Group */}
-                <div className="flex items-center space-x-1.5 shrink-0">
-                    <Switch
-                        id="time-format-toggle"
-                        checked={timeFormat === '12h'}
-                        onCheckedChange={(checked) => setTimeFormat(checked ? '12h' : '24h')}
-                        className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
-                    />
-                    <Label htmlFor="time-format-toggle" className="text-xs md:text-sm whitespace-nowrap">12-hour</Label>
+                {/* Settings & Add Timezone Group */}
+                <div className="flex items-center gap-x-3 gap-y-2 flex-wrap justify-end">
+                    {/* 12/24h Toggle Group */}
+                    <div className="flex items-center space-x-1.5 shrink-0">
+                        <Switch
+                            id="time-format-toggle"
+                            checked={timeFormat === '12h'}
+                            onCheckedChange={(checked) => setTimeFormat(checked ? '12h' : '24h')}
+                            className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
+                        />
+                        <Label htmlFor="time-format-toggle" className="text-xs md:text-sm whitespace-nowrap">12-hour</Label>
+                    </div>
+                    {/* Timezone Adder Group */}
+                    <div className="flex items-center gap-1.5 flex-grow min-w-[200px] sm:min-w-[250px] md:flex-grow-0">
+                        <TimezoneCombobox 
+                            value={adderTimezoneValue}
+                            onValueChange={setAdderTimezoneValue}
+                            placeholder="Search and add timezone..."
+                            className="flex-grow h-9 text-xs md:text-sm"
+                        />
+                        <Button onClick={handleAddTimezoneFromSearch} size="sm" className="h-9 px-3 text-xs md:text-sm shrink-0">
+                            <PlusCircle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-1.5" /> Add
+                        </Button>
+                    </div>
                 </div>
-                {/* Timezone Adder Group */}
-                 <div className="flex items-center gap-1.5 flex-grow min-w-[200px] sm:min-w-[250px] md:flex-grow-0">
-                    <TimezoneCombobox 
-                        value={adderTimezoneValue}
-                        onValueChange={setAdderTimezoneValue}
-                        placeholder="Search and add timezone..."
-                        className="flex-grow h-9 text-xs md:text-sm"
-                    />
-                    <Button onClick={handleAddLocationFromSearch} size="sm" className="h-9 px-3 text-xs md:text-sm shrink-0">
-                        <PlusCircle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-1.5" /> Add
-                    </Button>
-                 </div>
               </div>
 
               <div className="space-y-1.5">
@@ -484,19 +487,17 @@ export default function TimezoneConverterPage() {
                   const localSelectedEnd = selectedRange.end.tz(loc.selectedTimezone);
                   if (!localSelectedStart.isValid() || !localSelectedEnd.isValid()) return null;
 
-                  const timeSlots = generateTimeSlots(loc.selectedTimezone, selectedRange.start); // Generate slots for the start day of the selection
+                  const timeSlots = generateTimeSlots(loc.selectedTimezone, selectedRange.start); 
                   const timeFormatString = timeFormat === '12h' ? 'h:mm A' : 'HH:mm';
-                  const rangeDisplayFormat = timeFormat === '12h' ? 'h:mmA' : 'HH:mm';
-                  const dateFormatString = "ddd, MMM D, YYYY";
-
-                  const displayRangeStart = localSelectedStart.format(rangeDisplayFormat);
-                  // For end of range, subtract 1 minute to show "12:59" instead of "13:00" for an hour ending at 13:00
-                  const displayRangeEnd = localSelectedEnd.subtract(1, 'minute').format(rangeDisplayFormat); 
                   
-                  const rangeDateStr = localSelectedStart.isSame(localSelectedEnd.subtract(1, 'minute'), 'day')
-                    ? localSelectedStart.format(dateFormatString)
-                    : `${localSelectedStart.format(dateFormatString)} - ${localSelectedEnd.subtract(1, 'minute').format(dateFormatString)}`;
-
+                  const rangeStartStr = localSelectedStart.format(timeFormatString);
+                  const rangeEndStr = localSelectedEnd.subtract(1, 'minute').format(timeFormatString); 
+                  
+                  const dateDisplayFormat = "ddd, MMM D, YYYY";
+                  let rangeDateStr = localSelectedStart.format(dateDisplayFormat);
+                  if (!localSelectedStart.isSame(localSelectedEnd.subtract(1, 'minute'), 'day')) {
+                      rangeDateStr = `${localSelectedStart.format(dateDisplayFormat)} - ${localSelectedEnd.subtract(1, 'minute').format(dateDisplayFormat)}`;
+                  }
 
                   return (
                     <div key={loc.id} className="py-1.5 border-b last:border-b-0">
@@ -504,27 +505,27 @@ export default function TimezoneConverterPage() {
                         {/* Left: Controls and Timezone Info */}
                         <div className="w-full md:w-[220px] lg:w-[260px] shrink-0 pr-1 md:pr-2 space-y-0.5 flex-col">
                           <div className="flex items-center gap-1 justify-between">
-                            <div className="flex items-center gap-1 flex-grow min-w-0">
-                                <Button variant="ghost" size="icon" onClick={() => handlePinLocation(loc.id)} title={`Set ${loc.selectedTimezone.split('/').pop()?.replace(/_/g, ' ')} as primary`} 
-                                        className={cn("h-6 w-6 p-1 shrink-0", loc.isPinned ? "text-primary" : "text-muted-foreground hover:text-primary")}>
-                                    {loc.isPinned ? <Home className="h-4 w-4"/> : <Pin className="h-4 w-4" />}
-                                </Button>
-                                <TimezoneCombobox
-                                  value={loc.selectedTimezone}
-                                  onValueChange={(tz) => handleLocationTimezoneChange(loc.id, tz)}
-                                  placeholder="Select timezone"
-                                  className="text-xs font-semibold w-full h-7 truncate"
-                                />
-                            </div>
-                            <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-6 w-6 p-1 shrink-0">
-                                <XCircle className="h-4 w-4" />
-                            </Button>
+                              <div className="flex items-center gap-1 flex-grow min-w-0">
+                                  <Button variant="ghost" size="icon" onClick={() => handlePinLocation(loc.id)} title={`Set ${loc.selectedTimezone.split('/').pop()?.replace(/_/g, ' ')} as primary`} 
+                                          className={cn("h-6 w-6 p-1 shrink-0", loc.isPinned ? "text-primary" : "text-muted-foreground hover:text-primary")}>
+                                      {loc.isPinned ? <Home className="h-4 w-4"/> : <Pin className="h-4 w-4" />}
+                                  </Button>
+                                  <TimezoneCombobox
+                                    value={loc.selectedTimezone}
+                                    onValueChange={(tz) => handleLocationTimezoneChange(loc.id, tz)}
+                                    placeholder="Select timezone"
+                                    className="text-xs font-semibold w-full h-7 truncate"
+                                  />
+                              </div>
+                              <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-6 w-6 p-1 shrink-0">
+                                  <XCircle className="h-4 w-4" />
+                              </Button>
                           </div>
                           <p className="text-[10px] text-muted-foreground truncate ml-1 mt-1">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
                           
                           <div className="mt-1.5 pt-1.5 md:border-t md:border-muted/30">
                             <p className="text-lg font-bold ml-1 truncate leading-tight">
-                                {displayRangeStart} - {displayRangeEnd}
+                                {rangeStartStr} - {rangeEndStr}
                             </p>
                             <p className="text-[10px] text-muted-foreground ml-1 truncate">
                                 {rangeDateStr}
@@ -545,8 +546,7 @@ export default function TimezoneConverterPage() {
                           >
                             <div className="flex space-x-px min-w-max h-full items-stretch">
                               {timeSlots.map(slot => {
-                                // Check if the slot's hour is within the selected range for this location
-                                const isSlotInRange = slot.dateTime.isBetween(localSelectedStart, localSelectedEnd, 'hour', '[)');
+                                const isSlotInRange = selectedRange && slot.dateTime.isBetween(selectedRange.start.tz(loc.selectedTimezone), selectedRange.end.tz(loc.selectedTimezone), 'hour', '[)');
                                 
                                 const slotBgColor = isSlotInRange
                                   ? "bg-primary/40 dark:bg-primary/50 border-primary/60"
@@ -596,7 +596,7 @@ export default function TimezoneConverterPage() {
             </CardContent>
              <CardFooter className="pt-2 pb-3 px-3 md:px-4">
                 <p className="text-[10px] md:text-xs text-muted-foreground w-full text-center">
-                  Click an hour slot to set it as global reference. Drag to select a range. Scroll strips horizontally.
+                  Click an hour slot to set a 1-hour reference. Drag to select a custom range.
                 </p>
               </CardFooter>
           </Card>
