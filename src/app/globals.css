@@ -90,31 +90,98 @@ body {
     @apply bg-background text-foreground;
   }
 
-  /* Custom styles for .prose elements to look more like GitHub */
+  .prose {
+    line-height: 1.6;
+  }
+
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    margin-top: 1.5em; /* 24px */
+    margin-bottom: 1em; /* 16px */
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
   .prose h1 {
-    @apply border-b border-border pb-[0.3em] mb-[0.8em] mt-[1em];
+    font-size: 2em; /* 32px */
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid hsl(var(--border));
+    margin-bottom: 0.625em; 
   }
+
   .prose h2 {
-    @apply border-b border-border pb-[0.3em] mb-[0.6em] mt-[1em];
+    font-size: 1.5em; /* 24px */
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid hsl(var(--border));
+    margin-bottom: 0.75em;
   }
+
   .prose h3 {
-    @apply mb-[0.5em] mt-[1em];
+    font-size: 1.25em; /* 20px */
+    margin-bottom: 0.6em;
+  }
+
+  .prose h4 {
+    font-size: 1em; /* 16px */
+  }
+
+  .prose h5 {
+    font-size: 0.875em; /* 14px */
+  }
+
+  .prose h6 {
+    font-size: 0.85em; /* 13.6px */
+    color: hsl(var(--muted-foreground));
+  }
+  
+  .prose p {
+    margin-top: 0;
+    margin-bottom: 1em;
   }
 
   .prose pre {
-    @apply bg-muted/20 border border-border rounded-md p-4 text-sm overflow-x-auto my-[1em];
+    background-color: hsl(var(--muted)/0.2);
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.375rem; /* 6px */
+    padding: 1em;
+    overflow-x: auto;
+    font-size: 0.875em;
+    line-height: 1.45;
+    margin-top: 0;
+    margin-bottom: 1em;
   }
   .prose code:not(pre > code) {
-    @apply bg-muted/30 text-foreground rounded-[6px] px-[0.4em] py-[0.2em] text-[0.875em] font-code;
+    font-family: var(--font-code);
+    background-color: hsl(var(--muted)/0.3);
+    color: hsl(var(--foreground));
+    border-radius: 0.375rem; /* 6px */
+    padding: 0.2em 0.4em;
+    font-size: 0.875em;
   }
   .prose pre code {
-    @apply bg-transparent p-0 border-none rounded-none text-inherit; 
+    font-family: var(--font-code);
+    background-color: transparent;
+    padding: 0;
+    border: none;
+    border-radius: 0;
     font-size: inherit; 
+    color: inherit;
+    line-height: inherit;
+    white-space: pre;
   }
   
   .prose blockquote {
-    @apply border-l-[0.25em] border-border pl-6 pr-2 my-[1em] italic text-muted-foreground;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 1em;
+    padding: 0 1em;
+    color: hsl(var(--muted-foreground));
+    border-left: 0.25em solid hsl(var(--border));
+    font-style: normal; /* GitHub doesn't italicize blockquotes by default */
     quotes: none;
+  }
+  .prose blockquote p {
+    margin-bottom: 0; /* Remove bottom margin for paragraphs inside blockquotes */
   }
   .prose blockquote p:first-of-type::before {
     content: none; 
@@ -123,30 +190,68 @@ body {
     content: none; 
   }
 
-  /* Dark mode specifics for GitHub-like styling */
+  .prose ul, .prose ol {
+    padding-left: 2em;
+    margin-top: 0;
+    margin-bottom: 1em;
+  }
+  .prose li {
+    margin-bottom: 0.25em;
+  }
+  .prose li > p { /* Paragraphs inside list items */
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+  .prose li > ul, .prose li > ol { /* Nested lists */
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+  }
+
+  .prose hr {
+    height: 0.25em;
+    padding: 0;
+    margin: 1.5em 0; /* 24px */
+    background-color: hsl(var(--border));
+    border: 0;
+  }
+
+  /* Dark mode specifics - mirroring structure */
+  .dark .prose {
+    /* Dark mode specific base if needed */
+  }
+
+  .dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose h5, .dark .prose h6 {
+    /* color: hsl(var(--foreground)); Ensure headings use the dark mode foreground */
+  }
   .dark .prose h1 {
-    @apply border-b border-border pb-[0.3em] mb-[0.8em] mt-[1em];
+    border-bottom-color: hsl(var(--border));
   }
   .dark .prose h2 {
-    @apply border-b border-border pb-[0.3em] mb-[0.6em] mt-[1em];
+    border-bottom-color: hsl(var(--border));
   }
-  .dark .prose h3 {
-    @apply mb-[0.5em] mt-[1em];
+  .dark .prose h6 {
+    color: hsl(var(--muted-foreground));
   }
 
   .dark .prose pre {
-    @apply bg-muted/20 border border-border rounded-md p-4 text-sm;
+    background-color: hsl(var(--muted)/0.2);
+    border-color: hsl(var(--border));
   }
   .dark .prose code:not(pre > code) {
-    @apply bg-muted/30 text-foreground rounded-[6px] px-[0.4em] py-[0.2em] text-[0.875em] font-code;
+    background-color: hsl(var(--muted)/0.3);
+    color: hsl(var(--foreground));
   }
-  .dark .prose pre code {
-     @apply bg-transparent p-0 border-none rounded-none text-inherit;
-     font-size: inherit;
+   .dark .prose pre code {
+    background-color: transparent;
+    color: inherit;
   }
   
   .dark .prose blockquote {
-    @apply border-l-[0.25em] border-border pl-6 pr-2 italic text-muted-foreground;
-     quotes: none;
+    color: hsl(var(--muted-foreground));
+    border-left-color: hsl(var(--border));
+  }
+
+  .dark .prose hr {
+    background-color: hsl(var(--border));
   }
 }

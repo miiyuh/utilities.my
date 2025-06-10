@@ -32,20 +32,19 @@ Strikethrough uses two tildes: ~~scratch this.~~
   1. Ordered sub-list
     - Deeper unordered sub-sub-list.
 
+Paragraphs in lists:
+1.  This is the first list item.
+
+    You can include paragraphs in list items.
+    Make sure the paragraph is indented to align with the text of the list item. It will have its own spacing.
+
+2.  Second item.
+
 - Unordered list
   - Can use asterisks
   * Or minuses
   + Or pluses
     - With deeper nesting too.
-
-Paragraphs in lists:
-1.  This is the first list item.
-
-    You can include paragraphs in list items.
-    Make sure the paragraph is indented to align with the text of the list item.
-
-2.  Second item.
-
 
 ## Links
 [Visit Firebase](https://firebase.google.com)
@@ -84,7 +83,7 @@ const markdownExamples = [
   },
   {
     title: "Lists",
-    content: `Ordered List:\n1. First item\n2. Second item\n3. Third item\n  1. Indented item (2 spaces)\n    - Further indented (4 spaces)\n\nUnordered List:\n- Item 1\n- Item 2\n  - Sub-item 2.1 (2 spaces)\n  - Sub-item 2.2 (2 spaces)`,
+    content: `Ordered List:\n1. First item\n2. Second item\n3. Third item\n  1. Indented item (2 spaces)\n    - Further indented (4 spaces)\n\nUnordered List:\n- Item 1\n- Item 2\n  - Sub-item 2.1 (2 spaces)\n  - Sub-item 2.2 (2 spaces)\n\n- List item with a paragraph:\n\n  This is a paragraph inside a list item. It should be indented.\n\n- Another item.`,
   },
   {
     title: "Links & Images",
@@ -107,7 +106,14 @@ export default function MarkdownPreviewerPage() {
 
   useEffect(() => {
     const generateHtml = async () => {
-      const rawMarkup = await marked.parse(markdownText, { breaks: true, gfm: true });
+      // Configure marked to handle line breaks (gfm: true implies breaks: true, but explicitly setting can be clearer)
+      // and to use GitHub Flavored Markdown.
+      const rawMarkup = await marked.parse(markdownText, { 
+        gfm: true, 
+        breaks: true, // Ensures <br> for single newlines within paragraphs
+        mangle: false, // Recommended for security with untrusted input, but usually false for simple previewers.
+        headerIds: false, // Avoids generating ids for headers if not needed.
+      });
       setHtmlOutput(rawMarkup);
     };
     generateHtml();
@@ -134,7 +140,7 @@ export default function MarkdownPreviewerPage() {
           <ThemeToggleButton />
         </header>
         <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="grid flex-1 gap-6 md:grid-cols-2"> {/* flex-1 on grid ensures it takes space */}
+          <div className="grid flex-1 gap-6 md:grid-cols-2">
             {/* Markdown Input Card */}
             <Card className="shadow-lg flex flex-col">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -147,7 +153,7 @@ export default function MarkdownPreviewerPage() {
                   Clear
                 </Button>
               </CardHeader>
-              <CardContent className="flex-grow flex flex-col"> {/* flex-grow and flex-col */}
+              <CardContent className="flex-grow flex flex-col">
                 <Label htmlFor="markdownInput" className="sr-only">Markdown Input</Label>
                 <Textarea
                   id="markdownInput"
@@ -167,7 +173,7 @@ export default function MarkdownPreviewerPage() {
                   <CardTitle className="text-xl font-headline">HTML Preview</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow overflow-auto"> {/* flex-grow and overflow-auto */}
+              <CardContent className="flex-grow overflow-auto">
                 <div
                   className="prose dark:prose-invert max-w-none"
                   dangerouslySetInnerHTML={{ __html: htmlOutput }}
