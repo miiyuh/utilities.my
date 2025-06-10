@@ -32,9 +32,9 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(advancedFormat);
 
 const MAX_LOCATIONS = 10;
-const HOURS_AROUND_REFERENCE = 7; 
-const DAY_START_HOUR = 7; 
-const DAY_END_HOUR = 18;
+const HOURS_AROUND_REFERENCE = 7;
+const DAY_START_HOUR = 7;
+const DAY_END_HOUR = 18; // 6 PM
 
 
 interface Location {
@@ -60,24 +60,32 @@ export default function TimezoneConverterPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('12h');
 
-  const [locations, setLocations] = useState<Location[]>([
-    { id: generateLocationId(), selectedTimezone: 'UTC' },
-    { id: generateLocationId(), selectedTimezone: 'America/New_York' },
-    { id: generateLocationId(), selectedTimezone: 'Europe/London' },
-  ]);
+
+  const initialLocations = (): Location[] => {
+    const guessedTimezone = dayjs.tz.guess();
+    return [
+      { id: generateLocationId(), selectedTimezone: guessedTimezone },
+      { id: generateLocationId(), selectedTimezone: 'America/New_York' },
+      { id: generateLocationId(), selectedTimezone: 'Europe/London' },
+    ].filter(Boolean).slice(0, MAX_LOCATIONS);
+  };
+  const [locations, setLocations] = useState<Location[]>(initialLocations());
+
 
   useEffect(() => {
     setIsMounted(true);
-    setReferenceDateTime(dayjs());
+    const guessedTimezone = dayjs.tz.guess();
+    setReferenceDateTime(dayjs()); // Set to user's current local time initially
+
     setLocations(prevLocs => {
-      const newLocs = [...prevLocs];
-      const guessedTimezone = dayjs.tz.guess();
+      let newLocs = [...prevLocs];
       if (newLocs.length > 0 && newLocs[0]) {
         newLocs[0].selectedTimezone = guessedTimezone;
       } else {
-        newLocs.unshift({ id: generateLocationId(), selectedTimezone: guessedTimezone });
+        newLocs = [{ id: generateLocationId(), selectedTimezone: guessedTimezone }, ...newLocs.slice(1)];
       }
-
+      
+      // Ensure default secondary and tertiary timezones are different from guessed and each other
       const defaultTz2 = 'America/New_York';
       const defaultTz3 = 'Europe/London';
 
@@ -99,11 +107,12 @@ export default function TimezoneConverterPage() {
       
       return newLocs.filter(Boolean).slice(0, MAX_LOCATIONS);
     });
+
   }, []);
 
 
   const handleGlobalDateChange = (date: Date | undefined) => {
-    if (date && referenceDateTime) {
+    if (date && referenceDateTime && dayjs(date).isValid()) {
       const newDatePart = dayjs(date);
       const newDateTime = referenceDateTime
         .year(newDatePart.year())
@@ -121,21 +130,28 @@ export default function TimezoneConverterPage() {
       const minutes = parts[1] !== undefined ? parts[1] : referenceDateTime.minute();
       const seconds = parts[2] !== undefined ? parts[2] : referenceDateTime.second();
 
-      const newDateTime = referenceDateTime.hour(hours).minute(minutes).second(seconds).millisecond(0);
-      setReferenceDateTime(newDateTime);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        const newDateTime = referenceDateTime.hour(hours).minute(minutes).second(seconds || 0).millisecond(0);
+        setReferenceDateTime(newDateTime);
+      }
     }
   };
 
   const handleSetAsReference = (locationTimezone: string) => {
-    if (!referenceDateTime || !isMounted) return;
-    const newGlobalReference = referenceDateTime.tz(locationTimezone);
+    if (!referenceDateTime || !isMounted || !dayjs.tz.zone(locationTimezone)) return;
+    // Use the current referenceDateTime's UTC instant, but interpret it in the target location's timezone
+    // This means the *absolute point in time* doesn't change, but the *local wall clock time* for referenceDateTime changes
+    // to match what it would be in locationTimezone.
+    const newGlobalReference = referenceDateTime.tz(locationTimezone); 
     setReferenceDateTime(newGlobalReference);
     toast({ title: "Reference Updated", description: `Timeline now centered around current time in ${locationTimezone.replace(/_/g, ' ')}.`});
   };
 
 
   const handleHourSlotClick = (slotDateTime: dayjs.Dayjs) => {
-    setReferenceDateTime(slotDateTime); 
+     if (slotDateTime && slotDateTime.isValid()) {
+        setReferenceDateTime(slotDateTime);
+     }
   };
 
   const handleAddLocation = () => {
@@ -145,7 +161,7 @@ export default function TimezoneConverterPage() {
     }
     const newLocationId = generateLocationId();
     const existingTimezones = locations.map(l => l.selectedTimezone);
-    let defaultNewTimezone = 'Asia/Tokyo'; 
+    let defaultNewTimezone = 'Asia/Tokyo';
     const commonTimezones = ['Australia/Sydney', 'Europe/Paris', 'America/Los_Angeles', 'Asia/Dubai', 'Pacific/Honolulu', 'Africa/Johannesburg', 'Asia/Kolkata', 'America/Chicago', 'Asia/Shanghai'];
     for (const tz of commonTimezones) {
         if (!existingTimezones.includes(tz)) {
@@ -173,7 +189,7 @@ export default function TimezoneConverterPage() {
   };
 
   const generateHourSlots = useCallback((locationTimezone: string): HourSlot[] => {
-    if (!referenceDateTime || !isMounted) return [];
+    if (!referenceDateTime || !isMounted || !dayjs(referenceDateTime).isValid() || !dayjs.tz.zone(locationTimezone)) return [];
 
     const baseTimeInLocation = referenceDateTime.tz(locationTimezone);
     const slots: HourSlot[] = [];
@@ -196,7 +212,7 @@ export default function TimezoneConverterPage() {
   }, [referenceDateTime, isMounted]);
 
 
-  if (!isMounted || !referenceDateTime) {
+  if (!isMounted || !referenceDateTime || !referenceDateTime.isValid()) {
     return (
       <div className="flex flex-1 items-center justify-center p-4 md:p-6">
         <p>Loading World Time View...</p>
@@ -228,7 +244,6 @@ export default function TimezoneConverterPage() {
             <CardContent className="space-y-6">
               <div className="p-4 border rounded-md shadow-sm bg-muted/20">
                 <div className="flex flex-col items-center gap-2 md:flex-row md:flex-wrap md:justify-between md:gap-3 lg:gap-4">
-                  
                   <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
                     <Label className="text-base font-medium whitespace-nowrap md:text-lg">Reference:</Label>
                     <Popover>
@@ -267,8 +282,10 @@ export default function TimezoneConverterPage() {
 
               <div className="space-y-4">
                 {locations.map((loc) => {
-                  if (!loc || !loc.selectedTimezone || !referenceDateTime) return null;
+                  if (!loc || !loc.selectedTimezone || !referenceDateTime || !dayjs.tz.zone(loc.selectedTimezone)) return null;
                   const localTimeForRow = referenceDateTime.tz(loc.selectedTimezone);
+                  if (!localTimeForRow.isValid()) return null;
+
                   const hourSlots = generateHourSlots(loc.selectedTimezone);
                   const utcOffset = localTimeForRow.format('Z');
                   const timezoneAbbr = localTimeForRow.format('z');
@@ -276,12 +293,12 @@ export default function TimezoneConverterPage() {
                   return (
                     <div key={loc.id} className="p-3 border rounded-md shadow-sm">
                       <div className="flex flex-col md:flex-row items-stretch gap-3">
-                        <div className="flex md:flex-col items-center justify-start md:justify-center gap-1 md:w-12 py-1 md:py-0 shrink-0">
-                           <Button variant="ghost" size="icon" onClick={() => handleSetAsReference(loc.selectedTimezone)} title={`Set reference to ${loc.selectedTimezone.replace(/_/g, ' ')}`} className="text-muted-foreground hover:text-primary h-7 w-7">
-                            <PinIcon className="h-4 w-4" />
+                        <div className="flex md:flex-col items-center justify-start md:justify-center gap-1 md:w-auto py-1 md:py-0 shrink-0">
+                           <Button variant="ghost" size="icon" onClick={() => handleSetAsReference(loc.selectedTimezone)} title={`Set reference to ${loc.selectedTimezone.replace(/_/g, ' ')}`} className="text-muted-foreground hover:text-primary h-6 w-6 p-1">
+                            <PinIcon className="h-3.5 w-3.5" />
                           </Button>
-                           <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-7 w-7">
-                            <XCircle className="h-4 w-4" />
+                           <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-6 w-6 p-1">
+                            <XCircle className="h-3.5 w-3.5" />
                           </Button>
                         </div>
 
@@ -322,7 +339,7 @@ export default function TimezoneConverterPage() {
                                   !slot.isRefHour && [
                                     slot.isDayTime
                                       ? "bg-background text-foreground dark:bg-muted/30 dark:text-foreground"
-                                      : "bg-muted/60 text-muted-foreground dark:bg-muted/50 dark:text-muted-foreground", 
+                                      : "bg-muted/60 text-muted-foreground dark:bg-muted/50 dark:text-muted-foreground",
                                     (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && "opacity-80 dark:opacity-75"
                                   ]
                                 )}
@@ -334,7 +351,7 @@ export default function TimezoneConverterPage() {
                                     {slot.dateTime.format('MMM D')}
                                     </span>
                                 ) : (
-                                    <span className="h-[1em] opacity-90">{slot.dateTime.format('D')}</span> 
+                                    isSameDayAsRow && !slot.isRefHour ? <span className="opacity-90">{slot.dateTime.format('D')}</span> : <span className="h-[1em]"></span>
                                 )}
                                 
                                 <span className={cn("text-base font-semibold mt-0.5", (slot.isDifferentDayFromRow && !slot.isRefHour) ? "opacity-70" : "")}>
