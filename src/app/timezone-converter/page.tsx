@@ -32,9 +32,9 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(advancedFormat);
 
 const MAX_LOCATIONS = 10;
-const HOURS_AROUND_REFERENCE = 7;
-const DAY_START_HOUR = 7;
-const DAY_END_HOUR = 18;
+const HOURS_AROUND_REFERENCE = 7; // Approx 15 slots (7 before, 1 current, 7 after)
+const DAY_START_HOUR = 7; // 7 AM
+const DAY_END_HOUR = 18; // 6 PM (exclusive, so up to 5:59 PM is day)
 
 
 interface Location {
@@ -60,7 +60,6 @@ export default function TimezoneConverterPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('12h');
 
-
   const [locations, setLocations] = useState<Location[]>([
     { id: generateLocationId(), selectedTimezone: 'UTC' },
     { id: generateLocationId(), selectedTimezone: 'America/New_York' },
@@ -69,16 +68,19 @@ export default function TimezoneConverterPage() {
 
   useEffect(() => {
     setIsMounted(true);
+    // Set initial reference to client's current time
     setReferenceDateTime(dayjs());
+    // Attempt to set the first location to the user's guessed timezone
     setLocations(prevLocs => {
       const newLocs = [...prevLocs];
       const guessedTimezone = dayjs.tz.guess();
       if (newLocs.length > 0 && newLocs[0]) {
         newLocs[0].selectedTimezone = guessedTimezone;
       } else {
-        newLocs[0] = { id: generateLocationId(), selectedTimezone: guessedTimezone };
+        newLocs.unshift({ id: generateLocationId(), selectedTimezone: guessedTimezone });
       }
 
+      // Ensure unique default timezones if guessed is one of the subsequent defaults
       const defaultTz2 = 'America/New_York';
       const defaultTz3 = 'Europe/London';
 
@@ -97,6 +99,7 @@ export default function TimezoneConverterPage() {
       } else if (newLocs.length < 3) {
         newLocs.push({id: generateLocationId(), selectedTimezone: defaultTz3 === guessedTimezone || defaultTz3 === newLocs[1]?.selectedTimezone ? 'Australia/Sydney' : defaultTz3 });
       }
+      
       return newLocs.filter(Boolean).slice(0, MAX_LOCATIONS);
     });
   }, []);
@@ -128,14 +131,19 @@ export default function TimezoneConverterPage() {
 
   const handleSetAsReference = (locationTimezone: string) => {
     if (!referenceDateTime || !isMounted) return;
-    const baseTimeInLocation = referenceDateTime.tz(locationTimezone);
-    setReferenceDateTime(baseTimeInLocation);
+    // The reference point is the *current* local time displayed for that row's *reference hour slot*
+    // which is `referenceDateTime.tz(locationTimezone)`
+    const newGlobalReference = referenceDateTime.tz(locationTimezone);
+    setReferenceDateTime(newGlobalReference); // This updates the global reference
     toast({ title: "Reference Updated", description: `Timeline now centered around current time in ${locationTimezone.replace(/_/g, ' ')}.`});
   };
 
 
   const handleHourSlotClick = (slotDateTime: dayjs.Dayjs) => {
-    setReferenceDateTime(slotDateTime);
+    // slotDateTime is already the correct Dayjs object representing the local time for that slot.
+    // We want to make this the new global reference.
+    setReferenceDateTime(slotDateTime); 
+    // Removed toast: toast({ title: "Reference Time Updated", description: `Timeline centered on ${slotDateTime.format('MMM D, YYYY h:mm A')}` });
   };
 
   const handleAddLocation = () => {
@@ -145,17 +153,18 @@ export default function TimezoneConverterPage() {
     }
     const newLocationId = generateLocationId();
     const existingTimezones = locations.map(l => l.selectedTimezone);
-    let defaultNewTimezone = 'Asia/Tokyo';
-    const commonTimezones = ['Australia/Sydney', 'Europe/Paris', 'America/Los_Angeles', 'Asia/Dubai', 'Pacific/Honolulu', 'Africa/Johannesburg', 'Asia/Kolkata'];
+    let defaultNewTimezone = 'Asia/Tokyo'; // Default if all common are taken
+    const commonTimezones = ['Australia/Sydney', 'Europe/Paris', 'America/Los_Angeles', 'Asia/Dubai', 'Pacific/Honolulu', 'Africa/Johannesburg', 'Asia/Kolkata', 'America/Chicago', 'Asia/Shanghai'];
     for (const tz of commonTimezones) {
         if (!existingTimezones.includes(tz)) {
             defaultNewTimezone = tz;
             break;
         }
     }
+    // If all common are taken, pick first available from all supported
     if (existingTimezones.includes(defaultNewTimezone)) {
          const allSupported = Intl.supportedValuesOf('timeZone');
-         defaultNewTimezone = allSupported.find(tz => !existingTimezones.includes(tz)) || 'UTC';
+         defaultNewTimezone = allSupported.find(tz => !existingTimezones.includes(tz)) || 'UTC'; // Fallback to UTC if somehow all are taken
     }
     setLocations(prev => [...prev, { id: newLocationId, selectedTimezone: defaultNewTimezone }]);
   };
@@ -226,38 +235,42 @@ export default function TimezoneConverterPage() {
               <CardTitle className="text-2xl font-headline text-center">World Time View</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-3 p-4 border rounded-md shadow-sm bg-muted/20">
-                <Label className="text-lg font-medium text-center block">Set Reference Date & Time</Label>
-                <div className="flex flex-col sm:flex-row gap-2 items-center justify-center">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full sm:w-auto justify-start text-left font-normal min-w-[200px]",
-                          !referenceDateTime && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {referenceDateTime ? referenceDateTime.format("MMM D, YYYY") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar mode="single" selected={referenceDateTime.toDate()} onSelect={handleGlobalDateChange} initialFocus />
-                    </PopoverContent>
-                  </Popover>
-                  <div className="relative w-full sm:w-auto min-w-[150px]">
-                    <ClockIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input type="time" value={referenceDateTime.format("HH:mm:ss")} onChange={handleGlobalTimeChange} className="pl-10" step="1" />
+              <div className="p-4 border rounded-md shadow-sm bg-muted/20">
+                <div className="flex flex-col items-center gap-3 md:flex-row md:flex-wrap md:justify-between">
+                  
+                  <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
+                    <Label className="text-base font-medium whitespace-nowrap md:text-lg">Reference:</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal min-w-[180px] sm:w-auto",
+                            !referenceDateTime && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {referenceDateTime ? referenceDateTime.format("MMM D, YYYY") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={referenceDateTime.toDate()} onSelect={handleGlobalDateChange} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                    <div className="relative w-full sm:w-auto min-w-[120px]">
+                      <ClockIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input type="time" value={referenceDateTime.format("HH:mm:ss")} onChange={handleGlobalTimeChange} className="pl-10" step="1" />
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-center space-x-2 pt-2">
-                  <Switch
-                    id="time-format-toggle"
-                    checked={timeFormat === '24h'}
-                    onCheckedChange={(checked) => setTimeFormat(checked ? '24h' : '12h')}
-                  />
-                  <Label htmlFor="time-format-toggle">Use 24-hour format</Label>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="time-format-toggle"
+                      checked={timeFormat === '24h'}
+                      onCheckedChange={(checked) => setTimeFormat(checked ? '24h' : '12h')}
+                    />
+                    <Label htmlFor="time-format-toggle" className="text-sm whitespace-nowrap">24-hour format</Label>
+                  </div>
                 </div>
               </div>
 
@@ -314,8 +327,8 @@ export default function TimezoneConverterPage() {
                                   ],
                                   !slot.isRefHour && [
                                     slot.isDayTime
-                                      ? "bg-background text-foreground dark:bg-muted/30 dark:text-foreground"
-                                      : "bg-muted/60 text-muted-foreground dark:bg-muted/50 dark:text-muted-foreground",
+                                      ? "bg-background text-foreground dark:bg-muted/30 dark:text-foreground" // Daytime
+                                      : "bg-muted/60 text-muted-foreground dark:bg-muted/50 dark:text-muted-foreground", // Nighttime
                                     (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && "opacity-75"
                                   ]
                                 )}
@@ -352,3 +365,4 @@ export default function TimezoneConverterPage() {
     </>
   );
 }
+
