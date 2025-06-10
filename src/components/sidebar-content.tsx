@@ -64,7 +64,7 @@ export function SidebarContent() {
                 >
                   <Link href={tool.path}>
                     <tool.icon className="h-4 w-4" />
-                    <span>{tool.name}</span>
+                    <span className="group-data-[collapsible=icon]:hidden">{tool.name}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -83,7 +83,7 @@ export function SidebarContent() {
               >
                 <Link href="/settings">
                   <Settings className="h-4 w-4" />
-                  <span>Settings</span>
+                  <span className="group-data-[collapsible=icon]:hidden">Settings</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -96,7 +96,7 @@ export function SidebarContent() {
               >
                 <Link href="/about">
                   <Info className="h-4 w-4" />
-                  <span>About</span>
+                  <span className="group-data-[collapsible=icon]:hidden">About</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -109,7 +109,7 @@ export function SidebarContent() {
               >
                 <Link href="/privacy">
                   <ShieldCheck className="h-4 w-4" />
-                  <span>Privacy Policy</span>
+                  <span className="group-data-[collapsible=icon]:hidden">Privacy Policy</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -122,7 +122,7 @@ export function SidebarContent() {
               >
                 <Link href="/terms">
                   <BookOpenText className="h-4 w-4" />
-                  <span>Terms of Service</span>
+                  <span className="group-data-[collapsible=icon]:hidden">Terms of Service</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
