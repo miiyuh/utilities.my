@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,9 +32,9 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(advancedFormat);
 
 const MAX_LOCATIONS = 10;
-const HOURS_AROUND_REFERENCE = 7; 
+const HOURS_AROUND_REFERENCE = 12; 
 const DAY_START_HOUR = 7; 
-const DAY_END_HOUR = 19; // 7 PM (exclusive, so up to 6:59 PM is day)
+const DAY_END_HOUR = 19; 
 
 
 interface Location {
@@ -46,8 +46,7 @@ interface HourSlot {
   key: string;
   dateTime: dayjs.Dayjs;
   isRefHour: boolean;
-  isDifferentDayFromRow: boolean;
-  isDifferentMonthFromRow: boolean;
+  isDifferentDayFromRowMain: boolean;
   isDayTime: boolean;
 }
 
@@ -57,7 +56,8 @@ const generateLocationId = () => `loc-${locationIdCounter++}-${Date.now()}`;
 const isValidTz = (tzName: string): boolean => {
   if (!tzName) return false;
   try {
-    return dayjs().tz(tzName).isValid();
+    const testDate = dayjs().tz(tzName);
+    return testDate.isValid();
   } catch (e) {
     return false;
   }
@@ -65,9 +65,11 @@ const isValidTz = (tzName: string): boolean => {
 
 export default function TimezoneConverterPage() {
   const { toast } = useToast();
-  const [referenceDateTime, setReferenceDateTime] = useState<dayjs.Dayjs>(dayjs.utc());
+  const [referenceDateTime, setReferenceDateTime] = useState<dayjs.Dayjs>(dayjs());
   const [isMounted, setIsMounted] = useState(false);
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('12h');
+  const scrollableContainerRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [isProgrammaticScroll, setIsProgrammaticScroll] = useState(false);
 
 
   const initialLocations = (): Location[] => {
@@ -188,7 +190,15 @@ export default function TimezoneConverterPage() {
       toast({ title: 'Cannot Remove', description: 'At least one location is required.', variant: 'default' });
       return;
     }
-    setLocations(prev => prev.filter(l => l.id !== idToRemove));
+    setLocations(prev => prev.filter(l => {
+      if (l.id === idToRemove) {
+        if (scrollableContainerRefs.current[idToRemove]) {
+          delete scrollableContainerRefs.current[idToRemove];
+        }
+        return false;
+      }
+      return true;
+    }));
   };
 
   const handleLocationTimezoneChange = (idToUpdate: string, newTimezone: string) => {
@@ -199,10 +209,32 @@ export default function TimezoneConverterPage() {
     }
   };
 
-  const generateHourSlots = useCallback((locationTimezone: string): HourSlot[] => {
-    if (!referenceDateTime || !isMounted || !dayjs(referenceDateTime).isValid() || !isValidTz(locationTimezone)) return [];
+  const handleStripScroll = (scrolledLocId: string, event: React.UIEvent<HTMLDivElement>) => {
+    if (isProgrammaticScroll) return;
 
-    const baseTimeInLocation = referenceDateTime.tz(locationTimezone);
+    const scrollLeft = event.currentTarget.scrollLeft;
+    
+    setIsProgrammaticScroll(true);
+    
+    Object.keys(scrollableContainerRefs.current).forEach(locId => {
+      if (locId !== scrolledLocId) {
+        const container = scrollableContainerRefs.current[locId];
+        if (container) {
+          container.scrollLeft = scrollLeft;
+        }
+      }
+    });
+    
+    // Use a timeout to allow the programmatic scroll to finish before re-enabling user-triggered sync
+    setTimeout(() => {
+      setIsProgrammaticScroll(false);
+    }, 100); // Adjust timeout as needed, 100ms is a common starting point
+  };
+
+  const generateHourSlots = useCallback((locationTimezone: string, mainRowDateTime: dayjs.Dayjs): HourSlot[] => {
+    if (!isMounted || !isValidTz(locationTimezone) || !mainRowDateTime.isValid()) return [];
+
+    const baseTimeInLocation = mainRowDateTime;
     const slots: HourSlot[] = [];
 
     for (let i = -HOURS_AROUND_REFERENCE; i <= HOURS_AROUND_REFERENCE; i++) {
@@ -214,13 +246,12 @@ export default function TimezoneConverterPage() {
         key: `${locationTimezone}-${slotTime.toISOString()}-${i}`,
         dateTime: slotTime,
         isRefHour: i === 0,
-        isDifferentDayFromRow: !slotTime.isSame(baseTimeInLocation, 'day'),
-        isDifferentMonthFromRow: !slotTime.isSame(baseTimeInLocation, 'month'),
+        isDifferentDayFromRowMain: !slotTime.isSame(mainRowDateTime, 'day'),
         isDayTime: isDay,
       });
     }
     return slots;
-  }, [referenceDateTime, isMounted]);
+  }, [isMounted]);
 
 
   if (!isMounted || !referenceDateTime || !referenceDateTime.isValid()) {
@@ -254,7 +285,7 @@ export default function TimezoneConverterPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="p-4 border rounded-md shadow-sm bg-muted/20">
-                 <div className="flex flex-col items-center gap-2 md:flex-row md:flex-wrap md:justify-between md:gap-2 md:gap-3 lg:gap-4">
+                 <div className="flex flex-col items-center gap-2 md:flex-row md:flex-wrap md:justify-between md:gap-2 md:gap-y-3 lg:gap-x-4">
                   <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
                     <Label className="text-base font-medium whitespace-nowrap md:text-lg">Reference:</Label>
                     <Popover>
@@ -297,7 +328,7 @@ export default function TimezoneConverterPage() {
                   const localTimeForRow = referenceDateTime.tz(loc.selectedTimezone);
                   if (!localTimeForRow.isValid()) return null;
 
-                  const hourSlots = generateHourSlots(loc.selectedTimezone);
+                  const hourSlots = generateHourSlots(loc.selectedTimezone, localTimeForRow);
                   const utcOffset = localTimeForRow.format('Z');
                   const timezoneAbbr = localTimeForRow.format('z');
 
@@ -333,16 +364,20 @@ export default function TimezoneConverterPage() {
                           <div className="text-center text-sm font-medium text-muted-foreground py-1.5 border-b mb-1">
                             {localTimeForRow.format('dddd, MMMM D, YYYY')}
                           </div>
-                          <div className="overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+                          <div
+                            ref={el => scrollableContainerRefs.current[loc.id] = el}
+                            onScroll={(e) => handleStripScroll(loc.id, e)}
+                            className="overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+                          >
                             <div className="flex space-x-0.5 min-w-max">
                               {hourSlots.map(slot => {
-                                const showDayAbbreviation = slot.isDifferentDayFromRow;
+                                const showDayAbbreviation = slot.isDifferentDayFromRowMain;
                                 return (
                                 <div
                                   key={slot.key}
                                   onClick={() => handleHourSlotClick(slot.dateTime)}
                                   className={cn(
-                                    "flex flex-col items-center justify-center p-1.5 rounded-md w-[60px] h-[60px] text-center text-[10px] border cursor-pointer",
+                                    "flex flex-col items-center justify-center p-1.5 rounded-md w-[52px] h-[52px] text-center text-[10px] border cursor-pointer",
                                     "leading-tight transition-colors duration-150",
                                     "hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-white/5",
                                     slot.isRefHour && [
@@ -353,7 +388,7 @@ export default function TimezoneConverterPage() {
                                       slot.isDayTime
                                         ? "bg-background text-foreground dark:bg-muted/30 dark:text-foreground"
                                         : "bg-muted/60 text-muted-foreground dark:bg-muted/50 dark:text-muted-foreground",
-                                      (slot.isDifferentDayFromRow || slot.isDifferentMonthFromRow) && "opacity-80 dark:opacity-75"
+                                      slot.isDifferentDayFromRowMain && "opacity-80 dark:opacity-75"
                                     ]
                                   )}
                                 >
@@ -395,3 +430,6 @@ export default function TimezoneConverterPage() {
     </>
   );
 }
+
+
+    
