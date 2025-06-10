@@ -35,7 +35,7 @@ export function SidebarContent() {
           className="object-contain"
         />
         <span 
-          className="text-xl font-semibold font-headline tracking-tight ml-1.5 group-data-[collapsible=icon]:hidden"
+          className="text-xl font-semibold font-headline tracking-tight ml-1 group-data-[collapsible=icon]:hidden"
         >
           's utilities
         </span>
