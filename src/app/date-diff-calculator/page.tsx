@@ -185,10 +185,10 @@ export default function DateDiffCalculatorPage() {
                 {diffResult && (
                   <div className="space-y-4 pt-4 border-t">
                     <h3 className="text-lg font-semibold text-center md:text-left">Result:</h3>
-                    <p className="text-muted-foreground text-center md:text-left">
+                    <p className="text-muted-foreground text-center md:text-left font-['Noto_Serif'] italic">
                       The difference is: <br className="sm:hidden"/>
-                      <span className="font-semibold text-foreground">{diffResult.years}</span> years, <span className="font-semibold text-foreground">{diffResult.months}</span> months, <span className="font-semibold text-foreground">{diffResult.days}</span> days, <br className="hidden sm:inline md:hidden lg:inline"/>
-                      <span className="font-semibold text-foreground">{diffResult.hours}</span> hours, <span className="font-semibold text-foreground">{diffResult.minutes}</span> minutes, and <span className="font-semibold text-foreground">{diffResult.seconds}</span> seconds.
+                      <span className="font-semibold text-foreground not-italic">{diffResult.years}</span> years, <span className="font-semibold text-foreground not-italic">{diffResult.months}</span> months, <span className="font-semibold text-foreground not-italic">{diffResult.days}</span> days, <br className="hidden sm:inline md:hidden lg:inline"/>
+                      <span className="font-semibold text-foreground not-italic">{diffResult.hours}</span> hours, <span className="font-semibold text-foreground not-italic">{diffResult.minutes}</span> minutes, and <span className="font-semibold text-foreground not-italic">{diffResult.seconds}</span> seconds.
                     </p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm pt-2 border-t">
                         <p>Total Days: <span className="font-semibold text-foreground">{diffResult.totalDays.toLocaleString()}</span></p>
