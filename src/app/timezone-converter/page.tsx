@@ -23,6 +23,7 @@ import minMax from 'dayjs/plugin/minMax';
 import isBetween from 'dayjs/plugin/isBetween';
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -40,6 +41,8 @@ dayjs.extend(minMax);
 dayjs.extend(isBetween);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
+dayjs.extend(localizedFormat);
+
 
 const MAX_LOCATIONS = 10;
 const SLOT_WIDTH = 36; 
@@ -56,9 +59,10 @@ interface Location {
 interface TimeSlotData {
   key: string;
   dateTime: dayjs.Dayjs; 
-  hourNumber: number;
+  hourNumber: number; // 0-23
   isDayTime: boolean;
   isWeekend: boolean;
+  isStartOfNewDay?: boolean; // For day transition markers
 }
 
 let locationIdCounter = 0;
@@ -157,18 +161,17 @@ export default function TimezoneConverterPage() {
           const targetHourIndex = localSelectionStart.hour(); // 0-23 hour
           
           const effectiveSlotWidth = SLOT_WIDTH + SLOT_SPACING;
-          const scrollOffsetToTargetSlotStart = targetHourIndex * effectiveSlotWidth;
+          // Scroll to position the target slot as the first slot in view.
+          const desiredScrollPosition = targetHourIndex * effectiveSlotWidth;
           
-          // Attempt to position the target slot as the second slot in view (if possible)
-          // by scrolling one slot's width less than the offset to the target slot itself.
-          const desiredScrollPosition = Math.max(0, scrollOffsetToTargetSlotStart - effectiveSlotWidth); 
-          
-          container.scrollLeft = desiredScrollPosition;
+          if (container.scrollLeft !== desiredScrollPosition) {
+            container.scrollLeft = desiredScrollPosition;
+          }
         }
       }
     });
 
-    const timer = setTimeout(() => setIsProgrammaticScroll(false), 150); 
+    const timer = setTimeout(() => setIsProgrammaticScroll(false), 200); // Increased timeout slightly
     return () => clearTimeout(timer);
   }, [selectedRange, locations, isMounted, isDraggingSelection]);
 
@@ -179,7 +182,13 @@ export default function TimezoneConverterPage() {
       const oldStartUTC = selectedRange.start;
       const duration = dayjs.duration(selectedRange.end.diff(selectedRange.start));
 
-      const newStartDateUTC = newDatePart.hour(oldStartUTC.hour()).minute(oldStartUTC.minute()).second(oldStartUTC.second()).millisecond(oldStartUTC.millisecond()).utc();
+      const newStartDateUTC = newDatePart
+          .hour(oldStartUTC.hour())
+          .minute(oldStartUTC.minute())
+          .second(oldStartUTC.second())
+          .millisecond(oldStartUTC.millisecond())
+          .utc();
+
       const newEndDateUTC = newStartDateUTC.add(duration);
       
       setSelectedRange({ start: newStartDateUTC, end: newEndDateUTC });
@@ -262,10 +271,10 @@ export default function TimezoneConverterPage() {
     Object.keys(scrollableContainerRefs.current).forEach(locId => {
       if (locId !== scrolledLocId) {
         const container = scrollableContainerRefs.current[locId];
-        if (container) container.scrollLeft = scrollLeft;
+        if (container && container.scrollLeft !== scrollLeft) container.scrollLeft = scrollLeft;
       }
     });
-    const timer = setTimeout(() => setIsProgrammaticScroll(false), 100); 
+    const timer = setTimeout(() => setIsProgrammaticScroll(false), 150); 
     return () => clearTimeout(timer);
   };
 
@@ -273,7 +282,6 @@ export default function TimezoneConverterPage() {
     setIsDraggingSelection(true);
     const anchorUTC = slotDateTimeInOriginalTz.utc();
     setDragAnchorSlotTime(anchorUTC);
-    // Initial selection is just the clicked slot (1 hour duration)
     setSelectedRange({ start: anchorUTC, end: anchorUTC.add(1, 'hour') });
   };
 
@@ -281,7 +289,7 @@ export default function TimezoneConverterPage() {
     if (isDraggingSelection && dragAnchorSlotTime) {
       const currentSlotUTC = slotDateTimeInOriginalTz.utc();
       let newStartUTC = dayjs.min(dragAnchorSlotTime, currentSlotUTC);
-      let newEndUTC = dayjs.max(dragAnchorSlotTime, currentSlotUTC).add(1, 'hour'); // End is inclusive of the hour
+      let newEndUTC = dayjs.max(dragAnchorSlotTime, currentSlotUTC).add(1, 'hour'); 
       setSelectedRange({ start: newStartUTC, end: newEndUTC });
     }
   };
@@ -328,7 +336,7 @@ export default function TimezoneConverterPage() {
     const DAY_START_HOUR = 7; 
     const DAY_END_HOUR = 19; 
 
-    for (let i = 0; i < 24; i++) { // Generate 24 hourly slots for the single day
+    for (let i = 0; i < 24; i++) { 
       const slotTimeInLocationTZ = localDisplayDayStart.add(i, 'hour');
       const hourOfDay = slotTimeInLocationTZ.hour();
       const dayOfWeek = slotTimeInLocationTZ.day(); 
@@ -346,6 +354,21 @@ export default function TimezoneConverterPage() {
     }
     return slots;
   }, [isMounted]); 
+
+  const dateNavItems = React.useMemo(() => {
+    if (!selectedRange || !selectedRange.start.isValid()) return [];
+    const currentDayForNav = selectedRange.start.startOf('day'); // Use UTC start of day for nav consistency
+    const items = [];
+    for (let i = -NUM_NAV_DAYS_EACH_SIDE; i <= NUM_NAV_DAYS_EACH_SIDE; i++) {
+      const day = currentDayForNav.add(i, 'day');
+      items.push({
+        date: day,
+        label: day.format('D'),
+        isCurrentSelected: day.isSame(currentDayForNav, 'day'),
+      });
+    }
+    return items;
+  }, [selectedRange]);
   
   if (!isMounted || !selectedRange || !selectedRange.start.isValid()) {
     return (
@@ -380,8 +403,9 @@ export default function TimezoneConverterPage() {
             </CardHeader>
             <CardContent className="space-y-3 p-2 md:p-3 lg:p-4">
               {/* Global Controls: Date Nav, Add TZ, 12/24h */}
-              <div className="p-2 border rounded-md shadow-sm bg-muted/20 space-y-2.5">
-                <div className="flex items-center justify-center gap-1 mb-1 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-2 border rounded-md shadow-sm bg-muted/20">
+                {/* Date Navigation Group */}
+                <div className="flex items-center gap-1 flex-wrap">
                     <Popover>
                         <PopoverTrigger asChild>
                         <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
@@ -397,66 +421,57 @@ export default function TimezoneConverterPage() {
                         />
                         </PopoverContent>
                     </Popover>
-
                     <div className="flex items-center rounded-md border bg-background overflow-hidden shadow-sm">
-                        {[-NUM_NAV_DAYS_EACH_SIDE, -NUM_NAV_DAYS_EACH_SIDE + 1].map(offset => {
-                            if (offset === 0) return null;
-                            const day = selectedRange.start.add(offset, 'day');
-                            return (
-                                <Button
-                                key={`prev-${offset}`}
-                                variant="ghost"
+                        {dateNavItems.filter(item => item.date.isBefore(selectedRange.start.startOf('day'))).map(item => (
+                            <Button
+                                key={`prev-${item.date.toISOString()}`}
+                                variant={"outline"}
                                 size="sm"
                                 className="h-9 px-2.5 md:px-3 rounded-none border-r text-xs md:text-sm text-muted-foreground hover:bg-accent focus-visible:z-10"
-                                onClick={() => handleGlobalDateChange(day.toDate())}
-                                >
-                                {day.format('D')}
-                                </Button>
-                            );
-                        })}
-
-                        <div className="flex items-center bg-primary/10 text-primary h-9 px-2.5 md:px-3 border-r">
+                                onClick={() => handleGlobalDateChange(item.date.toDate())}
+                            >
+                                {item.label}
+                            </Button>
+                        ))}
+                         <div className="flex items-center bg-primary/10 text-primary h-9 px-2.5 md:px-3 border-r">
                             <span className="text-xs md:text-sm font-semibold">{selectedRange.start.format('MMM D')}</span>
                             <Button variant="ghost" size="icon" className="h-7 w-7 ml-1 md:ml-1.5 p-0 hover:bg-primary/20" onClick={handleGoToToday} title="Go to Today">
                                 <RotateCcw className="h-3.5 w-3.5" />
                             </Button>
                         </div>
-
-                        {[1, NUM_NAV_DAYS_EACH_SIDE].map(offset => {
-                             if (offset === 0) return null;
-                            const day = selectedRange.start.add(offset, 'day');
-                            return (
-                                <Button
-                                key={`next-${offset}`}
-                                variant="ghost"
+                        {dateNavItems.filter(item => item.date.isAfter(selectedRange.start.startOf('day'))).map(item => (
+                            <Button
+                                key={`next-${item.date.toISOString()}`}
+                                variant={"outline"}
                                 size="sm"
                                 className="h-9 px-2.5 md:px-3 rounded-none border-r last:border-r-0 text-xs md:text-sm text-muted-foreground hover:bg-accent focus-visible:z-10"
-                                onClick={() => handleGlobalDateChange(day.toDate())}
-                                >
-                                {day.format('D')}
-                                </Button>
-                            );
-                        })}
-                    </div>
-                    <div className="flex items-center space-x-1.5 ml-auto md:ml-2 shrink-0">
-                        <Switch
-                            id="time-format-toggle"
-                            checked={timeFormat === '12h'}
-                            onCheckedChange={(checked) => setTimeFormat(checked ? '12h' : '24h')}
-                            className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
-                        />
-                        <Label htmlFor="time-format-toggle" className="text-xs md:text-sm whitespace-nowrap">12-hour</Label>
+                                onClick={() => handleGlobalDateChange(item.date.toDate())}
+                            >
+                                {item.label}
+                            </Button>
+                        ))}
                     </div>
                 </div>
-                 <div className="flex items-center gap-1.5">
+                {/* 12/24h Toggle Group */}
+                <div className="flex items-center space-x-1.5 shrink-0">
+                    <Switch
+                        id="time-format-toggle"
+                        checked={timeFormat === '12h'}
+                        onCheckedChange={(checked) => setTimeFormat(checked ? '12h' : '24h')}
+                        className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
+                    />
+                    <Label htmlFor="time-format-toggle" className="text-xs md:text-sm whitespace-nowrap">12-hour</Label>
+                </div>
+                {/* Timezone Adder Group */}
+                 <div className="flex items-center gap-1.5 flex-grow min-w-[200px] sm:min-w-[250px] md:flex-grow-0">
                     <TimezoneCombobox 
                         value={adderTimezoneValue}
                         onValueChange={setAdderTimezoneValue}
                         placeholder="Search and add timezone..."
                         className="flex-grow h-9 text-xs md:text-sm"
                     />
-                    <Button onClick={handleAddLocationFromSearch} size="sm" className="h-9 px-3 text-xs md:text-sm">
-                        <PlusCircle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" /> Add
+                    <Button onClick={handleAddLocationFromSearch} size="sm" className="h-9 px-3 text-xs md:text-sm shrink-0">
+                        <PlusCircle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-1.5" /> Add
                     </Button>
                  </div>
               </div>
@@ -469,9 +484,19 @@ export default function TimezoneConverterPage() {
                   const localSelectedEnd = selectedRange.end.tz(loc.selectedTimezone);
                   if (!localSelectedStart.isValid() || !localSelectedEnd.isValid()) return null;
 
-                  const timeSlots = generateTimeSlots(loc.selectedTimezone, selectedRange.start);
+                  const timeSlots = generateTimeSlots(loc.selectedTimezone, selectedRange.start); // Generate slots for the start day of the selection
                   const timeFormatString = timeFormat === '12h' ? 'h:mm A' : 'HH:mm';
+                  const rangeDisplayFormat = timeFormat === '12h' ? 'h:mmA' : 'HH:mm';
                   const dateFormatString = "ddd, MMM D, YYYY";
+
+                  const displayRangeStart = localSelectedStart.format(rangeDisplayFormat);
+                  // For end of range, subtract 1 minute to show "12:59" instead of "13:00" for an hour ending at 13:00
+                  const displayRangeEnd = localSelectedEnd.subtract(1, 'minute').format(rangeDisplayFormat); 
+                  
+                  const rangeDateStr = localSelectedStart.isSame(localSelectedEnd.subtract(1, 'minute'), 'day')
+                    ? localSelectedStart.format(dateFormatString)
+                    : `${localSelectedStart.format(dateFormatString)} - ${localSelectedEnd.subtract(1, 'minute').format(dateFormatString)}`;
+
 
                   return (
                     <div key={loc.id} className="py-1.5 border-b last:border-b-0">
@@ -481,7 +506,7 @@ export default function TimezoneConverterPage() {
                           <div className="flex items-center gap-1 justify-between">
                             <div className="flex items-center gap-1 flex-grow min-w-0">
                                 <Button variant="ghost" size="icon" onClick={() => handlePinLocation(loc.id)} title={`Set ${loc.selectedTimezone.split('/').pop()?.replace(/_/g, ' ')} as primary`} 
-                                        className={cn("h-6 w-6 p-0.5 shrink-0", loc.isPinned ? "text-primary" : "text-muted-foreground hover:text-primary")}>
+                                        className={cn("h-6 w-6 p-1 shrink-0", loc.isPinned ? "text-primary" : "text-muted-foreground hover:text-primary")}>
                                     {loc.isPinned ? <Home className="h-4 w-4"/> : <Pin className="h-4 w-4" />}
                                 </Button>
                                 <TimezoneCombobox
@@ -491,18 +516,18 @@ export default function TimezoneConverterPage() {
                                   className="text-xs font-semibold w-full h-7 truncate"
                                 />
                             </div>
-                            <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-6 w-6 p-0.5 shrink-0">
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveLocation(loc.id)} disabled={locations.length <= 1} className="text-muted-foreground hover:text-destructive h-6 w-6 p-1 shrink-0">
                                 <XCircle className="h-4 w-4" />
                             </Button>
                           </div>
-                          <p className="text-[10px] text-muted-foreground truncate ml-1">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
-                          <div className="mt-1 pt-1 md:border-t">
-                            <p className="text-sm font-semibold ml-1 truncate">
-                                {localSelectedStart.format(timeFormatString)} - {localSelectedEnd.subtract(1, 'millisecond').format(timeFormatString)}
+                          <p className="text-[10px] text-muted-foreground truncate ml-1 mt-1">{loc.selectedTimezone.replace(/_/g, ' ')}</p>
+                          
+                          <div className="mt-1.5 pt-1.5 md:border-t md:border-muted/30">
+                            <p className="text-lg font-bold ml-1 truncate leading-tight">
+                                {displayRangeStart} - {displayRangeEnd}
                             </p>
                             <p className="text-[10px] text-muted-foreground ml-1 truncate">
-                                {localSelectedStart.format(dateFormatString)}
-                                {!localSelectedStart.isSame(localSelectedEnd.subtract(1, 'millisecond'), 'day') ? ` - ${localSelectedEnd.subtract(1, 'millisecond').format(dateFormatString)}` : ''}
+                                {rangeDateStr}
                             </p>
                           </div>
                         </div>
@@ -520,10 +545,11 @@ export default function TimezoneConverterPage() {
                           >
                             <div className="flex space-x-px min-w-max h-full items-stretch">
                               {timeSlots.map(slot => {
+                                // Check if the slot's hour is within the selected range for this location
                                 const isSlotInRange = slot.dateTime.isBetween(localSelectedStart, localSelectedEnd, 'hour', '[)');
                                 
                                 const slotBgColor = isSlotInRange
-                                  ? "bg-primary/30 dark:bg-primary/40 border-primary/50"
+                                  ? "bg-primary/40 dark:bg-primary/50 border-primary/60"
                                   : slot.isWeekend
                                     ? (slot.isDayTime ? "bg-amber-100/70 dark:bg-amber-900/30" : "bg-amber-200/20 dark:bg-amber-800/10")
                                     : (slot.isDayTime ? "bg-sky-100/70 dark:bg-sky-900/30" : "bg-slate-100/70 dark:bg-slate-800/20");
@@ -549,10 +575,10 @@ export default function TimezoneConverterPage() {
                                   )}
                                   style={{width: `${SLOT_WIDTH}px`}}
                                 >
-                                    <span className={cn("text-sm md:text-base font-medium", isSlotInRange ? "font-bold" : "")}>
+                                    <span className={cn("text-base font-medium", isSlotInRange ? "font-bold" : "")}>
                                       {slot.dateTime.format(timeFormat === '12h' ? 'h' : 'H')}
                                     </span>
-                                    {timeFormat === '12h' && <span className="text-[8px] md:text-[9px] opacity-80 -mt-0.5">{slot.dateTime.format('A')}</span>}
+                                    {timeFormat === '12h' && <span className="text-[9px] opacity-80 -mt-0.5">{slot.dateTime.format('A')}</span>}
                                 </div>
                               );
                             })}
@@ -570,7 +596,7 @@ export default function TimezoneConverterPage() {
             </CardContent>
              <CardFooter className="pt-2 pb-3 px-3 md:px-4">
                 <p className="text-[10px] md:text-xs text-muted-foreground w-full text-center">
-                  Drag on time strips to select a range. Click calendar icon or day numbers to navigate dates.
+                  Click an hour slot to set it as global reference. Drag to select a range. Scroll strips horizontally.
                 </p>
               </CardFooter>
           </Card>
