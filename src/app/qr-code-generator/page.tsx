@@ -497,9 +497,9 @@ export default function QrCodeGeneratorPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="w-full max-w-[288px] aspect-square bg-muted/30 rounded-md flex flex-col items-center justify-center text-muted-foreground p-6 shadow">
-                      <QrCodeIcon className="h-16 w-16 mb-2" />
-                      <span>Enter data to generate QR Code</span>
+                    <div className="w-full max-w-[288px] aspect-square bg-muted/30 rounded-md flex flex-col items-center justify-center text-muted-foreground p-4 shadow">
+                      <QrCodeIcon className="h-12 w-12 mb-2 opacity-70" />
+                      <span className="text-sm text-center">Enter data to generate QR Code</span>
                     </div>
                   )}
 
@@ -544,6 +544,3 @@ export default function QrCodeGeneratorPage() {
     </>
   );
 }
-
-
-    
