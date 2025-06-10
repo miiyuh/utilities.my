@@ -76,18 +76,19 @@ export default function FileCompressorPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="fileUpload">Select Files</Label>
+                  <Label htmlFor="fileUploadButton">Select Files</Label>
                   <Input
                     id="fileUpload"
                     type="file"
                     multiple
                     ref={fileInputRef}
                     onChange={handleFileChange}
-                    className="pt-2"
+                    className="hidden" // Changed from pt-2 to hidden
                   />
                    <Button 
+                    id="fileUploadButton"
                     variant="outline" 
-                    className="w-full mt-2" 
+                    className="w-full" 
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <UploadCloud className="mr-2 h-4 w-4" /> Choose Files
@@ -97,28 +98,30 @@ export default function FileCompressorPage() {
                 {selectedFiles && selectedFiles.length > 0 && (
                   <div className="space-y-2 pt-4 border-t">
                     <h3 className="font-medium">Selected Files: {selectedFiles.length}</h3>
-                    <ul className="max-h-40 overflow-y-auto space-y-1 text-sm bg-muted/30 p-2 rounded-md">
+                    <ul className="max-h-40 overflow-y-auto space-y-1 text-sm bg-muted/30 p-2 rounded-md border">
                       {Array.from(selectedFiles).map((file, index) => (
-                        <li key={index} className="truncate">{file.name} ({(file.size / 1024).toFixed(2)} KB)</li>
+                        <li key={index} className="truncate p-1">
+                          {file.name} <span className="text-xs text-muted-foreground">({(file.size / 1024).toFixed(2)} KB)</span>
+                        </li>
                       ))}
                     </ul>
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive px-2 py-1"
                       onClick={() => {
                         setSelectedFiles(null);
                         if(fileInputRef.current) fileInputRef.current.value = "";
                       }}
                     >
-                      <XCircle className="mr-1 h-4 w-4" /> Clear Selection
+                      <XCircle className="mr-1 h-3.5 w-3.5" /> Clear Selection
                     </Button>
                   </div>
                 )}
               </CardContent>
               <CardFooter>
                 <Button onClick={handleCompress} disabled={!selectedFiles || selectedFiles.length === 0} className="w-full">
-                  <FileArchiveIcon className="mr-2 h-4 w-4" /> Compress & Download
+                  <FileArchiveIcon className="mr-2 h-4 w-4" /> Compress & Download ZIP
                 </Button>
               </CardFooter>
             </Card>
