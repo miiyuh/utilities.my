@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Trash2, PanelLeft } from 'lucide-react';
+import { Copy, Trash2, PanelLeft, CaseUpper, CaseLower, CaseSensitive, Baseline } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -95,10 +95,18 @@ export default function TextCaseConverterPage() {
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => handleConvert('uppercase')}>Uppercase</Button>
-                  <Button onClick={() => handleConvert('lowercase')}>Lowercase</Button>
-                  <Button onClick={() => handleConvert('titlecase')}>Title Case</Button>
-                  <Button onClick={() => handleConvert('sentencecase')}>Sentence Case</Button>
+                  <Button onClick={() => handleConvert('uppercase')}>
+                    <CaseUpper className="mr-2 h-4 w-4" /> Uppercase
+                  </Button>
+                  <Button onClick={() => handleConvert('lowercase')}>
+                    <CaseLower className="mr-2 h-4 w-4" /> Lowercase
+                  </Button>
+                  <Button onClick={() => handleConvert('titlecase')}>
+                    <CaseSensitive className="mr-2 h-4 w-4" /> Title Case
+                  </Button>
+                  <Button onClick={() => handleConvert('sentencecase')}>
+                    <Baseline className="mr-2 h-4 w-4" /> Sentence Case
+                  </Button>
                 </div>
 
                 <div className="space-y-2">
@@ -117,7 +125,7 @@ export default function TextCaseConverterPage() {
                 <Button variant="outline" onClick={handleClear} title="Clear all text">
                   <Trash2 className="mr-2 h-4 w-4" /> Clear
                 </Button>
-                <Button onClick={handleCopy} title="Copy output text">
+                <Button onClick={handleCopy} title="Copy output text" disabled={!outputText}>
                   <Copy className="mr-2 h-4 w-4" /> Copy Output
                 </Button>
               </CardFooter>
