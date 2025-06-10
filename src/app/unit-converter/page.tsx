@@ -65,13 +65,12 @@ export default function UnitConverterPage() {
 
   useEffect(() => {
     convertUnits();
-  }, [inputValue, fromUnit, toUnit, selectedCategory]);
+  }, [inputValue, fromUnit, toUnit, selectedCategory, currentCategory]); // Added currentCategory
   
   useEffect(() => {
     setFromUnit(currentCategory.units[0].value);
     setToUnit(currentCategory.units.length > 1 ? currentCategory.units[1].value : currentCategory.units[0].value);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, currentCategory.units]);
+  }, [selectedCategory, currentCategory]);
 
 
   const convertUnits = () => {
@@ -185,7 +184,7 @@ export default function UnitConverterPage() {
                       value={outputValue}
                       readOnly
                       placeholder="Result"
-                      className="bg-muted/50"
+                      className="bg-muted/50 text-lg font-semibold"
                     />
                     <Select value={toUnit} onValueChange={setToUnit}>
                       <SelectTrigger>
@@ -212,3 +211,4 @@ export default function UnitConverterPage() {
     </>
   );
 }
+
