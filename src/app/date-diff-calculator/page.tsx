@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,7 @@ import { PanelLeft, CalendarIcon } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { format, differenceInYears, differenceInMonths, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, isValid } from 'date-fns';
+import { format, differenceInYears, differenceInMonths, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, isValid, parseISO, getUnixTime } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -46,7 +46,10 @@ export default function DateDiffCalculatorPage() {
     let newDate = datePart ? new Date(datePart) : new Date(originalDate); 
     
     if (timePart) {
-        const [hours, minutes, seconds] = timePart.split(':').map(Number);
+        const timePartsArray = timePart.split(':').map(Number);
+        const hours = timePartsArray[0];
+        const minutes = timePartsArray[1];
+        const seconds = timePartsArray[2]; // Might be undefined if timePart doesn't include seconds
         newDate.setHours(hours || 0, minutes || 0, seconds || 0, 0); 
     } else if (datePart) { 
         newDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds(), originalDate.getMilliseconds());
@@ -55,8 +58,7 @@ export default function DateDiffCalculatorPage() {
     setter(newDate);
   };
 
-
-  const calculateDiff = () => {
+  const calculateDiff = useCallback(() => {
     if (!isValid(startDate) || !isValid(endDate)) {
       toast({ title: 'Invalid Dates', description: 'Please ensure both dates are valid.', variant: 'destructive' });
       setDiffResult(null);
@@ -72,19 +74,19 @@ export default function DateDiffCalculatorPage() {
     let tempStartDate = new Date(startDate);
     
     const years = differenceInYears(endDate, tempStartDate);
-    tempStartDate = new Date(tempStartDate.setFullYear(tempStartDate.getFullYear() + years));
+    tempStartDate.setFullYear(tempStartDate.getFullYear() + years);
     
     const months = differenceInMonths(endDate, tempStartDate);
-    tempStartDate = new Date(tempStartDate.setMonth(tempStartDate.getMonth() + months));
+    tempStartDate.setMonth(tempStartDate.getMonth() + months);
 
     const days = differenceInDays(endDate, tempStartDate);
-    tempStartDate = new Date(tempStartDate.setDate(tempStartDate.getDate() + days));
+    tempStartDate.setDate(tempStartDate.getDate() + days);
 
     const hours = differenceInHours(endDate, tempStartDate);
-    tempStartDate = new Date(tempStartDate.setHours(tempStartDate.getHours() + hours));
+    tempStartDate.setHours(tempStartDate.getHours() + hours);
 
     const minutes = differenceInMinutes(endDate, tempStartDate);
-    tempStartDate = new Date(tempStartDate.setMinutes(tempStartDate.getMinutes() + minutes));
+    tempStartDate.setMinutes(tempStartDate.getMinutes() + minutes);
 
     const seconds = differenceInSeconds(endDate, tempStartDate);
 
@@ -100,13 +102,14 @@ export default function DateDiffCalculatorPage() {
       totalMinutes: differenceInMinutes(endDate, startDate),
       totalSeconds: differenceInSeconds(endDate, startDate),
     });
+    // The toast is kept here as per original logic, button click will also trigger this.
+    // If this toast is too frequent due to auto-update, it can be moved to a separate button handler.
     toast({ title: 'Difference Calculated!' });
-  };
+  }, [startDate, endDate, toast]);
   
   useEffect(() => {
     calculateDiff();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, endDate]);
+  }, [calculateDiff]);
 
 
   return (
@@ -246,3 +249,4 @@ export default function DateDiffCalculatorPage() {
     </>
   );
 }
+
