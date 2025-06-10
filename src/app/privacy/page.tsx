@@ -3,12 +3,18 @@
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { PanelLeft } from 'lucide-react';
+import { PanelLeft, ShieldCheck } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 
 export default function PrivacyPolicyPage() {
+  const [lastUpdated, setLastUpdated] = React.useState('');
+
+  React.useEffect(() => {
+    setLastUpdated(new Date().toLocaleDateString());
+  }, []);
+
   return (
     <>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -21,6 +27,7 @@ export default function PrivacyPolicyPage() {
             <SidebarTrigger className="md:hidden">
               <PanelLeft />
             </SidebarTrigger>
+            <ShieldCheck className="h-5 w-5 md:h-6 md:w-6" />
             <h1 className="text-xl font-semibold font-headline">Privacy Policy</h1>
           </div>
           <ThemeToggleButton />
@@ -30,22 +37,22 @@ export default function PrivacyPolicyPage() {
             <Card className="w-full max-w-2xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Privacy Policy</CardTitle>
-                <CardDescription>Our commitment to your privacy.</CardDescription>
+                <CardDescription>Our commitment to your privacy at utilities.my.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                  <div className="prose dark:prose-invert max-w-none">
-                  <p><strong>Last Updated: {new Date().toLocaleDateString()}</strong></p>
+                  <p><strong>Last Updated: {lastUpdated}</strong></p>
 
                   <h2>1. Introduction</h2>
                   <p>
-                    This Privacy Policy explains how UtilityBelt ("we", "us", or "our")
+                    This Privacy Policy explains how utilities.my ("we", "us", or "our")
                     collects, uses, and discloses information about you when you use our
                     application (the "Service").
                   </p>
 
                   <h2>2. Information We Collect</h2>
                   <p>
-                    Currently, UtilityBelt is designed to operate primarily on the client-side.
+                    Currently, utilities.my is designed to operate primarily on the client-side.
                     This means that most data processed by the tools remains within your browser
                     and is not transmitted to our servers.
                   </p>
@@ -111,7 +118,7 @@ export default function PrivacyPolicyPage() {
                   <h2>9. Contact Us</h2>
                   <p>
                     If you have any questions about this Privacy Policy, please contact us.
-                    (Note: A real contact method would be provided in a production app).
+                    (Note: A real contact method would be provided in a production app for utilities.my).
                   </p>
                 </div>
               </CardContent>
