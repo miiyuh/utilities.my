@@ -19,7 +19,7 @@ const WHEEL_COLORS = [
 ];
 
 const POINTER_SIZE = 20; // Size of the triangular pointer
-const TEXT_OFFSET_PERCENTAGE = 0.27; // How far from center text is (27% of radius) - Adjusted to prevent clipping
+const TEXT_OFFSET_PERCENTAGE = 0.25; // How far from center text is (25% of radius) - Adjusted
 
 export default function SpinTheWheelPage() {
   const { toast } = useToast();
@@ -73,7 +73,7 @@ export default function SpinTheWheelPage() {
     const randomIndex = Math.floor(Math.random() * items.length);
     const segmentAngle = 360 / items.length;
     
-    const baseSpins = Math.floor(Math.random() * 3) + 4; // 4 to 6 full spins - Adjusted for more spin
+    const baseSpins = Math.floor(Math.random() * 3) + 5; // 5 to 7 full spins - Adjusted for more spin
     const targetAngle = (baseSpins * 360) - (randomIndex * segmentAngle) - (segmentAngle / 2);
     
     setRotation(prevRotation => prevRotation + targetAngle); // Accumulate rotation for continuous spinning effect
@@ -145,11 +145,12 @@ export default function SpinTheWheelPage() {
                         ref={wheelRef}
                         className={cn(
                             "relative w-64 h-64 md:w-72 md:h-72 rounded-full border-4 border-primary overflow-hidden shadow-2xl",
-                            "transition-transform duration-[4000ms] ease-in-out" // Changed to ease-in-out
+                            "transition-transform duration-[4000ms] ease-in-out"
                         )}
                         style={{ 
                           transform: `rotate(${rotation}deg)`,
                           background: getConicGradientBackground(),
+                          willChange: 'transform', // Added will-change
                         }}
                     >
                         {items.length > 0 && items.map((item, index) => {
@@ -160,7 +161,7 @@ export default function SpinTheWheelPage() {
                           return (
                             <div
                               key={index}
-                              className="absolute top-1/2 left-1/2 pointer-events-none flex items-center justify-center" // Added flex for centering span
+                              className="absolute top-1/2 left-1/2 pointer-events-none flex items-center justify-center"
                               style={{
                                 transform: `rotate(${segmentMidAngle}deg) translate(0, -${textRadius}px) rotate(-${segmentMidAngle}deg)`,
                                 width: `${anglePerSegment < 45 ? wheelDiameter * 0.25 : wheelDiameter * 0.35}px`, 
