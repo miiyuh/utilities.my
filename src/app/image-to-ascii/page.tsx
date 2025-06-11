@@ -17,20 +17,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 
 const ASCII_RAMPS = {
-  detailed: "`.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@",
-  simple: " .:-=+*#%@",
-  blocks: " ░▒▓█",
-  special1: "@%#*+=-:. ",
-  special2: "Ñ@#W$9876543210?!abc;:+=-,._ ",
+  detailed: "`.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@", // Sparse to Dense
+  standard: " .'-~+=*#%@", // Sparse to Dense
+  simple: " .:*o&8#@", // Sparse to Dense (very short)
+  blocks: " ░▒▓█", // Sparse to Dense
+  minimal: " .#", // Sparse to Dense (extreme minimal)
 };
 type RampKey = keyof typeof ASCII_RAMPS;
 
 const getAsciiChar = (brightness: number, ramp: string, invert: boolean): string => {
   const normalizedBrightness = brightness / 255;
   let index = Math.floor(normalizedBrightness * (ramp.length - 1));
-  // Default: dark characters for light image areas (higher brightness -> earlier in ramp if ramp is sparse to dense)
-  // So, if ramp is sparse to dense, use ramp.length - 1 - index for light image areas to get sparse chars.
-  // If invert is true, use index directly (light image areas get denser chars from a sparse-to-dense ramp).
+  // Ramps are sparse to dense.
+  // Not inverted: Light (high brightness) -> sparse (early in ramp) -> ramp.length - 1 - index
+  // Inverted: Light (high brightness) -> dense (late in ramp) -> ramp[index]
   return invert ? ramp[index] : ramp[ramp.length - 1 - index];
 };
 
@@ -42,8 +42,9 @@ export default function ImageToAsciiPage() {
   
   // Conversion Options
   const [asciiWidth, setAsciiWidth] = useState<number>(80);
-  const [selectedRampKey, setSelectedRampKey] = useState<RampKey>('detailed');
+  const [selectedRampKey, setSelectedRampKey] = useState<RampKey>('standard');
   const [invertBrightness, setInvertBrightness] = useState<boolean>(false);
+  const [contrast, setContrast] = useState<number>(1);
 
   const imagePreviewRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +81,7 @@ export default function ImageToAsciiPage() {
     }
 
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) {
       toast({ title: 'Canvas Error', description: 'Could not create canvas context.', variant: 'destructive' });
       setIsLoading(false);
@@ -88,7 +89,10 @@ export default function ImageToAsciiPage() {
     }
 
     const aspectRatio = img.naturalWidth / img.naturalHeight;
-    const scaledHeight = Math.round(asciiWidth / aspectRatio * 0.55); // Adjusted aspect ratio for characters
+    // Character aspect ratio correction (characters are taller than they are wide)
+    // 0.5 to 0.6 is a common range, 0.55 is a decent middle ground.
+    const charAspectCorrection = 0.55; 
+    const scaledHeight = Math.round((asciiWidth / aspectRatio) * charAspectCorrection);
 
     canvas.width = asciiWidth;
     canvas.height = scaledHeight;
@@ -107,7 +111,22 @@ export default function ImageToAsciiPage() {
             const r = data[i];
             const g = data[i + 1];
             const b = data[i + 2];
-            const brightness = (0.299 * r + 0.587 * g + 0.114 * b); 
+            const a = data[i + 3];
+
+            // Blend with white based on alpha
+            const alphaFactor = a / 255;
+            const blendedR = r * alphaFactor + 255 * (1 - alphaFactor);
+            const blendedG = g * alphaFactor + 255 * (1 - alphaFactor);
+            const blendedB = b * alphaFactor + 255 * (1 - alphaFactor);
+            
+            let brightness = (0.299 * blendedR + 0.587 * blendedG + 0.114 * blendedB); 
+
+            // Apply contrast
+            let normalizedBrightness = brightness / 255;
+            normalizedBrightness = (normalizedBrightness - 0.5) * contrast + 0.5;
+            normalizedBrightness = Math.max(0, Math.min(1, normalizedBrightness)); // Clamp to [0, 1]
+            brightness = normalizedBrightness * 255;
+            
             art += getAsciiChar(brightness, currentRamp, invertBrightness);
           }
           art += '\n';
@@ -122,7 +141,7 @@ export default function ImageToAsciiPage() {
         setIsLoading(false);
     }
 
-  }, [uploadedImage, asciiWidth, toast, selectedRampKey, invertBrightness]);
+  }, [uploadedImage, asciiWidth, toast, selectedRampKey, invertBrightness, contrast]);
 
   const handleCopy = async () => {
     if (!asciiArt) {
@@ -201,6 +220,7 @@ export default function ImageToAsciiPage() {
                             onError={() => toast({title:"Preview Error", description:"Could not load image preview.", variant:"destructive"})}
                           />
                         </div>
+                        <p className="text-xs text-muted-foreground text-center md:text-left">This is a preview of your uploaded image.</p>
                       </div>
                     )}
                     {!uploadedImage && (
@@ -249,6 +269,19 @@ export default function ImageToAsciiPage() {
                           </Select>
                         </div>
                         
+                        <div className="space-y-2">
+                            <Label htmlFor="contrastSlider">Contrast: {contrast.toFixed(1)}</Label>
+                            <Slider
+                                id="contrastSlider"
+                                min={0.1}
+                                max={3}
+                                step={0.1}
+                                value={[contrast]}
+                                onValueChange={(value) => setContrast(value[0])}
+                                disabled={isLoading}
+                            />
+                        </div>
+
                         <div className="flex items-center space-x-2">
                           <Switch 
                             id="invertBrightness" 
@@ -301,5 +334,3 @@ export default function ImageToAsciiPage() {
     </>
   );
 }
-
-    
