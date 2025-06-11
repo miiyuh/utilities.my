@@ -1,8 +1,8 @@
 // src/lib/tools.ts
 import type { LucideIcon } from "lucide-react";
 import { 
-  CaseSensitive, FileJson, Palette, Ruler, Home, 
-  FileText, QrCode, Timer, Globe, CalendarRange, FileArchive, Baseline, ArrowDownUp 
+  CaseSensitive, Palette, Ruler, Home, 
+  FileText, QrCode, Timer, Globe, CalendarRange, FileArchive, Baseline, ArrowDownUp, Camera, Disc3
 } from "lucide-react";
 
 export interface Tool {
@@ -15,7 +15,6 @@ export interface Tool {
 export const tools: Tool[] = [
   { name: "Home", path: "/", icon: Home, description: "Return to the main dashboard." },
   { name: "Text Case Converter", path: "/text-case", icon: CaseSensitive, description: "Convert text between different letter cases." },
-  { name: "JSON Formatter", path: "/json-formatter", icon: FileJson, description: "Format and validate JSON data." },
   { name: "Color Picker", path: "/color-picker", icon: Palette, description: "Pick colors and get their codes in various formats." },
   { name: "Unit Converter", path: "/unit-converter", icon: Ruler, description: "Convert between different units of measurement." },
   { name: "Markdown Previewer", path: "/markdown-previewer", icon: FileText, description: "Write Markdown and see a live preview." },
@@ -26,4 +25,6 @@ export const tools: Tool[] = [
   { name: "File Compressor (ZIP)", path: "/file-compressor", icon: FileArchive, description: "Compress multiple files into a single ZIP archive." },
   { name: "Text Statistics", path: "/text-statistics", icon: Baseline, description: "Analyze text for word count, character count, and more." },
   { name: "Sorter", path: "/sorter", icon: ArrowDownUp, description: "Sort lines of text alphabetically or numerically." },
+  { name: "Image to ASCII", path: "/image-to-ascii", icon: Camera, description: "Convert images into ASCII art representations." },
+  { name: "Spin the Wheel", path: "/spin-the-wheel", icon: Disc3, description: "A fun utility to pick a random item from a list." },
 ];
