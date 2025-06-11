@@ -2,13 +2,13 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, UploadCloud, Wand2, Copy } from 'lucide-react';
+import { PanelLeft, UploadCloud, Wand2, Copy, Image as ImageIcon } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -56,17 +56,9 @@ export default function ImageToAsciiPage() {
 
     const img = imagePreviewRef.current;
     
-    // Ensure image is loaded before trying to draw it
-    // This check is crucial because the img src is set asynchronously
     if (!img.complete || img.naturalWidth === 0) {
-        // Image not loaded yet, or dimensions are zero.
-        // Attempt to re-trigger after a short delay if src is set.
-        // If src is not set (or image fails to load), this won't loop indefinitely.
         toast({title: "Image Loading", description: "Preview is loading, please wait a moment and try again.", variant: "default"});
-        setIsLoading(false); // Reset loading state
-        // Optionally, add a retry mechanism or user feedback
-        // For now, we just inform the user and stop.
-        // setTimeout(convertToAscii, 100); // Avoid this without better load handling
+        setIsLoading(false);
         return;
     }
 
@@ -78,16 +70,12 @@ export default function ImageToAsciiPage() {
       return;
     }
 
-    // Calculate scaled height based on original aspect ratio and desired ASCII width
-    // The 0.5 factor accounts for typical character aspect ratio (height is roughly twice width)
-    // to make the ASCII art look less "stretched" vertically.
     const aspectRatio = img.naturalWidth / img.naturalHeight;
     const scaledHeight = Math.round(asciiWidth / aspectRatio * 0.5);
 
     canvas.width = asciiWidth;
     canvas.height = scaledHeight;
 
-    // Draw the (potentially scaled) image onto the canvas
     ctx.drawImage(img, 0, 0, asciiWidth, scaledHeight);
     
     let art = '';
@@ -97,22 +85,21 @@ export default function ImageToAsciiPage() {
 
         for (let y = 0; y < scaledHeight; y++) {
           for (let x = 0; x < asciiWidth; x++) {
-            const i = (y * asciiWidth + x) * 4; // Index for R, G, B, A components
+            const i = (y * asciiWidth + x) * 4;
             const r = data[i];
             const g = data[i + 1];
             const b = data[i + 2];
-            // Standard luminance formula for grayscale conversion
             const brightness = (0.299 * r + 0.587 * g + 0.114 * b); 
             art += getAsciiChar(brightness);
           }
-          art += '\n'; // Newline after each row
+          art += '\n';
         }
         setAsciiArt(art);
         toast({ title: 'Conversion Complete!', description: 'Image converted to ASCII art.' });
     } catch (error) {
         console.error("Error getting image data:", error);
         toast({ title: 'Conversion Error', description: 'Could not process image data. The image might be from a restricted source (CORS) if loaded from a URL.', variant: 'destructive' });
-        setAsciiArt(''); // Clear any partial art
+        setAsciiArt('');
     } finally {
         setIsLoading(false);
     }
@@ -150,84 +137,104 @@ export default function ImageToAsciiPage() {
         </header>
         <div className="flex flex-1 flex-col p-4 md:p-6">
           <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-3xl mx-auto shadow-lg">
+            <Card className="w-full max-w-5xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Image to ASCII Converter</CardTitle>
                 <CardDescription>Upload an image, preview it, adjust the width, and then convert it into an ASCII art representation.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="imageUploadButton">Upload Image</Label>
-                  <Input
-                    id="imageUpload"
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    id="imageUploadButton"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isLoading}
-                  >
-                    <UploadCloud className="mr-2 h-4 w-4" /> Choose Image
-                  </Button>
-                </div>
-
-                {uploadedImage && (
-                  <div className="space-y-4 pt-4 border-t">
-                    <h3 className="font-medium text-center">Image Preview</h3>
-                    <div className="flex justify-center max-h-60 overflow-hidden rounded-md border bg-muted/10 p-2 shadow-inner">
-                      <img 
-                        ref={imagePreviewRef} 
-                        src={uploadedImage} 
-                        alt="Uploaded preview" 
-                        className="max-w-full max-h-full object-contain"
-                        data-ai-hint="uploaded image preview"
-                        onLoad={() => console.log("Image preview loaded.")} // For debugging
-                        onError={() => toast({title:"Preview Error", description:"Could not load image preview.", variant:"destructive"})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="asciiWidthSlider">ASCII Art Width: {asciiWidth} characters</Label>
-                        <Slider
-                            id="asciiWidthSlider"
-                            min={20}
-                            max={200}
-                            step={5}
-                            value={[asciiWidth]}
-                            onValueChange={(value) => setAsciiWidth(value[0])}
-                            disabled={isLoading}
-                        />
-                    </div>
-                    <Button onClick={convertToAscii} disabled={isLoading || !uploadedImage} className="w-full">
-                      <Wand2 className="mr-2 h-4 w-4" /> {isLoading ? 'Converting...' : 'Convert to ASCII'}
+              <CardContent className="grid md:grid-cols-2 gap-6 p-4 md:p-6">
+                {/* Left Column: Upload & Preview */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="imageUploadButton">1. Upload Image</Label>
+                    <Input
+                      id="imageUpload"
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      id="imageUploadButton"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isLoading}
+                    >
+                      <UploadCloud className="mr-2 h-4 w-4" /> Choose Image
                     </Button>
                   </div>
-                )}
 
-                {asciiArt && !isLoading && (
-                  <div className="space-y-2 pt-4 border-t">
-                    <Label htmlFor="asciiOutput">ASCII Art Output</Label>
-                    <Textarea
-                      id="asciiOutput"
-                      value={asciiArt}
-                      readOnly
-                      rows={15}
-                      className="font-mono text-[10px] leading-tight resize-none bg-muted/30 p-2 whitespace-pre" // whitespace-pre is important
-                      placeholder="ASCII art will appear here..."
-                    />
-                  </div>
-                )}
+                  {uploadedImage && (
+                    <div className="space-y-2 pt-2">
+                      <h3 className="font-medium text-center md:text-left">Image Preview</h3>
+                      <div className="flex justify-center md:justify-start max-h-80 overflow-hidden rounded-md border bg-muted/10 p-2 shadow-inner">
+                        <img 
+                          ref={imagePreviewRef} 
+                          src={uploadedImage} 
+                          alt="Uploaded preview" 
+                          className="max-w-full max-h-full object-contain"
+                          data-ai-hint="uploaded image preview"
+                          onLoad={() => console.log("Image preview loaded.")}
+                          onError={() => toast({title:"Preview Error", description:"Could not load image preview.", variant:"destructive"})}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {!uploadedImage && (
+                    <div className="mt-4 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-md p-8 h-60">
+                        <ImageIcon className="h-16 w-16 mb-2 opacity-50" />
+                        <p className="text-center">Upload an image to see a preview here.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column: Controls & Output */}
+                <div className="space-y-4">
+                  {uploadedImage ? (
+                    <>
+                      <div className="space-y-2">
+                          <Label htmlFor="asciiWidthSlider">2. Adjust ASCII Art Width: {asciiWidth} chars</Label>
+                          <Slider
+                              id="asciiWidthSlider"
+                              min={20}
+                              max={200}
+                              step={5}
+                              value={[asciiWidth]}
+                              onValueChange={(value) => setAsciiWidth(value[0])}
+                              disabled={isLoading}
+                          />
+                      </div>
+                      <Button onClick={convertToAscii} disabled={isLoading || !uploadedImage} className="w-full">
+                        <Wand2 className="mr-2 h-4 w-4" /> {isLoading ? 'Converting...' : '3. Convert to ASCII'}
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-muted-foreground border-2 border-dashed rounded-md p-8 h-full flex flex-col items-center justify-center min-h-[200px]">
+                        <Wand2 className="h-10 w-10 mb-2 opacity-50" />
+                        <p className="text-center">Controls and output will appear here after uploading an image.</p>
+                    </div>
+                  )}
+
+                  {asciiArt && !isLoading && (
+                    <div className="space-y-2 pt-4 border-t">
+                      <Label htmlFor="asciiOutput">ASCII Art Output</Label>
+                      <Textarea
+                        id="asciiOutput"
+                        value={asciiArt}
+                        readOnly
+                        rows={15}
+                        className="font-mono text-[10px] leading-tight resize-none bg-muted/30 p-2 whitespace-pre"
+                        placeholder="ASCII art will appear here..."
+                      />
+                      <Button onClick={handleCopy} disabled={!asciiArt || isLoading} className="w-full sm:w-auto">
+                        <Copy className="mr-2 h-4 w-4" /> Copy ASCII Art
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button onClick={handleCopy} disabled={!asciiArt || isLoading} className="w-full sm:w-auto">
-                  <Copy className="mr-2 h-4 w-4" /> Copy ASCII Art
-                </Button>
-              </CardFooter>
             </Card>
           </div>
         </div>
@@ -235,5 +242,3 @@ export default function ImageToAsciiPage() {
     </>
   );
 }
-
-    
