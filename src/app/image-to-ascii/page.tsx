@@ -71,7 +71,7 @@ export default function ImageToAsciiPage() {
     }
 
     const aspectRatio = img.naturalWidth / img.naturalHeight;
-    const scaledHeight = Math.round(asciiWidth / aspectRatio * 0.5);
+    const scaledHeight = Math.round(asciiWidth / aspectRatio * 0.5); // 0.5 factor for character aspect ratio
 
     canvas.width = asciiWidth;
     canvas.height = scaledHeight;
@@ -142,98 +142,102 @@ export default function ImageToAsciiPage() {
                 <CardTitle className="text-2xl font-headline">Image to ASCII Converter</CardTitle>
                 <CardDescription>Upload an image, preview it, adjust the width, and then convert it into an ASCII art representation.</CardDescription>
               </CardHeader>
-              <CardContent className="grid md:grid-cols-2 gap-6 p-4 md:p-6">
-                {/* Left Column: Upload & Preview */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="imageUploadButton">1. Upload Image</Label>
-                    <Input
-                      id="imageUpload"
-                      type="file"
-                      accept="image/*"
-                      ref={fileInputRef}
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      id="imageUploadButton"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isLoading}
-                    >
-                      <UploadCloud className="mr-2 h-4 w-4" /> Choose Image
-                    </Button>
+              <CardContent className="p-4 md:p-6">
+                {/* Top Section: Upload, Preview, Controls */}
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  {/* Left Part: Upload & Preview */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="imageUploadButton">1. Upload Image</Label>
+                      <Input
+                        id="imageUpload"
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        id="imageUploadButton"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isLoading}
+                      >
+                        <UploadCloud className="mr-2 h-4 w-4" /> Choose Image
+                      </Button>
+                    </div>
+
+                    {uploadedImage && (
+                      <div className="space-y-2 pt-2">
+                        <h3 className="font-medium text-center md:text-left">Image Preview</h3>
+                        <div className="flex justify-center md:justify-start max-h-80 overflow-hidden rounded-md border bg-muted/10 p-2 shadow-inner">
+                          <img 
+                            ref={imagePreviewRef} 
+                            src={uploadedImage} 
+                            alt="Uploaded preview" 
+                            className="max-w-full max-h-full object-contain"
+                            data-ai-hint="uploaded image preview"
+                            onLoad={() => console.log("Image preview loaded.")}
+                            onError={() => toast({title:"Preview Error", description:"Could not load image preview.", variant:"destructive"})}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {!uploadedImage && (
+                      <div className="mt-4 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-md p-8 h-60">
+                          <ImageIcon className="h-16 w-16 mb-2 opacity-50" />
+                          <p className="text-center">Upload an image to see a preview here.</p>
+                      </div>
+                    )}
                   </div>
 
-                  {uploadedImage && (
-                    <div className="space-y-2 pt-2">
-                      <h3 className="font-medium text-center md:text-left">Image Preview</h3>
-                      <div className="flex justify-center md:justify-start max-h-80 overflow-hidden rounded-md border bg-muted/10 p-2 shadow-inner">
-                        <img 
-                          ref={imagePreviewRef} 
-                          src={uploadedImage} 
-                          alt="Uploaded preview" 
-                          className="max-w-full max-h-full object-contain"
-                          data-ai-hint="uploaded image preview"
-                          onLoad={() => console.log("Image preview loaded.")}
-                          onError={() => toast({title:"Preview Error", description:"Could not load image preview.", variant:"destructive"})}
-                        />
+                  {/* Right Part: Controls */}
+                  <div className="space-y-4">
+                    {uploadedImage ? (
+                      <>
+                        <div className="space-y-2">
+                            <Label htmlFor="asciiWidthSlider">2. Adjust ASCII Art Width: {asciiWidth} chars</Label>
+                            <Slider
+                                id="asciiWidthSlider"
+                                min={20}
+                                max={200}
+                                step={5}
+                                value={[asciiWidth]}
+                                onValueChange={(value) => setAsciiWidth(value[0])}
+                                disabled={isLoading}
+                            />
+                        </div>
+                        <Button onClick={convertToAscii} disabled={isLoading || !uploadedImage} className="w-full">
+                          <Wand2 className="mr-2 h-4 w-4" /> {isLoading ? 'Converting...' : '3. Convert to ASCII'}
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="text-muted-foreground border-2 border-dashed rounded-md p-8 h-full flex flex-col items-center justify-center min-h-[200px] md:min-h-[260px]">
+                          <Wand2 className="h-10 w-10 mb-2 opacity-50" />
+                          <p className="text-center">Controls will appear here after uploading an image.</p>
                       </div>
-                    </div>
-                  )}
-                  {!uploadedImage && (
-                    <div className="mt-4 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-md p-8 h-60">
-                        <ImageIcon className="h-16 w-16 mb-2 opacity-50" />
-                        <p className="text-center">Upload an image to see a preview here.</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-
-                {/* Right Column: Controls & Output */}
-                <div className="space-y-4">
-                  {uploadedImage ? (
-                    <>
-                      <div className="space-y-2">
-                          <Label htmlFor="asciiWidthSlider">2. Adjust ASCII Art Width: {asciiWidth} chars</Label>
-                          <Slider
-                              id="asciiWidthSlider"
-                              min={20}
-                              max={200}
-                              step={5}
-                              value={[asciiWidth]}
-                              onValueChange={(value) => setAsciiWidth(value[0])}
-                              disabled={isLoading}
-                          />
-                      </div>
-                      <Button onClick={convertToAscii} disabled={isLoading || !uploadedImage} className="w-full">
-                        <Wand2 className="mr-2 h-4 w-4" /> {isLoading ? 'Converting...' : '3. Convert to ASCII'}
-                      </Button>
-                    </>
-                  ) : (
-                    <div className="text-muted-foreground border-2 border-dashed rounded-md p-8 h-full flex flex-col items-center justify-center min-h-[200px]">
-                        <Wand2 className="h-10 w-10 mb-2 opacity-50" />
-                        <p className="text-center">Controls and output will appear here after uploading an image.</p>
-                    </div>
-                  )}
-
-                  {asciiArt && !isLoading && (
-                    <div className="space-y-2 pt-4 border-t">
-                      <Label htmlFor="asciiOutput">ASCII Art Output</Label>
-                      <Textarea
-                        id="asciiOutput"
-                        value={asciiArt}
-                        readOnly
-                        rows={15}
-                        className="font-mono text-[10px] leading-tight resize-none bg-muted/30 p-2 whitespace-pre"
-                        placeholder="ASCII art will appear here..."
-                      />
-                      <Button onClick={handleCopy} disabled={!asciiArt || isLoading} className="w-full sm:w-auto">
-                        <Copy className="mr-2 h-4 w-4" /> Copy ASCII Art
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                
+                {/* Bottom Section: Output */}
+                {asciiArt && !isLoading && (
+                  <div className="space-y-2 pt-6 border-t mt-6">
+                    <Label htmlFor="asciiOutput">ASCII Art Output</Label>
+                    <Textarea
+                      id="asciiOutput"
+                      value={asciiArt}
+                      readOnly
+                      rows={15}
+                      className="font-mono text-[10px] leading-tight resize-none bg-muted/30 p-2 whitespace-pre w-full"
+                      placeholder="ASCII art will appear here..."
+                    />
+                    <Button onClick={handleCopy} disabled={!asciiArt || isLoading} className="w-full sm:w-auto mt-2">
+                      <Copy className="mr-2 h-4 w-4" /> Copy ASCII Art
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
