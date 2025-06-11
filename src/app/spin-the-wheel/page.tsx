@@ -19,6 +19,7 @@ const WHEEL_COLORS = [
 ];
 
 const POINTER_SIZE = 20; // Size of the triangular pointer
+const TEXT_OFFSET_PERCENTAGE = 0.3; // How far from center text is (30% of radius)
 
 export default function SpinTheWheelPage() {
   const { toast } = useToast();
@@ -28,12 +29,38 @@ export default function SpinTheWheelPage() {
   const [result, setResult] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
   const wheelRef = useRef<HTMLDivElement>(null);
+  const [wheelDiameter, setWheelDiameter] = useState(288); // Default to md size
 
   useEffect(() => {
     const parsedItems = itemsInput.split('\n').map(item => item.trim()).filter(item => item);
     setItems(parsedItems);
-    setResult(null); // Reset result when items change
+    setResult(null); 
   }, [itemsInput]);
+
+  useEffect(() => {
+    if (wheelRef.current) {
+      setWheelDiameter(wheelRef.current.offsetWidth);
+    }
+    const handleResize = () => {
+      if (wheelRef.current) {
+        setWheelDiameter(wheelRef.current.offsetWidth);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [items]); // Re-check on items change if wheel might resize due to layout shift
+
+  const getConicGradientBackground = () => {
+    if (items.length === 0) return 'transparent';
+    const segmentAnglePercent = 100 / items.length;
+    const colorStops = items.map((_, index) => {
+      const color = WHEEL_COLORS[index % WHEEL_COLORS.length];
+      const startPercent = segmentAnglePercent * index;
+      const endPercent = segmentAnglePercent * (index + 1);
+      return `${color} ${startPercent}% ${endPercent}%`;
+    });
+    return `conic-gradient(${colorStops.join(', ')})`;
+  };
 
   const handleSpin = () => {
     if (items.length < 2) {
@@ -46,49 +73,24 @@ export default function SpinTheWheelPage() {
     const randomIndex = Math.floor(Math.random() * items.length);
     const segmentAngle = 360 / items.length;
     
-    // Calculate target rotation:
-    // Base rotations (3-6 full spins) + angle to center of winning segment + slight offset for visual appeal
     const baseSpins = Math.floor(Math.random() * 4) + 3; 
     const targetAngle = (baseSpins * 360) - (randomIndex * segmentAngle) - (segmentAngle / 2);
     
-    setRotation(targetAngle);
+    setRotation(prevRotation => prevRotation + targetAngle); // Accumulate rotation for continuous spinning effect
 
     setTimeout(() => {
       setIsSpinning(false);
       setResult(items[randomIndex]);
       toast({ title: 'And the winner is...', description: items[randomIndex], duration: 3000 });
-    }, 4000); // Match CSS transition duration
+    }, 4000); 
   };
 
   const handleReset = () => {
     setItemsInput('Option 1\nOption 2\nOption 3\nOption 4\nOption 5\nOption 6');
     setIsSpinning(false);
     setResult(null);
-    setRotation(0);
+    setRotation(0); // Reset rotation to initial state
     toast({ title: 'Wheel Reset' });
-  };
-  
-  const getSegmentStyle = (index: number, totalItems: number) => {
-    if (totalItems === 0) return {};
-    const angle = 360 / totalItems;
-    const skewY = totalItems > 2 ? angle - 90 : 0; // Skew for pie effect
-    const rotate = angle * index;
-    
-    return {
-      transform: `rotate(${rotate}deg) skewY(${skewY}deg)`,
-      background: WHEEL_COLORS[index % WHEEL_COLORS.length],
-    };
-  };
-  
-  const getSegmentTextStyle = (index: number, totalItems: number) => {
-     if (totalItems === 0) return {};
-    const angle = 360 / totalItems;
-    const textRotation = totalItems > 2 ? (angle / 2) - 90 : 0; // Center text in segment
-    const skewY = totalItems > 2 ? angle - 90 : 0;
-    
-    return {
-       transform: `skewY(${-skewY}deg) rotate(${textRotation}deg)`,
-    };
   };
 
   return (
@@ -128,10 +130,9 @@ export default function SpinTheWheelPage() {
                   />
                 </div>
 
-                <div className="relative flex flex-col items-center justify-center my-8 min-h-[300px]">
-                    {/* Pointer */}
+                <div className="relative flex flex-col items-center justify-center my-8 min-h-[300px] md:min-h-[350px]">
                     <div 
-                        className="absolute top-[-10px] left-1/2 -translate-x-1/2 z-10"
+                        className="absolute top-[-10px] left-1/2 -translate-x-1/2 z-20"
                         style={{
                             width: 0, height: 0,
                             borderLeft: `${POINTER_SIZE / 2}px solid transparent`,
@@ -140,33 +141,38 @@ export default function SpinTheWheelPage() {
                         }}
                         aria-hidden="true"
                     />
-                    {/* Wheel */}
                     <div
                         ref={wheelRef}
                         className={cn(
                             "relative w-64 h-64 md:w-72 md:h-72 rounded-full border-4 border-primary overflow-hidden shadow-2xl",
                             "transition-transform duration-[4000ms] ease-out" 
                         )}
-                        style={{ transform: `rotate(${rotation}deg)` }}
+                        style={{ 
+                          transform: `rotate(${rotation}deg)`,
+                          background: getConicGradientBackground(),
+                        }}
                     >
-                        {items.length > 0 && items.map((item, index) => (
+                        {items.length > 0 && items.map((item, index) => {
+                          const anglePerSegment = 360 / items.length;
+                          const segmentMidAngle = anglePerSegment * index + anglePerSegment / 2;
+                          const textRadius = wheelDiameter * TEXT_OFFSET_PERCENTAGE;
+
+                          return (
                             <div
-                                key={index}
-                                className="absolute top-0 left-0 w-full h-full origin-center"
-                                style={getSegmentStyle(index, items.length)}
+                              key={index}
+                              className="absolute top-1/2 left-1/2 pointer-events-none"
+                              style={{
+                                transform: `rotate(${segmentMidAngle}deg) translate(0, -${textRadius}px) rotate(-${segmentMidAngle}deg)`,
+                                width: `${anglePerSegment < 45 ? wheelDiameter * 0.25 : wheelDiameter * 0.35}px`, // Adjust width based on segment size
+                              }}
                             >
-                                <div 
-                                    className="absolute w-1/2 h-1/2 top-0 left-0 flex items-center justify-center origin-bottom-right"
-                                    style={getSegmentTextStyle(index, items.length)}
-                                >
-                                    <span className="text-xs md:text-sm font-semibold text-primary-foreground/80 select-none truncate px-1 text-center block max-w-[80%]">
-                                        {item}
-                                    </span>
-                                </div>
+                              <span className="text-xs md:text-sm font-semibold text-primary-foreground/90 select-none truncate px-1 text-center block">
+                                {item}
+                              </span>
                             </div>
-                        ))}
-                        {/* Center Circle */}
-                        <div className="absolute top-1/2 left-1/2 w-10 h-10 md:w-12 md:h-12 bg-background border-2 border-primary rounded-full -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+                          );
+                        })}
+                        <div className="absolute top-1/2 left-1/2 w-10 h-10 md:w-12 md:h-12 bg-background border-2 border-primary rounded-full -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10">
                             <Disc3 className="h-5 w-5 md:h-6 md:w-6 text-primary opacity-70"/>
                         </div>
                     </div>
