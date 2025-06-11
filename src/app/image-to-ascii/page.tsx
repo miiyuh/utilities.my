@@ -8,18 +8,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, UploadCloud, Wand2, Copy, Image as ImageIcon } from 'lucide-react';
+import { PanelLeft, UploadCloud, Wand2, Copy, Image as ImageIcon, Settings2 } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 
-// More detailed ramp
-const ASCII_CHARS = "`.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@".split('');
+const ASCII_RAMPS = {
+  detailed: "`.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@",
+  simple: " .:-=+*#%@",
+  blocks: " ░▒▓█",
+  special1: "@%#*+=-:. ",
+  special2: "Ñ@#W$9876543210?!abc;:+=-,._ ",
+};
+type RampKey = keyof typeof ASCII_RAMPS;
 
-const getAsciiChar = (brightness: number): string => {
-  const index = Math.floor((brightness / 255) * (ASCII_CHARS.length - 1));
-  return ASCII_CHARS[ASCII_CHARS.length - 1 - index]; // Invert for dark char on light bg
+const getAsciiChar = (brightness: number, ramp: string, invert: boolean): string => {
+  const normalizedBrightness = brightness / 255;
+  let index = Math.floor(normalizedBrightness * (ramp.length - 1));
+  // Default: dark characters for light image areas (higher brightness -> earlier in ramp if ramp is sparse to dense)
+  // So, if ramp is sparse to dense, use ramp.length - 1 - index for light image areas to get sparse chars.
+  // If invert is true, use index directly (light image areas get denser chars from a sparse-to-dense ramp).
+  return invert ? ramp[index] : ramp[ramp.length - 1 - index];
 };
 
 export default function ImageToAsciiPage() {
@@ -27,7 +39,12 @@ export default function ImageToAsciiPage() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [asciiArt, setAsciiArt] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  // Conversion Options
   const [asciiWidth, setAsciiWidth] = useState<number>(80);
+  const [selectedRampKey, setSelectedRampKey] = useState<RampKey>('detailed');
+  const [invertBrightness, setInvertBrightness] = useState<boolean>(false);
+
   const imagePreviewRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,7 +58,7 @@ export default function ImageToAsciiPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         setUploadedImage(e.target?.result as string);
-        setAsciiArt(''); // Clear previous ASCII art
+        setAsciiArt(''); 
       };
       reader.readAsDataURL(file);
     }
@@ -71,7 +88,7 @@ export default function ImageToAsciiPage() {
     }
 
     const aspectRatio = img.naturalWidth / img.naturalHeight;
-    const scaledHeight = Math.round(asciiWidth / aspectRatio * 0.5); // 0.5 factor for character aspect ratio
+    const scaledHeight = Math.round(asciiWidth / aspectRatio * 0.55); // Adjusted aspect ratio for characters
 
     canvas.width = asciiWidth;
     canvas.height = scaledHeight;
@@ -79,6 +96,7 @@ export default function ImageToAsciiPage() {
     ctx.drawImage(img, 0, 0, asciiWidth, scaledHeight);
     
     let art = '';
+    const currentRamp = ASCII_RAMPS[selectedRampKey];
     try {
         const imageData = ctx.getImageData(0, 0, asciiWidth, scaledHeight);
         const { data } = imageData;
@@ -90,7 +108,7 @@ export default function ImageToAsciiPage() {
             const g = data[i + 1];
             const b = data[i + 2];
             const brightness = (0.299 * r + 0.587 * g + 0.114 * b); 
-            art += getAsciiChar(brightness);
+            art += getAsciiChar(brightness, currentRamp, invertBrightness);
           }
           art += '\n';
         }
@@ -104,7 +122,7 @@ export default function ImageToAsciiPage() {
         setIsLoading(false);
     }
 
-  }, [uploadedImage, asciiWidth, toast]);
+  }, [uploadedImage, asciiWidth, toast, selectedRampKey, invertBrightness]);
 
   const handleCopy = async () => {
     if (!asciiArt) {
@@ -140,15 +158,15 @@ export default function ImageToAsciiPage() {
             <Card className="w-full max-w-5xl mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Image to ASCII Converter</CardTitle>
-                <CardDescription>Upload an image, preview it, adjust the width, and then convert it into an ASCII art representation.</CardDescription>
+                <CardDescription>Upload an image, adjust options, and convert it into an ASCII art representation. Preview your image and then generate the art.</CardDescription>
               </CardHeader>
               <CardContent className="p-4 md:p-6">
                 {/* Top Section: Upload, Preview, Controls */}
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <div className="grid md:grid-cols-2 gap-x-6 gap-y-8 mb-6">
                   {/* Left Part: Upload & Preview */}
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="imageUploadButton">1. Upload Image</Label>
+                      <Label htmlFor="imageUploadButton" className="font-medium text-base">1. Upload Image</Label>
                       <Input
                         id="imageUpload"
                         type="file"
@@ -156,6 +174,7 @@ export default function ImageToAsciiPage() {
                         ref={fileInputRef}
                         onChange={handleImageUpload}
                         className="hidden"
+                        disabled={isLoading}
                       />
                       <Button
                         id="imageUploadButton"
@@ -176,7 +195,7 @@ export default function ImageToAsciiPage() {
                             ref={imagePreviewRef} 
                             src={uploadedImage} 
                             alt="Uploaded preview" 
-                            className="max-w-full max-h-full object-contain"
+                            className="max-w-full max-h-72 object-contain"
                             data-ai-hint="uploaded image preview"
                             onLoad={() => console.log("Image preview loaded.")}
                             onError={() => toast({title:"Preview Error", description:"Could not load image preview.", variant:"destructive"})}
@@ -193,29 +212,64 @@ export default function ImageToAsciiPage() {
                   </div>
 
                   {/* Right Part: Controls */}
-                  <div className="space-y-4">
+                  <div className="space-y-6">
+                     <h3 className="font-medium text-base flex items-center"><Settings2 className="mr-2 h-5 w-5 text-primary"/>2. Adjust Conversion Options</h3>
                     {uploadedImage ? (
                       <>
                         <div className="space-y-2">
-                            <Label htmlFor="asciiWidthSlider">2. Adjust ASCII Art Width: {asciiWidth} chars</Label>
+                            <Label htmlFor="asciiWidthSlider">ASCII Art Width: {asciiWidth} chars</Label>
                             <Slider
                                 id="asciiWidthSlider"
                                 min={20}
-                                max={200}
+                                max={300}
                                 step={5}
                                 value={[asciiWidth]}
                                 onValueChange={(value) => setAsciiWidth(value[0])}
                                 disabled={isLoading}
                             />
                         </div>
-                        <Button onClick={convertToAscii} disabled={isLoading || !uploadedImage} className="w-full">
+
+                        <div className="space-y-2">
+                          <Label htmlFor="characterRamp">Character Set (Ramp)</Label>
+                          <Select 
+                            value={selectedRampKey} 
+                            onValueChange={(value) => setSelectedRampKey(value as RampKey)}
+                            disabled={isLoading}
+                          >
+                            <SelectTrigger id="characterRamp">
+                              <SelectValue placeholder="Select character ramp" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.keys(ASCII_RAMPS).map(key => (
+                                <SelectItem key={key} value={key}>
+                                  {key.charAt(0).toUpperCase() + key.slice(1)} (Preview: {ASCII_RAMPS[key as RampKey].substring(0,10)}...)
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Switch 
+                            id="invertBrightness" 
+                            checked={invertBrightness} 
+                            onCheckedChange={setInvertBrightness} 
+                            disabled={isLoading}
+                          />
+                          <Label htmlFor="invertBrightness">Invert Brightness Mapping</Label>
+                        </div>
+                        <p className="text-xs text-muted-foreground -mt-1 pl-1">
+                          Changes how bright/dark image areas map to sparse/dense characters.
+                        </p>
+
+                        <Button onClick={convertToAscii} disabled={isLoading || !uploadedImage} className="w-full pt-3">
                           <Wand2 className="mr-2 h-4 w-4" /> {isLoading ? 'Converting...' : '3. Convert to ASCII'}
                         </Button>
                       </>
                     ) : (
                       <div className="text-muted-foreground border-2 border-dashed rounded-md p-8 h-full flex flex-col items-center justify-center min-h-[200px] md:min-h-[260px]">
-                          <Wand2 className="h-10 w-10 mb-2 opacity-50" />
-                          <p className="text-center">Controls will appear here after uploading an image.</p>
+                          <Settings2 className="h-10 w-10 mb-2 opacity-50" />
+                          <p className="text-center">Options will appear here after uploading an image.</p>
                       </div>
                     )}
                   </div>
@@ -223,15 +277,16 @@ export default function ImageToAsciiPage() {
                 
                 {/* Bottom Section: Output */}
                 {asciiArt && !isLoading && (
-                  <div className="space-y-2 pt-6 border-t mt-6">
-                    <Label htmlFor="asciiOutput">ASCII Art Output</Label>
+                  <div className="space-y-4 pt-6 border-t mt-8">
+                    <Label htmlFor="asciiOutput" className="font-medium text-base">4. ASCII Art Output</Label>
                     <Textarea
                       id="asciiOutput"
                       value={asciiArt}
                       readOnly
                       rows={15}
-                      className="font-mono text-[10px] leading-tight resize-none bg-muted/30 p-2 whitespace-pre w-full"
+                      className="font-mono text-[10px] leading-tight resize-none bg-muted/30 p-2 whitespace-pre w-full shadow-inner"
                       placeholder="ASCII art will appear here..."
+                      aria-label="ASCII Art Output"
                     />
                     <Button onClick={handleCopy} disabled={!asciiArt || isLoading} className="w-full sm:w-auto mt-2">
                       <Copy className="mr-2 h-4 w-4" /> Copy ASCII Art
@@ -246,3 +301,5 @@ export default function ImageToAsciiPage() {
     </>
   );
 }
+
+    
