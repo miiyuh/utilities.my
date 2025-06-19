@@ -5,8 +5,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 export const metadata: Metadata = {
-  title: 'UtilityBelt App',
-  description: 'A collection of useful tools by Firebase Studio',
+  title: 'utilities.my',
+  description: 'a collection of useful tools by miiyuh',
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <ThemeProvider defaultTheme="light" storageKey="utilitybelt-theme">
+        <ThemeProvider defaultTheme="light" storageKey="utilities.my-theme">
           <SidebarProvider>
             {children}
             <Toaster />

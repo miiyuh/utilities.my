@@ -38,7 +38,7 @@ export default function Home() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                <Card className="lg:col-span-3">
                 <CardHeader>
-                  <CardTitle>Welcome to UtilityBelt!</CardTitle>
+                  <CardTitle>Welcome to utilities.my!</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
