@@ -111,13 +111,13 @@ export default function TermsOfServicePage() {
                   <h2>7. Governing Law</h2>
                   <p>
                     These Terms shall be governed and construed in accordance with the laws of
-                    [Your Jurisdiction - placeholder for utilities.my], without regard to its conflict of law provisions.
+                    Malaysia, without regard to its conflict of law provisions.
                   </p>
 
                   <h2>8. Contact Us</h2>
                   <p>
                     If you have any questions about these Terms, please contact us.
-                    (Note: A real contact method would be provided in a production app for utilities.my).
+                    (Note: A real contact method will be added soon).
                   </p>
                 </div>
               </CardContent>
