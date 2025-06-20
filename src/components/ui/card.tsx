@@ -30,25 +30,25 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLDivElement, // Changed from HTMLParagraphElement to HTMLDivElement for semantic correctness
+  React.HTMLAttributes<HTMLHeadingElement> // Using HTMLHeadingElement as it's a title
 >(({ className, ...props }, ref) => (
-  <div
+  <div // Changed from h3 to div to allow more flexible heading levels via props or direct usage
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      "text-2xl font-semibold leading-none tracking-tight font-headline", // Added font-headline
       className
     )}
-    {...props}
+    {...props} // Spread props, allowing `as` or other heading tags if needed
   />
 ))
 CardTitle.displayName = "CardTitle"
 
 const CardDescription = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLParagraphElement, // Kept as HTMLParagraphElement
+  React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <div
+  <p // Changed from div to p for semantic correctness of a description
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
