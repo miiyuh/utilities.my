@@ -230,8 +230,6 @@ export default function MarkdownPreviewerPage() {
       const rawMarkup = await marked.parse(markdownText, {
         gfm: true,
         breaks: true,
-        mangle: false,
-        headerIds: false,
       });
       setHtmlOutput(rawMarkup);
     };
