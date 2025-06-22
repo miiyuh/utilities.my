@@ -10,6 +10,7 @@ import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { marked } from 'marked';
+import markedFootnote from 'marked-footnote';
 import {
   Accordion,
   AccordionContent,
@@ -17,6 +18,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from '@/components/ui/button';
+
+marked.use(markedFootnote());
 
 const initialMarkdown = `# Markdown Comprehensive Demo
 
@@ -165,7 +168,7 @@ ___
 | Tables          |    Full       | Requires header and separator row       |
 | Alignment (Col) |    Full       | Use colons in the separator row         |
 
-## 10. Footnotes (GFM Style - rendering depends on processor)
+## 10. Footnotes
 
 Here's some text that requires a footnote for more details.[^1]
 You can have multiple footnotes in your document.[^note-id]
