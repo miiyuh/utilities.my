@@ -1,200 +1,212 @@
-
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, PlayCircle, RotateCcw, Disc3, Gift } from 'lucide-react';
+import { Play, RotateCcw, Trash2, PanelLeft, Settings, Plus } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { cn } from "@/lib/utils";
+import { SpinWheelCanvas } from '@/components/spin-wheel-canvas';
 
-const WHEEL_COLORS = [
-  "hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", 
-  "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--accent))"
+const DEFAULT_ITEMS = [
+  "Pizza", "Burgers", "Sushi", "Pasta", "Tacos", "Salad"
 ];
-
-const POINTER_SIZE = 20; // Size of the triangular pointer
-const TEXT_OFFSET_PERCENTAGE = 0.25; // How far from center text is (25% of radius) - Adjusted
 
 export default function SpinTheWheelPage() {
   const { toast } = useToast();
-  const [itemsInput, setItemsInput] = useState('Option 1\nOption 2\nOption 3\nOption 4\nOption 5\nOption 6');
-  const [items, setItems] = useState<string[]>([]);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-  const [rotation, setRotation] = useState(0);
-  const wheelRef = useRef<HTMLDivElement>(null);
-  const [wheelDiameter, setWheelDiameter] = useState(288); // Default to md size
+  const [itemsInput, setItemsInput] = useState(DEFAULT_ITEMS.join("\n"));
+  const [winners, setWinners] = useState<string[]>([]);
+  const [removeAfterWin, setRemoveAfterWin] = useState(false);
 
-  useEffect(() => {
-    const parsedItems = itemsInput.split('\n').map(item => item.trim()).filter(item => item);
-    setItems(parsedItems);
-    setResult(null); 
-  }, [itemsInput]);
+  const items = itemsInput
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
-  useEffect(() => {
-    if (wheelRef.current) {
-      setWheelDiameter(wheelRef.current.offsetWidth);
-    }
-    const handleResize = () => {
-      if (wheelRef.current) {
-        setWheelDiameter(wheelRef.current.offsetWidth);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [items]); // Re-check on items change if wheel might resize due to layout shift
-
-  const getConicGradientBackground = () => {
-    if (items.length === 0) return 'transparent';
-    const segmentAnglePercent = 100 / items.length;
-    const colorStops = items.map((_, index) => {
-      const color = WHEEL_COLORS[index % WHEEL_COLORS.length];
-      const startPercent = segmentAnglePercent * index;
-      const endPercent = segmentAnglePercent * (index + 1);
-      return `${color} ${startPercent}% ${endPercent}%`;
+  const handleSpin = (winner: string) => {
+    // Add winner to history
+    setWinners((prev) => [...prev, winner]);
+    
+    // Show celebration toast
+    toast({
+      title: "🎉 Winner!",
+      description: `${winner} has been selected!`,
+      duration: 4000,
     });
-    return `conic-gradient(${colorStops.join(', ')})`;
+
+    // Remove winner if option is enabled
+    if (removeAfterWin) {
+      setTimeout(() => {
+        setItemsInput((prev) => {
+          const arr = prev.split("\n").map((l) => l.trim());
+          const index = arr.indexOf(winner);
+          if (index > -1) {
+            arr.splice(index, 1);
+          }
+          return arr.join("\n");
+        });
+      }, 1500); // Delay to allow celebration to finish
+    }
   };
 
-  const handleSpin = () => {
-    if (items.length < 2) {
-      toast({ title: 'Not Enough Items', description: 'Please add at least two items to the wheel.', variant: 'destructive' });
-      return;
-    }
-    setIsSpinning(true);
-    setResult(null);
-
-    const randomIndex = Math.floor(Math.random() * items.length);
-    const segmentAngle = 360 / items.length;
-    
-    const baseSpins = Math.floor(Math.random() * 3) + 5; // 5 to 7 full spins - Adjusted for more spin
-    const targetAngle = (baseSpins * 360) - (randomIndex * segmentAngle) - (segmentAngle / 2);
-    
-    setRotation(prevRotation => prevRotation + targetAngle); // Accumulate rotation for continuous spinning effect
-
-    setTimeout(() => {
-      setIsSpinning(false);
-      setResult(items[randomIndex]);
-      toast({ title: 'And the winner is...', description: items[randomIndex], duration: 3000 });
-    }, 4000); 
+  const handleClear = () => {
+    setItemsInput('');
+    setWinners([]);
   };
 
   const handleReset = () => {
-    setItemsInput('Option 1\nOption 2\nOption 3\nOption 4\nOption 5\nOption 6');
-    setIsSpinning(false);
-    setResult(null);
-    setRotation(0); // Reset rotation to initial state
-    toast({ title: 'Wheel Reset' });
+    setItemsInput(DEFAULT_ITEMS.join("\n"));
+    setWinners([]);
+  };
+
+  const handleAddItem = () => {
+    const newItem = `Item ${items.length + 1}`;
+    setItemsInput(prev => prev ? `${prev}\n${newItem}` : newItem);
   };
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar className="z-50">
         <SidebarContent />
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
-            <h1 className="text-xl font-semibold font-headline">Spin the Wheel</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-2xl mx-auto shadow-lg">
+        <div className="flex h-full flex-col">
+          <header className="flex items-center gap-2 border-b px-4 py-3">
+            <SidebarTrigger />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <h1 className="text-lg font-semibold">Spin the Wheel</h1>
+            <div className="ml-auto">
+              <ThemeToggleButton />
+            </div>
+          </header>
+          
+          <div className="flex-1 p-4 md:p-6">
+            <Card className="h-full">
               <CardHeader>
-                <CardTitle className="text-2xl font-headline">Spin the Wheel</CardTitle>
-                <CardDescription>Enter items for the wheel, one per line. Click "Spin" to randomly select an item. Fun for making decisions or giveaways!</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Play className="h-5 w-5" />
+                  Spin the Wheel
+                </CardTitle>
+                <CardDescription>
+                  Add your choices and spin to randomly select one. Perfect for making decisions!
+                </CardDescription>
               </CardHeader>
+              
               <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="itemsInput">Wheel Items (one per line)</Label>
-                  <Textarea
-                    id="itemsInput"
-                    value={itemsInput}
-                    onChange={(e) => setItemsInput(e.target.value)}
-                    placeholder="Enter items here, one per line..."
-                    rows={6}
-                    className="resize-none"
-                    disabled={isSpinning}
-                  />
-                </div>
-
-                <div className="relative flex flex-col items-center justify-center my-8 min-h-[300px] md:min-h-[350px]">
-                    <div 
-                        className="absolute top-[-10px] left-1/2 -translate-x-1/2 z-20"
-                        style={{
-                            width: 0, height: 0,
-                            borderLeft: `${POINTER_SIZE / 2}px solid transparent`,
-                            borderRight: `${POINTER_SIZE / 2}px solid transparent`,
-                            borderTop: `${POINTER_SIZE}px solid hsl(var(--primary))`,
-                        }}
-                        aria-hidden="true"
-                    />
-                    <div
-                        ref={wheelRef}
-                        className={cn(
-                            "relative w-64 h-64 md:w-72 md:h-72 rounded-full border-4 border-primary overflow-hidden shadow-2xl",
-                            "transition-transform duration-[4000ms] ease-in-out"
-                        )}
-                        style={{ 
-                          transform: `rotate(${rotation}deg)`,
-                          background: getConicGradientBackground(),
-                          willChange: 'transform', // Added will-change
-                        }}
-                    >
-                        {items.length > 0 && items.map((item, index) => {
-                          const anglePerSegment = 360 / items.length;
-                          const segmentMidAngle = anglePerSegment * index + anglePerSegment / 2;
-                          const textRadius = wheelDiameter * TEXT_OFFSET_PERCENTAGE;
-
-                          return (
-                            <div
-                              key={index}
-                              className="absolute top-1/2 left-1/2 pointer-events-none flex items-center justify-center"
-                              style={{
-                                transform: `rotate(${segmentMidAngle}deg) translate(0, -${textRadius}px) rotate(-${segmentMidAngle}deg)`,
-                                width: `${anglePerSegment < 45 ? wheelDiameter * 0.25 : wheelDiameter * 0.35}px`, 
-                              }}
-                            >
-                              <span className="text-xs md:text-sm font-semibold text-primary-foreground/90 select-none truncate px-1 block text-center">
-                                {item}
-                              </span>
-                            </div>
-                          );
-                        })}
-                        <div className="absolute top-1/2 left-1/2 w-10 h-10 md:w-12 md:h-12 bg-background border-2 border-primary rounded-full -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10">
-                            <Disc3 className="h-5 w-5 md:h-6 md:w-6 text-primary opacity-70"/>
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Wheel Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium">Wheel</h3>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">
+                          {items.length} {items.length === 1 ? 'option' : 'options'}
+                        </Badge>
+                      </div>
                     </div>
+                    
+                    <div className="flex justify-center">
+                      <SpinWheelCanvas 
+                        items={items}
+                        onSpin={handleSpin}
+                        disabled={items.length < 2}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Controls Section */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="itemsInput">Items (one per line)</Label>
+                      <Textarea
+                        id="itemsInput"
+                        rows={8}
+                        value={itemsInput}
+                        onChange={(e) => setItemsInput(e.target.value)}
+                        className="resize-none font-mono text-sm"
+                        placeholder="Enter your options here...&#10;Example:&#10;Pizza&#10;Burgers&#10;Sushi&#10;Pasta"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          id="removeAfterWin"
+                          type="checkbox"
+                          checked={removeAfterWin}
+                          onChange={(e) => setRemoveAfterWin(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                        <Label htmlFor="removeAfterWin" className="text-sm cursor-pointer">
+                          Remove winners automatically
+                        </Label>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddItem}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Item
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleReset}
+                      >
+                        <RotateCcw className="w-4 h-4 mr-1" />
+                        Reset
+                      </Button>
+                    </div>
+
+                    {items.length < 2 && (
+                      <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                        <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                          Add at least 2 items to spin the wheel.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {result && !isSpinning && (
-                  <div className="text-center p-4 bg-accent/20 border border-accent rounded-md">
-                    <h3 className="text-lg font-semibold text-accent-foreground">The Winner Is:</h3>
-                    <p className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
-                        <Gift className="h-6 w-6"/>
-                        {result}
-                    </p>
-                  </div>
+                {/* Winner History */}
+                {winners.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-sm">Winner History ({winners.length})</h4>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {winners.map((winner, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
+                          >
+                            #{index + 1} {winner}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </>
                 )}
               </CardContent>
-              <CardFooter className="flex flex-col sm:flex-row justify-between gap-2">
-                <Button onClick={handleSpin} disabled={isSpinning || items.length < 2} className="w-full sm:w-auto">
-                  <PlayCircle className="mr-2 h-4 w-4" /> {isSpinning ? 'Spinning...' : 'Spin the Wheel!'}
-                </Button>
-                <Button variant="outline" onClick={handleReset} disabled={isSpinning} className="w-full sm:w-auto">
-                  <RotateCcw className="mr-2 h-4 w-4" /> Reset Wheel
+              
+              <CardFooter className="flex justify-end gap-2">
+                <Button variant="outline" onClick={handleClear}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Clear All
                 </Button>
               </CardFooter>
             </Card>

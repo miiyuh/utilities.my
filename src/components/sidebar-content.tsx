@@ -43,10 +43,9 @@ export function SidebarContent() {
           className={cn(
             "object-contain",
             "group-data-[state=expanded]:mr-1" 
-          )}
-        />
+          )}        />
         <span 
-          className="text-xl font-semibold font-headline tracking-tight ml-1 group-data-[collapsible=icon]:hidden"
+          className="text-xl font-semibold font-headline tracking-tight group-data-[collapsible=icon]:hidden"
         >
           's utilities
         </span>
