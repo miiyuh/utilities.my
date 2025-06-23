@@ -226,6 +226,36 @@
     background-color: hsl(var(--border));
     border: 0;
   }
+  
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0;
+    margin-bottom: 1em;
+    border: 1px solid hsl(var(--border));
+    font-size: 0.875em;
+    line-height: 1.5;
+  }
+  .prose thead {
+    background-color: hsl(var(--muted)/0.3);
+    border-bottom: 2px solid hsl(var(--border));
+  }
+  .prose th {
+    padding: 0.5em 0.75em;
+    font-weight: 600;
+    text-align: left;
+    border: 1px solid hsl(var(--border));
+  }
+  .prose td {
+    padding: 0.5em 0.75em;
+    border: 1px solid hsl(var(--border));
+  }
+  .prose tbody tr:nth-of-type(even) {
+    background-color: hsl(var(--muted)/0.2);
+  }
+  .prose tbody tr:hover {
+      background-color: hsl(var(--muted)/0.4);
+  }
 
   /* Dark mode specifics - mirroring structure */
   .dark .prose {
@@ -266,12 +296,24 @@
     border-left-color: hsl(var(--border));
   }
 
-  /* Ensure list markers in dark mode use appropriate colors if needed */
-  /* For Tailwind Prose, it often uses ::marker pseudo-element with CSS variables */
-  /* Example: .dark .prose ul > li::marker { color: hsl(var(--muted-foreground)); } */
-  /* However, the default color based on text-foreground should usually be fine */
-
   .dark .prose hr {
     background-color: hsl(var(--border));
+  }
+  
+  .dark .prose table {
+    border-color: hsl(var(--border));
+  }
+  .dark .prose thead {
+    background-color: hsl(var(--muted)/0.2);
+    border-bottom-color: hsl(var(--border));
+  }
+  .dark .prose th, .dark .prose td {
+    border-color: hsl(var(--border));
+  }
+  .dark .prose tbody tr:nth-of-type(even) {
+    background-color: hsl(var(--muted)/0.1);
+  }
+  .dark .prose tbody tr:hover {
+      background-color: hsl(var(--muted)/0.3);
   }
 }
