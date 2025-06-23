@@ -73,7 +73,7 @@ export function SidebarContent() {
         </ScrollArea>
       </SidebarScrollableContent>
       <SidebarGroup className="border-t">
-         <SidebarMenu className="p-2">
+         <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
