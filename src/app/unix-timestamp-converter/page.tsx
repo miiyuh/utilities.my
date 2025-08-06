@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, ArrowRightLeft, Copy, CalendarIcon } from 'lucide-react';
+import { PanelLeft, ArrowRightLeft, Copy, CalendarIcon, Timer } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -82,40 +82,42 @@ export default function UnixTimestampConverterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger className="lg:hidden" />
+            <Timer className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-semibold font-headline">Unix Timestamp Converter</h1>
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-lg mx-auto shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl font-headline">Unix Timestamp Converter</CardTitle>
-                <CardDescription>Convert Unix timestamps (seconds since epoch) to human-readable dates and times, and vice-versa. Useful for developers and system administrators.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
+        <div className="flex flex-1 flex-col p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-8">
+            {/* Big heading */}
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Unix Timestamp Converter</h1>
+              <p className="text-lg text-muted-foreground">Convert Unix timestamps to human-readable dates and vice-versa.</p>
+            </div>
+            
+            <div className="max-w-3xl mx-auto space-y-8">
+              <div className="space-y-6">
+                <div className="space-y-4">
                   <Label htmlFor="timestamp">Unix Timestamp (seconds)</Label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Input
                       id="timestamp"
                       type="number"
                       value={timestamp}
                       onChange={(e) => setTimestamp(e.target.value)}
                       placeholder="e.g., 1678886400"
+                      className="h-12 text-base"
                     />
-                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(timestamp, 'Timestamp')} title="Copy Timestamp">
+                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(timestamp, 'Timestamp')} title="Copy Timestamp" className="h-12 w-12">
                         <Copy className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
 
-                <div className="flex justify-center my-4">
+                <div className="flex justify-center my-6">
                   <Button variant="ghost" size="icon" onClick={() => { 
                       const tempTs = timestamp;
                       const tempDate = humanDate;
@@ -123,19 +125,19 @@ export default function UnixTimestampConverterPage() {
                       setHumanDate(format(fromUnixTime(parseInt(tempTs,10)), "yyyy-MM-dd'T'HH:mm:ss"));
                       setSelectedDate(fromUnixTime(parseInt(tempTs,10)));
                       toast({title: "Swapped values"});
-                    }}>
+                    }} className="h-14 w-14">
                     <ArrowRightLeft className="h-6 w-6" />
                   </Button>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <Label htmlFor="humanDate">Human Readable Date & Time</Label>
                    <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full justify-start text-left font-normal",
+                            "w-full justify-start text-left font-normal h-12 text-base",
                             !selectedDate && "text-muted-foreground"
                           )}
                         >
@@ -163,31 +165,33 @@ export default function UnixTimestampConverterPage() {
                                     }
                                 }}
                                 step="1"
+                                className="h-10"
                             />
                         </div>
                       </PopoverContent>
                     </Popover>
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-3 mt-3">
                     <Input
                         id="humanDate"
                         type="text"
                         value={humanDate}
                         onChange={handleHumanDateChange}
                         placeholder="e.g., 2023-03-15T12:00:00"
-                        className="bg-muted/30"
+                        className="bg-muted/30 h-12 text-base"
                         readOnly 
                       />
-                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(humanDate, 'Date')} title="Copy Date">
+                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(humanDate, 'Date')} title="Copy Date" className="h-12 w-12">
                         <Copy className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button onClick={handleTimestampToDate}>Timestamp to Date</Button>
-                <Button onClick={handleDateToTimestamp}>Date to Timestamp</Button>
-              </CardFooter>
-            </Card>
+                
+                <div className="flex justify-between gap-4 pt-6">
+                  <Button onClick={handleTimestampToDate} className="flex-1 h-12">Timestamp to Date</Button>
+                  <Button onClick={handleDateToTimestamp} className="flex-1 h-12">Date to Timestamp</Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </SidebarInset>

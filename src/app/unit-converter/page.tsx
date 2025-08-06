@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRightLeft, Copy, PanelLeft } from 'lucide-react';
+import { ArrowRightLeft, Copy, PanelLeft, Ruler } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -122,16 +122,24 @@ export default function UnitConverterPage() {
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
-            <h1 className="text-xl font-semibold font-headline">Unit Converter</h1>
+            <SidebarTrigger className="lg:hidden" />
+            <div className="flex items-center gap-2">
+              <Ruler className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-semibold font-headline">Unit Converter</h1>
+            </div>
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-lg mx-auto shadow-lg">
+        <div className="flex flex-1 flex-col p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto">
+            {/* Big heading */}
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Unit Converter</h1>
+              <p className="text-lg text-muted-foreground">Convert between different units of measurement.</p>
+            </div>
+            
+            <div className="flex flex-1 items-center justify-center">
+              <Card className="w-full max-w-lg mx-auto shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-headline">Unit Converter</CardTitle>
                 <CardDescription>Convert values between various units of measurement, including length (meters, feet, miles, etc.) and weight (kilograms, pounds, ounces, etc.).</CardDescription>
@@ -205,7 +213,8 @@ export default function UnitConverterPage() {
                   <Copy className="mr-2 h-4 w-4" /> Copy Result
                 </Button>
               </CardFooter>
-            </Card>
+              </Card>
+            </div>
           </div>
         </div>
       </SidebarInset>

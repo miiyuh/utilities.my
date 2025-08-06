@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Upload, PanelLeft } from 'lucide-react';
+import { Copy, Upload, PanelLeft, Palette } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -261,172 +261,187 @@ export default function ColorPickerPage() {
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
-            <h1 className="text-xl font-semibold font-headline">Color Picker</h1>
+            <SidebarTrigger className="lg:hidden" />
+            <div className="flex items-center gap-2">
+              <Palette className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-semibold font-headline">Color Picker</h1>
+            </div>
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-4xl mx-auto shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl font-headline">Color Picker</CardTitle>
-                <CardDescription>Pick colors using a visual selector, input HEX values, or extract colors from an uploaded image. View corresponding RGB, HSL, and CMYK values.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 md:p-6">
-                <div className="grid md:grid-cols-2 md:gap-x-8 lg:gap-x-12">
-                  {/* Left Panel: Color Inputs & Derived Codes */}
+        <div className="flex flex-1 flex-col p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto">
+            {/* Big heading */}
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Color Picker</h1>
+              <p className="text-lg text-muted-foreground">Pick colors and get their codes in various formats.</p>
+            </div>
+            
+            <div className="space-y-8">            
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Left Panel: Color Inputs & Derived Codes */}
+              <Card>
+                <CardHeader className="pb-6">
+                  <CardTitle>Color Input & Preview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-8">
                   <div className="space-y-6">
-                    <div className="space-y-4">
-                      <Label htmlFor="hex-value" className="text-center block text-lg font-medium">Input HEX or Pick Visually</Label>
-                      <div className="flex items-center gap-4">
-                        <Input
-                          id="color-picker-swatch"
-                          type="color"
-                          value={(/^#[0-9a-fA-F]{6}$/i.test(hexColor) || /^#[0-9a-fA-F]{3}$/i.test(hexColor)) ? hexColor : '#000000'}
-                          onChange={handleColorInputChange}
-                          className="h-16 w-16 md:h-20 md:w-20 shrink-0 cursor-pointer p-0.5 border-0 rounded-md overflow-hidden shadow-sm"
-                          aria-label="Visual color picker"
-                        />
-                        <div
-                          className="flex-grow h-16 md:h-20 rounded-md border border-input shadow-inner"
-                          style={{ backgroundColor: hexColor }}
-                          aria-label={`Current color preview: ${hexColor}`}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="hex-value-input">HEX Value</Label>
-                        <div className="flex items-center gap-2">
-                          <Input 
-                            id="hex-value-input" 
-                            value={hexColor} 
-                            onChange={handleHexChange} 
-                            className="font-mono" 
-                            placeholder="#RRGGBB, fff, #abc..."
-                          />
-                          <Button variant="outline" size="icon" onClick={() => copyToClipboard(hexColor, 'HEX')} title="Copy HEX">
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+                    <Label htmlFor="hex-value" className="text-center block text-lg font-medium">Input HEX or Pick Visually</Label>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        id="color-picker-swatch"
+                        type="color"
+                        value={(/^#[0-9a-fA-F]{6}$/i.test(hexColor) || /^#[0-9a-fA-F]{3}$/i.test(hexColor)) ? hexColor : '#000000'}
+                        onChange={handleColorInputChange}
+                        className="h-16 w-16 md:h-20 md:w-20 shrink-0 cursor-pointer p-0.5 border-0 rounded-md overflow-hidden shadow-sm"
+                        aria-label="Visual color picker"
+                      />
+                      <div
+                        className="flex-grow h-16 md:h-20 rounded-md border border-input shadow-inner"
+                        style={{ backgroundColor: hexColor }}
+                        aria-label={`Current color preview: ${hexColor}`}
+                      />
                     </div>
-
-                    <div className="space-y-4 pt-4 border-t">
-                      <h3 className="text-md font-medium text-muted-foreground">Derived Color Codes</h3>
-                      <div>
-                        <Label>RGB</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            readOnly
-                            value={rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : 'N/A'}
-                            className="font-mono bg-muted/30"
-                          />
-                          <Button variant="outline" size="icon" onClick={() => copyToClipboard(rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : '', 'RGB')} title="Copy RGB" disabled={!rgbColor}>
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>HSL</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            readOnly
-                            value={hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : 'N/A'}
-                            className="font-mono bg-muted/30"
-                          />
-                          <Button variant="outline" size="icon" onClick={() => copyToClipboard(hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : '', 'HSL')} title="Copy HSL" disabled={!hslColor}>
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label>CMYK</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            readOnly
-                            value={cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : 'N/A'}
-                            className="font-mono bg-muted/30"
-                          />
-                          <Button variant="outline" size="icon" onClick={() => copyToClipboard(cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : '', 'CMYK')} title="Copy CMYK" disabled={!cmykColor}>
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="hex-value-input">HEX Value</Label>
+                      <div className="flex items-center gap-2">
+                        <Input 
+                          id="hex-value-input" 
+                          value={hexColor} 
+                          onChange={handleHexChange} 
+                          className="font-mono" 
+                          placeholder="#RRGGBB, fff, #abc..."
+                        />
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(hexColor, 'HEX')} title="Copy HEX">
+                          <Copy className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Panel: Pick from Image & Magnifier */}
-                  <div className="space-y-6 mt-8 md:mt-0">
-                    <div className="space-y-4 pt-6 border-t md:border-t-0 md:pt-0">
-                      <Label htmlFor="image-upload-button" className="text-lg block text-center font-medium">Pick Color from Image</Label>
-                      <Button
-                        id="image-upload-button"
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full"
-                      >
-                        <Upload className="mr-2 h-4 w-4" /> Upload Image
-                      </Button>
-                      <Input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleImageUpload}
-                        accept="image/*"
-                        className="hidden"
+                  <div className="space-y-4 pt-4 border-t">
+                    <h3 className="text-md font-medium text-muted-foreground">Derived Color Codes</h3>
+                    <div>
+                      <Label>RGB</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          readOnly
+                          value={rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : 'N/A'}
+                          className="font-mono bg-muted/30"
+                        />
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(rgbColor ? `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})` : '', 'RGB')} title="Copy RGB" disabled={!rgbColor}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>HSL</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          readOnly
+                          value={hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : 'N/A'}
+                          className="font-mono bg-muted/30"
+                        />
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(hslColor ? `hsl(${hslColor.h}, ${hslColor.s}%, ${hslColor.l}%)` : '', 'HSL')} title="Copy HSL" disabled={!hslColor}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label>CMYK</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          readOnly
+                          value={cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : 'N/A'}
+                          className="font-mono bg-muted/30"
+                        />
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(cmykColor ? `cmyk(${cmykColor.c}%, ${cmykColor.m}%, ${cmykColor.y}%, ${cmykColor.k}%)` : '', 'CMYK')} title="Copy CMYK" disabled={!cmykColor}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                    <p className="text-xs text-muted-foreground w-full text-center">
+                        Tip: Type a HEX value (e.g., #RRGGBB or RRGGBB) or use the visual picker.
+                    </p>
+                </CardFooter>
+              </Card>
+
+              {/* Right Panel: Pick from Image & Magnifier */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pick Color from Image</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button
+                    id="image-upload-button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="mr-2 h-4 w-4" /> Upload Image
+                  </Button>
+                  <Input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  {uploadedImage ? (
+                    <div className="flex flex-col items-center space-y-2 relative">
+                      <p className="text-sm text-muted-foreground">Click on the image to pick a color. Hover to magnify.</p>
+                      <canvas
+                        ref={canvasRef}
+                        onMouseMove={handleMouseMoveOnCanvas}
+                        onMouseEnter={handleMouseEnterCanvas}
+                        onMouseLeave={handleMouseLeaveCanvas}
+                        onClick={handleCanvasClick}
+                        className="rounded-md border border-border cursor-crosshair max-w-full shadow-sm"
+                        style={{ touchAction: 'none' }} 
                       />
-                      {uploadedImage && (
-                        <div className="mt-4 flex flex-col items-center space-y-2 relative">
-                          <p className="text-sm text-muted-foreground">Click on the image to pick a color. Hover to magnify.</p>
+                      {magnifierVisible && (
+                        <div
+                          style={{
+                            left: `${magnifierPosition.x}px`,
+                            top: `${magnifierPosition.y}px`,
+                            width: `${MAGNIFIER_SIZE}px`,
+                            height: `${MAGNIFIER_SIZE}px`,
+                          }}
+                          className="absolute z-50 pointer-events-none border-2 border-primary bg-background/90 shadow-lg rounded-full flex flex-col items-center justify-center overflow-hidden"
+                        >
                           <canvas
-                            ref={canvasRef}
-                            onMouseMove={handleMouseMoveOnCanvas}
-                            onMouseEnter={handleMouseEnterCanvas}
-                            onMouseLeave={handleMouseLeaveCanvas}
-                            onClick={handleCanvasClick}
-                            className="rounded-md border border-border cursor-crosshair max-w-full shadow-sm"
-                            style={{ touchAction: 'none' }} 
+                            ref={magnifierCanvasRef}
+                            width={MAGNIFIER_SIZE}
+                            height={MAGNIFIER_SIZE}
+                            className="absolute inset-0"
                           />
-                          {magnifierVisible && (
-                            <div
-                              style={{
-                                left: `${magnifierPosition.x}px`,
-                                top: `${magnifierPosition.y}px`,
-                                width: `${MAGNIFIER_SIZE}px`,
-                                height: `${MAGNIFIER_SIZE}px`,
-                              }}
-                              className="absolute z-50 pointer-events-none border-2 border-primary bg-background/90 shadow-lg rounded-full flex flex-col items-center justify-center overflow-hidden"
-                            >
-                              <canvas
-                                ref={magnifierCanvasRef}
-                                width={MAGNIFIER_SIZE}
-                                height={MAGNIFIER_SIZE}
-                                className="absolute inset-0"
-                              />
-                              {/* Crosshair */}
-                              <div style={{width: '1px', height: '100%'}} className="absolute left-1/2 bg-red-500/70 -translate-x-1/2"></div>
-                              <div style={{height: '1px', width: '100%'}} className="absolute top-1/2 bg-red-500/70 -translate-y-1/2"></div>
-                              
-                              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 bg-black/70 text-white px-2 py-0.5 rounded text-[10px] font-mono shadow">
-                                {magnifiedColor}
-                              </div>
-                            </div>
-                          )}
+                          {/* Crosshair */}
+                          <div style={{width: '1px', height: '100%'}} className="absolute left-1/2 bg-red-500/70 -translate-x-1/2"></div>
+                          <div style={{height: '1px', width: '100%'}} className="absolute top-1/2 bg-red-500/70 -translate-y-1/2"></div>
+                          
+                          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 bg-black/70 text-white px-2 py-0.5 rounded text-[10px] font-mono shadow">
+                            {magnifiedColor}
+                          </div>
                         </div>
                       )}
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                  <p className="text-xs text-muted-foreground w-full text-center">
-                      Tip: Type a HEX value (e.g., #RRGGBB or RRGGBB) or use the visual picker.
-                  </p>
-              </CardFooter>
-            </Card>
+                  ) : (
+                    <div className="flex items-center justify-center h-40 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                      <div className="text-center text-muted-foreground">
+                        <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Upload an image to extract colors</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            </div>
           </div>
         </div>
       </SidebarInset>

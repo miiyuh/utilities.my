@@ -10,9 +10,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Noto Sans', 'sans-serif'], // Noto Sans as primary body font
-        headline: ['Noto Serif', 'serif'], // Noto Serif as primary headline font
-        code: ['Noto Mono', 'Source Code Pro', 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif'], // Main font - Inter
+        body: ['Inter', 'system-ui', 'sans-serif'], // Body text - Inter  
+        paragraph: ['Noto Sans', 'system-ui', 'sans-serif'], // Paragraphs - Noto Sans
+        'serif-display': ['Noto Serif Display', 'serif'], // Display serif for special content
+        headline: ['Inter', 'system-ui', 'sans-serif'], // Headlines - Inter
+        code: ['Fira Code', 'Source Code Pro', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -88,10 +91,28 @@ export default {
             height: '0',
           },
         },
+        'neu-float': {
+          '0%, 100%': { 
+            transform: 'translateY(0px)',
+          },
+          '50%': { 
+            transform: 'translateY(-4px)',
+          },
+        },
+        'neu-pulse': {
+          '0%, 100%': {
+            opacity: '1',
+          },
+          '50%': {
+            opacity: '0.8',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'neu-float': 'neu-float 6s ease-in-out infinite',
+        'neu-pulse': 'neu-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },

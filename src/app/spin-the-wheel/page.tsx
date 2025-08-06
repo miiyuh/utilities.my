@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Play, RotateCcw, Trash2, PanelLeft, Settings, Plus } from 'lucide-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Play, RotateCcw, Trash2, Settings, Plus, Disc3 } from 'lucide-react';
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { SpinWheelCanvas } from '@/components/spin-wheel-canvas';
@@ -78,28 +78,27 @@ export default function SpinTheWheelPage() {
       </Sidebar>
       <SidebarInset>
         <div className="flex h-full flex-col">
-          <header className="flex items-center gap-2 border-b px-4 py-3">
-            <SidebarTrigger />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <h1 className="text-lg font-semibold">Spin the Wheel</h1>
-            <div className="ml-auto">
-              <ThemeToggleButton />
+          <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+            <div className="flex items-center gap-3">
+              <Disc3 className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-semibold font-headline">Spin the Wheel</h1>
             </div>
+            <ThemeToggleButton />
           </header>
           
-          <div className="flex-1 p-4 md:p-6">
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Play className="h-5 w-5" />
-                  Spin the Wheel
-                </CardTitle>
-                <CardDescription>
-                  Add your choices and spin to randomly select one. Perfect for making decisions!
-                </CardDescription>
-              </CardHeader>
+          <div className="flex-1 p-4 lg:p-8">
+            <div className="w-full max-w-7xl mx-auto space-y-6">
+              {/* Big heading */}
+              <div className="mb-8">
+                <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Spin the Wheel</h1>
+                <p className="text-lg text-muted-foreground">A fun utility to pick a random item from a list.</p>
+              </div>
               
-              <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <p className="text-muted-foreground">Add your choices and spin to randomly select one. Perfect for making decisions!</p>
+              </div>
+              
+              <div className="bg-card rounded-lg border p-6 space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Wheel Section */}
                   <div className="space-y-4">
@@ -201,15 +200,15 @@ export default function SpinTheWheelPage() {
                     </div>
                   </>
                 )}
-              </CardContent>
               
-              <CardFooter className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleClear}>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={handleClear} className="h-10">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Clear All
                 </Button>
-              </CardFooter>
-            </Card>
+              </div>
+              </div>
+            </div>
           </div>
         </div>
       </SidebarInset>

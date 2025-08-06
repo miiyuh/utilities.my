@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, CalendarIcon, PlusCircle, XCircle, Pin, Home, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { PanelLeft, CalendarIcon, PlusCircle, XCircle, Pin, Home, ChevronLeft, ChevronRight, RotateCcw, Globe } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -389,20 +389,27 @@ export default function TimezoneConverterPage() {
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
-            <h1 className="text-xl font-semibold font-headline">World Time View</h1>
+            <SidebarTrigger className="lg:hidden" />
+            <div className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-semibold font-headline">Timezone Converter</h1>
+            </div>
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-2 md:p-4 lg:p-6">
-          <Card className="w-full max-w-full mx-auto shadow-lg">
-            <CardHeader className="pb-3 pt-4 px-3 md:px-4">
-              <CardTitle className="text-xl md:text-2xl font-headline text-center">World Time View</CardTitle>
-              <CardDescription className="text-center">Visually compare times across multiple timezones. Select a date and time range to see corresponding local times worldwide.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 p-2 md:p-3 lg:p-4">
+        <div className="flex flex-1 flex-col p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-6">
+            {/* Big heading */}
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Timezone Converter</h1>
+              <p className="text-lg text-muted-foreground">Convert times between different timezones.</p>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-center">Visually compare times across multiple timezones. Select a date and time range to see corresponding local times worldwide.</p>
+            </div>
+            
+            <div className="bg-card rounded-lg border p-4 space-y-3">
               {/* Global Controls Wrapper */}
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 p-2 border rounded-md shadow-sm bg-muted/20">
                 {/* Date Navigation Group */}
@@ -540,7 +547,7 @@ export default function TimezoneConverterPage() {
                                <ChevronLeft className="h-4 w-4"/>
                            </Button>
                            <div
-                            ref={el => scrollableContainerRefs.current[loc.id] = el}
+                            ref={el => { scrollableContainerRefs.current[loc.id] = el; }}
                             onScroll={(e) => handleStripScroll(loc.id, e)}
                             className="overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-muted/20 flex-grow h-full"
                             style={{ cursor: isDraggingSelection ? 'grabbing': 'default'}}
@@ -594,13 +601,14 @@ export default function TimezoneConverterPage() {
                   );
                 })}
               </div>
-            </CardContent>
-             <CardFooter className="pt-2 pb-3 px-3 md:px-4">
+              
+              <div className="pt-2 pb-3">
                 <p className="text-[10px] md:text-xs text-muted-foreground w-full text-center">
                   Click an hour slot to set a 1-hour reference. Drag to select a custom range.
                 </p>
-              </CardFooter>
-          </Card>
+              </div>
+            </div>
+          </div>
         </div>
       </SidebarInset>
     </>

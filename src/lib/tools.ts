@@ -2,7 +2,7 @@
 import type { LucideIcon } from "lucide-react";
 import { 
   CaseSensitive, Palette, Ruler, Home, 
-  FileText, QrCode, Timer, Globe, CalendarRange, FileArchive, Baseline, ArrowDownUp, Camera, Disc3
+  FileText, QrCode, Timer, Globe, CalendarRange, Baseline, ArrowDownUp, Disc3
 } from "lucide-react";
 
 export interface Tool {
@@ -22,9 +22,7 @@ export const tools: Tool[] = [
   { name: "Unix Timestamp Converter", path: "/unix-timestamp-converter", icon: Timer, description: "Convert Unix timestamps to human-readable dates and vice-versa." },
   { name: "Timezone Converter", path: "/timezone-converter", icon: Globe, description: "Convert times between different timezones." },
   { name: "Date Difference Calculator", path: "/date-diff-calculator", icon: CalendarRange, description: "Calculate the difference between two dates." },
-  { name: "File Compressor (ZIP)", path: "/file-compressor", icon: FileArchive, description: "Compress multiple files into a single ZIP archive." },
   { name: "Text Statistics", path: "/text-statistics", icon: Baseline, description: "Analyze text for word count, character count, and more." },
   { name: "Sorter", path: "/sorter", icon: ArrowDownUp, description: "Sort lines of text alphabetically or numerically." },
-  { name: "Image to ASCII", path: "/image-to-ascii", icon: Camera, description: "Convert images into ASCII art representations." },
   { name: "Spin the Wheel", path: "/spin-the-wheel", icon: Disc3, description: "A fun utility to pick a random item from a list." },
 ];

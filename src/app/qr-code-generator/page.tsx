@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, Download, Settings2, Upload, Trash2, QrCode as QrCodeIcon, Copy } from 'lucide-react';
+import { PanelLeft, Download, Settings2, Upload, Trash2, QrCode as QrCodeIcon, Copy, QrCode } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -321,27 +321,31 @@ export default function QrCodeGeneratorPage() {
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
-            <h1 className="text-xl font-semibold font-headline">QR Code Generator</h1>
+            <SidebarTrigger className="lg:hidden" />
+            <div className="flex items-center gap-2">
+              <QrCode className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-semibold font-headline">QR Code Generator</h1>
+            </div>
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-5xl mx-auto shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl font-headline">QR Code Generator</CardTitle>
-                <CardDescription>Generate custom QR codes for URLs, text, email, SMS, Wi-Fi credentials, and more. Customize size, colors, and add a logo.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 grid md:grid-cols-3 gap-8">
-                {/* Left Panel: Inputs & Customization */}
-                <div className="md:col-span-2 space-y-8">
-                  
-                  {/* Content & Data Type Section */}
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-medium">Content & Data Type</h3>
+        <div className="flex flex-1 flex-col p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto">
+            {/* Big heading */}
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">QR Code Generator</h1>
+              <p className="text-lg text-muted-foreground">Generate QR codes from text or URLs.</p>
+            </div>
+            
+            <div className="space-y-8">
+              <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 h-full">
+              {/* Left Panel: Inputs & Customization */}
+              <div className="lg:col-span-2 space-y-8">
+                <Card>
+                  <CardHeader className="pb-6">
+                    <CardTitle>Content & Data Type</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     <div className="space-y-2">
                         <Label htmlFor="payloadType">Payload Type</Label>
                         <Select value={payloadType} onValueChange={(value) => setPayloadType(value as PayloadType)}>
@@ -359,11 +363,15 @@ export default function QrCodeGeneratorPage() {
                     <div className="pt-2">
                         {renderPayloadInputs()}
                     </div>
-                  </div>
-                  
-                  {/* Customization Section */}
-                  <div className="space-y-6 pt-6 border-t">
-                    <h3 className="text-lg font-medium flex items-center"><Settings2 className="mr-2 h-5 w-5" /> Customization</h3>
+                  </CardContent>
+                </Card>
+                
+                {/* Customization Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center"><Settings2 className="mr-2 h-5 w-5" /> Customization</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     
                     <div className="space-y-2">
                       <Label htmlFor="errorCorrectionLevel">Error Correction Level</Label>
@@ -438,75 +446,85 @@ export default function QrCodeGeneratorPage() {
                         <Switch id="bgTransparent" checked={bgTransparent} onCheckedChange={setBgTransparent} />
                         <Label htmlFor="bgTransparent">Transparent Background</Label>
                     </div>
-                  </div>
 
-                  {/* Logo Section */}
-                  <div className="space-y-4 pt-6 border-t">
-                      <h3 className="text-lg font-medium">Logo (Optional)</h3>
-                      <div className="space-y-2">
-                          <Label htmlFor="logoUpload">Upload Logo Image</Label>
-                          <Input
-                              id="logoUpload"
-                              type="file"
-                              accept="image/png, image/jpeg, image/svg+xml"
-                              onChange={handleLogoUpload}
-                              ref={logoFileInputRef}
-                              className="hidden"
-                          />
-                           <Button 
-                              variant="outline" 
-                              className="w-full" 
-                              onClick={() => logoFileInputRef.current?.click()}
-                            >
-                              <Upload className="mr-2 h-4 w-4" /> Choose Logo
-                            </Button>
-                      </div>
-                      {logoSrc && (
-                          <div className="space-y-3 pt-3">
-                              <div className="flex justify-center">
-                                  <img src={logoSrc} alt="Logo preview" className="max-h-20 border rounded-md p-1 bg-white" />
-                              </div>
-                              <div className="space-y-2">
-                                  <Label htmlFor="logoSize">Logo Size: {Math.round(logoSize * 100)}% of QR Code</Label>
-                                  <Slider
-                                      id="logoSize"
-                                      min={5} 
-                                      max={30} 
-                                      step={1}
-                                      value={[logoSize * 100]}
-                                      onValueChange={(val) => setLogoSize(val[0] / 100)}
-                                  />
-                              </div>
-                              <Button variant="outline" onClick={clearLogo} className="w-full text-destructive hover:text-destructive">
-                                  <Trash2 className="mr-2 h-4 w-4" /> Clear Logo
+                    {/* Logo Section */}
+                    <div className="space-y-4 pt-4 border-t">
+                        <h4 className="font-medium">Logo (Optional)</h4>
+                        <div className="space-y-2">
+                            <Label htmlFor="logoUpload">Upload Logo Image</Label>
+                            <Input
+                                id="logoUpload"
+                                type="file"
+                                accept="image/png, image/jpeg, image/svg+xml"
+                                onChange={handleLogoUpload}
+                                ref={logoFileInputRef}
+                                className="hidden"
+                            />
+                             <Button 
+                                variant="outline" 
+                                className="w-full" 
+                                onClick={() => logoFileInputRef.current?.click()}
+                              >
+                                <Upload className="mr-2 h-4 w-4" /> Choose Logo
                               </Button>
-                          </div>
-                      )}
-                  </div>
-                </div>
-
-                {/* Right Panel: Preview & Download */}
-                <div className="md:col-span-1 flex flex-col items-center space-y-6 md:pt-10">
-                  {qrValue ? (
-                    <div className="p-4 bg-white dark:bg-muted/20 rounded-md inline-block shadow-md">
-                      {outputFormat === 'png' ? (
-                        <div ref={qrCanvasRef}>
-                           <QRCodeCanvas {...commonQrProps} />
                         </div>
-                      ) : (
-                        <QRCodeSVG {...commonQrProps} ref={qrSvgRef} />
-                      )}
+                        {logoSrc && (
+                            <div className="space-y-3 pt-3">
+                                <div className="flex justify-center">
+                                    <img src={logoSrc} alt="Logo preview" className="max-h-20 border rounded-md p-1 bg-white" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="logoSize">Logo Size: {Math.round(logoSize * 100)}% of QR Code</Label>
+                                    <Slider
+                                        id="logoSize"
+                                        min={5} 
+                                        max={30} 
+                                        step={1}
+                                        value={[logoSize * 100]}
+                                        onValueChange={(val) => setLogoSize(val[0] / 100)}
+                                    />
+                                </div>
+                                <Button variant="outline" onClick={clearLogo} className="w-full text-destructive hover:text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Clear Logo
+                                </Button>
+                            </div>
+                        )}
                     </div>
-                  ) : (
-                    <div className="w-full max-w-[288px] aspect-square bg-muted/30 rounded-md flex flex-col items-center justify-center text-muted-foreground p-4 shadow">
-                      <QrCodeIcon className="h-12 w-12 mb-2 opacity-70" />
-                      <span className="text-sm text-center">Enter data to generate QR Code</span>
-                    </div>
-                  )}
+                  </CardContent>
+                </Card>
+              </div>
 
-                  {/* Output Section */}
-                  <div className="w-full max-w-xs space-y-4">
-                    <h3 className="text-lg font-medium text-center md:text-left">Output</h3>
+              {/* Right Panel: Preview & Download */}
+              <div className="lg:col-span-1 space-y-6">
+                <Card className="h-fit">
+                  <CardHeader>
+                    <CardTitle>Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col items-center space-y-6">
+                    {qrValue ? (
+                      <div className="p-4 bg-white dark:bg-muted/20 rounded-md inline-block shadow-md">
+                        {outputFormat === 'png' ? (
+                          <div ref={qrCanvasRef}>
+                             <QRCodeCanvas {...commonQrProps} />
+                          </div>
+                        ) : (
+                          <QRCodeSVG {...commonQrProps} ref={qrSvgRef} />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-full max-w-[288px] aspect-square bg-muted/30 rounded-md flex flex-col items-center justify-center text-muted-foreground p-4 shadow">
+                        <QrCodeIcon className="h-12 w-12 mb-2 opacity-70" />
+                        <span className="text-sm text-center">Enter data to generate QR Code</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Download</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="flex items-end gap-2">
                        <div className="flex-1 space-y-1">
                           <Label htmlFor="outputFormat">File Type</Label>
@@ -519,7 +537,7 @@ export default function QrCodeGeneratorPage() {
                           </Select>
                       </div>
                       <div className="flex-1 space-y-1">
-                          <Label htmlFor="downloadFilename">Download Filename</Label>
+                          <Label htmlFor="downloadFilename">Filename</Label>
                           <Input 
                               id="downloadFilename" 
                               value={downloadFilename} 
@@ -531,14 +549,14 @@ export default function QrCodeGeneratorPage() {
                     <Button onClick={handleCopyHtmlEmbed} variant="outline" className="w-full">
                         <Copy className="mr-2 h-4 w-4" /> Copy HTML Embed Code
                     </Button>
-                  </div>
-                  
-                  <Button onClick={handleDownload} disabled={!qrValue} className="w-full max-w-xs">
-                    <Download className="mr-2 h-4 w-4" /> Download QR Code ({outputFormat.toUpperCase()})
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    <Button onClick={handleDownload} disabled={!qrValue} className="w-full">
+                      <Download className="mr-2 h-4 w-4" /> Download QR Code ({outputFormat.toUpperCase()})
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+              </div>
+            </div>
           </div>
         </div>
       </SidebarInset>

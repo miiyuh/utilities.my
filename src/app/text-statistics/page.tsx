@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { PanelLeft, Type, RemoveFormatting, WrapText, ScanLine, Pilcrow, Clock } from 'lucide-react';
+import { PanelLeft, Type, RemoveFormatting, WrapText, ScanLine, Pilcrow, Clock, Baseline } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -73,53 +73,68 @@ export default function TextStatisticsPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger className="lg:hidden" />
+            <Baseline className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-semibold font-headline">Text Statistics</h1>
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-2xl mx-auto shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl font-headline">Text Statistics</CardTitle>
-                <CardDescription>Analyze your text to get statistics like character count (with and without spaces), word count, sentence count, paragraph count, and estimated reading time.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="textInput">Enter Text</Label>
+        <div className="flex flex-1 flex-col p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-8">
+            {/* Big heading */}
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Statistics</h1>
+              <p className="text-lg text-muted-foreground">Analyze text for word count, character count, and more.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 h-full">
+              {/* Input Section */}
+              <Card className="flex flex-col">
+                <CardHeader>
+                  <CardTitle>Enter Text</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1">
                   <Textarea
                     id="textInput"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Paste or type your text here..."
-                    rows={10}
-                    className="resize-none"
+                    className="resize-none h-full min-h-[400px]"
                   />
-                </div>
+                </CardContent>
+              </Card>
 
-                {stats && (
-                  <div className="space-y-4 pt-4 border-t">
-                    <h3 className="text-xl font-semibold mb-3">Statistics:</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Results Section */}
+              <Card className="flex flex-col">
+                <CardHeader>
+                  <CardTitle>Statistics</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  {stats ? (
+                    <div className="grid grid-cols-1 gap-5">
                       {statItems.map((item) => (
-                        <div key={item.id} className="flex items-center p-4 rounded-lg border bg-card shadow-sm">
-                          <item.icon className="h-8 w-8 text-primary mr-4 shrink-0" />
+                        <div key={item.id} className="flex items-center p-5 rounded-lg border bg-card shadow-sm">
+                          <item.icon className="h-8 w-8 text-primary mr-5 shrink-0" />
                           <div>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{item.label}</p>
                             <p className="text-2xl font-bold text-foreground">{item.value}</p>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <div className="text-center">
+                        <Type className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Enter text to see statistics</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </SidebarInset>

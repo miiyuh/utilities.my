@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, CalendarIcon } from 'lucide-react';
+import { PanelLeft, CalendarIcon, CalendarRange } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -119,29 +119,30 @@ export default function DateDiffCalculatorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger className="lg:hidden" />
+            <CalendarRange className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-semibold font-headline">Date Difference Calculator</h1>
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-2xl mx-auto shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl font-headline">Date Difference Calculator</CardTitle>
-                <CardDescription>Calculate the duration between two dates and times, displayed in various units like years, months, days, hours, minutes, and seconds.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div className="space-y-2">
+        <div className="flex flex-1 flex-col p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-8">
+            {/* Big heading */}
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Date Difference Calculator</h1>
+              <p className="text-lg text-muted-foreground">Calculate the difference between two dates.</p>
+            </div>
+            
+            <div className="max-w-7xl mx-auto space-y-8">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
                     <Label htmlFor="startDateInput">Start Date & Time</Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button id="startDateInput" variant={"outline"} className={cn("w-full justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                        <Button id="startDateInput" variant={"outline"} className={cn("w-full justify-start text-left font-normal h-12 text-base", !startDate && "text-muted-foreground")}>
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {startDate ? format(startDate, "d MMMM yyyy") : <span>Pick a date</span>}
                         </Button>
@@ -158,13 +159,13 @@ export default function DateDiffCalculatorPage() {
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input type="time" value={format(startDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(startDate, e.target.value, setStartDate, startDate)} step="1" />
+                    <Input type="time" value={format(startDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(startDate, e.target.value, setStartDate, startDate)} step="1" className="h-10" />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <Label htmlFor="endDateInput">End Date & Time</Label>
                      <Popover>
                       <PopoverTrigger asChild>
-                        <Button id="endDateInput" variant={"outline"} className={cn("w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
+                        <Button id="endDateInput" variant={"outline"} className={cn("w-full justify-start text-left font-normal h-12 text-base", !endDate && "text-muted-foreground")}>
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {endDate ? format(endDate, "d MMMM yyyy") : <span>Pick a date</span>}
                         </Button>
@@ -181,14 +182,14 @@ export default function DateDiffCalculatorPage() {
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input type="time" value={format(endDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(endDate, e.target.value, setEndDate, endDate)} step="1" />
+                    <Input type="time" value={format(endDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(endDate, e.target.value, setEndDate, endDate)} step="1" className="h-10" />
                   </div>
                 </div>
 
-                <Button onClick={calculateDiff} className="w-full">Calculate Difference</Button>
+                <Button onClick={calculateDiff} className="w-full h-12 text-base">Calculate Difference</Button>
 
                 {diffResult && (
-                  <div className="space-y-4 pt-4 border-t">
+                  <div className="space-y-6 pt-6 border-t">
                     <h3 className="text-xl font-semibold text-center md:text-left">Result:</h3>
                     <Table>
                       <TableBody>
@@ -237,13 +238,14 @@ export default function DateDiffCalculatorPage() {
                     </Table>
                   </div>
                 )}
-              </CardContent>
-               <CardFooter>
-                 <p className="text-xs text-muted-foreground w-full text-center">
-                  Results update automatically as you change dates or times.
-                </p>
-              </CardFooter>
-            </Card>
+                
+                <div className="pt-6 border-t">
+                  <p className="text-xs text-muted-foreground w-full text-center">
+                    Results update automatically as you change dates or times.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </SidebarInset>

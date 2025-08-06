@@ -1,131 +1,231 @@
-
 "use client";
 
-import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { PanelLeft, ShieldCheck } from 'lucide-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
-import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
+import { ShieldCheck } from 'lucide-react';
+import { MarkdownPage } from '@/components/markdown/markdown-page';
+
+const PRIVACY_CONTENT = `# Privacy Policy
+
+*Last Updated: 2025-08-06*
+
+This Privacy Policy governs how we collect, use, protect, and handle your information when you use our web-based utility tools and services.
+
+## 1. Introduction
+
+### 1.1 Our Commitment to Privacy
+
+utilities.my is built with **privacy by design** principles. We believe in giving users complete control over their data while providing powerful, client-side utility tools.
+
+### 1.2 Scope of This Policy
+
+This policy describes our practices regarding data collection and usage across all our utility tools, including:
+
+- Text processing tools (case conversion, statistics, markdown preview)
+- Media tools (image to ASCII, color picker, file compression)
+- Productivity tools (date calculator, timezone converter, unit converter)
+- Fun tools (QR generator, wheel spinner, random sorter)
+
+## 2. Information We Collect
+
+### 2.1 Client-Side Processing
+
+Our application is designed with privacy by design principles. **Most of our tools operate entirely within your browser** using client-side processing, which means:
+
+- **Your data stays on your device** - Files and text you process remain in your browser
+- **No server uploads** - We don't upload your sensitive data to our servers
+- **Real-time processing** - Conversions and transformations happen instantly on your device
+- **No tracking** - We don't monitor what tools you use or how you use them
+
+### 2.2 Data We May Store Locally
+
+We use browser local storage **only** for:
+
+- **Theme Preferences**: Your preferred theme (light/dark mode) and UI customization settings
+- **Tool Settings**: Last used configurations and user preferences for specific utilities
+- **User Experience**: Convenience settings like default units, formats, and recently used options
+
+> **Note**: All this data is stored locally on your device and never transmitted to our servers.
+
+### 2.3 Data We Explicitly Do NOT Collect
+
+We want to be crystal clear about what we **don't** collect:
+
+- Personal identification information (name, email, phone, address)
+- File contents you upload or process through our tools
+- Text or data you input into our utilities
+- IP addresses or precise location data
+- Browsing history or detailed usage analytics
+- Device fingerprinting or tracking identifiers
+- Cookies for tracking purposes
+- Third-party advertising data
+
+## 3. How We Use Information
+
+### 3.1 Enhancing Your Experience
+
+The minimal information we store locally is used to:
+
+- Remember your preferred theme and interface settings
+- Provide consistent user experience across browser sessions
+- Save your tool configurations for convenience
+- Optimize tool performance based on your usage patterns
+
+### 3.2 Service Improvement
+
+Anonymous, aggregated data helps us:
+
+- Identify which tools are most useful to users
+- Optimize performance and fix technical issues
+- Plan new features and improvements
+- Ensure compatibility across different browsers and devices
+
+### 3.3 No Profiling or Tracking
+
+We explicitly do **not**:
+
+- Create detailed user profiles or behavioral tracking
+- Share data with advertising networks or data brokers
+- Use data for marketing or promotional purposes
+- Track users across different websites or services
+
+## 4. Data Security and Protection
+
+### 4.1 Client-Side Security
+
+- **Encryption in Transit**: All connections use HTTPS/TLS encryption
+- **No Data Transmission**: Most processing happens entirely in your browser
+- **Browser Security**: We rely on your browser's built-in security features
+- **No Persistent Server Storage**: Tool data is not saved permanently on our servers
+
+### 4.2 Your Responsibility
+
+Since data processing happens in your browser, we recommend:
+
+- Keep your browser updated with the latest security patches
+- Use trusted networks when processing sensitive data
+- Clear browser data when using shared or public computers
+- Be cautious when processing highly confidential information
+
+### 4.3 Incident Response
+
+In the unlikely event of a security incident:
+
+- We will investigate and contain any issues immediately
+- Users will be notified if their data may have been affected
+- We will cooperate with relevant authorities as required by law
+
+## 5. Third-Party Services
+
+### 5.1 External Dependencies
+
+Our application may use:
+
+- **CDN Services**: For faster loading of fonts, icons, and static assets
+- **Font Services**: For typography (Google Fonts, etc.)
+- **Icon Libraries**: For user interface elements
+- **Analytics Services**: For anonymous usage statistics (if any)
+
+> **Important**: No personal data is shared with these services.
+
+### 5.2 External Links
+
+We may link to external resources, documentation, or related tools. This Privacy Policy does not cover third-party websites or services. Please review their privacy policies before using external services.
+
+## 6. Your Rights and Choices
+
+### 6.1 Data Control
+
+You have complete control over your data:
+
+- **Clear Local Storage**: Remove all saved preferences and settings
+- **Disable JavaScript**: Prevent local storage (may break functionality)
+- **Use Incognito Mode**: For completely temporary sessions
+- **Opt Out**: Stop using our services at any time
+
+### 6.2 Privacy Settings
+
+You can adjust privacy-related settings:
+
+- Choose whether to save tool preferences
+- Control theme and interface customizations
+- Decide which convenience features to enable
+
+## 7. International Data Transfers
+
+### 7.1 Cross-Border Processing
+
+While utilities.my primarily operates using client-side processing, some services may involve:
+
+- **CDN Services**: Content delivery networks that may cache static assets globally
+- **Analytics Services**: Anonymous usage statistics that may be processed internationally
+- **Cloud Infrastructure**: Hosting services that may replicate data across regions
+
+### 7.2 Data Protection Standards
+
+We ensure that any international data transfers maintain appropriate safeguards:
+
+- **Equivalent Protection**: All transfers maintain privacy standards equivalent to this policy
+- **Security Measures**: Data in transit and at rest is encrypted and secured
+- **Limited Scope**: Only necessary data is transferred for service functionality
+
+## 8. Children's Privacy
+
+### 8.1 Age Requirements
+
+utilities.my is intended for users who are at least 13 years of age. We:
+
+- Do not knowingly collect personal information from children under 13
+- Encourage parental supervision for users under 18
+- Comply with applicable children's privacy laws (COPPA, GDPR Article 8)
+
+### 8.2 Parental Rights
+
+If you believe a child under 13 has used our services:
+
+- **Contact Us**: Report the incident through our contact methods
+- **Data Removal**: We will promptly remove any collected information
+- **Account Termination**: Access will be restricted until age verification
+
+## 9. Updates to This Policy
+
+### 9.1 Policy Changes
+
+We may update this Privacy Policy to:
+
+- Reflect changes in our data practices
+- Comply with new legal requirements
+- Improve clarity and transparency
+- Add new features or services
+
+### 9.2 Notification Process
+
+- **Significant Changes**: Will be prominently displayed on our website
+- **Version Dating**: All updates include effective dates
+- **Continued Use**: Constitutes acceptance of updated terms
+- **Change Log**: We maintain a record of major policy changes
+
+## 10. Contact Information
+
+### 10.1 Privacy Questions
+
+If you have questions about this Privacy Policy or our privacy practices:
+
+- **Website**: Contact us through utilities.my
+- **Response Time**: We aim to respond within 48 hours
+- **Data Requests**: We handle data-related inquiries promptly
+
+### 10.2 Data Protection Requests
+
+For any data-related requests, please include:
+
+- Your specific concern or question
+- The tool or service you're asking about
+- Any relevant details about your usage
+- Preferred method of response
+
+## Summary
+
+**utilities.my is committed to privacy**. We collect minimal data, process most information locally in your browser, and give you complete control over your privacy settings. This policy is designed to be transparent and comprehensive because we believe in your right to privacy.`;
 
 export default function PrivacyPolicyPage() {
-  const [lastUpdated, setLastUpdated] = React.useState('');
-
-  React.useEffect(() => {
-    setLastUpdated(new Date().toLocaleDateString());
-  }, []);
-
-  return (
-    <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
-        <SidebarContent />
-        <SidebarRail />
-      </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
-            <ShieldCheck className="h-5 w-5 md:h-6 md:w-6" />
-            <h1 className="text-xl font-semibold font-headline">Privacy Policy</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 items-center justify-center">
-            <Card className="w-full max-w-2xl mx-auto shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl font-headline">Privacy Policy</CardTitle>
-                <CardDescription>Our commitment to your privacy at utilities.my.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                 <div className="prose dark:prose-invert max-w-none">
-                  <p><strong>Last Updated: {lastUpdated}</strong></p>
-
-                  <h2>1. Introduction</h2>
-                  <p>
-                    This Privacy Policy explains how utilities.my ("we", "us", or "our")
-                    collects, uses, and discloses information about you when you use our
-                    application (the "Service").
-                  </p>
-
-                  <h2>2. Information We Collect</h2>
-                  <p>
-                    Currently, utilities.my is designed to operate primarily on the client-side.
-                    This means that most data processed by the tools remains within your browser
-                    and is not transmitted to our servers.
-                  </p>
-                  <p>
-                    Specifically:
-                  </p>
-                  <ul>
-                    <li>
-                      <strong>Theme Preferences:</strong> We use browser local storage to save your
-                      preferred theme (light or dark). This information is stored only on your
-                      device.
-                    </li>
-                    <li>
-                      <strong>Tool Inputs & Outputs:</strong> Data you enter into tools (e.g., text for
-                      the Text Case Converter, JSON for the Formatter) is processed in your
-                      browser. We do not store this information on our servers.
-                    </li>
-                     <li>
-                      <strong>Uploaded Files:</strong> For tools like the File Compressor or Color Picker (image upload), files are processed in your browser. They are not uploaded to or stored on our servers.
-                    </li>
-                  </ul>
-                  <p>
-                    We do not require user accounts, and we do not collect personal
-                    identification information such as your name, email address, or IP address
-                    through the standard operation of the tools.
-                  </p>
-
-                  <h2>3. How We Use Information</h2>
-                  <p>
-                    The information stored locally (like theme preference) is used solely to
-                    enhance your user experience with the Service.
-                  </p>
-
-                  <h2>4. Information Sharing and Disclosure</h2>
-                  <p>
-                    As we do not collect personal data on our servers through the core tool
-                    functionality, we do not share such data with third parties.
-                  </p>
-                  
-                  <h2>5. Data Security</h2>
-                  <p>
-                    Since data is primarily processed and stored client-side, security largely depends on the security of your own device and browser. We encourage you to use up-to-date browser software.
-                  </p>
-
-                  <h2>6. Third-Party Services</h2>
-                  <p>
-                    The application may include links to third-party websites or services. This Privacy Policy does not apply to such third-party services.
-                  </p>
-
-                  <h2>7. Children's Privacy</h2>
-                  <p>
-                    The Service is not directed to individuals under the age of 13. We do not
-                    knowingly collect personal information from children under 13.
-                  </p>
-
-                  <h2>8. Changes to This Privacy Policy</h2>
-                  <p>
-                    We may update this Privacy Policy from time to time. We will notify you of
-                    any changes by posting the new Privacy Policy on this page. You are advised
-                    to review this Privacy Policy periodically for any changes.
-                  </p>
-
-                  <h2>9. Contact Us</h2>
-                  <p>
-                    If you have any questions about this Privacy Policy, please contact us.
-                    (Note: A real contact method would be provided in a production app for utilities.my).
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </SidebarInset>
-    </>
-  );
+  return <MarkdownPage icon={ShieldCheck} title="Privacy Policy" content={PRIVACY_CONTENT} />;
 }

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { PanelLeft, FileText, Eye, Info, Trash2 } from 'lucide-react';
+import { PanelLeft, Copy, Download, Eye, EyeOff, Maximize, Minimize, FileText, Trash2, Info } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -249,86 +249,88 @@ export default function MarkdownPreviewerPage() {
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden">
-              <PanelLeft />
-            </SidebarTrigger>
-            <h1 className="text-xl font-semibold font-headline">Markdown Previewer</h1>
+            <SidebarTrigger className="lg:hidden" />
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-semibold font-headline">Markdown Previewer</h1>
+            </div>
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <Card className="w-full shadow-lg mb-6">
-            <CardHeader>
-              <CardTitle className="text-2xl font-headline">Markdown Editor & Previewer</CardTitle>
-              <CardDescription>Write and preview Markdown text in real-time. See how your Markdown syntax translates to formatted HTML content. A quick reference guide is available below.</CardDescription>
-            </CardHeader>
-          </Card>
-        
-          <div className="grid flex-1 gap-6 md:grid-cols-2">
-            {/* Markdown Input Card */}
-            <Card className="shadow-lg flex flex-col">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-xl font-headline">Markdown Input</CardTitle>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleClearInput} title="Clear Markdown Input">
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                  Clear
-                </Button>
-              </CardHeader>
-              <CardContent className="flex-grow flex flex-col">
-                <Label htmlFor="markdownInput" className="sr-only">Markdown Input</Label>
-                <Textarea
-                  id="markdownInput"
-                  value={markdownText}
-                  onChange={(e) => setMarkdownText(e.target.value)}
-                  className="flex-grow resize-none font-code"
-                  placeholder="Type your Markdown here..."
-                />
-              </CardContent>
-            </Card>
+        <div className="flex flex-1 flex-col p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-8">
+            {/* Big heading */}
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Markdown Previewer</h1>
+              <p className="text-lg text-muted-foreground">Write Markdown and see a live preview.</p>
+            </div>
+            
+            <div className="grid flex-1 gap-6 lg:gap-8 md:grid-cols-2">
+              {/* Markdown Input Card */}
+              <Card className="shadow-lg flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between pb-6">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-xl font-headline">Markdown Input</CardTitle>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleClearInput} title="Clear Markdown Input" className="h-9 px-3">
+                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                    Clear
+                  </Button>
+                </CardHeader>
+                <CardContent className="flex-grow flex flex-col">
+                  <Label htmlFor="markdownInput" className="sr-only">Markdown Input</Label>
+                  <Textarea
+                    id="markdownInput"
+                    value={markdownText}
+                    onChange={(e) => setMarkdownText(e.target.value)}
+                    className="flex-grow resize-none font-code text-base"
+                    placeholder="Type your Markdown here..."
+                  />
+                </CardContent>
+              </Card>
 
-            {/* HTML Preview Card */}
-            <Card className="shadow-lg flex flex-col">
-              <CardHeader>
+              {/* HTML Preview Card */}
+              <Card className="shadow-lg flex flex-col">
+                <CardHeader className="pb-6">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-xl font-headline">HTML Preview</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow overflow-auto">
+                  <div
+                    className="prose dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: htmlOutput }}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Markdown Quick Reference Card */}
+            <Card className="shadow-lg">
+              <CardHeader className="pb-6">
                 <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-xl font-headline">HTML Preview</CardTitle>
+                  <Info className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-xl font-headline">Markdown Quick Reference</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow overflow-auto">
-                <div
-                  className="prose dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ __html: htmlOutput }}
-                />
+              <CardContent>
+                <Accordion type="single" collapsible className="w-full">
+                  {markdownExamples.sort((a,b) => a.title.localeCompare(b.title)).map((example, index) => (
+                    <AccordionItem value={`item-${index}`} key={index}>
+                      <AccordionTrigger>{example.title}</AccordionTrigger>
+                      <AccordionContent>
+                        <pre className="bg-muted/50 p-4 rounded-md border border-border text-sm font-code overflow-x-auto">
+                          {example.content}
+                        </pre>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
               </CardContent>
             </Card>
           </div>
-
-          {/* Markdown Quick Reference Card */}
-          <Card className="shadow-lg mt-6">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Info className="h-5 w-5 text-primary" />
-                <CardTitle className="text-xl font-headline">Markdown Quick Reference</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                {markdownExamples.sort((a,b) => a.title.localeCompare(b.title)).map((example, index) => (
-                  <AccordionItem value={`item-${index}`} key={index}>
-                    <AccordionTrigger>{example.title}</AccordionTrigger>
-                    <AccordionContent>
-                      <pre className="bg-muted/50 p-4 rounded-md border border-border text-sm font-code overflow-x-auto">
-                        {example.content}
-                      </pre>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </CardContent>
-          </Card>
         </div>
       </SidebarInset>
     </>
