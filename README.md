@@ -1,5 +1,6 @@
 # utilities.my
 
+<<<<<<< HEAD
 A comprehensive collection of web-based utilities for everyday tasks, all centralized in one modern, responsive web application.
 
 ## Overview
@@ -260,3 +261,9 @@ SOFTWARE.
 ## Author
 
 Created and maintained by miiyuh
+=======
+bunch of utilities packed into one site (well, all the ones that i use frequently)
+
+
+head ove rto https://utilities.my to use it
+>>>>>>> b8a12c6be9e4ea869225857b4be63db4945f76f9
