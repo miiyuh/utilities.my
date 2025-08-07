@@ -1,3 +1,5 @@
+<img src="https://utilities.my/assets/img/utilities-my_text.svg" alt="utilities.my logo" height="64px" />
+
 # utilities.my
 
 A comprehensive collection of web-based utilities for everyday tasks, all centralized in one modern, responsive web application.
@@ -46,17 +48,6 @@ utilities.my is a personal productivity suite designed to consolidate frequently
 - **Lucide React** - Beautiful, customizable icons
 - **shadcn/ui** - Re-usable component library built on Radix UI
 
-### Key Libraries
-- **date-fns** - Modern JavaScript date utility library
-- **Marked** - Fast Markdown parser and compiler
-- **QRCode.react** - QR code generation for React
-- **JSZip** - JavaScript library for creating and reading ZIP files
-- **Canvas Confetti** - Lightweight confetti animation library
-
-### Development Tools
-- **ESLint** - Code linting and formatting
-- **PostCSS** - CSS processing and optimization
-
 ## Project Structure
 
 ```
@@ -65,8 +56,6 @@ src/
 │   ├── about/             # About page
 │   ├── color-picker/      # Color picker utility
 │   ├── date-diff-calculator/ # Date difference calculator
-│   ├── file-compressor/   # File compression utility
-│   ├── image-to-ascii/    # Image to ASCII converter
 │   ├── markdown-previewer/ # Markdown editor and preview
 │   ├── qr-code-generator/ # QR code generation
 │   ├── settings/          # Application settings
@@ -203,15 +192,12 @@ Contributions are welcome and encouraged! This project is open-source and benefi
 
 We're always looking for useful utilities to add! Some ideas include:
 
-- Password/Passphrase Generator
 - Base64 Encoder/Decoder
 - JSON Formatter and Validator
 - Hash Generator (MD5, SHA-256, etc.)
 - Lorem Ipsum Generator
 - Regular Expression Tester
-- CSS Gradient Generator
 - Image Format Converter
-- URL Shortener
 - Percentage Calculator
 - Binary/Decimal/Hex Converter
 
