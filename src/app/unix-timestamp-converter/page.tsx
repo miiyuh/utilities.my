@@ -2,12 +2,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+// Removed unused Card component imports after lint cleanup
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, ArrowRightLeft, Copy, CalendarIcon, Timer } from 'lucide-react';
+import { ArrowRightLeft, Copy, CalendarIcon, Timer } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -36,8 +36,9 @@ export default function UnixTimestampConverterPage() {
       const dateObj = fromUnixTime(numTimestamp);
       setSelectedDate(dateObj); // This will trigger useEffect
       toast({ title: 'Converted to Date', description: `Timestamp ${timestamp} is ${format(dateObj, "PPPpp")}` });
-    } catch (e: any) {
-      toast({ title: 'Conversion Error', description: e.message, variant: 'destructive' });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      toast({ title: 'Conversion Error', description: message, variant: 'destructive' });
     }
   };
 
@@ -47,8 +48,9 @@ export default function UnixTimestampConverterPage() {
       if (isNaN(dateObj.getTime())) throw new Error("Invalid date format");
       setSelectedDate(dateObj); // This will trigger useEffect
       toast({ title: 'Converted to Timestamp', description: `Date ${humanDate} is ${getUnixTime(dateObj)}` });
-    } catch (e: any) {
-      toast({ title: 'Conversion Error', description: e.message, variant: 'destructive' });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      toast({ title: 'Conversion Error', description: message, variant: 'destructive' });
     }
   };
   
@@ -60,7 +62,7 @@ export default function UnixTimestampConverterPage() {
         if (!isNaN(dateObj.getTime())) {
             setSelectedDate(dateObj);
         }
-    } catch (error) {
+  } catch {
         // Silently fail if typing invalid date, useEffect won't update timestamp
     }
   };
@@ -70,7 +72,7 @@ export default function UnixTimestampConverterPage() {
     try {
       await navigator.clipboard.writeText(text);
       toast({ title: `${label} Copied!`, description: `${text} copied to clipboard.` });
-    } catch (err) {
+  } catch {
       toast({ title: 'Copy Failed', variant: 'destructive' });
     }
   };

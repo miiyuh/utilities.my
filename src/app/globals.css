@@ -117,7 +117,7 @@
 @layer components {
   /* Minimal card design with subtle border and hover */
   .minimal-card {
-    @apply bg-card text-card-foreground border rounded-lg p-6 transition-all duration-200 hover:shadow-sm hover:border-primary/20;
+    @apply bg-card text-card-foreground border rounded-lg p-6 transition-all duration-200 hover:shadow-sm hover:border-primary/20 relative z-10;
     border-color: hsl(var(--border));
   }
 
@@ -136,7 +136,8 @@
 
   /* Icon container with subtle background */
   .minimal-icon-container {
-    @apply bg-primary/10 text-primary p-3.5 rounded-lg inline-flex items-center justify-center w-12 h-12 transition-colors hover:bg-primary/15;
+    /* Reverted to subtle translucent background, ensure it's above background canvas */
+    @apply bg-primary/10 text-primary p-3.5 rounded-lg inline-flex items-center justify-center w-12 h-12 transition-colors hover:bg-primary/15 relative z-10;
   }
 
   /* Menu item styling */
@@ -203,6 +204,11 @@
 
   .content-wrapper {
     @apply w-full max-w-none space-y-8;
+  }
+
+  /* Optional translucent surface to place over dot grid without hiding it */
+  .surface-translucent {
+    @apply bg-background/70 backdrop-blur-[2px];
   }
 
   /* Responsive grid spacing */

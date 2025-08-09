@@ -29,14 +29,17 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="antialiased">
-        <DotGridBackground />
         <ThemeProvider defaultTheme="dark" storageKey="utilities.my-theme">
-          <SettingsProvider>
-            <SidebarProvider>
-              {children}
-              <Toaster />
-            </SidebarProvider>
-          </SettingsProvider>
+          {/* Background lives inside ThemeProvider so it can react to theme changes */}
+          <DotGridBackground />
+          <div className="relative z-20">
+            <SettingsProvider>
+              <SidebarProvider>
+                {children}
+                <Toaster />
+              </SidebarProvider>
+            </SettingsProvider>
+          </div>
         </ThemeProvider>
       </body>
     </html>

@@ -2,15 +2,14 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, CalendarIcon, CalendarRange } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { format, differenceInYears, differenceInMonths, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, isValid, parseISO, getUnixTime } from 'date-fns';
+import { format, differenceInYears, differenceInMonths, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, isValid } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -43,7 +42,7 @@ export default function DateDiffCalculatorPage() {
   const [diffResult, setDiffResult] = useState<DateDiff | null>(null);
 
   const handleDateTimeChange = (datePart: Date | undefined, timePart: string, setter: React.Dispatch<React.SetStateAction<Date>>, originalDate: Date) => {
-    let newDate = datePart ? new Date(datePart) : new Date(originalDate); 
+  const newDate = datePart ? new Date(datePart) : new Date(originalDate); 
     
     if (timePart) {
         const timePartsArray = timePart.split(':').map(Number);
@@ -71,7 +70,7 @@ export default function DateDiffCalculatorPage() {
         return;
     }
 
-    let tempStartDate = new Date(startDate);
+  const tempStartDate = new Date(startDate);
     
     const years = differenceInYears(endDate, tempStartDate);
     tempStartDate.setFullYear(tempStartDate.getFullYear() + years);
@@ -122,7 +121,7 @@ export default function DateDiffCalculatorPage() {
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="lg:hidden" />
-            <CalendarRange className="h-5 w-5 text-primary" />
+            <CalendarIcon className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-semibold font-headline">Date Difference Calculator</h1>
           </div>
           <ThemeToggleButton />

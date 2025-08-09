@@ -2,14 +2,13 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, Copy, Trash2, ArrowDownUp, ALargeSmall, FilterX } from 'lucide-react';
+import { ArrowDownUp, ALargeSmall, FilterX, Trash2, Copy } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -46,8 +45,8 @@ export default function SorterPage() {
     }
     
     lines.sort((a, b) => {
-      let valA = caseSensitive ? a : a.toLowerCase();
-      let valB = caseSensitive ? b : b.toLowerCase();
+  const valA = caseSensitive ? a : a.toLowerCase();
+  const valB = caseSensitive ? b : b.toLowerCase();
 
       if (sortType === 'numeric') {
         const numA = parseFloat(valA);

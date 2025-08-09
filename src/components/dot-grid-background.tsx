@@ -1,123 +1,148 @@
-"use client";
+'use client'
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react'
+import { useTheme } from '@/components/theme-provider'
 
-export function DotGridBackground() {
+interface DotGridBackgroundProps {
+  dotSize?: number;
+  spacing?: number;
+  baseOpacity?: number;
+  hoverOpacity?: number;
+  hoverRadius?: number;
+  color?: string; // Optional override; if absent we derive from theme for contrast
+}
+
+// Adapted from user-provided implementation (renamed to maintain existing export)
+export function DotGridBackground({
+  dotSize = 2,
+  spacing = 40,
+  baseOpacity = 0.1,
+  hoverOpacity = 0.8,
+  hoverRadius = 80,
+  color
+}: DotGridBackgroundProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const mousePosRef = useRef({ x: -1000, y: -1000 })
+  const animationRef = useRef<number | null>(null)
+  const { theme } = useTheme()
+
   useEffect(() => {
-    let canvas: HTMLCanvasElement | null = null;
-    let ctx: CanvasRenderingContext2D | null = null;
-    let animationId: number;
-    let mouseX = 0;
-    let mouseY = 0;
-    let isMouseMoving = false;
-    let lastMouseMove = 0;
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-    const init = () => {
-      // Create canvas element
-      canvas = document.createElement('canvas');
-      canvas.style.position = 'fixed';
-      canvas.style.top = '0';
-      canvas.style.left = '0';
-      canvas.style.pointerEvents = 'none';
-      canvas.style.zIndex = '-1';
-      canvas.style.opacity = '1.0';
-      
-      ctx = canvas.getContext('2d');
-      if (!ctx) return;
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-      // Append to body
-      document.body.appendChild(canvas);
-
-      // Set canvas size
-      resize();
-      
-      // Start animation
-      animate();
-    };
-
-    const resize = () => {
-      if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
+    const resizeCanvas = () => {
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = window.innerWidth * dpr
+      canvas.height = window.innerHeight * dpr
+      canvas.style.width = `${window.innerWidth}px`
+      canvas.style.height = `${window.innerHeight}px`
+      ctx.setTransform(1,0,0,1,0,0)
+      ctx.scale(dpr, dpr)
+    }
 
     const handleMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      isMouseMoving = true;
-      lastMouseMove = Date.now();
-    };
+      mousePosRef.current.x = e.clientX
+      mousePosRef.current.y = e.clientY
+    }
 
-    const drawDot = (x: number, y: number, opacity: number, size: number = 2) => {
-      if (!ctx) return;
-      
-      ctx.fillStyle = `hsla(240, 6%, 50%, ${opacity})`;
-      ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.fill();
-    };
+    const handleMouseLeave = () => {
+      mousePosRef.current.x = -1000
+      mousePosRef.current.y = -1000
+    }
 
-    const animate = () => {
-      if (!canvas || !ctx) return;
+    // We'll recompute theme-driven styling inside draw loop using latest refs
+    let effectiveBaseOpacity = baseOpacity
+    let effectiveHoverOpacity = hoverOpacity
+    let resolvedColour = color || ''
 
-      // Clear canvas
+    const resolveThemeColour = () => {
+      if (color) return color
+      const root = document.documentElement
+      const styles = getComputedStyle(root)
+      const fgRaw = styles.getPropertyValue('--foreground').trim() // e.g. "240 6% 5%"
+      const bgRaw = styles.getPropertyValue('--background').trim()
+      const fg = fgRaw ? `hsl(${fgRaw})` : '#0d0d0f'
+      const bg = bgRaw ? `hsl(${bgRaw})` : '#ffffff'
+      // For dark mode we want a lighter mid-tone than pure foreground (which is already light cream)
+      if (theme === 'dark') {
+        // foreground is cream already; mix slightly with bg to soften
+        return fg
+      }
+      // Light theme: use a darker tone (foreground) directly
+      return fg
+    }
+
+    const drawDots = () => {
+      // Update theme adaptive values each frame (cheap) so effect doesn't depend on theme
+      if (!color) {
+        resolvedColour = resolveThemeColour()
+        if (theme === 'dark') {
+          effectiveBaseOpacity = 0.34
+          effectiveHoverOpacity = 0.72
+        } else {
+          effectiveBaseOpacity = 0.18
+          effectiveHoverOpacity = 0.38
+        }
+      } else {
+        resolvedColour = color
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Fade out mouse movement
-      if (Date.now() - lastMouseMove > 100) {
-        isMouseMoving = false;
-      }
+      const cols = Math.ceil(canvas.width / spacing);
+      const rows = Math.ceil(canvas.height / spacing);
 
-      const dotSize = 30;
-      const baseOpacity = 0.4;
-      const hoverOpacity = 1.0;
-      const influenceRadius = 120;
+      for (let i = 0; i <= cols; i++) {
+        for (let j = 0; j <= rows; j++) {
+          const x = i * spacing;
+          const y = j * spacing;
 
-      // Draw dots
-      for (let x = 0; x < canvas.width; x += dotSize) {
-        for (let y = 0; y < canvas.height; y += dotSize) {
-          let opacity = baseOpacity;
-          let size = 2;
+          const dx = x - mousePosRef.current.x
+          const dy = y - mousePosRef.current.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
 
-          if (isMouseMoving) {
-            const dx = x - mouseX;
-            const dy = y - mouseY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < influenceRadius) {
-              const influence = 1 - (distance / influenceRadius);
-              const easedInfluence = influence * influence; // Quadratic easing
-              opacity = baseOpacity + (hoverOpacity - baseOpacity) * easedInfluence;
-              size = 2 + easedInfluence * 3;
+            let opacity = effectiveBaseOpacity;
+            if (distance < hoverRadius) {
+              const factor = 1 - (distance / hoverRadius);
+              opacity = effectiveBaseOpacity + (effectiveHoverOpacity - effectiveBaseOpacity) * factor;
             }
-          }
 
-          drawDot(x, y, opacity, size);
+          ctx.fillStyle = resolvedColour;
+          ctx.globalAlpha = opacity;
+          ctx.beginPath();
+          ctx.arc(x, y, dotSize / 2, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
 
-      animationId = requestAnimationFrame(animate);
+  animationRef.current = requestAnimationFrame(drawDots);
     };
 
-    // Initialize
-    init();
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseleave', handleMouseLeave)
+    
+    drawDots()
 
-    // Event listeners
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', handleMouseMove);
-
-    // Cleanup
     return () => {
-      if (canvas) {
-        document.body.removeChild(canvas);
+      window.removeEventListener('resize', resizeCanvas)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseleave', handleMouseLeave)
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
       }
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
+    }
+  // Effect only re-runs when structural props or theme override inputs change (not mouse)
+  }, [dotSize, spacing, baseOpacity, hoverOpacity, hoverRadius, color, theme])
 
-  return null;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none z-10"
+      style={{ background: 'transparent' }}
+    />
+  )
 }

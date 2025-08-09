@@ -112,7 +112,7 @@ export default function QrCodeGeneratorPage() {
     }
 
     const finalFilename = downloadFilename.endsWith(`.${outputFormat}`) ? downloadFilename : `${downloadFilename || 'qrcode'}.${outputFormat}`;
-    let downloadLink = document.createElement('a');
+  const downloadLink = document.createElement('a');
 
     if (outputFormat === 'png') {
         if (qrCanvasRef.current) {

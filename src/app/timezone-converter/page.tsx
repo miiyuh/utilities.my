@@ -2,12 +2,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+// Removed unused Card components imports after audit
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, CalendarIcon, PlusCircle, XCircle, Pin, Home, ChevronLeft, ChevronRight, RotateCcw, Globe } from 'lucide-react';
+import { CalendarIcon, PlusCircle, XCircle, Pin, Home, ChevronLeft, ChevronRight, RotateCcw, Globe } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -264,18 +264,19 @@ export default function TimezoneConverterPage() {
     }
   };
 
+  // Synchronise horizontal scroll across time strips; debounced to avoid feedback loop.
+  let scrollSyncTimer: ReturnType<typeof setTimeout> | null = null;
   const handleStripScroll = (scrolledLocId: string, event: React.UIEvent<HTMLDivElement>) => {
-    if (isProgrammaticScroll || isDraggingSelection) return; 
+    if (isProgrammaticScroll || isDraggingSelection) return;
     const scrollLeft = event.currentTarget.scrollLeft;
+    if (scrollSyncTimer) clearTimeout(scrollSyncTimer);
     setIsProgrammaticScroll(true);
-    Object.keys(scrollableContainerRefs.current).forEach(locId => {
-      if (locId !== scrolledLocId) {
-        const container = scrollableContainerRefs.current[locId];
-        if (container && container.scrollLeft !== scrollLeft) container.scrollLeft = scrollLeft;
+    Object.entries(scrollableContainerRefs.current).forEach(([locId, container]) => {
+      if (locId !== scrolledLocId && container && container.scrollLeft !== scrollLeft) {
+        container.scrollLeft = scrollLeft;
       }
     });
-    const timer = setTimeout(() => setIsProgrammaticScroll(false), 150); 
-    return () => clearTimeout(timer);
+    scrollSyncTimer = setTimeout(() => setIsProgrammaticScroll(false), 120);
   };
 
   const handleSlotMouseDown = (slotDateTimeInOriginalTz: dayjs.Dayjs) => {
@@ -288,8 +289,8 @@ export default function TimezoneConverterPage() {
   const handleSlotMouseEnter = (slotDateTimeInOriginalTz: dayjs.Dayjs) => {
     if (isDraggingSelection && dragAnchorSlotTime) {
       const currentSlotUTC = slotDateTimeInOriginalTz.utc();
-      let newStartUTC = dayjs.min(dragAnchorSlotTime, currentSlotUTC);
-      let newEndUTC = dayjs.max(dragAnchorSlotTime, currentSlotUTC).add(1, 'hour'); 
+  const newStartUTC = dayjs.min(dragAnchorSlotTime, currentSlotUTC);
+  const newEndUTC = dayjs.max(dragAnchorSlotTime, currentSlotUTC).add(1, 'hour'); 
       setSelectedRange({ start: newStartUTC, end: newEndUTC });
     }
   };
@@ -569,25 +570,41 @@ export default function TimezoneConverterPage() {
                                     : (slot.isDayTime ? "text-sky-700 dark:text-sky-300" : "text-slate-600 dark:text-slate-400");
 
                                 return (
-                                <div
+                                <button
                                   key={slot.key}
+                                  type="button"
                                   onMouseDown={() => handleSlotMouseDown(slot.dateTime)}
                                   onMouseEnter={() => handleSlotMouseEnter(slot.dateTime)}
                                   onClick={() => handleSingleSlotSelect(slot.dateTime)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
+                                      handleSingleSlotSelect(slot.dateTime);
+                                    }
+                                    if (e.key === 'ArrowRight') {
+                                      const next = slot.dateTime.add(1,'hour');
+                                      handleSingleSlotSelect(next);
+                                    }
+                                    if (e.key === 'ArrowLeft') {
+                                      const prev = slot.dateTime.subtract(1,'hour');
+                                      handleSingleSlotSelect(prev);
+                                    }
+                                  }}
+                                  aria-pressed={isSlotInRange}
+                                  aria-label={`Hour ${slot.dateTime.format(timeFormat === '12h' ? 'h A' : 'HH:00')} ${slot.isWeekend ? 'weekend' : 'weekday'} ${slot.isDayTime ? 'daytime' : 'night'}`}
                                   className={cn(
-                                    "relative flex flex-col items-center justify-center rounded-sm border cursor-grab select-none",
-                                    "leading-tight transition-colors duration-75 h-[52px] py-0.5", 
+                                    "relative flex flex-col items-center justify-center rounded-sm border select-none focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-1",
+                                    "leading-tight transition-colors duration-75 h-[52px] py-0.5",
                                     "hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-white/5",
+                                    isSlotInRange ? 'cursor-pointer' : 'cursor-pointer',
                                     slotBgColor,
                                     slotTextColor
                                   )}
                                   style={{width: `${SLOT_WIDTH}px`}}
                                 >
-                                    <span className={cn("text-base font-medium", isSlotInRange ? "font-bold" : "")}>
-                                      {slot.dateTime.format(timeFormat === '12h' ? 'h' : 'H')}
-                                    </span>
-                                    {timeFormat === '12h' && <span className="text-[9px] opacity-80 -mt-0.5">{slot.dateTime.format('A')}</span>}
-                                </div>
+                                  <span className={cn("text-base font-medium", isSlotInRange ? "font-bold" : "")}>{slot.dateTime.format(timeFormat === '12h' ? 'h' : 'H')}</span>
+                                  {timeFormat === '12h' && <span className="text-[9px] opacity-80 -mt-0.5">{slot.dateTime.format('A')}</span>}
+                                </button>
                               );
                             })}
                             </div>

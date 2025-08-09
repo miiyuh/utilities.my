@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { PanelLeft, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -57,13 +57,13 @@ export default function AboutPage() {
                 <h2 className="text-2xl font-semibold mb-4 text-foreground">From the Author</h2>
                 <div className="prose dark:prose-invert max-w-none font-paragraph">
                   <p>
-                    hey, its miiyuh, the creator and maintainer of this website. As a developer who
+                    hey, it&#39;s miiyuh, the creator and maintainer of this website. As a developer who
                     frequently uses various online tools for different tasks, I found myself constantly switching
                     between multiple websites and bookmarks.
                   </p>
                   <p>
                     This project started as a personal solution to centralize the utilities I use most often. What began
-                    as a simple collection of tools has evolved into a comprehensive platform that I'm excited to share
+                    as a simple collection of tools has evolved into a comprehensive platform that I&#39;m excited to share
                     with the community.
                   </p>
                   <p>
