@@ -111,6 +111,10 @@ export default function ColourPickerPage() {
   const [magnifierZoom, setMagnifierZoom] = useState(DEFAULT_MAGNIFIER_ZOOM);
   const [lastSamplePos, setLastSamplePos] = useState<{x:number;y:number}|null>(null);
   const [showAdvancedHSV, setShowAdvancedHSV] = useState(false);
+  // Mobile a11y panel toggle
+  const [showMobileA11y, setShowMobileA11y] = useState(false);
+  // User-configurable dominant palette size (min 4 max 16)
+  const [paletteSize, setPaletteSize] = useState<number>(8);
   // Fresh drag/pan tracking
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{x:number;y:number;panX:number;panY:number}|null>(null);
@@ -127,43 +131,35 @@ export default function ColourPickerPage() {
   }
   // Always listen for paste events (no explicit activation button necessary)
 
+  // Track last fully valid 6-digit HEX to keep previews stable during partial typing
+  const lastValidHexRef = useRef<string>(hexColour);
   useEffect(() => {
-    const rgb = hexToRgb(hexColour);
-    setRgbColour(rgb);
-    if (rgb) {
-      setHslColour(rgbToHsl(rgb.r, rgb.g, rgb.b));
-      setCmykColour(rgbToCmyk(rgb.r, rgb.g, rgb.b));
+    if (/^#[0-9A-F]{6}$/i.test(hexColour)) {
+      const rgb = hexToRgb(hexColour);
+      setRgbColour(rgb);
+      if (rgb) {
+        setHslColour(rgbToHsl(rgb.r, rgb.g, rgb.b));
+        setCmykColour(rgbToCmyk(rgb.r, rgb.g, rgb.b));
+      } else {
+        setHslColour(null);
+        setCmykColour(null);
+      }
+      lastValidHexRef.current = hexColour;
+    } else if (hexColour === '' || /^#[0-9A-F]{0,5}$/i.test(hexColour)) {
+      // Partial input: don't recompute, keep previous valid conversions
     } else {
-      setHslColour(null);
-      setCmykColour(null);
+      // Invalid characters removed below in handler; no state change here
     }
   }, [hexColour]);
 
   const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let textValue = e.target.value.trim();
-    let newHexOutput = textValue;
-
-    // Remove any existing #
-    if (textValue.startsWith('#')) {
-      textValue = textValue.substring(1);
-    }
-
-    // Validate and format the input
-    if (/^[0-9a-fA-F]{6}$/.test(textValue)) {
-      newHexOutput = '#' + textValue.toUpperCase();
-    } else if (/^[0-9a-fA-F]{3}$/.test(textValue)) {
-      newHexOutput = '#' + textValue.split('').map(char => char + char).join('').toUpperCase();
-    } else if (textValue === '') {
-      newHexOutput = '';
-    } else {
-      // For invalid input, try to preserve what was valid
-      const validChars = textValue.replace(/[^0-9a-fA-F]/gi, '').substring(0, 6);
-      if (validChars.length > 0) {
-        newHexOutput = '#' + validChars.toUpperCase();
-      }
-    }
-    
-    setHexColour(newHexOutput);
+    let raw = e.target.value.toUpperCase();
+    // Always allow a leading '#'
+    if (!raw.startsWith('#')) raw = '#' + raw.replace(/#/g,'');
+    // Strip invalid characters after '#'
+    const body = raw.slice(1).replace(/[^0-9A-F]/g, '').slice(0,6);
+    const candidate = '#' + body;
+    setHexColour(candidate);
   };
   
   // --- Colour Space Conversion Helpers (RGB/HSV/Hex) ---
@@ -306,10 +302,10 @@ export default function ColourPickerPage() {
       colourMap.set(hex, (colourMap.get(hex) || 0) + 1);
     }
     
-    // Sort by frequency and get top 8 colours
+    // Sort by frequency and get top N colours (user configurable)
     const sortedColours = Array.from(colourMap.entries())
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
+      .slice(0, Math.min(16, Math.max(4, paletteSize)))
       .map(([colour]) => colour);
     
     setImagePalette(sortedColours);
@@ -567,6 +563,13 @@ export default function ColourPickerPage() {
     }
   }, [uploadedImage]);
 
+  // Recompute palette when user changes desired palette size
+  useEffect(() => {
+    if (uploadedImage && canvasRef.current) {
+      extractImagePalette(canvasRef.current);
+    }
+  }, [paletteSize]);
+
   // handleCanvasClick removed (sampling now occurs in pointerup when not dragging)
 
   const handleMouseMoveOnCanvas = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -627,7 +630,7 @@ export default function ColourPickerPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="lg:hidden" />
             <div className="flex items-center gap-2">
@@ -649,269 +652,191 @@ export default function ColourPickerPage() {
             <div className="grid gap-6 xl:gap-8 lg:grid-cols-2">
               {/* Left Panel: Colour Inputs & Derived Codes */}
               <Card className="minimal-card">
-                <CardHeader className="pb-6">
-                  <CardTitle>Colour Input & Preview</CardTitle>
+                <CardHeader className="pb-3 md:pb-4">
+                  <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Colour Input & Preview</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex flex-col lg:flex-row gap-4">
-                      {/* Visual Picker */}
-                      <div className="flex flex-col gap-2 w-full max-w-[230px] mx-auto lg:mx-0">
-                        <div className="relative select-none" aria-label="Visual colour picker" role="application" aria-describedby="sv-instructions">
+                <CardContent className="space-y-4 md:space-y-5">
+                  {/* Top interactive area */}
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left: Visual Picker */}
+                    <div className="flex flex-col gap-2 w-full max-w-[250px] mx-auto md:mx-0">
+                      <div className="relative select-none" aria-label="Visual colour picker" role="application" aria-describedby="sv-instructions">
                           {/* Saturation / Value Area */}
-                          <div
-                            className="relative aspect-square w-full rounded-md overflow-hidden cursor-crosshair border border-border shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/40"
-                            style={{
-                              background: `hsl(${hsv.h} 100% 50%)`,
-                            }}
-                            tabIndex={0}
-                            onMouseDown={(e) => {
-                              const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                              const handleMove = (event: MouseEvent) => {
-                                const x = Math.min(Math.max(0, event.clientX - rect.left), rect.width);
-                                const y = Math.min(Math.max(0, event.clientY - rect.top), rect.height);
-                                const s = Math.round((x / rect.width) * 100);
-                                const v = Math.round(100 - (y / rect.height) * 100);
-                                const next = { h: hsv.h, s, v };
-                                setHsv(next);
-                                updateHexFromHsv(next);
-                              };
-                              const handleUp = () => {
-                                window.removeEventListener('mousemove', handleMove);
-                                window.removeEventListener('mouseup', handleUp);
-                              };
-                              window.addEventListener('mousemove', handleMove);
-                              window.addEventListener('mouseup', handleUp);
-                              handleMove(e.nativeEvent as unknown as MouseEvent);
-                            }}
-                            onKeyDown={(e)=>{
-                              let {h,s,v}=hsv; const step = e.shiftKey?10:1; let changed=false;
-                              if(e.key==='ArrowRight'){ s=Math.min(100,s+step); changed=true; }
-                              if(e.key==='ArrowLeft'){ s=Math.max(0,s-step); changed=true; }
-                              if(e.key==='ArrowUp'){ v=Math.min(100,v+step); changed=true; }
-                              if(e.key==='ArrowDown'){ v=Math.max(0,v-step); changed=true; }
-                              if(changed){ const next={h,s,v}; setHsv(next); updateHexFromHsv(next); e.preventDefault(); }
-                            }}
-                          >
-                            {/* White gradient (left to right) & Black gradient (top to bottom) overlays */}
-                            <div className="absolute inset-0" style={{background: 'linear-gradient(to right, #fff, rgba(255,255,255,0))'}} />
-                            <div className="absolute inset-0" style={{background: 'linear-gradient(to top, #000, rgba(0,0,0,0))'}} />
-                            {/* Thumb */}
-                            <div
-                              className="absolute w-4 h-4 rounded-full border-2 border-white shadow pointer-events-none"
-                              style={{
-                                left: `calc(${hsv.s}% - 8px)`,
-                                top: `calc(${100 - hsv.v}% - 8px)`,
-                                boxShadow: '0 0 0 1px rgba(0,0,0,0.4)'
-                              }}
-                            />
-                          </div>
-                          {/* Hue Slider */}
-                          <div className="mt-2 relative h-3 w-full rounded-full overflow-hidden cursor-pointer border border-border focus:outline-none focus:ring-2 focus:ring-primary/40"
-                            onMouseDown={(e) => {
-                              const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                              const handleMove = (event: MouseEvent) => {
-                                const x = Math.min(Math.max(0, event.clientX - rect.left), rect.width);
-                                const h = Math.round((x / rect.width) * 360);
-                                const next = { h, s: hsv.s, v: hsv.v };
-                                setHsv(next);
-                                updateHexFromHsv(next);
-                              };
-                              const handleUp = () => {
-                                window.removeEventListener('mousemove', handleMove);
-                                window.removeEventListener('mouseup', handleUp);
-                              };
-                              window.addEventListener('mousemove', handleMove);
-                              window.addEventListener('mouseup', handleUp);
-                              handleMove(e.nativeEvent as unknown as MouseEvent);
-                            }}
-                            aria-label="Hue"
-                            role="slider"
-                            aria-valuemin={0}
-                            aria-valuemax={360}
-                            aria-valuenow={hsv.h}
-                            tabIndex={0}
-                            onKeyDown={(e)=>{
-                              let h=hsv.h; const step = e.shiftKey?15:2; let changed=false;
-                              if(e.key==='ArrowRight' || e.key==='ArrowUp'){ h=(h+step)%361; changed=true; }
-                              if(e.key==='ArrowLeft' || e.key==='ArrowDown'){ h=(h-step+360)%361; changed=true; }
-                              if(changed){ const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); e.preventDefault(); }
-                            }}
-                          >
-                            <div className="absolute inset-0" style={{background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)'}} />
-                            <div
-                              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white shadow"
-                              style={{ left: `calc(${(hsv.h/360)*100}% - 6px)`, boxShadow: '0 0 0 1px rgba(0,0,0,0.4)' }}
-                            />
-                          </div>
-                          <div className="flex justify-between mt-1 text-[10px] font-medium text-muted-foreground">
-                            <span>SV</span><span>Hue</span>
-                          </div>
-                          <div className="flex items-center justify-between mt-1 gap-2">
+                        <div
+                          className="relative aspect-square w-full rounded-md overflow-hidden cursor-crosshair border border-border shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          style={{ background: `hsl(${hsv.h} 100% 50%)` }}
+                          tabIndex={0}
+                          onMouseDown={(e)=>{
+                            const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                            const move=(ev:MouseEvent)=>{ const x=Math.min(Math.max(0,ev.clientX-rect.left),rect.width); const y=Math.min(Math.max(0,ev.clientY-rect.top),rect.height); const s=Math.round((x/rect.width)*100); const v=Math.round(100-(y/rect.height)*100); const next={h:hsv.h,s,v}; setHsv(next); updateHexFromHsv(next); };
+                            const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};
+                            window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);move(e.nativeEvent as unknown as MouseEvent);
+                          }}
+                          onKeyDown={(e)=>{ let {h,s,v}=hsv; const step=e.shiftKey?10:1; let changed=false; if(e.key==='ArrowRight'){s=Math.min(100,s+step);changed=true;} if(e.key==='ArrowLeft'){s=Math.max(0,s-step);changed=true;} if(e.key==='ArrowUp'){v=Math.min(100,v+step);changed=true;} if(e.key==='ArrowDown'){v=Math.max(0,v-step);changed=true;} if(changed){ const next={h,s,v}; setHsv(next); updateHexFromHsv(next); e.preventDefault();}}}
+                        >
+                          <div className="absolute inset-0" style={{background:'linear-gradient(to right,#fff,rgba(255,255,255,0))'}} />
+                          <div className="absolute inset-0" style={{background:'linear-gradient(to top,#000,rgba(0,0,0,0))'}} />
+                          <div className="absolute w-4 h-4 border-2 border-white shadow pointer-events-none bg-white/70" style={{left:`calc(${hsv.s}% - 8px)`,top:`calc(${100-hsv.v}% - 8px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
+                        </div>
+                        {/* Hue slider */}
+                        <div className="mt-2 relative h-3 w-full overflow-hidden cursor-pointer border border-border" onMouseDown={(e)=>{ const rect=(e.currentTarget as HTMLDivElement).getBoundingClientRect(); const move=(ev:MouseEvent)=>{ const x=Math.min(Math.max(0,ev.clientX-rect.left),rect.width); const h=Math.round((x/rect.width)*360); const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); }; const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);}; window.addEventListener('mousemove',move); window.addEventListener('mouseup',up); move(e.nativeEvent as unknown as MouseEvent); }}>
+                          <div className="absolute inset-0" style={{background:'linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)'}} />
+                          <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-white shadow bg-white/70" style={{left:`calc(${(hsv.h/360)*100}% - 6px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] mt-1 text-muted-foreground">
+                          <span>SV</span><span>Hue</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1 text-[10px]">
+                          <div className="flex gap-2">
                             <button
                               type="button"
+                              aria-label={showAdvancedHSV? 'Hide HSV numeric inputs':'Show HSV numeric inputs'}
+                              title={showAdvancedHSV? 'Hide HSV numeric inputs':'Show HSV numeric inputs'}
                               onClick={()=> setShowAdvancedHSV(s=>!s)}
-                              className="text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
-                            >{showAdvancedHSV? 'Hide':'HSV'}</button>
+                              className="px-2 h-6 inline-flex items-center gap-1 rounded-sm border border-border/70 bg-background/40 hover:bg-accent/30 hover:border-primary/60 transition-colors font-medium tracking-wide"
+                            >
+                              <span className="font-mono">HSV</span>
+                              <span className="text-[9px] opacity-70">{showAdvancedHSV?'–':'+'}</span>
+                            </button>
                             <button
                               type="button"
+                              aria-label="Reset picker to default #1A1A1A"
+                              title="Reset to default (#1A1A1A)"
                               onClick={()=>{ setHsv(rgbToHsv(26,26,26)); setPreviousHex(hexColour); setHexColour('#1A1A1A'); }}
-                              className="text-[10px] text-muted-foreground hover:underline"
-                            >Reset</button>
+                              className="px-2 h-6 inline-flex items-center gap-1 rounded-sm border border-border/70 bg-background/40 hover:bg-destructive/20 hover:border-destructive/60 transition-colors font-medium"
+                            >
+                              <span className="font-mono">Reset</span>
+                            </button>
+                            <button
+                              type="button"
+                              aria-label="Generate random colour"
+                              title="Random colour"
+                              onClick={generateRandomColour}
+                              className="px-2 h-6 inline-flex items-center gap-1 rounded-sm border border-border/70 bg-background/40 hover:bg-accent/30 hover:border-primary/60 transition-colors font-medium"
+                            >
+                              <Shuffle className="h-3 w-3" />
+                              <span className="font-mono">Rand</span>
+                            </button>
                           </div>
-                          {showAdvancedHSV && (
-                            <div className="grid grid-cols-3 gap-1 mt-2">
-                              {(['h','s','v'] as const).map(key=> (
-                                <div key={key} className="flex flex-col gap-0.5">
-                                  <Label className="text-[9px] uppercase tracking-wide">{key}</Label>
-                                  <Input
-                                    type="number"
-                                    min={0}
-                                    max={key==='h'?360:100}
-                                    value={hsv[key]}
-                                    onChange={(e)=>{ const val=Math.max(0, Math.min(key==='h'?360:100, parseInt(e.target.value||'0',10))); const next={...hsv,[key]:val}; setHsv(next); updateHexFromHsv(next); }}
-                                    className="h-7 text-[11px] font-mono"
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          <p id="sv-instructions" className="sr-only">Use mouse or arrow keys to adjust saturation and value; use hue slider below to change hue. Shift + arrow for larger steps.</p>
+                          <span className="text-muted-foreground hidden sm:inline">S:{hsv.s}% V:{hsv.v}%</span>
                         </div>
-                      {/* Combined Preview + Hex */}
-                      <div className="flex flex-col flex-1 gap-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="flex-grow h-20 rounded-md border border-border shadow-inner transition-all"
-                            style={{ backgroundColor: hexColour }}
-                            aria-label={`Current colour preview: ${hexColour}`}
-                          />
-                        </div>
-            <div className="flex items-center gap-2 w-full">
-                          <Input
-                            id="hex-value-input"
-                            value={hexColour}
-                            onChange={handleHexChange}
-              className="font-mono text-center text-base tracking-wider flex-1 min-w-[120px]"
-                            placeholder="#000000"
-                            maxLength={7}
-                          />
-                          <Button
-                            variant="outline"
-              size="icon"
-              className="shrink-0 hover:bg-primary hover:text-primary-foreground"
-                            onClick={() => copyToClipboard(hexColour, 'HEX')}
-                            title="Copy HEX"
-                            disabled={!hexColour || !/^#[0-9a-fA-F]{6}$/i.test(hexColour)}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-              size="icon"
-              className="shrink-0"
-                            title="Revert to previous colour"
-                            disabled={previousHex === hexColour}
-                            onClick={()=>{ const current=hexColour; setHexColour(previousHex); setPreviousHex(current); }}
-                          >↺</Button>
-                        </div>
-                        {hexColour && !/^#[0-9a-fA-F]{6}$/i.test(hexColour) && (
-                          <p className="text-xs text-destructive">Enter valid HEX (#RRGGBB)</p>
+                        {showAdvancedHSV && (
+                          <div className="grid grid-cols-3 gap-1 mt-2">
+                            {(['h','s','v'] as const).map(key=> (
+                              <div key={key} className="flex flex-col gap-0.5">
+                                <Label className="text-[9px] uppercase tracking-wide">{key}</Label>
+                                <Input type="number" min={0} max={key==='h'?360:100} value={hsv[key]} onChange={(e)=>{ const val=Math.max(0,Math.min(key==='h'?360:100,parseInt(e.target.value||'0',10))); const next={...hsv,[key]:val}; setHsv(next); updateHexFromHsv(next); }} className="h-7 text-[11px] font-mono" />
+                              </div>
+                            ))}
+                          </div>
                         )}
+                        <p id="sv-instructions" className="sr-only">Use mouse or arrow keys to adjust saturation and value; use hue slider below.</p>
+                      </div>{/* end relative select-none */}
+                    </div>{/* end picker column */}
+                    {/* Right: Derived Colour Codes */}
+                    <div className="flex flex-col gap-2 md:gap-3 flex-1 max-w-xs mx-auto md:mx-0">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Derived Colour Codes</p>
+                      {/* RGB */}
+                      <button
+                        type="button"
+                        disabled={!rgbColour}
+                        onClick={()=> copyToClipboard(rgbColour?`rgb(${rgbColour.r}, ${rgbColour.g}, ${rgbColour.b})`:'','RGB')}
+                        className="group relative h-14 md:h-16 border border-border rounded-sm text-[11px] md:text-xs font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                        aria-label={rgbColour?`Copy RGB ${`rgb(${rgbColour.r}, ${rgbColour.g}, ${rgbColour.b})`}`:'RGB unavailable'}
+                      >
+                        <span className="absolute top-1 left-2 text-[10px] tracking-wide font-medium opacity-70 group-hover:opacity-100">RGB</span>
+                        <span className="truncate w-full">{rgbColour?`rgb(${rgbColour.r}, ${rgbColour.g}, ${rgbColour.b})`:'—'}</span>
+                        <span className="pointer-events-none absolute bottom-1 right-2 opacity-0 group-hover:opacity-70 text-[9px] inline-flex items-center gap-0.5">Copy <Copy className="h-3 w-3 opacity-80" /></span>
+                      </button>
+                      {/* HSL */}
+                      <button
+                        type="button"
+                        disabled={!hslColour}
+                        onClick={()=> copyToClipboard(hslColour?`hsl(${hslColour.h}, ${hslColour.s}%, ${hslColour.l}%)`:'','HSL')}
+                        className="group relative h-14 md:h-16 border border-border rounded-sm text-[11px] md:text-xs font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                        aria-label={hslColour?`Copy HSL ${`hsl(${hslColour.h}, ${hslColour.s}%, ${hslColour.l}%)`}`:'HSL unavailable'}
+                      >
+                        <span className="absolute top-1 left-2 text-[10px] tracking-wide font-medium opacity-70 group-hover:opacity-100">HSL</span>
+                        <span className="truncate w-full">{hslColour?`hsl(${hslColour.h}, ${hslColour.s}%, ${hslColour.l}%)`:'—'}</span>
+                        <span className="pointer-events-none absolute bottom-1 right-2 opacity-0 group-hover:opacity-70 text-[9px] inline-flex items-center gap-0.5">Copy <Copy className="h-3 w-3 opacity-80" /></span>
+                      </button>
+                      {/* CMYK */}
+                      <button
+                        type="button"
+                        disabled={!cmykColour}
+                        onClick={()=> copyToClipboard(cmykColour?`cmyk(${cmykColour.c}%, ${cmykColour.m}%, ${cmykColour.y}%, ${cmykColour.k}%)`:'','CMYK')}
+                        className="group relative h-14 md:h-16 border border-border rounded-sm text-[11px] md:text-xs font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                        aria-label={cmykColour?`Copy CMYK ${`cmyk(${cmykColour.c}%, ${cmykColour.m}%, ${cmykColour.y}%, ${cmykColour.k}%)`}`:'CMYK unavailable'}
+                      >
+                        <span className="absolute top-1 left-2 text-[10px] tracking-wide font-medium opacity-70 group-hover:opacity-100">CMYK</span>
+                        <span className="truncate w-full">{cmykColour?`cmyk(${cmykColour.c}%, ${cmykColour.m}%, ${cmykColour.y}%, ${cmykColour.k}%)`:'—'}</span>
+                        <span className="pointer-events-none absolute bottom-1 right-2 opacity-0 group-hover:opacity-70 text-[9px] inline-flex items-center gap-0.5">Copy <Copy className="h-3 w-3 opacity-80" /></span>
+                      </button>
+                      {/* Colour preview */}
+                      <div className="relative h-14 md:h-16 border border-border rounded-sm overflow-hidden">
+                        <div className="absolute inset-0" style={{background:lastValidHexRef.current}} aria-label={`Colour preview ${lastValidHexRef.current}`}></div>
+                        <div className="absolute inset-0 flex items-end justify-end p-1">
+                          <span className="bg-black/50 text-white text-[10px] px-1 rounded-sm font-mono">{lastValidHexRef.current}</span>
+                        </div>
                       </div>
                     </div>
+                  </div> {/* end top interactive area */}
+                  {/* Hex row */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Input id="hex-value-input" value={hexColour} onChange={handleHexChange} className="font-mono text-center text-base tracking-wider w-40" placeholder="#000000" maxLength={7} />
+                    <Button variant="outline" size="icon" onClick={()=> copyToClipboard(lastValidHexRef.current,'HEX')} disabled={!/^#[0-9A-F]{6}$/i.test(lastValidHexRef.current)} aria-label="Copy HEX"><Copy className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon" disabled={previousHex===lastValidHexRef.current} onClick={()=>{ const cur=lastValidHexRef.current; setHexColour(previousHex); setPreviousHex(cur); }} aria-label="Swap with previous colour">↺</Button>
                   </div>
-                  </div>{/* close outer space-y-4 wrapper */}
-
-                  <div className="space-y-4 pt-4 border-t">
-                    <h3 className="text-md font-medium text-muted-foreground">Derived Colour Codes</h3>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
-                      <Label>RGB</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          readOnly
-                          value={rgbColour ? `rgb(${rgbColour.r}, ${rgbColour.g}, ${rgbColour.b})` : 'N/A'}
-                          className="font-mono bg-muted/30"
-                        />
-                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(rgbColour ? `rgb(${rgbColour.r}, ${rgbColour.g}, ${rgbColour.b})` : '', 'RGB')} title="Copy RGB" disabled={!rgbColour}>
-                          <Copy className="h-4 w-4" />
-                        </Button>
+                  <hr className="border-border/60" />
+                  {/* Accessibility + Preview (integrated styling) */}
+                  <section className="space-y-3">
+                    <div className="flex md:hidden justify-end">
+                      <button
+                        type="button"
+                        onClick={()=> setShowMobileA11y(s=>!s)}
+                        className="text-[11px] px-2 py-1 rounded border border-border/60 hover:bg-accent/30 transition-colors"
+                        aria-expanded={showMobileA11y}
+                      >{showMobileA11y? 'Hide':'Accessibility'}</button>
+                    </div>
+                    <div className={"space-y-3 " + (showMobileA11y? 'block':'hidden md:block')}>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <h4 className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Accessibility & Preview</h4>
+                      <div className="flex items-center gap-3 text-[11px] font-mono">
+                        <span className="px-2 py-0.5 rounded bg-secondary/50 border border-border/60">{contrast.ratio}:1</span>
+                        <span className="text-[10px]">AA {contrast.passesAA? '✔':'✖'} / AAA {contrast.passesAAA? '✔':'✖'}</span>
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={()=>{ const payload = { hex: hexColour, rgb: rgbColour, hsl: hslColour, cmyk: cmykColour, hsv }; copyToClipboard(JSON.stringify(payload,null,2),'All Formats'); }}>Copy All</Button>
                       </div>
                     </div>
-                      <div>
-                      <Label>HSL</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          readOnly
-                          value={hslColour ? `hsl(${hslColour.h}, ${hslColour.s}%, ${hslColour.l}%)` : 'N/A'}
-                          className="font-mono bg-muted/30"
-                        />
-                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(hslColour ? `hsl(${hslColour.h}, ${hslColour.s}%, ${hslColour.l}%)` : '', 'HSL')} title="Copy HSL" disabled={!hslColour}>
-                          <Copy className="h-4 w-4" />
-                        </Button>
+                    <div className="grid gap-4 md:grid-cols-2 items-stretch">
+                      <div className="text-xs space-y-1 leading-relaxed">
+                        <p>Current colour: <span className="font-mono">{lastValidHexRef.current}</span></p>
+                        <p>Recommended text: <span style={{color:contrast.recommended}} className="font-mono">{contrast.recommended}</span></p>
+                        <p>Contrast: <span className={contrast.passesAA? 'text-green-500':'text-yellow-500'}>{contrast.ratio}:1</span></p>
+                        <p>Status: <span>{contrast.passesAA? 'AA pass':'AA fail'}</span> / <span>{contrast.passesAAA? 'AAA pass':'AAA fail'}</span></p>
                       </div>
-                    </div>
-                      <div className="sm:col-span-2">
-                        <div>
-                      <Label>CMYK</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          readOnly
-                          value={cmykColour ? `cmyk(${cmykColour.c}%, ${cmykColour.m}%, ${cmykColour.y}%, ${cmykColour.k}%)` : 'N/A'}
-                          className="font-mono bg-muted/30"
-                        />
-                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(cmykColour ? `cmyk(${cmykColour.c}%, ${cmykColour.m}%, ${cmykColour.y}%, ${cmykColour.k}%)` : '', 'CMYK')} title="Copy CMYK" disabled={!cmykColour}>
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="pt-2 grid grid-cols-2 gap-4 border-t">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Accessibility</Label>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          <p>Contrast vs background: <span className={contrast.passesAA? 'text-green-500':'text-yellow-500'}>{contrast.ratio}:1</span></p>
-                          <p>AA {contrast.passesAA? '✔':'✖'} / AAA {contrast.passesAAA? '✔':'✖'}</p>
-                          <p>Recommended text: <span style={{color:contrast.recommended}}>{contrast.recommended}</span></p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-stretch gap-1">
-                        <Label className="text-xs">Preview</Label>
-                        <div className="rounded-md border border-border h-16 overflow-hidden grid grid-cols-2 text-[10px] font-mono">
-                          <div style={{background:hexColour, color: contrast.recommended}} className="flex items-center justify-center p-1 text-center">Aa
+                      <div className="flex flex-col gap-2">
+                        <div className="rounded-md border border-border h-20 overflow-hidden grid grid-cols-2 text-[11px] font-mono">
+                          <div style={{background:lastValidHexRef.current,color:contrast.recommended}} className="flex flex-col items-center justify-center gap-1">
+                            <span>Aa</span>
+                            <span className="text-[9px] opacity-70">FG {contrast.recommended}</span>
                           </div>
-                          <div style={{background:contrast.recommended, color: hexColour}} className="flex items-center justify-center p-1 text-center">Aa
+                          <div style={{background:contrast.recommended,color:lastValidHexRef.current}} className="flex flex-col items-center justify-center gap-1">
+                            <span>Aa</span>
+                            <span className="text-[9px] opacity-70">FG {lastValidHexRef.current}</span>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center gap-3 flex-wrap">
-                      <div className="text-[10px] text-muted-foreground">Contrast {contrast.ratio}:1 {contrast.passesAA? 'AA':'!AA'} {contrast.passesAAA? 'AAA':''}</div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={()=>{ const payload = { hex: hexColour, rgb: rgbColour, hsl: hslColour, cmyk: cmykColour, hsv }; copyToClipboard(JSON.stringify(payload,null,2), 'All Formats'); }}
-                      >Copy All</Button>
                     </div>
-                  </div>
+                  </section>
                 </CardContent>
-                {/* closing wrapper div added for outer space-y-4 container */}
-                  <CardFooter className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" onClick={generateRandomColour} variant="secondary"><Shuffle className="mr-2 h-4 w-4" />Random</Button>
-                      <Button size="sm" variant="outline" onClick={()=>{ setShowAdvancedHSV(s=>!s); }}>{showAdvancedHSV? 'Basic':'Advanced'}</Button>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">HEX input or visual picker</p>
-                  </CardFooter>
               </Card>
 
               {/* Right Panel: Pick from Image & Magnifier */}
               <Card className="minimal-card">
                 <CardHeader className="flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <CardTitle className="shrink-0">Pick Colour from Image</CardTitle>
+                    <CardTitle className="shrink-0 font-headline text-lg md:text-xl tracking-tight">Pick Colour from Image</CardTitle>
                     <div className="flex gap-2">
                       <Button
                         id="image-upload-button"
@@ -1077,35 +1002,45 @@ export default function ColourPickerPage() {
                   
                   {/* Image Palette */}
                   {imagePalette.length > 0 && (
-                    <div className="space-y-4 pt-6 border-t">
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-3 pt-6 border-t">
+                      <div className="flex items-center gap-3 mb-1">
                         <Palette className="h-5 w-5 text-primary" />
                         <h3 className="text-lg font-medium">Image Palette</h3>
-                        <span className="text-sm text-muted-foreground">({imagePalette.length} dominant colours)</span>
+                        <span className="text-sm text-muted-foreground">({imagePalette.length}/{paletteSize})</span>
+                        <div className="ml-auto flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={()=> setPaletteSize(s=> Math.max(4, s-1))}
+                            disabled={paletteSize<=4}
+                            className="w-7 h-7 border border-border rounded-sm flex items-center justify-center text-lg leading-none font-mono hover:bg-accent/30 disabled:opacity-40"
+                            title="Decrease palette size"
+                            aria-label="Decrease palette size"
+                          >−</button>
+                          <button
+                            type="button"
+                            onClick={()=> setPaletteSize(s=> Math.min(16, s+1))}
+                            disabled={paletteSize>=16}
+                            className="w-7 h-7 border border-border rounded-sm flex items-center justify-center text-lg leading-none font-mono hover:bg-accent/30 disabled:opacity-40"
+                            title="Increase palette size"
+                            aria-label="Increase palette size"
+                          >+</button>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-6 xs:grid-cols-8 sm:grid-cols-8 gap-2">
+                      <div className="grid gap-2 p-1 rounded-md bg-muted/10 border border-border" style={{gridTemplateColumns:`repeat(${imagePalette.length}, minmax(24px,1fr))`}}>
                         {imagePalette.map((colour, index) => (
                           <button
                             key={index}
-                            onClick={() => {
-                              setHexColour(colour);
-                              copyToClipboard(colour, 'HEX');
-                            }}
-                            className="aspect-square rounded-lg border-2 border-border hover:border-primary/50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:scale-105 group relative focus:outline-none focus:ring-2 focus:ring-primary"
+                            onClick={() => { setHexColour(colour); copyToClipboard(colour, 'HEX'); }}
+                            className="relative w-full h-8 rounded-sm border border-border/70 hover:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary group transition-colors"
+                            style={{backgroundColor: colour}}
                             aria-label={`Use palette colour ${colour}`}
-                            style={{ backgroundColor: colour }}
                             title={`Click to use ${colour}`}
                           >
-                            <div className="absolute inset-0 bg-black/0 hover:bg-black/10 rounded-lg transition-colors" />
-                            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white px-1.5 py-0.5 rounded text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                              {colour}
-                            </div>
+                            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-black/80 text-white px-1 py-0.5 rounded text-[9px] font-mono opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">{colour}</div>
                           </button>
                         ))}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Click any colour to use it as your main colour
-                      </p>
+                      <p className="text-xs text-muted-foreground">Click a swatch to set the colour. Use + / − to adjust count.</p>
                     </div>
                   )}
                   {lockedSamples.length > 0 && (

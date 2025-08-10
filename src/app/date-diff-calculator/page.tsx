@@ -1,19 +1,19 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { format, differenceInYears, differenceInMonths, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, isValid } from 'date-fns';
+import { format, differenceInYears, differenceInMonths, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, isValid, startOfDay } from 'date-fns';
+import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+// Removed table layout for results; using flex rows instead
 import { cn } from "@/lib/utils";
 
 interface DateDiff {
@@ -32,7 +32,6 @@ interface DateDiff {
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function DateDiffCalculatorPage() {
-  const { toast } = useToast();
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(() => {
     const tomorrow = new Date();
@@ -40,6 +39,8 @@ export default function DateDiffCalculatorPage() {
     return tomorrow;
   });
   const [diffResult, setDiffResult] = useState<DateDiff | null>(null);
+  const [includeTime, setIncludeTime] = useState(false); // time selection hidden by default
+  const [error, setError] = useState<string | null>(null); // inline error message
 
   const handleDateTimeChange = (datePart: Date | undefined, timePart: string, setter: React.Dispatch<React.SetStateAction<Date>>, originalDate: Date) => {
   const newDate = datePart ? new Date(datePart) : new Date(originalDate); 
@@ -59,56 +60,91 @@ export default function DateDiffCalculatorPage() {
 
   const calculateDiff = useCallback(() => {
     if (!isValid(startDate) || !isValid(endDate)) {
-      toast({ title: 'Invalid Dates', description: 'Please ensure both dates are valid.', variant: 'destructive' });
       setDiffResult(null);
+      setError('Invalid dates. Please ensure both dates are valid.');
       return;
     }
 
-    if (endDate < startDate) {
-        toast({ title: 'Invalid Range', description: 'End date must be after start date.', variant: 'destructive' });
-        setDiffResult(null);
-        return;
-    }
+    // Effective dates (strip time if not included)
+    const effectiveStart = includeTime ? startDate : startOfDay(startDate);
+    const effectiveEnd = includeTime ? endDate : startOfDay(endDate);
 
-  const tempStartDate = new Date(startDate);
+  if (effectiveEnd < effectiveStart) {
+    setDiffResult(null);
+    setError('Invalid range. End date must be after start date.');
+    return;
+  }
+
+    const tempStartDate = new Date(effectiveStart);
     
-    const years = differenceInYears(endDate, tempStartDate);
+    const years = differenceInYears(effectiveEnd, tempStartDate);
     tempStartDate.setFullYear(tempStartDate.getFullYear() + years);
     
-    const months = differenceInMonths(endDate, tempStartDate);
+    const months = differenceInMonths(effectiveEnd, tempStartDate);
     tempStartDate.setMonth(tempStartDate.getMonth() + months);
 
-    const days = differenceInDays(endDate, tempStartDate);
+    const days = differenceInDays(effectiveEnd, tempStartDate);
     tempStartDate.setDate(tempStartDate.getDate() + days);
 
-    const hours = differenceInHours(endDate, tempStartDate);
+    const hours = differenceInHours(effectiveEnd, tempStartDate);
     tempStartDate.setHours(tempStartDate.getHours() + hours);
 
-    const minutes = differenceInMinutes(endDate, tempStartDate);
+    const minutes = differenceInMinutes(effectiveEnd, tempStartDate);
     tempStartDate.setMinutes(tempStartDate.getMinutes() + minutes);
 
-    const seconds = differenceInSeconds(endDate, tempStartDate);
+    const seconds = differenceInSeconds(effectiveEnd, tempStartDate);
 
-    setDiffResult({
+  setDiffResult({
       years,
       months,
       days,
       hours,
       minutes,
       seconds,
-      totalDays: differenceInDays(endDate, startDate),
-      totalHours: differenceInHours(endDate, startDate),
-      totalMinutes: differenceInMinutes(endDate, startDate),
-      totalSeconds: differenceInSeconds(endDate, startDate),
+      totalDays: differenceInDays(effectiveEnd, effectiveStart),
+      totalHours: differenceInHours(effectiveEnd, effectiveStart),
+      totalMinutes: differenceInMinutes(effectiveEnd, effectiveStart),
+      totalSeconds: differenceInSeconds(effectiveEnd, effectiveStart),
     });
-    // The toast is kept here as per original logic, button click will also trigger this.
-    // If this toast is too frequent due to auto-update, it can be moved to a separate button handler.
-    toast({ title: 'Difference Calculated!' });
-  }, [startDate, endDate, toast]);
+  setError(null);
+  }, [startDate, endDate, includeTime]);
   
   useEffect(() => {
     calculateDiff();
   }, [calculateDiff]);
+
+  // Derive filtered rows & summary for UX (hide zero-value units)
+  const resultRows = useMemo(() => {
+    if (!diffResult) return [] as { label: string; value: number; isTotal?: boolean }[]
+    const rows: { label: string; value: number; isTotal?: boolean }[] = [
+      { label: 'Years', value: diffResult.years },
+      { label: 'Months', value: diffResult.months },
+      { label: 'Days', value: diffResult.days },
+      { label: 'Hours', value: diffResult.hours },
+      { label: 'Minutes', value: diffResult.minutes },
+      { label: 'Seconds', value: diffResult.seconds },
+      { label: 'Total Days', value: diffResult.totalDays, isTotal: true },
+      { label: 'Total Hours', value: diffResult.totalHours, isTotal: true },
+      { label: 'Total Minutes', value: diffResult.totalMinutes, isTotal: true },
+      { label: 'Total Seconds', value: diffResult.totalSeconds, isTotal: true },
+    ]
+    return rows.filter(r => r.value !== 0)
+  }, [diffResult])
+
+  const summary = useMemo(() => {
+    if (!diffResult) return ''
+    const ordered = [
+      ['year', diffResult.years] as [string, number],
+      ['month', diffResult.months] as [string, number],
+      ['day', diffResult.days] as [string, number],
+      ['hour', diffResult.hours] as [string, number],
+      ['minute', diffResult.minutes] as [string, number],
+      ['second', diffResult.seconds] as [string, number],
+    ].filter(([, v]) => v > 0)
+    if (!ordered.length) return 'No difference (dates are the same).'
+    const top = ordered.slice(0, 3).map(([l, v]) => `${v.toLocaleString()} ${l}${v!==1?'s':''}`)
+    return top.join(', ')
+  }, [diffResult])
 
 
   return (
@@ -118,7 +154,7 @@ export default function DateDiffCalculatorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
+  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="lg:hidden" />
             <CalendarIcon className="h-5 w-5 text-primary" />
@@ -128,7 +164,7 @@ export default function DateDiffCalculatorPage() {
         </header>
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
-            {/* Big heading */}
+            {/* Big heading (consistent with other pages) */}
             <div className="mb-8">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Date Difference Calculator</h1>
               <p className="text-lg text-muted-foreground">Calculate the difference between two dates.</p>
@@ -136,6 +172,12 @@ export default function DateDiffCalculatorPage() {
             
             <div className="max-w-7xl mx-auto space-y-8">
               <div className="space-y-6">
+                <div className="flex items-center justify-between gap-6 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <Switch id="include-time" checked={includeTime} onCheckedChange={setIncludeTime} />
+                    <label htmlFor="include-time" className="text-sm font-medium select-none">Include time</label>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <Label htmlFor="startDateInput">Start Date & Time</Label>
@@ -158,7 +200,9 @@ export default function DateDiffCalculatorPage() {
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input type="time" value={format(startDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(startDate, e.target.value, setStartDate, startDate)} step="1" className="h-10" />
+                    {includeTime && (
+                      <Input type="time" value={format(startDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(startDate, e.target.value, setStartDate, startDate)} step="1" className="h-10" />
+                    )}
                   </div>
                   <div className="space-y-4">
                     <Label htmlFor="endDateInput">End Date & Time</Label>
@@ -181,67 +225,59 @@ export default function DateDiffCalculatorPage() {
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input type="time" value={format(endDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(endDate, e.target.value, setEndDate, endDate)} step="1" className="h-10" />
+                    {includeTime && (
+                      <Input type="time" value={format(endDate, "HH:mm:ss")} onChange={(e) => handleDateTimeChange(endDate, e.target.value, setEndDate, endDate)} step="1" className="h-10" />
+                    )}
                   </div>
                 </div>
 
-                <Button onClick={calculateDiff} className="w-full h-12 text-base">Calculate Difference</Button>
+                {error && (
+                  <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 text-destructive text-sm px-4 py-2 flex items-start gap-2">
+                    <span className="font-medium">Error:</span>
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <div className="flex flex-col md:flex-row md:items-stretch gap-4">
+                  {diffResult && (
+                    <div className="flex-1 h-12 rounded-md border border-border/60 bg-background/40 px-4 flex items-center text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground mr-1">Summary:</span> {summary}
+                    </div>
+                  )}
+                </div>
 
                 {diffResult && (
-                  <div className="space-y-6 pt-6 border-t">
-                    <h3 className="text-xl font-semibold text-center md:text-left">Result:</h3>
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground">Years</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.years}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground">Months</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.months}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground">Days</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.days}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground">Hours</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.hours}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground">Minutes</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.minutes}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground">Seconds</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.seconds}</TableCell>
-                        </TableRow>
-                        
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground pt-4 border-t">Total Days</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right pt-4 border-t">{diffResult.totalDays.toLocaleString()}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground">Total Hours</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.totalHours.toLocaleString()}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground">Total Minutes</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.totalMinutes.toLocaleString()}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium text-md text-muted-foreground">Total Seconds</TableCell>
-                          <TableCell className="text-2xl font-semibold text-primary text-right">{diffResult.totalSeconds.toLocaleString()}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
+                  <div className="space-y-4 pt-6 border-t">
+                    <h3 className="text-lg font-semibold">Result</h3>
+                    {resultRows.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No difference – both date & time values are identical.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {resultRows.map((r, i) => {
+                          const prev = resultRows[i-1]
+                          const needsGroupBorder = r.isTotal && (!prev || !prev.isTotal)
+                          return (
+                            <div
+                              key={r.label}
+                              className={cn(
+                                'flex items-baseline gap-3 px-2 py-2 rounded-md transition-colors hover:bg-muted/40',
+                                needsGroupBorder && 'border-t pt-4 mt-2'
+                              )}
+                            >
+                              <span className={cn('diff-number text-2xl md:text-3xl leading-none text-primary')}>
+                                {r.value.toLocaleString()}
+                              </span>
+                              <span className={cn('text-sm md:text-base font-medium text-muted-foreground')}>{r.label}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
                 
-                <div className="pt-6 border-t">
-                  <p className="text-xs text-muted-foreground w-full text-center">
-                    Results update automatically as you change dates or times.
-                  </p>
+                <div className="pt-6 border-t text-center">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Auto-updates on change</p>
                 </div>
               </div>
             </div>

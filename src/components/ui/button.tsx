@@ -9,11 +9,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+  // Unified single-pixel border without extra shadow for consistent stroke width
+  default: "bg-primary text-primary-foreground hover:bg-primary/90 border border-primary/60",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-border bg-background text-foreground hover:bg-primary/10 hover:border-primary/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",

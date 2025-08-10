@@ -27,7 +27,7 @@ export function MarkdownPage({ icon: Icon, title, content }: MarkdownPageProps) 
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="lg:hidden">
               <Icon className="h-5 w-5 md:h-6 md:w-6" />

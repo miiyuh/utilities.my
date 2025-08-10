@@ -1,25 +1,76 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { PanelLeft, Copy, Download, Eye, EyeOff, Maximize, Minimize, FileText, Trash2, Info } from 'lucide-react';
+import { Copy, Download, Eye, FileText, Trash2, Info, Columns } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { marked } from 'marked';
+import { marked, Renderer } from 'marked';
 import markedFootnote from 'marked-footnote';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 
+// Fallback simple icons for actions not present in lucide-react selection
+const CodeIconFallback = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
+);
+const RefreshIconFallback = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10" /><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14" /></svg>
+);
+
+// Configure marked with footnotes + custom renderer (token-based API)
 marked.use(markedFootnote());
+class AppRenderer extends Renderer {
+  heading(token: any): string {
+    const id = (token.text || '').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    return `<h${token.depth} id="${id}" class="md-heading md-h${token.depth}"><a href="#${id}" class="md-anchor" aria-label="Link to section">#</a>${token.text}</h${token.depth}>`;
+  }
+  listitem(token: any): string {
+    if (token.task) {
+      return `<li class="md-task"><input type="checkbox" disabled ${token.checked ? 'checked' : ''} /> <span>${token.text}</span></li>`;
+    }
+    return `<li>${token.text}</li>`;
+  }
+  code(token: any): string {
+    const lang = (token.lang || '').toLowerCase();
+    return `<pre data-lang="${lang}"><code class="language-${lang}">${token.text}</code></pre>`;
+  }
+  table(token: any): string {
+    return `<div class="md-table-wrapper"><table>${token.header}${token.rows.join('')}</table></div>`;
+  }
+}
+marked.use({ renderer: new AppRenderer(), gfm: true, breaks: true });
+
+interface EditorPaneProps { markdownText: string; setMarkdownText: (v: string)=>void; wrap: boolean; }
+const EditorPane: React.FC<EditorPaneProps> = ({ markdownText, setMarkdownText, wrap }) => (
+  <div className="flex flex-col h-full">
+    <div className="flex items-center justify-between px-3 py-2 border-b bg-background/70">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Markdown</span>
+      <span className="text-[10px] text-muted-foreground">{markdownText.length.toLocaleString()} chars</span>
+    </div>
+    <Textarea
+      value={markdownText}
+      onChange={(e)=>setMarkdownText(e.target.value)}
+      className={"flex-1 resize-none font-code text-sm p-3 bg-transparent border-0 focus-visible:ring-0 focus-visible:outline-none " + (wrap ? 'whitespace-pre-wrap' : 'whitespace-pre')}
+      placeholder="Type your Markdown here..."
+    />
+  </div>
+);
+
+const PreviewPane: React.FC<{ htmlOutput: string }> = ({ htmlOutput }) => (
+  <div className="flex flex-col h-full">
+    <div className="flex items-center justify-between px-3 py-2 border-b bg-background/70">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Preview</span>
+    </div>
+    <div className="flex-1 overflow-auto p-4">
+      <div className="markdown-preview" dangerouslySetInnerHTML={{ __html: htmlOutput }} />
+    </div>
+  </div>
+);
 
 const initialMarkdown = `# Markdown Comprehensive Demo
 
@@ -224,21 +275,77 @@ const markdownExamples = [
 export default function MarkdownPreviewerPage() {
   const [markdownText, setMarkdownText] = useState(initialMarkdown);
   const [htmlOutput, setHtmlOutput] = useState('');
+  const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('split');
+  const [wrap, setWrap] = useState(true);
+  const [panelRatio, setPanelRatio] = useState(0.5); // left pane width ratio in split mode
+  const draggingRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const LS_KEY = 'markdown-previewer-content';
+
+  // Autosave / load
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved && saved !== markdownText) {
+        setMarkdownText(saved);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem(LS_KEY, markdownText); } catch {}
+  }, [markdownText]);
 
   useEffect(() => {
-    const generateHtml = async () => {
-      const rawMarkup = await marked.parse(markdownText, {
-        gfm: true,
-        breaks: true,
-      });
-      setHtmlOutput(rawMarkup);
-    };
-    generateHtml();
+    // Synchronous parse is sufficient; heavy docs still fast client-side
+    const rawMarkup = marked.parse(markdownText) as string;
+    setHtmlOutput(rawMarkup);
   }, [markdownText]);
 
   const handleClearInput = () => {
     setMarkdownText('');
   };
+
+  const handleResetDemo = () => {
+    setMarkdownText(initialMarkdown);
+  };
+
+  const handleCopyMarkdown = async () => {
+    try { await navigator.clipboard.writeText(markdownText); } catch {}
+  };
+  const handleCopyHtml = async () => {
+    try { await navigator.clipboard.writeText(htmlOutput); } catch {}
+  };
+  const handleDownload = () => {
+    const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'document.md';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const startDrag = (e: React.MouseEvent) => {
+    if (viewMode !== 'split') return;
+    draggingRef.current = true;
+    const rect = containerRef.current?.getBoundingClientRect();
+    const handleMove = (ev: MouseEvent) => {
+      if (!draggingRef.current || !rect) return;
+      const x = ev.clientX - rect.left;
+      const ratio = Math.min(0.8, Math.max(0.2, x / rect.width));
+      setPanelRatio(ratio);
+    };
+    const handleUp = () => { draggingRef.current = false; window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', handleUp); };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  };
+
+  const wordCount = useMemo(() => markdownText.trim() ? markdownText.trim().split(/\s+/).length : 0, [markdownText]);
+  const lineCount = useMemo(() => markdownText.split(/\n/).length, [markdownText]);
+  const charCount = markdownText.length;
 
   return (
     <>
@@ -247,7 +354,7 @@ export default function MarkdownPreviewerPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="lg:hidden" />
             <div className="flex items-center gap-2">
@@ -265,46 +372,69 @@ export default function MarkdownPreviewerPage() {
               <p className="text-lg text-muted-foreground">Write Markdown and see a live preview.</p>
             </div>
             
-            <div className="grid flex-1 gap-6 lg:gap-8 md:grid-cols-2">
-              {/* Markdown Input Card */}
-              <Card className="shadow-lg flex flex-col">
-                <CardHeader className="flex flex-row items-center justify-between pb-6">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-xl font-headline">Markdown Input</CardTitle>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={handleClearInput} title="Clear Markdown Input" className="h-9 px-3">
-                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                    Clear
-                  </Button>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col">
-                  <Label htmlFor="markdownInput" className="sr-only">Markdown Input</Label>
-                  <Textarea
-                    id="markdownInput"
-                    value={markdownText}
-                    onChange={(e) => setMarkdownText(e.target.value)}
-                    className="flex-grow resize-none font-code text-base"
-                    placeholder="Type your Markdown here..."
-                  />
-                </CardContent>
-              </Card>
+            {/* Controls Bar */}
+            <div className="flex flex-wrap gap-3 items-center border rounded-md p-3 bg-background/60">
+              <div className="flex items-center gap-1">
+                <Button variant={viewMode==='edit'?'default':'outline'} size="sm" onClick={()=>setViewMode('edit')} title="Editor only"><FileText className="h-4 w-4"/></Button>
+                <Button variant={viewMode==='preview'?'default':'outline'} size="sm" onClick={()=>setViewMode('preview')} title="Preview only"><Eye className="h-4 w-4"/></Button>
+                <Button variant={viewMode==='split'?'default':'outline'} size="sm" onClick={()=>setViewMode('split')} title="Split view"><Columns className="h-4 w-4"/></Button>
+              </div>
+              <div className="h-6 w-px bg-border" />
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" onClick={handleCopyMarkdown} title="Copy Markdown"><Copy className="h-4 w-4"/></Button>
+                <Button variant="outline" size="sm" onClick={handleCopyHtml} title="Copy Rendered HTML"><CodeIconFallback />{/* fallback icon */}</Button>
+                <Button variant="outline" size="sm" onClick={handleDownload} title="Download .md"><Download className="h-4 w-4"/></Button>
+                <Button variant="outline" size="sm" onClick={handleClearInput} title="Clear"><Trash2 className="h-4 w-4"/></Button>
+                <Button variant="outline" size="sm" onClick={handleResetDemo} title="Reset Demo Content"><RefreshIconFallback /></Button>
+              </div>
+              <div className="h-6 w-px bg-border" />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{wordCount.toLocaleString()} words</span>
+                <span>{lineCount} lines</span>
+                <span>{charCount.toLocaleString()} chars</span>
+              </div>
+            </div>
 
-              {/* HTML Preview Card */}
-              <Card className="shadow-lg flex flex-col">
-                <CardHeader className="pb-6">
-                  <div className="flex items-center gap-2">
-                    <Eye className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-xl font-headline">HTML Preview</CardTitle>
+            {/* Main Workspace */}
+            <div
+              ref={containerRef}
+              className={"relative w-full rounded-lg border overflow-hidden bg-card/40 backdrop-blur flex flex-col " + (viewMode==='split' ? 'md:h-[70vh]' : 'md:h-[65vh]')}
+            >
+              {viewMode === 'edit' && (
+                <div className="flex flex-col h-full">
+                  <EditorPane markdownText={markdownText} setMarkdownText={setMarkdownText} wrap={wrap} />
+                </div>
+              )}
+              {viewMode === 'preview' && (
+                <div className="flex flex-col h-full">
+                  <PreviewPane htmlOutput={htmlOutput} />
+                </div>
+              )}
+              {viewMode === 'split' && (
+                <div className="flex flex-1 h-full w-full select-none">
+                  <div style={{flexBasis: `${panelRatio*100}%`}} className="min-w-[30%] max-w-[80%] flex flex-col border-r">
+                    <EditorPane markdownText={markdownText} setMarkdownText={setMarkdownText} wrap={wrap} />
                   </div>
-                </CardHeader>
-                <CardContent className="flex-grow overflow-auto">
                   <div
-                    className="prose dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: htmlOutput }}
+                    onMouseDown={startDrag}
+                    className="w-1 cursor-col-resize hover:bg-primary/50 bg-border/60 transition-colors"
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label="Resize panels"
                   />
-                </CardContent>
-              </Card>
+                  <div className="flex-1 flex flex-col min-w-[20%]">
+                    <PreviewPane htmlOutput={htmlOutput} />
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between border-t bg-background/70 px-3 py-1.5 text-[11px] gap-2">
+                <div className="flex gap-2">
+                  <button onClick={()=>setWrap(w=>!w)} className="px-2 py-0.5 rounded border text-muted-foreground hover:text-foreground hover:border-primary/60 transition-colors">
+                    {wrap ? 'Disable Wrap' : 'Enable Wrap'}
+                  </button>
+                </div>
+                <span className="text-muted-foreground">Auto-rendered preview • Markdown changes update instantly</span>
+              </div>
             </div>
 
             {/* Markdown Quick Reference Card */}
