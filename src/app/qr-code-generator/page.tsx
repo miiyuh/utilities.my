@@ -10,12 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { PanelLeft, Download, Settings2, Upload, Trash2, QrCode as QrCodeIcon, Copy, QrCode } from 'lucide-react';
+import { PanelLeft, Download, Settings2, Upload, Trash2, QrCode as QrCodeIcon, Copy, QrCode, ImageDown, RefreshCcw, Info } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import { Slider } from '@/components/ui/slider';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type PayloadType = "url" | "text" | "email" | "sms" | "tel" | "wifi";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
@@ -61,9 +62,12 @@ export default function QrCodeGeneratorPage() {
   // Output States
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('png');
   const [downloadFilename, setDownloadFilename] = useState('qrcode.png');
+  const [manualFilenameEdited, setManualFilenameEdited] = useState(false);
+  const [includeMargin, setIncludeMargin] = useState(true);
 
   const qrCanvasRef = useRef<HTMLDivElement>(null);
   const qrSvgRef = useRef<SVGSVGElement>(null);
+  const suggestedFilenameRef = useRef<string>('qrcode');
 
 
   // Effect to update qrValue based on payloadType and its fields
@@ -96,13 +100,33 @@ export default function QrCodeGeneratorPage() {
     setQrValue(newQrValue);
   }, [payloadType, urlInput, plainTextInput, emailTo, emailSubject, emailBody, smsNumber, smsMessage, telNumber, wifiSsid, wifiPassword, wifiEncryption]);
 
-  // Effect to update filename extension when output format changes
+  // Update filename extension or suggest base when format changes
   useEffect(() => {
     setDownloadFilename(prev => {
-      const nameWithoutExtension = prev.substring(0, prev.lastIndexOf('.')) || prev || "qrcode";
-      return `${nameWithoutExtension}.${outputFormat}`;
+      if (!manualFilenameEdited) {
+        const base = suggestedFilenameRef.current || 'qrcode';
+        return `${base}.${outputFormat}`;
+      }
+      const dot = prev.lastIndexOf('.');
+      const base = dot > 0 ? prev.slice(0, dot) : prev || 'qrcode';
+      return `${base}.${outputFormat}`;
     });
-  }, [outputFormat]);
+  }, [outputFormat, manualFilenameEdited]);
+
+  // Suggest filename based on current payload value
+  useEffect(() => {
+    if (!manualFilenameEdited) {
+      const raw = qrValue || 'qrcode';
+      const base = raw
+        .replace(/^https?:\/\//i, '')
+        .slice(0, 50)
+        .replace(/[^a-z0-9-_]+/gi, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '') || 'qrcode';
+      suggestedFilenameRef.current = base.toLowerCase();
+      setDownloadFilename(`${suggestedFilenameRef.current}.${outputFormat}`);
+    }
+  }, [qrValue, manualFilenameEdited, outputFormat]);
 
 
   const handleDownload = () => {
@@ -147,6 +171,65 @@ export default function QrCodeGeneratorPage() {
       URL.revokeObjectURL(downloadLink.href);
     }
     toast({ title: 'QR Code Downloaded', description: `${finalFilename} has been downloaded.` });
+  };
+
+  const copyPngToClipboard = async () => {
+    if (outputFormat !== 'png') {
+      toast({ title: 'PNG Only', description: 'Switch to PNG to copy image.', variant: 'destructive' });
+      return;
+    }
+    if (!qrValue || !qrCanvasRef.current) {
+      toast({ title: 'Nothing to Copy', description: 'Generate a QR code first.', variant: 'destructive' });
+      return;
+    }
+    const canvas = qrCanvasRef.current.querySelector('canvas');
+    if (!canvas) {
+      toast({ title: 'Copy Failed', description: 'Canvas not found.', variant: 'destructive' });
+      return;
+    }
+    try {
+      if ((window as any).ClipboardItem && navigator.clipboard?.write) {
+        const blob: Blob | null = await new Promise(res => canvas.toBlob(b => res(b), 'image/png'));
+        if (blob) {
+          const item = new (window as any).ClipboardItem({ 'image/png': blob });
+          await navigator.clipboard.write([item]);
+          toast({ title: 'Copied!', description: 'QR PNG copied to clipboard.' });
+          return;
+        }
+      }
+      const dataUrl = canvas.toDataURL('image/png');
+      await navigator.clipboard.writeText(dataUrl);
+      toast({ title: 'Copied (Data URL)', description: 'PNG data URL copied.' });
+    } catch (e) {
+      toast({ title: 'Copy Failed', description: String(e), variant: 'destructive' });
+    }
+  };
+
+  const resetAll = () => {
+    setPayloadType('url');
+    setUrlInput('');
+    setPlainTextInput('');
+    setEmailTo('');
+    setEmailSubject('');
+    setEmailBody('');
+    setSmsNumber('');
+    setSmsMessage('');
+    setTelNumber('');
+    setWifiSsid('');
+    setWifiPassword('');
+    setWifiEncryption('WPA');
+    setQrSize(256);
+    setFgColor('#000000');
+    setBgColorHex('#FFFFFF');
+    setBgTransparent(false);
+    setErrorCorrectionLevel('M');
+    setLogoSrc(null);
+    setLogoSize(0.15);
+    setOutputFormat('png');
+    setIncludeMargin(true);
+    setManualFilenameEdited(false);
+    suggestedFilenameRef.current = 'qrcode';
+    toast({ title: 'Reset', description: 'All settings reverted.' });
   };
   
   const getFinalBgColor = (): string => {
@@ -304,6 +387,7 @@ export default function QrCodeGeneratorPage() {
     fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
     bgColor: getFinalBgColor(),
     level: errorCorrectionLevel,
+    includeMargin,
     imageSettings: logoSrc ? {
       src: logoSrc,
       height: qrSize * logoSize,
@@ -311,6 +395,15 @@ export default function QrCodeGeneratorPage() {
       excavate: true,
     } : undefined,
   };
+
+  const qrByteLength = new TextEncoder().encode(qrValue || '').length;
+  const complexityHint = (() => {
+    if (!qrValue) return 'Enter data to generate a code';
+    if (qrByteLength < 50) return 'Very small payload';
+    if (qrByteLength < 150) return 'Moderate payload';
+    if (qrByteLength < 500) return 'Large payload (may increase version)';
+    return 'Very large payload (consider shortening)';
+  })();
 
   return (
     <>
@@ -338,14 +431,14 @@ export default function QrCodeGeneratorPage() {
             </div>
             
             <div className="space-y-8">
-              <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 h-full">
+              <div className="grid lg:grid-cols-3 gap-6 xl:gap-8 h-full">
               {/* Left Panel: Inputs & Customization */}
               <div className="lg:col-span-2 space-y-8">
-                <Card>
-                  <CardHeader className="pb-6">
-                    <CardTitle>Content & Data Type</CardTitle>
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3 md:pb-4">
+                    <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Content & Data Type</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-4 md:space-y-5">
                     <div className="space-y-2">
                         <Label htmlFor="payloadType">Payload Type</Label>
                         <Select value={payloadType} onValueChange={(value) => setPayloadType(value as PayloadType)}>
@@ -360,31 +453,63 @@ export default function QrCodeGeneratorPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="pt-2">
+                    <div className="pt-2 space-y-3">
                         {renderPayloadInputs()}
+                        <div className="flex flex-wrap gap-2">
+                          <Button type="button" variant="outline" size="sm" disabled={!qrValue} onClick={handleCopyHtmlEmbed} className="h-8 px-3">
+                            <Copy className="h-3.5 w-3.5 mr-1" /> HTML
+                          </Button>
+                          <Button type="button" variant="outline" size="sm" disabled={!qrValue || outputFormat!=='png'} onClick={copyPngToClipboard} className="h-8 px-3">
+                            <ImageDown className="h-3.5 w-3.5 mr-1" /> PNG
+                          </Button>
+                          <Button type="button" variant="outline" size="sm" onClick={resetAll} className="h-8 px-3">
+                            <RefreshCcw className="h-3.5 w-3.5 mr-1" /> Reset
+                          </Button>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-muted-foreground">
+                          <span>{qrByteLength} bytes</span>
+                          <span>{errorCorrectionLevel} EC</span>
+                        </div>
+                        <div className="w-full h-1 bg-border/60 rounded overflow-hidden">
+                          <div className={`h-full transition-all ${qrByteLength<150?'bg-primary':qrByteLength<500?'bg-amber-500':'bg-destructive'}`} style={{width: `${Math.min(100, (qrByteLength/600)*100)}%`}} />
+                        </div>
+                        <p className="text-[11px] leading-snug text-muted-foreground">{complexityHint}</p>
                     </div>
                   </CardContent>
                 </Card>
                 
                 {/* Customization Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center"><Settings2 className="mr-2 h-5 w-5" /> Customization</CardTitle>
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3 md:pb-4">
+                    <CardTitle className="flex items-center font-headline text-lg md:text-xl tracking-tight"><Settings2 className="mr-2 h-5 w-5" /> Customization</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="errorCorrectionLevel">Error Correction Level</Label>
-                      <Select value={errorCorrectionLevel} onValueChange={(value) => setErrorCorrectionLevel(value as ErrorCorrectionLevel)}>
-                        <SelectTrigger id="errorCorrectionLevel"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="L">L (Low ~7%)</SelectItem>
-                          <SelectItem value="M">M (Medium ~15%)</SelectItem>
-                          <SelectItem value="Q">Q (Quartile ~25%)</SelectItem>
-                          <SelectItem value="H">H (High ~30%)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <CardContent className="space-y-4 md:space-y-5">
+                    <TooltipProvider delayDuration={200}>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1">
+                          <Label htmlFor="errorCorrectionLevel">Error Correction</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button type="button" className="inline-flex items-center text-muted-foreground hover:text-foreground" aria-label="About error correction levels">
+                                <Info className="h-3.5 w-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs text-xs leading-snug">
+                              Higher levels add redundancy for damaged codes but increase density. Use M for most cases.
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Select value={errorCorrectionLevel} onValueChange={(value) => setErrorCorrectionLevel(value as ErrorCorrectionLevel)}>
+                          <SelectTrigger id="errorCorrectionLevel"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="L">L (7%)</SelectItem>
+                            <SelectItem value="M">M (15%)</SelectItem>
+                            <SelectItem value="Q">Q (25%)</SelectItem>
+                            <SelectItem value="H">H (30%)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TooltipProvider>
 
                     <div className="space-y-2">
                       <Label htmlFor="qrSize">QR Code Size: {qrSize}px</Label>
@@ -396,6 +521,11 @@ export default function QrCodeGeneratorPage() {
                         value={[qrSize]}
                         onValueChange={(value) => setQrSize(value[0])}
                       />
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {[128,256,384,512,768,1024].map(sz => (
+                          <button key={sz} type="button" onClick={()=> setQrSize(sz)} className={`px-2 h-7 text-[11px] rounded-sm border border-border/70 hover:border-primary/60 hover:bg-accent/30 font-mono ${qrSize===sz?'bg-accent/40 border-primary/60':''}`}>{sz}px</button>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -442,9 +572,15 @@ export default function QrCodeGeneratorPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <Switch id="bgTransparent" checked={bgTransparent} onCheckedChange={setBgTransparent} />
-                        <Label htmlFor="bgTransparent">Transparent Background</Label>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                      <div className="flex items-center space-x-2">
+                          <Switch id="bgTransparent" checked={bgTransparent} onCheckedChange={setBgTransparent} />
+                          <Label htmlFor="bgTransparent">Transparent BG</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                          <Switch id="includeMargin" checked={includeMargin} onCheckedChange={setIncludeMargin} />
+                          <Label htmlFor="includeMargin">Quiet Zone</Label>
+                      </div>
                     </div>
 
                     {/* Logo Section */}
@@ -495,14 +631,14 @@ export default function QrCodeGeneratorPage() {
               </div>
 
               {/* Right Panel: Preview & Download */}
-              <div className="lg:col-span-1 space-y-6">
-                <Card className="h-fit">
-                  <CardHeader>
-                    <CardTitle>Preview</CardTitle>
+              <div className="lg:col-span-1 space-y-8">
+                <Card className="h-fit minimal-card">
+                  <CardHeader className="pb-3 md:pb-4">
+                    <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Preview</CardTitle>
                   </CardHeader>
-                  <CardContent className="flex flex-col items-center space-y-6">
+                  <CardContent className="flex flex-col items-center space-y-4 md:space-y-5">
                     {qrValue ? (
-                      <div className="p-4 bg-white dark:bg-muted/20 rounded-md inline-block shadow-md">
+                      <div className={`p-4 rounded-sm inline-block border border-border ${bgTransparent? 'bg-[linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%),linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%)] bg-[length:12px_12px] bg-[0_0,6px_6px] dark:bg-[linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%),linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%)] dark:bg-[length:12px_12px] dark:bg-[0_0,6px_6px]':''} bg-background`}> 
                         {outputFormat === 'png' ? (
                           <div ref={qrCanvasRef}>
                              <QRCodeCanvas {...commonQrProps} />
@@ -512,19 +648,19 @@ export default function QrCodeGeneratorPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="w-full max-w-[288px] aspect-square bg-muted/30 rounded-md flex flex-col items-center justify-center text-muted-foreground p-4 shadow">
-                        <QrCodeIcon className="h-12 w-12 mb-2 opacity-70" />
-                        <span className="text-sm text-center">Enter data to generate QR Code</span>
+                      <div className="w-full max-w-[288px] aspect-square rounded-sm flex flex-col items-center justify-center text-muted-foreground p-4 border border-dashed border-border/70 bg-background/40">
+                        <QrCodeIcon className="h-10 w-10 mb-2 opacity-60" />
+                        <span className="text-xs text-center tracking-wide uppercase">Enter data to generate</span>
                       </div>
                     )}
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Download</CardTitle>
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3 md:pb-4">
+                    <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Download</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 md:space-y-5">
                     <div className="flex items-end gap-2">
                        <div className="flex-1 space-y-1">
                           <Label htmlFor="outputFormat">File Type</Label>
@@ -538,20 +674,23 @@ export default function QrCodeGeneratorPage() {
                       </div>
                       <div className="flex-1 space-y-1">
                           <Label htmlFor="downloadFilename">Filename</Label>
-                          <Input 
-                              id="downloadFilename" 
-                              value={downloadFilename} 
-                              onChange={(e) => setDownloadFilename(e.target.value)}
-                              placeholder={`qrcode.${outputFormat}`}
-                          />
+              <Input 
+                id="downloadFilename" 
+                value={downloadFilename} 
+                onChange={(e) => { setDownloadFilename(e.target.value); setManualFilenameEdited(true); }}
+                placeholder={`qrcode.${outputFormat}`}
+              />
                       </div>
                     </div>
-                    <Button onClick={handleCopyHtmlEmbed} variant="outline" className="w-full">
-                        <Copy className="mr-2 h-4 w-4" /> Copy HTML Embed Code
-                    </Button>
-                    <Button onClick={handleDownload} disabled={!qrValue} className="w-full">
-                      <Download className="mr-2 h-4 w-4" /> Download QR Code ({outputFormat.toUpperCase()})
-                    </Button>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <Button onClick={handleCopyHtmlEmbed} variant="outline" className="w-full">
+                          <Copy className="mr-2 h-4 w-4" /> HTML Embed
+                      </Button>
+                      <Button onClick={handleDownload} disabled={!qrValue} className="w-full">
+                        <Download className="mr-2 h-4 w-4" /> Download
+                      </Button>
+                    </div>
+          <p className="text-[11px] text-muted-foreground leading-snug">Tip: SVG stays vector for print; PNG is raster. Include a quiet zone for better scanning.</p>
                   </CardContent>
                 </Card>
               </div>
