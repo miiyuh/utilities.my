@@ -13,6 +13,7 @@ import { marked, Renderer } from 'marked';
 import markedFootnote from 'marked-footnote';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 // Fallback simple icons for actions not present in lucide-react selection
 const CodeIconFallback = () => (
@@ -281,6 +282,7 @@ export default function MarkdownPreviewerPage() {
   const draggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const LS_KEY = 'markdown-previewer-content';
+  const { toast } = useToast();
 
   // Autosave / load
   useEffect(() => {
@@ -296,25 +298,30 @@ export default function MarkdownPreviewerPage() {
     try { localStorage.setItem(LS_KEY, markdownText); } catch {}
   }, [markdownText]);
 
+  // Debounced parse for performance on large documents
   useEffect(() => {
-    // Synchronous parse is sufficient; heavy docs still fast client-side
-    const rawMarkup = marked.parse(markdownText) as string;
-    setHtmlOutput(rawMarkup);
+    const handle = setTimeout(() => {
+      const rawMarkup = marked.parse(markdownText) as string;
+      setHtmlOutput(rawMarkup);
+    }, 120); // 120ms debounce
+    return () => clearTimeout(handle);
   }, [markdownText]);
 
   const handleClearInput = () => {
     setMarkdownText('');
+    toast({ title: 'Cleared', description: 'Editor content removed.' });
   };
 
   const handleResetDemo = () => {
     setMarkdownText(initialMarkdown);
+    toast({ title: 'Demo Reset', description: 'Restored example markdown.' });
   };
 
   const handleCopyMarkdown = async () => {
-    try { await navigator.clipboard.writeText(markdownText); } catch {}
+    try { await navigator.clipboard.writeText(markdownText); toast({ title: 'Markdown Copied', description: 'Source markdown copied to clipboard.' }); } catch {}
   };
   const handleCopyHtml = async () => {
-    try { await navigator.clipboard.writeText(htmlOutput); } catch {}
+    try { await navigator.clipboard.writeText(htmlOutput); toast({ title: 'HTML Copied', description: 'Rendered HTML copied to clipboard.' }); } catch {}
   };
   const handleDownload = () => {
     const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' });
@@ -326,6 +333,7 @@ export default function MarkdownPreviewerPage() {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+    toast({ title: 'Download Started', description: 'Saved as document.md' });
   };
 
   const startDrag = (e: React.MouseEvent) => {
@@ -368,12 +376,12 @@ export default function MarkdownPreviewerPage() {
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
             <div className="mb-8">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Markdown Previewer</h1>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Markdown Previewer</h1>
               <p className="text-lg text-muted-foreground">Write Markdown and see a live preview.</p>
             </div>
             
             {/* Controls Bar */}
-            <div className="flex flex-wrap gap-3 items-center border rounded-md p-3 bg-background/60">
+            <div className="flex flex-wrap gap-3 items-center border rounded-md p-3 bg-background/60 sm:justify-start justify-between overflow-x-auto">
               <div className="flex items-center gap-1">
                 <Button variant={viewMode==='edit'?'default':'outline'} size="sm" onClick={()=>setViewMode('edit')} title="Editor only"><FileText className="h-4 w-4"/></Button>
                 <Button variant={viewMode==='preview'?'default':'outline'} size="sm" onClick={()=>setViewMode('preview')} title="Preview only"><Eye className="h-4 w-4"/></Button>
@@ -398,7 +406,10 @@ export default function MarkdownPreviewerPage() {
             {/* Main Workspace */}
             <div
               ref={containerRef}
-              className={"relative w-full rounded-lg border overflow-hidden bg-card/40 backdrop-blur flex flex-col " + (viewMode==='split' ? 'md:h-[70vh]' : 'md:h-[65vh]')}
+              className={
+                "relative w-full rounded-lg border overflow-hidden bg-card/40 backdrop-blur flex flex-col h-[60vh] sm:h-[65vh] " +
+                (viewMode==='split' ? 'md:h-[70vh]' : 'md:h-[65vh]')
+              }
             >
               {viewMode === 'edit' && (
                 <div className="flex flex-col h-full">
@@ -411,29 +422,31 @@ export default function MarkdownPreviewerPage() {
                 </div>
               )}
               {viewMode === 'split' && (
-                <div className="flex flex-1 h-full w-full select-none">
-                  <div style={{flexBasis: `${panelRatio*100}%`}} className="min-w-[30%] max-w-[80%] flex flex-col border-r">
+                <div className="flex flex-1 h-full w-full select-none flex-col md:flex-row">
+                  <div style={{flexBasis: `${panelRatio*100}%`}} className="min-h-[35%] md:min-h-0 md:min-w-[30%] md:max-w-[80%] flex flex-col border-b md:border-b-0 md:border-r">
                     <EditorPane markdownText={markdownText} setMarkdownText={setMarkdownText} wrap={wrap} />
                   </div>
+                  {/* Drag handle: vertical on desktop only */}
                   <div
                     onMouseDown={startDrag}
-                    className="w-1 cursor-col-resize hover:bg-primary/50 bg-border/60 transition-colors"
+                    className="hidden md:block w-1 cursor-col-resize hover:bg-primary/50 bg-border/60 transition-colors"
                     role="separator"
                     aria-orientation="vertical"
                     aria-label="Resize panels"
                   />
-                  <div className="flex-1 flex flex-col min-w-[20%]">
+                  <div className="flex-1 flex flex-col min-h-[35%]">
                     <PreviewPane htmlOutput={htmlOutput} />
                   </div>
                 </div>
               )}
-              <div className="flex items-center justify-between border-t bg-background/70 px-3 py-1.5 text-[11px] gap-2">
-                <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t bg-background/70 px-3 py-1.5 text-[11px] gap-2">
+                <div className="flex gap-2 flex-wrap items-center">
                   <button onClick={()=>setWrap(w=>!w)} className="px-2 py-0.5 rounded border text-muted-foreground hover:text-foreground hover:border-primary/60 transition-colors">
                     {wrap ? 'Disable Wrap' : 'Enable Wrap'}
                   </button>
+                  <span className="text-muted-foreground hidden sm:inline">{wordCount.toLocaleString()} words • {lineCount} lines • {charCount.toLocaleString()} chars</span>
                 </div>
-                <span className="text-muted-foreground">Auto-rendered preview • Markdown changes update instantly</span>
+                <span className="text-muted-foreground">Debounced live preview</span>
               </div>
             </div>
 

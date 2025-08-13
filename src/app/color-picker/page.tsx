@@ -71,7 +71,7 @@ function rgbToCmyk(r: number, g: number, b: number): { c: number; m: number; y: 
   };
 }
 
-const MAGNIFIER_SIZE = 120;
+const MAGNIFIER_SIZE = 120; // base size (desktop)
 const DEFAULT_MAGNIFIER_ZOOM = 4;
 
 export default function ColourPickerPage() {
@@ -91,6 +91,7 @@ export default function ColourPickerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [magnifierVisible, setMagnifierVisible] = useState(false);
+  const [magnifierSize, setMagnifierSize] = useState<number>(MAGNIFIER_SIZE);
   const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
   const [magnifiedColour, setMagnifiedColour] = useState('#000000');
   const [mouseOnCanvasPosition, setMouseOnCanvasPosition] = useState({ x: 0, y: 0 });
@@ -577,7 +578,17 @@ export default function ColourPickerPage() {
     if (!canvasRef.current || !uploadedImage || !canvasContainerRef.current) return;
     const { offsetX, offsetY } = translatePointerToImageCoords(event, canvasContainerRef.current);
     setMouseOnCanvasPosition({ x: offsetX, y: offsetY });
-    setMagnifierPosition({ x: offsetX * scale + pan.x + 15, y: offsetY * scale + pan.y + 15 });
+    // Raw desired position (offset slightly so cursor not covered)
+    let rawX = offsetX * scale + pan.x + 15;
+    let rawY = offsetY * scale + pan.y + 15;
+    // Clamp within container so magnifier stays inside card on small screens
+    const cont = canvasContainerRef.current;
+    if (cont) {
+      const cw = cont.clientWidth; const ch = cont.clientHeight;
+      rawX = Math.min(Math.max(0, rawX), cw - magnifierSize);
+      rawY = Math.min(Math.max(0, rawY), ch - magnifierSize);
+    }
+    setMagnifierPosition({ x: rawX, y: rawY });
     const colourData = getPixelColour(canvasRef.current, offsetX, offsetY);
     if (colourData) setMagnifiedColour(colourData.hex);
     const fx = Math.floor(offsetX); const fy = Math.floor(offsetY);
@@ -603,9 +614,9 @@ export default function ColourPickerPage() {
     if (!mainCtx || !magnCtx) return;
 
     magnCtx.imageSmoothingEnabled = false;
-    magnCtx.clearRect(0, 0, MAGNIFIER_SIZE, MAGNIFIER_SIZE);
+    magnCtx.clearRect(0, 0, magnifierSize, magnifierSize);
 
-  const sourceRectSize = MAGNIFIER_SIZE / magnifierZoom;
+  const sourceRectSize = magnifierSize / magnifierZoom;
     const sourceX = mouseOnCanvasPosition.x - sourceRectSize / 2;
     const sourceY = mouseOnCanvasPosition.y - sourceRectSize / 2;
     
@@ -617,10 +628,21 @@ export default function ColourPickerPage() {
       sourceRectSize,
       0,
       0,
-      MAGNIFIER_SIZE,
-      MAGNIFIER_SIZE
+      magnifierSize,
+      magnifierSize
     );
-  }, [magnifierVisible, mouseOnCanvasPosition, uploadedImage]);
+  }, [magnifierVisible, mouseOnCanvasPosition, uploadedImage, magnifierSize, magnifierZoom]);
+
+  // Adjust magnifier size responsively
+  useEffect(()=>{
+    const compute = () => {
+      const w = window.innerWidth;
+      if (w < 420) setMagnifierSize(90); else if (w < 640) setMagnifierSize(100); else setMagnifierSize(MAGNIFIER_SIZE);
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    return ()=> window.removeEventListener('resize', compute);
+  }, []);
 
 
   return (
@@ -783,7 +805,7 @@ export default function ColourPickerPage() {
                   </div> {/* end top interactive area */}
                   {/* Hex row */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Input id="hex-value-input" value={hexColour} onChange={handleHexChange} className="font-mono text-center text-base tracking-wider w-40" placeholder="#000000" maxLength={7} />
+                    <Input id="hex-value-input" value={hexColour} onChange={handleHexChange} className="font-mono text-center text-base tracking-wider w-32 sm:w-40" placeholder="#000000" maxLength={7} />
                     <Button variant="outline" size="icon" onClick={()=> copyToClipboard(lastValidHexRef.current,'HEX')} disabled={!/^#[0-9A-F]{6}$/i.test(lastValidHexRef.current)} aria-label="Copy HEX"><Copy className="h-4 w-4" /></Button>
                     <Button variant="outline" size="icon" disabled={previousHex===lastValidHexRef.current} onClick={()=>{ const cur=lastValidHexRef.current; setHexColour(previousHex); setPreviousHex(cur); }} aria-label="Swap with previous colour">↺</Button>
                   </div>
@@ -966,20 +988,20 @@ export default function ColourPickerPage() {
                           }} />
                         )}
                       </div>
-                      {magnifierVisible && (
+          {magnifierVisible && (
                         <div
                           style={{
-                            left: `${magnifierPosition.x}px`,
-                            top: `${magnifierPosition.y}px`,
-                            width: `${MAGNIFIER_SIZE}px`,
-                            height: `${MAGNIFIER_SIZE}px`,
+            left: `${magnifierPosition.x}px`,
+            top: `${magnifierPosition.y}px`,
+            width: `${magnifierSize}px`,
+            height: `${magnifierSize}px`,
                           }}
                           className="absolute z-50 pointer-events-none border-2 border-primary bg-background shadow-2xl rounded-full flex flex-col items-center justify-center overflow-hidden"
                         >
                           <canvas
                             ref={magnifierCanvasRef}
-                            width={MAGNIFIER_SIZE}
-                            height={MAGNIFIER_SIZE}
+            width={magnifierSize}
+            height={magnifierSize}
                             className="absolute inset-0"
                           />
                           {/* Enhanced crosshair */}

@@ -2,7 +2,7 @@
 import type { LucideIcon } from "lucide-react";
 import { 
   CaseSensitive, Palette, Ruler, Home, 
-  FileText, QrCode, Timer, Globe, CalendarRange, Baseline, ArrowDownUp, Disc3
+  FileText, QrCode, Timer, Globe, CalendarRange, Baseline, ArrowDownUp, Disc3, Activity
 } from "lucide-react";
 
 export interface Tool {
@@ -17,6 +17,7 @@ export const tools: Tool[] = [
   { name: "Text Case Converter", path: "/text-case", icon: CaseSensitive, description: "Convert text between different letter cases." },
   { name: "Color Picker", path: "/color-picker", icon: Palette, description: "Pick colors and get their codes in various formats." },
   { name: "Unit Converter", path: "/unit-converter", icon: Ruler, description: "Convert between different units of measurement." },
+  { name: "BMI Calculator", path: "/bmi-calculator", icon: Activity, description: "Calculate Body Mass Index with metric or imperial units." },
   { name: "Markdown Previewer", path: "/markdown-previewer", icon: FileText, description: "Write Markdown and see a live preview." },
   { name: "QR Code Generator", path: "/qr-code-generator", icon: QrCode, description: "Generate QR codes from text or URLs." },
   { name: "Unix Timestamp Converter", path: "/unix-timestamp-converter", icon: Timer, description: "Convert Unix timestamps to human-readable dates and vice-versa." },
