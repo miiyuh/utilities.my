@@ -358,23 +358,63 @@ export default function BmiCalculatorPage() {
                     </div>
                   )}
 
-                  {/* Scale bar */}
+                  {/* Integrated BMI scale with segments, marker and ticks */}
                   <div className="space-y-1">
-                    <div className="h-2 w-full rounded-full bg-gradient-to-r from-blue-500 via-green-500 via-50% to-amber-500 relative overflow-hidden">
+                    <div className="relative w-full">
+                      <div className="relative h-3 sm:h-4 w-full rounded-full overflow-hidden bg-muted/40">
+                        {/* Segments: widths proportional to category ranges (0–40) */}
+                        <div className="absolute inset-y-0 left-0 bg-blue-500/70" style={{ width: `${(18.5/40)*100}%` }} />
+                        <div className="absolute inset-y-0 bg-green-500/70" style={{ left: `${(18.5/40)*100}%`, width: `${((25-18.5)/40)*100}%` }} />
+                        <div className="absolute inset-y-0 bg-amber-500/70" style={{ left: `${(25/40)*100}%`, width: `${((30-25)/40)*100}%` }} />
+                        <div className="absolute inset-y-0 bg-red-500/70" style={{ left: `${(30/40)*100}%`, width: `${((40-30)/40)*100}%` }} />
+                        {/* Inline labels on larger screens */}
+                        <div className="pointer-events-none absolute inset-0 hidden sm:flex text-[10px] text-black/80 dark:text-white/80">
+                          <div className="flex items-center justify-center" style={{ width: `${(18.5/40)*100}%` }}>Underweight</div>
+                          <div className="flex items-center justify-center" style={{ width: `${((25-18.5)/40)*100}%` }}>Healthy</div>
+                          <div className="flex items-center justify-center" style={{ width: `${((30-25)/40)*100}%` }}>Overweight</div>
+                          <div className="flex items-center justify-center" style={{ width: `${((40-30)/40)*100}%` }}>Obesity</div>
+                        </div>
+                      </div>
+                      {/* Marker */}
                       <div
-                        className="absolute top-0 bottom-0 w-0.5 bg-foreground/80"
+                        className="absolute top-[-4px] sm:top-[-5px] bottom-[-4px] sm:bottom-[-5px] w-0.5 bg-foreground/80"
                         style={{ left: `calc(${pct}% - 1px)` }}
                         aria-hidden
                       />
                     </div>
-                    <div className="flex justify-between text-[10px] text-muted-foreground">
-                      <span>0</span>
-                      <span>18.5</span>
-                      <span>25</span>
-                      <span>30</span>
-                      <span>40+</span>
+                    {/* Proportional ticks (0–40 scale) */}
+                    <div className="relative h-4 text-[10px] text-muted-foreground">
+                      {[
+                        { label: '0', value: 0 },
+                        { label: '18.5', value: 18.5 },
+                        { label: '25', value: 25 },
+                        { label: '30', value: 30 },
+                        { label: '40+', value: 40 },
+                      ].map((t) => {
+                        const left = clamp((t.value / 40) * 100, 0, 100);
+                        const transform = left === 0 ? 'translateX(0%)' : left === 100 ? 'translateX(-100%)' : 'translateX(-50%)';
+                        return (
+                          <React.Fragment key={t.label}>
+                            {/* Tick line */}
+                            <span
+                              className="absolute -top-2 h-2 w-px bg-foreground/40"
+                              style={{ left: `${left}%`, transform: 'translateX(-50%)' }}
+                              aria-hidden
+                            />
+                            {/* Label */}
+                            <span
+                              className="absolute top-0 select-none"
+                              style={{ left: `${left}%`, transform }}
+                            >
+                              {t.label}
+                            </span>
+                          </React.Fragment>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {/* Legend integrated into the scale above (labels inside segments on sm+) */}
 
                   <p className="text-xs text-muted-foreground flex items-center gap-2">
                     <Info className="h-3.5 w-3.5" />
@@ -399,18 +439,6 @@ export default function BmiCalculatorPage() {
                       </AlertDescription>
                     </Alert>
                   )}
-
-                  {/* Legend */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
-                    {[
-                      { label: 'Underweight', color:'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30' },
-                      { label: 'Healthy', color:'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30' },
-                      { label: 'Overweight', color:'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30' },
-                      { label: 'Obesity', color:'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30' },
-                    ].map(cat=> (
-                      <div key={cat.label} className={cn('rounded-md border text-[11px] px-2 py-1 flex items-center justify-center font-medium', cat.color)}>{cat.label}</div>
-                    ))}
-                  </div>
 
                   {/* Collapsible info */}
                   <Accordion type="single" collapsible className="w-full mt-4 border rounded-md">

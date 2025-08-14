@@ -86,7 +86,9 @@ export default function QrCodeGeneratorPage() {
         newQrValue = `mailto:${emailTo}${subjectQuery}${bodyQuery}`;
         break;
       case 'sms':
-        newQrValue = `smsto:${smsNumber}:${encodeURIComponent(smsMessage)}`;
+  // Do not URL-encode the SMS message; some scanners/apps don't decode %20 etc.
+  // Use the standard SMSTO format: SMSTO:number:message
+  newQrValue = `smsto:${smsNumber}:${smsMessage}`;
         break;
       case 'tel':
         newQrValue = `tel:${telNumber}`;
