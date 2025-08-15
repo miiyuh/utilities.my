@@ -1,5 +1,6 @@
-
 "use client";
+
+import type { Metadata } from 'next';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
@@ -73,6 +74,18 @@ function rgbToCmyk(r: number, g: number, b: number): { c: number; m: number; y: 
 
 const MAGNIFIER_SIZE = 120; // base size (desktop)
 const DEFAULT_MAGNIFIER_ZOOM = 4;
+
+export const metadata: Metadata = {
+  title: 'Color Picker',
+  description: 'Pick colors, convert between HEX/RGB/HSL/CMYK, and copy values quickly. Includes a magnifier and palettes.',
+  keywords: ['color picker', 'hex', 'rgb', 'hsl', 'cmyk', 'palette'],
+  alternates: { canonical: '/color-picker' },
+  openGraph: {
+    title: 'Color Picker · utilities.my',
+    url: 'https://utilities.my/color-picker',
+    images: [{ url: '/api/og?title=Color%20Picker&subtitle=HEX%2FRGB%2FHSL%2FCMYK', width: 1200, height: 630 }],
+  },
+};
 
 export default function ColourPickerPage() {
   const { toast } = useToast();

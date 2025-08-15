@@ -1,5 +1,6 @@
-
 "use client";
+
+import type { Metadata } from 'next';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -272,6 +273,18 @@ const markdownExamples = [
   }
 ];
 
+
+export const metadata: Metadata = {
+  title: 'Markdown Previewer',
+  description: 'Live preview Markdown with GFM, tables, checklists, and code blocks. Handy for writing docs and README files.',
+  keywords: ['markdown preview', 'github markdown', 'gfm', 'readme'],
+  alternates: { canonical: '/markdown-previewer' },
+  openGraph: {
+    title: 'Markdown Previewer · utilities.my',
+    url: 'https://utilities.my/markdown-previewer',
+    images: [{ url: '/api/og?title=Markdown%20Previewer&subtitle=GFM%2C%20Tables%2C%20Code', width: 1200, height: 630 }],
+  },
+};
 
 export default function MarkdownPreviewerPage() {
   const [markdownText, setMarkdownText] = useState(initialMarkdown);

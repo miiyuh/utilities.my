@@ -1,5 +1,6 @@
-
 "use client";
+
+import type { Metadata } from 'next';
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -11,6 +12,17 @@ import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { useSettings, UnitSystem, DateFormat, NumberFormat, Currency } from '@/contexts/settings-context';
+
+export const metadata: Metadata = {
+  title: 'Settings',
+  description: 'Personalize your experience on utilities.my: theme, defaults, and preferences.',
+  alternates: { canonical: '/settings' },
+  openGraph: {
+    title: 'Settings · utilities.my',
+    url: 'https://utilities.my/settings',
+    images: [{ url: '/api/og?title=Settings&subtitle=Theme%20%26%20preferences', width: 1200, height: 630 }],
+  },
+};
 
 export default function SettingsPage() {
   const { settings, updateSetting, resetSettings } = useSettings();

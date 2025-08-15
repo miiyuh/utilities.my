@@ -1,5 +1,6 @@
-
 "use client";
+
+import type { Metadata } from 'next';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,18 @@ import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: 'Sorter',
+  description: 'Sort lines naturally, alphabetically, by length, and more. Remove duplicates and tidy text quickly.',
+  keywords: ['sort lines', 'natural sort', 'remove duplicates', 'text tools'],
+  alternates: { canonical: '/sorter' },
+  openGraph: {
+    title: 'Sorter · utilities.my',
+    url: 'https://utilities.my/sorter',
+    images: [{ url: '/api/og?title=Sorter&subtitle=Sort%20%2B%20De-dupe%20Text', width: 1200, height: 630 }],
+  },
+};
 
 export default function SorterPage() {
   const { toast } = useToast();

@@ -1,6 +1,8 @@
 
 "use client";
 
+import type { Metadata } from 'next';
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +29,21 @@ type OutputFormat = "png" | "svg";
 // Helper function to validate HEX color
 const isValidHexColor = (color: string): boolean => {
   return /^#[0-9A-Fa-f]{6}$/i.test(color);
+};
+
+export const metadata: Metadata = {
+  title: 'QR Code Generator',
+  description: 'Create customizable QR codes for URLs, text, Wi‑Fi, SMS, email, and more. Download as PNG or SVG with logo, colors, and error correction levels.',
+  keywords: ['qr', 'qr code', 'qr generator', 'png', 'svg', 'wifi qr', 'sms qr', 'email qr'],
+  alternates: { canonical: '/qr-code-generator' },
+  openGraph: {
+    title: 'QR Code Generator · utilities.my',
+    description: 'Create customizable QR codes and download as PNG/SVG.',
+    url: 'https://utilities.my/qr-code-generator',
+    images: [
+      { url: '/api/og?title=QR%20Code%20Generator&subtitle=PNG%2FSVG%20%2B%20Logos', width: 1200, height: 630 },
+    ],
+  },
 };
 
 export default function QrCodeGeneratorPage() {

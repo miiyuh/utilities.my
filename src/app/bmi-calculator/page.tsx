@@ -1,5 +1,7 @@
 "use client";
 
+import type { Metadata } from 'next';
+
 import React from "react";
 import { Sidebar, SidebarInset, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
@@ -17,6 +19,19 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 type UnitSystem = "metric" | "imperial";
+
+export const metadata: Metadata = {
+  title: 'BMI Calculator',
+  description: 'Calculate your Body Mass Index (BMI) with metric or imperial units, see category, ideal range, and extras like BMI Prime.',
+  keywords: ['bmi', 'bmi calculator', 'body mass index', 'health'],
+  alternates: { canonical: '/bmi-calculator' },
+  openGraph: {
+  title: 'BMI Calculator · utilities.my',
+  description: 'Fast, privacy-friendly BMI Calculator with helpful insights.',
+  url: 'https://utilities.my/bmi-calculator',
+  images: [{ url: '/api/og?title=BMI%20Calculator&subtitle=Metric%20or%20Imperial', width: 1200, height: 630 }],
+  },
+};
 
 function clamp(num: number, min: number, max: number) {
   return Math.min(max, Math.max(min, num));

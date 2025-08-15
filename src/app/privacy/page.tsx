@@ -1,5 +1,7 @@
 "use client";
 
+import type { Metadata } from 'next';
+
 import { ShieldCheck } from 'lucide-react';
 import { MarkdownPage } from '@/components/markdown/markdown-page';
 
@@ -225,6 +227,17 @@ For any data-related requests, please include:
 ## Summary
 
 **utilities.my is committed to privacy**. We collect minimal data, process most information locally in your browser, and give you complete control over your privacy settings. This policy is designed to be transparent and comprehensive because we believe in your right to privacy.`;
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description: 'How utilities.my handles your data: privacy-first approach with local processing where possible.',
+  alternates: { canonical: '/privacy' },
+  openGraph: {
+    title: 'Privacy Policy · utilities.my',
+    url: 'https://utilities.my/privacy',
+    images: [{ url: '/api/og?title=Privacy%20Policy&subtitle=Your%20data%2C%20your%20control', width: 1200, height: 630 }],
+  },
+};
 
 export default function PrivacyPolicyPage() {
   return <MarkdownPage icon={ShieldCheck} title="Privacy Policy" content={PRIVACY_CONTENT} />;

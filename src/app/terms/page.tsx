@@ -1,5 +1,7 @@
 "use client";
 
+import type { Metadata } from 'next';
+
 import { BookOpenText } from 'lucide-react';
 import { MarkdownPage } from '@/components/markdown/markdown-page';
 
@@ -311,6 +313,17 @@ Response times:
 
 **Thank you for using utilities.my!**
 We're committed to providing useful, privacy-respecting tools that enhance your productivity and creativity. These Terms help ensure a positive experience for everyone in our community.`;
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'The terms that govern your use of utilities.my.',
+  alternates: { canonical: '/terms' },
+  openGraph: {
+    title: 'Terms of Service · utilities.my',
+    url: 'https://utilities.my/terms',
+    images: [{ url: '/api/og?title=Terms%20of%20Service&subtitle=Use%20and%20guidelines', width: 1200, height: 630 }],
+  },
+};
 
 export default function TermsOfServicePage() {
   return <MarkdownPage icon={BookOpenText} title="Terms of Service" content={TERMS_CONTENT} />;

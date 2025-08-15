@@ -1,5 +1,6 @@
-
 "use client";
+
+import type { Metadata } from 'next';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,17 @@ import { MouseEvent } from "react";
 import { cn } from "@/lib/utils";
 
 type Tool = typeof tools[0];
+
+export const metadata: Metadata = {
+  title: 'utilities.my',
+  description: 'A fast, privacy-friendly collection of useful, everyday web tools: converters, generators, calculators, and more.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'utilities.my',
+    url: 'https://utilities.my/',
+    images: [{ url: '/api/og?title=utilities.my&subtitle=Handy%20tools%20for%20everyday%20tasks', width: 1200, height: 630 }],
+  },
+};
 
 export default function Home() {
   const { toast } = useToast();

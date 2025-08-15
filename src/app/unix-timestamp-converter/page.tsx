@@ -1,5 +1,6 @@
-
 "use client";
+
+import type { Metadata } from 'next';
 
 import React, { useState, useEffect } from 'react';
 // Removed unused Card component imports after lint cleanup
@@ -15,6 +16,18 @@ import { format, parseISO, fromUnixTime, getUnixTime } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: 'Unix Timestamp Converter',
+  description: 'Convert Unix timestamps to human-readable dates and back. Handles milliseconds and time zones.',
+  keywords: ['unix timestamp', 'epoch', 'timestamp converter'],
+  alternates: { canonical: '/unix-timestamp-converter' },
+  openGraph: {
+    title: 'Unix Timestamp Converter · utilities.my',
+    url: 'https://utilities.my/unix-timestamp-converter',
+    images: [{ url: '/api/og?title=Unix%20Timestamp&subtitle=Epoch%20%E2%86%92%20Date', width: 1200, height: 630 }],
+  },
+};
 
 export default function UnixTimestampConverterPage() {
   const { toast } = useToast();

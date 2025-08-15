@@ -1,5 +1,6 @@
-
 "use client";
+
+import type { Metadata } from 'next';
 
 import React from 'react';
 import Image from 'next/image';
@@ -26,6 +27,17 @@ import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { DotGridBackground } from "@/components/dot-grid-background";
+
+export const metadata: Metadata = {
+  title: 'About',
+  description: 'Learn about utilities.my, a focused collection of fast, privacy-friendly web tools by miiyuh.',
+  alternates: { canonical: '/about' },
+  openGraph: {
+    title: 'About · utilities.my',
+    url: 'https://utilities.my/about',
+    images: [{ url: '/api/og?title=About&subtitle=Behind%20utilities.my', width: 1200, height: 630 }],
+  },
+};
 
 export default function AboutPage() {
   return (
