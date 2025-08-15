@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -9,7 +10,7 @@ import { Copy, Download, Eye, FileText, Trash2, Info, Columns } from 'lucide-rea
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { marked, Renderer } from 'marked';
+import { marked, Renderer, Tokens } from 'marked';
 import markedFootnote from 'marked-footnote';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -25,23 +26,36 @@ const RefreshIconFallback = () => (
 
 // Configure marked with footnotes + custom renderer (token-based API)
 marked.use(markedFootnote());
+// Basic type for marked tokens (partial, for demonstration)
+type MarkedToken = {
+  text?: string;
+  depth?: number;
+  task?: boolean;
+  checked?: boolean;
+  lang?: string;
+};
 class AppRenderer extends Renderer {
-  heading(token: any): string {
+  heading(token: MarkedToken): string {
     const id = (token.text || '').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     return `<h${token.depth} id="${id}" class="md-heading md-h${token.depth}"><a href="#${id}" class="md-anchor" aria-label="Link to section">#</a>${token.text}</h${token.depth}>`;
   }
-  listitem(token: any): string {
+  listitem(token: MarkedToken): string {
     if (token.task) {
       return `<li class="md-task"><input type="checkbox" disabled ${token.checked ? 'checked' : ''} /> <span>${token.text}</span></li>`;
     }
     return `<li>${token.text}</li>`;
   }
-  code(token: any): string {
+  code(token: MarkedToken): string {
     const lang = (token.lang || '').toLowerCase();
     return `<pre data-lang="${lang}"><code class="language-${lang}">${token.text}</code></pre>`;
   }
-  table(token: any): string {
-    return `<div class="md-table-wrapper"><table>${token.header}${token.rows.join('')}</table></div>`;
+  table(token: Tokens.Table): string {
+    // token.header: TableCell[]; token.rows: TableCell[][]
+    const renderRow = (row: Tokens.TableCell[]) =>
+      '<tr>' + row.map(cell => `<td>${cell.text}</td>`).join('') + '</tr>';
+    const headerRow = '<tr>' + token.header.map(cell => `<th>${cell.text}</th>`).join('') + '</tr>';
+    const bodyRows = token.rows.map(renderRow).join('');
+    return `<div class="md-table-wrapper"><table>${headerRow}${bodyRows}</table></div>`;
   }
 }
 marked.use({ renderer: new AppRenderer(), gfm: true, breaks: true });
@@ -291,21 +305,36 @@ export default function MarkdownPreviewerPage() {
       if (saved && saved !== markdownText) {
         setMarkdownText(saved);
       }
-    } catch {}
+    } catch (e) {
+      toast({ title: 'Error', description: 'Failed to load saved content.' });
+      // Optionally log error: console.error(e);
+    }
+    // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    try { localStorage.setItem(LS_KEY, markdownText); } catch {}
-  }, [markdownText]);
+    try {
+      localStorage.setItem(LS_KEY, markdownText);
+    } catch (e) {
+      toast({ title: 'Error', description: 'Failed to save content.' });
+      // Optionally log error: console.error(e);
+    }
+  }, [markdownText, toast]);
 
   // Debounced parse for performance on large documents
   useEffect(() => {
     const handle = setTimeout(() => {
-      const rawMarkup = marked.parse(markdownText) as string;
-      setHtmlOutput(rawMarkup);
+      try {
+        const rawMarkup = marked.parse(markdownText) as string;
+        const sanitized = DOMPurify.sanitize(rawMarkup);
+        setHtmlOutput(sanitized);
+      } catch (e) {
+        toast({ title: 'Error', description: 'Failed to render Markdown.' });
+        setHtmlOutput('');
+      }
     }, 120); // 120ms debounce
     return () => clearTimeout(handle);
-  }, [markdownText]);
+  }, [markdownText, toast]);
 
   const handleClearInput = () => {
     setMarkdownText('');
@@ -318,10 +347,22 @@ export default function MarkdownPreviewerPage() {
   };
 
   const handleCopyMarkdown = async () => {
-    try { await navigator.clipboard.writeText(markdownText); toast({ title: 'Markdown Copied', description: 'Source markdown copied to clipboard.' }); } catch {}
+    try {
+      await navigator.clipboard.writeText(markdownText);
+      toast({ title: 'Markdown Copied', description: 'Source markdown copied to clipboard.' });
+    } catch (e) {
+      toast({ title: 'Copy Failed', description: 'Could not copy markdown to clipboard.' });
+      // Optionally log error: console.error(e);
+    }
   };
   const handleCopyHtml = async () => {
-    try { await navigator.clipboard.writeText(htmlOutput); toast({ title: 'HTML Copied', description: 'Rendered HTML copied to clipboard.' }); } catch {}
+    try {
+      await navigator.clipboard.writeText(htmlOutput);
+      toast({ title: 'HTML Copied', description: 'Rendered HTML copied to clipboard.' });
+    } catch (e) {
+      toast({ title: 'Copy Failed', description: 'Could not copy HTML to clipboard.' });
+      // Optionally log error: console.error(e);
+    }
   };
   const handleDownload = () => {
     const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' });
