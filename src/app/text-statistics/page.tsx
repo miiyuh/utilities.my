@@ -1,6 +1,5 @@
-"use client";
 
-import type { Metadata } from 'next';
+"use client";
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -38,18 +37,6 @@ interface FullStats {
 const STOPWORDS = new Set([
   'a','an','and','the','or','but','if','then','else','for','to','of','in','on','at','by','with','as','is','it','this','that','these','those','be','been','are','was','were','from','up','down','over','under','i','you','he','she','we','they','them','me','my','your','their','our'
 ]);
-
-export const metadata: Metadata = {
-  title: 'Text Statistics',
-  description: 'Analyze text for character, word, sentence counts, reading time, and more. Live updates and copy-friendly.',
-  keywords: ['text statistics', 'word count', 'character count', 'reading time'],
-  alternates: { canonical: '/text-statistics' },
-  openGraph: {
-    title: 'Text Statistics · utilities.my',
-    url: 'https://utilities.my/text-statistics',
-    images: [{ url: '/api/og?title=Text%20Statistics&subtitle=Counts%20%26%20Reading%20Time', width: 1200, height: 630 }],
-  },
-};
 
 export default function TextStatisticsPage() {
   const [inputText, setInputText] = useState('');

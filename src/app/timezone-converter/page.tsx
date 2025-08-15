@@ -1,6 +1,5 @@
-"use client";
 
-import type { Metadata } from 'next';
+"use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -88,18 +87,6 @@ const isValidTz = (tzName: string): boolean => {
   } catch (e) {
     return false;
   }
-};
-
-export const metadata: Metadata = {
-  title: 'Timezone Converter',
-  description: 'Convert time zones, compare multiple cities, and create shareable schedules. Export events to calendar (.ics).',
-  keywords: ['timezone converter', 'time zones', 'world clock', 'scheduler', 'ics'],
-  alternates: { canonical: '/timezone-converter' },
-  openGraph: {
-    title: 'Timezone Converter · utilities.my',
-    url: 'https://utilities.my/timezone-converter',
-    images: [{ url: '/api/og?title=Timezone%20Converter&subtitle=Plan%20across%20cities', width: 1200, height: 630 }],
-  },
 };
 
 export default function TimezoneConverterPage() {
@@ -908,7 +895,7 @@ export default function TimezoneConverterPage() {
     const eventStartLocal = buildLocalFrom(eventDate, eventTime, eventTz || tzPrimary);
     const eventEndLocal = eventStartLocal.add(eventDurationMin, 'minute');
     const travelDepartLocal = buildLocalFrom(travelDepartDate, travelDepartTime, travelDepartTz || tzPrimary);
-    const travelArriveLocal = travelDepartLocal.tz('UTC').add(travelDurationMin, 'minute').tz(travelArriveTz || 'America/New_York');
+    const travelArriveLocal = travelDepartLocal.tz('UTC').add(travelDurationMin, 'minute').tz(travelArriveTz || tzPrimary);
 
     return (
       <>
@@ -1180,9 +1167,9 @@ export default function TimezoneConverterPage() {
                             value={Number.isFinite(eventDurationMin)? eventDurationMin : 60}
                             onChange={(e)=> {
                               const v = Number(e.currentTarget.value);
-                              if (!Number.isNaN(v)) {
-                                setEventDurationMin(Math.max(1, Math.min(1440, Math.round(v))));
-                              }
+                              if (!Number.isFinite(v)) return;
+                              const clamped = Math.max(1, Math.min(1440, Math.round(v)));
+                              setEventDurationMin(clamped);
                             }}
                             className="h-8 w-[88px] rounded-md border bg-background px-2 text-sm"
                             placeholder="mins"
@@ -1283,9 +1270,9 @@ export default function TimezoneConverterPage() {
                               value={Number.isFinite(travelDurationMin)? travelDurationMin : 60}
                               onChange={(e)=> {
                                 const v = Number(e.currentTarget.value);
-                                if (!Number.isNaN(v)) {
-                                  setTravelDurationMin(Math.max(1, Math.min(1440, Math.round(v))));
-                                }
+                                if (!Number.isFinite(v)) return;
+                                const clamped = Math.max(1, Math.min(1440, Math.round(v)));
+                                setTravelDurationMin(clamped);
                               }}
                               className="h-8 w-[88px] rounded-md border bg-background px-2 text-sm"
                               placeholder="mins"
@@ -1343,7 +1330,7 @@ export default function TimezoneConverterPage() {
       <SidebarInset>
   <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
-                       <SidebarTrigger className="lg:hidden" />
+            <SidebarTrigger className="lg:hidden" />
             <div className="flex items-center gap-2">
               <Globe className="h-5 w-5 text-primary" />
               <h1 className="text-xl font-semibold font-headline">Timezone Converter</h1>

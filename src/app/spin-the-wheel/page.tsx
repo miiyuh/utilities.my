@@ -1,7 +1,5 @@
 "use client";
 
-import type { Metadata } from 'next';
-
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,18 +21,6 @@ const PRESETS: Record<string,string[]> = {
   "Lunch": DEFAULT_ITEMS,
   "Yes/No": ["Yes","No"],
   "Numbers 1-10": Array.from({length:10},(_,i)=> String(i+1)),
-};
-
-export const metadata: Metadata = {
-  title: 'Spin the Wheel',
-  description: 'Random picker wheel for making decisions. Add options, spin, and get a fair choice.',
-  keywords: ['spin the wheel', 'random picker', 'decision wheel'],
-  alternates: { canonical: '/spin-the-wheel' },
-  openGraph: {
-    title: 'Spin the Wheel · utilities.my',
-    url: 'https://utilities.my/spin-the-wheel',
-    images: [{ url: '/api/og?title=Spin%20the%20Wheel&subtitle=Random%20Picker', width: 1200, height: 630 }],
-  },
 };
 
 export default function SpinTheWheelPage() {

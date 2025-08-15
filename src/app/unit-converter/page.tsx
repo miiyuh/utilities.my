@@ -1,6 +1,5 @@
-"use client";
 
-import type { Metadata } from 'next';
+"use client";
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -100,18 +99,6 @@ const unitCategories: UnitCategory[] = [
     ],
   },
 ];
-
-export const metadata: Metadata = {
-  title: 'Unit Converter',
-  description: 'Convert between units across length, mass, temperature, and more with a fast, accurate unit converter.',
-  keywords: ['unit converter', 'conversion', 'length', 'mass', 'temperature', 'units'],
-  alternates: { canonical: '/unit-converter' },
-  openGraph: {
-    title: 'Unit Converter · utilities.my',
-    url: 'https://utilities.my/unit-converter',
-    images: [{ url: '/api/og?title=Unit%20Converter&subtitle=Length%2C%20Mass%2C%20Temp', width: 1200, height: 630 }],
-  },
-};
 
 export default function UnitConverterPage() {
   const { toast } = useToast();

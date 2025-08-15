@@ -1,6 +1,5 @@
-"use client";
 
-import type { Metadata } from 'next';
+"use client";
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -18,18 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 type Mode = 'uppercase' | 'lowercase' | 'title' | 'sentence' | 'toggle' | 'camel' | 'pascal' | 'snake' | 'kebab' | 'constant';
 
 const SMALL_WORDS = new Set(['a','an','and','the','or','but','as','at','by','for','in','of','on','to','via','vs','vs.','per','nor','so','yet']);
-
-export const metadata: Metadata = {
-  title: 'Text Case Converter',
-  description: 'Convert text between cases: title, sentence, upper/lower, camel, snake, kebab, and more. Smart title casing included.',
-  keywords: ['text case', 'title case', 'sentence case', 'camel case', 'snake case', 'kebab case'],
-  alternates: { canonical: '/text-case' },
-  openGraph: {
-    title: 'Text Case Converter · utilities.my',
-    url: 'https://utilities.my/text-case',
-    images: [{ url: '/api/og?title=Text%20Case%20Converter&subtitle=Title%2C%20Camel%2C%20Snake', width: 1200, height: 630 }],
-  },
-};
 
 export default function TextCaseConverterPage() {
   const { toast } = useToast();

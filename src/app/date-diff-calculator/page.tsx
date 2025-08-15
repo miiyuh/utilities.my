@@ -1,6 +1,5 @@
-"use client";
 
-import type { Metadata } from 'next';
+"use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
@@ -31,18 +30,6 @@ interface DateDiff {
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
-
-export const metadata: Metadata = {
-  title: 'Date Difference Calculator',
-  description: 'Calculate the difference between two dates in days, months, years, and business days.',
-  keywords: ['date difference', 'days between', 'business days'],
-  alternates: { canonical: '/date-diff-calculator' },
-  openGraph: {
-    title: 'Date Difference Calculator · utilities.my',
-    url: 'https://utilities.my/date-diff-calculator',
-    images: [{ url: '/api/og?title=Date%20Diff%20Calculator&subtitle=Days%2C%20Weeks%2C%20Months', width: 1200, height: 630 }],
-  },
-};
 
 export default function DateDiffCalculatorPage() {
   const [startDate, setStartDate] = useState<Date>(new Date());
