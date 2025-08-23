@@ -1,69 +1,96 @@
 <img src="https://utilities.my/assets/img/utilities-my_text.svg" alt="utilities.my logo" height="64px" />
 
-# utilities.my
+---
 
 A comprehensive collection of web-based utilities for everyday tasks, all centralized in one modern, responsive web application.
 
 ## Overview
 
-utilities.my is a personal productivity suite designed to consolidate frequently-used online tools into a single, cohesive platform. Instead of navigating between multiple websites for different utilities, this application provides a unified interface with consistent design and functionality.
+utilities.my is a productivity-focused web application that consolidates essential online tools into a single, unified platform. Built with modern web technologies and designed with accessibility in mind, it eliminates the need to switch between multiple websites by providing a consistent, responsive interface across all utilities.
+
+**Key Benefits:**
+- 🎯 **Centralized Access** - All your frequently-used tools in one place
+- 📱 **Fully Responsive** - Optimized for mobile, tablet, and desktop devices
+- 🎨 **Modern Design** - Clean, intuitive interface with dark/light theme support
+- ♿ **Accessible** - Built with accessibility-first principles
+- ⚡ **High Performance** - Server-side rendering and optimized loading
 
 ## Features
 
-### Text Utilities
-- **Text Case Converter** - Convert text between different letter cases (uppercase, lowercase, title case, camel case, etc.)
-- **Text Statistics** - Analyze text for character count, word count, paragraph count, reading time, and more
-- **Sorter** - Sort lines of text alphabetically or numerically with various sorting options
+### 📝 Text Utilities
+- **Text Case Converter** - Transform text between multiple case formats (uppercase, lowercase, title case, camel case, snake case, and more)
+- **Text Statistics** - Comprehensive text analysis including character count, word count, paragraph count, reading time, and readability metrics
+- **Text Sorter** - Sort lines of text alphabetically, numerically, or by length with customizable options
 
-### Development Tools
-- **Markdown Previewer** - Write Markdown with live preview and syntax highlighting
-- **QR Code Generator** - Generate QR codes from text or URLs with customizable styling
-- **Color Picker** - Pick colors and get their codes in various formats (HEX, RGB, HSL, etc.)
+### 🛠️ Development Tools
+- **Markdown Previewer** - Live markdown editor with real-time preview, syntax highlighting, and comprehensive formatting support
+- **QR Code Generator** - Create customizable QR codes from text or URLs with size and styling options
+- **Color Picker** - Advanced color selection tool with support for HEX, RGB, HSL, CMYK, and HSV formats. Includes image color extraction and accessibility contrast checking
 
-### Date & Time Utilities
-- **Unix Timestamp Converter** - Convert Unix timestamps to human-readable dates and vice versa
-- **Timezone Converter** - Convert times between different timezones with support for major cities
-- **Date Difference Calculator** - Calculate precise differences between two dates and times
+### ⏰ Date & Time Utilities
+- **Unix Timestamp Converter** - Bidirectional conversion between Unix timestamps and human-readable dates with timezone support
+- **Timezone Converter** - Convert times across global timezones with major city presets and DST handling
+- **Date Difference Calculator** - Calculate precise time differences with multiple output formats (years, months, days, hours, etc.)
 
-### Measurement Tools
-- **Unit Converter** - Convert between different units of measurement (length, weight, temperature, etc.)
+### 📏 Measurement Tools
+- **Unit Converter** - Convert between various units including length, weight, temperature, volume, area, and more
+- **BMI Calculator** - Calculate Body Mass Index with metric and imperial units, including health classifications and ideal weight ranges
 
-### File Tools
-- **File Compressor** - Compress multiple files into ZIP archives for easy sharing and storage
-- **Image to ASCII Converter** - Convert images into ASCII art with customizable settings
+### 📁 File & Image Tools
+- **File Compressor** - Create ZIP archives from multiple files with compression options
+- **Image Converter** - Convert images between different formats (PNG, JPG, WebP) with resizing and quality control
+- **Image to ASCII Converter** - Transform images into ASCII art with adjustable resolution and character sets
 
-### Fun Utilities
-- **Spin the Wheel** - Random decision maker with customizable options and animation
+### 🎲 Fun Utilities
+- **Spin the Wheel** - Customizable decision-making wheel with animations and multiple options
+
+### 📜 Additional Pages
+- **About** - Comprehensive project information, technology stack, and contribution guidelines
+- **Settings** - Application configuration including theme preferences and default units
+- **Privacy Policy** - Privacy information and data handling practices
+- **Terms of Service** - Terms and conditions for using the application
 
 ## Technology Stack
 
 ### Frontend Framework
-- **Next.js 15.3.3** - React framework with App Router and server-side rendering
-- **React 18** - Modern React with hooks and concurrent features
-- **TypeScript** - Type-safe development with full IntelliSense support
+- **Next.js 15.3.3** - React framework with App Router, server-side rendering, and Turbopack for fast development
+- **React 18** - Modern React with hooks, concurrent features, and server components
+- **TypeScript** - Full type safety with comprehensive IntelliSense support
 
 ### UI & Styling
-- **Tailwind CSS** - Utility-first CSS framework for rapid styling
-- **Radix UI** - Accessible, unstyled UI components
-- **Lucide React** - Beautiful, customizable icons
-- **shadcn/ui** - Re-usable component library built on Radix UI
+- **Tailwind CSS 3.4.1** - Utility-first CSS framework with custom design system
+- **Radix UI** - Accessible, unstyled component primitives
+- **shadcn/ui** - Beautiful, reusable component library built on Radix UI
+- **Lucide React** - Consistent, customizable icon library
+
+### Additional Libraries
+- **marked** - Markdown parsing and rendering with extensions
+- **DOMPurify** - XSS protection for user-generated content
+- **dayjs** - Lightweight date manipulation library
+- **qrcode.react** - QR code generation
+- **jszip** - Client-side ZIP file creation
+- **Google Fonts** - Noto Sans, Noto Mono, and Inter typography
 
 ## Project Structure
 
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── about/             # About page
-│   ├── color-picker/      # Color picker utility
+│   ├── about/             # About page with project information
+│   ├── bmi-calculator/    # BMI calculation with health metrics
+│   ├── color-picker/      # Advanced color picker and palette tool
 │   ├── date-diff-calculator/ # Date difference calculator
-│   ├── markdown-previewer/ # Markdown editor and preview
-│   ├── qr-code-generator/ # QR code generation
-│   ├── settings/          # Application settings
+│   ├── image-converter/   # Image format conversion and resizing
+│   ├── markdown-previewer/ # Markdown editor and live preview
+│   ├── privacy/           # Privacy policy page
+│   ├── qr-code-generator/ # QR code generation utility
+│   ├── settings/          # Application settings and preferences
 │   ├── sorter/            # Text sorting utility
 │   ├── spin-the-wheel/    # Random decision wheel
+│   ├── terms/             # Terms of service page
 │   ├── text-case/         # Text case converter
-│   ├── text-statistics/   # Text analysis tool
-│   ├── timezone-converter/ # Timezone conversion
+│   ├── text-statistics/   # Text analysis and statistics
+│   ├── timezone-converter/ # Timezone conversion tool
 │   ├── unit-converter/    # Unit measurement converter
 │   └── unix-timestamp-converter/ # Unix timestamp converter
 ├── components/            # Reusable React components
@@ -76,63 +103,82 @@ src/
 └── ai/                   # AI integration files
 ```
 
-## Installation & Development
+## 🚀 Installation & Development
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or yarn package manager
+- **Node.js 18+** (Latest LTS recommended)
+- **npm** or **yarn** package manager
+- **Git** for version control
 
-### Setup
-1. Clone the repository
-```bash
-git clone https://github.com/miiyuh/utilities.my.git
-cd utilities.my
-```
+### Quick Start
 
-2. Install dependencies
-```bash
-npm install
-```
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/miiyuh/utilities.my.git
+   cd utilities.my
+   ```
 
-3. Start the development server
-```bash
-npm run dev
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-The application will be available at `http://localhost:9002`
+3. **Start development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-### Available Scripts
-- `npm run dev` - Start development server with Turbopack
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run typecheck` - Run TypeScript compiler check
-- `npm run genkit:dev` - Start Genkit AI development server
-- `npm run genkit:watch` - Start Genkit AI with file watching
+4. **Open your browser**
+   Navigate to `http://localhost:9002`
 
-## Design Philosophy
+### 📋 Available Scripts
 
-### Consistency
-- Unified design language across all utilities
-- Consistent navigation and user interface patterns
-- Standardized color scheme and typography
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server with Turbopack (hot reload) |
+| `npm run build` | Build optimized production bundle |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint for code quality |
+| `npm run typecheck` | Run TypeScript compiler checks |
+| `npm run genkit:dev` | Start Genkit AI development server |
+| `npm run genkit:watch` | Start Genkit AI with file watching |
 
-### Accessibility
-- Built with accessibility-first components from Radix UI
-- Keyboard navigation support
-- Screen reader compatibility
-- High contrast color schemes
+### 🔧 Development Environment
 
-### Performance
-- Server-side rendering with Next.js
-- Optimized bundle sizes with code splitting
-- Fast page transitions and loading states
+- **Hot Reload**: Instant updates during development
+- **TypeScript**: Full type checking and IntelliSense
+- **ESLint**: Code quality and consistency
+- **Turbopack**: Ultra-fast bundling and compilation
 
-### User Experience
-- Responsive design for all screen sizes
-- Dark and light theme support
-- Intuitive navigation with sidebar
-- Real-time feedback and validation
+## 🎨 Design Philosophy
+
+### 🎯 User-Centered Design
+- **Intuitive Interface** - Clean, uncluttered layouts that prioritize functionality
+- **Responsive Design** - Seamless experience across mobile, tablet, and desktop devices
+- **Progressive Enhancement** - Core features work everywhere, enhanced features where supported
+
+### ♿ Accessibility First
+- **WCAG Compliance** - Built with accessibility-first components from Radix UI
+- **Keyboard Navigation** - Full keyboard accessibility for all interactive elements
+- **Screen Reader Support** - Proper ARIA labels and semantic HTML structure
+- **Color Contrast** - High contrast ratios and colorblind-friendly palettes
+- **Touch Targets** - Minimum 44px touch targets for mobile devices
+
+### ⚡ Performance Optimized
+- **Server-Side Rendering** - Fast initial page loads with Next.js SSR
+- **Code Splitting** - Optimized bundle sizes with automatic code splitting
+- **Image Optimization** - Automatic image optimization and lazy loading
+- **Caching Strategy** - Efficient caching for static assets and dynamic content
+
+### 🎨 Visual Consistency
+- **Design System** - Unified color palette, typography, and spacing scales
+- **Component Library** - Reusable shadcn/ui components for consistency
+- **Theme Support** - Beautiful dark and light themes with smooth transitions
+- **Micro-interactions** - Subtle animations and feedback for better UX
 
 ## Contributing
 
@@ -188,18 +234,43 @@ Contributions are welcome and encouraged! This project is open-source and benefi
 - Apply standard padding (`p-4 lg:p-8`)
 - Maintain the sidebar navigation structure
 
-### Ideas for Contributions
+### 💡 Ideas for Contributions
 
 We're always looking for useful utilities to add! Some ideas include:
 
+**Encoding & Decoding**
 - Base64 Encoder/Decoder
+- URL Encoder/Decoder
+- HTML Entity Encoder/Decoder
+
+**Development Tools**
 - JSON Formatter and Validator
-- Hash Generator (MD5, SHA-256, etc.)
-- Lorem Ipsum Generator
 - Regular Expression Tester
-- Image Format Converter
-- Percentage Calculator
+- CSS Formatter and Minifier
+- JWT Token Decoder
+
+**Text & Content**
+- Lorem Ipsum Generator
+- Password Generator with customizable rules
+- Text Diff Checker
+- Slug Generator
+
+**Data & Math**
+- Hash Generator (MD5, SHA-256, etc.)
 - Binary/Decimal/Hex Converter
+- Percentage Calculator
+- Random Number Generator
+
+**Health & Fitness**
+- BMI Calculator with health classifications
+- Metric and imperial unit support
+- Health recommendations and ideal weight ranges
+
+**Image Processing**
+- Multi-format image conversion (PNG, JPG, WebP)
+- Intelligent resizing with aspect ratio preservation
+- Quality control for optimized file sizes
+- Drag-and-drop file handling
 
 ### Reporting Issues
 
