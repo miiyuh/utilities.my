@@ -662,16 +662,16 @@ export default function ColourPickerPage() {
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <div className="flex flex-1 flex-col p-3 md:p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* Big heading */}
-            <div className="mb-8">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Colour Picker</h1>
-              <p className="text-lg text-muted-foreground">Pick colours and get their codes in various formats.</p>
+            <div className="mb-6 md:mb-8">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 md:mb-6 text-foreground border-b border-border pb-3 md:pb-4">Colour Picker</h1>
+              <p className="text-base md:text-lg text-muted-foreground">Pick colours and get their codes in various formats.</p>
             </div>
             
-            <div className="space-y-8">
-            <div className="grid gap-6 xl:gap-8 lg:grid-cols-2">
+            <div className="space-y-6 md:space-y-8">
+            <div className="grid gap-4 md:gap-6 xl:gap-8 md:grid-cols-2">
               {/* Left Panel: Colour Inputs & Derived Codes */}
               <Card className="minimal-card">
                 <CardHeader className="pb-3 md:pb-4">
@@ -679,9 +679,9 @@ export default function ColourPickerPage() {
                 </CardHeader>
                 <CardContent className="space-y-4 md:space-y-5">
                   {/* Top interactive area */}
-                  <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
                     {/* Left: Visual Picker */}
-                    <div className="flex flex-col gap-2 w-full max-w-[250px] mx-auto md:mx-0">
+                    <div className="flex flex-col gap-2 w-full max-w-[280px] mx-auto lg:mx-0">
                       <div className="relative select-none" aria-label="Visual colour picker" role="application" aria-describedby="sv-instructions">
                           {/* Saturation / Value Area */}
                         <div
@@ -756,7 +756,7 @@ export default function ColourPickerPage() {
                       </div>{/* end relative select-none */}
                     </div>{/* end picker column */}
                     {/* Right: Derived Colour Codes */}
-                    <div className="flex flex-col gap-2 md:gap-3 flex-1 max-w-xs mx-auto md:mx-0">
+                    <div className="flex flex-col gap-2 md:gap-3 flex-1 max-w-sm mx-auto lg:mx-0">
                       <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Derived Colour Codes</p>
                       {/* RGB */}
                       <button
@@ -811,25 +811,25 @@ export default function ColourPickerPage() {
                   </div>
                   <hr className="border-border/60" />
                   {/* Accessibility + Preview (integrated styling) */}
-                  <section className="space-y-3">
+                  <section className="space-y-2 md:space-y-3">
                     <div className="flex md:hidden justify-end">
                       <button
                         type="button"
                         onClick={()=> setShowMobileA11y(s=>!s)}
-                        className="text-[11px] px-2 py-1 rounded border border-border/60 hover:bg-accent/30 transition-colors"
+                        className="text-[11px] px-2 py-1 rounded border border-border/60 hover:bg-accent/30 transition-colors touch-manipulation"
                         aria-expanded={showMobileA11y}
                       >{showMobileA11y? 'Hide':'Accessibility'}</button>
                     </div>
-                    <div className={"space-y-3 " + (showMobileA11y? 'block':'hidden md:block')}>
+                    <div className={"space-y-2 md:space-y-3 " + (showMobileA11y? 'block':'hidden md:block')}>
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <h4 className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Accessibility & Preview</h4>
-                      <div className="flex items-center gap-3 text-[11px] font-mono">
+                      <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-[11px] font-mono">
                         <span className="px-2 py-0.5 rounded bg-secondary/50 border border-border/60">{contrast.ratio}:1</span>
-                        <span className="text-[10px]">AA {contrast.passesAA? '✔':'✖'} / AAA {contrast.passesAAA? '✔':'✖'}</span>
-                        <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={()=>{ const payload = { hex: hexColour, rgb: rgbColour, hsl: hslColour, cmyk: cmykColour, hsv }; copyToClipboard(JSON.stringify(payload,null,2),'All Formats'); }}>Copy All</Button>
+                        <span className="text-[9px] md:text-[10px]">AA {contrast.passesAA? '✔':'✖'} / AAA {contrast.passesAAA? '✔':'✖'}</span>
+                        <Button size="sm" variant="outline" className="h-6 md:h-7 px-2 text-[10px] md:text-[11px] touch-manipulation" onClick={()=>{ const payload = { hex: hexColour, rgb: rgbColour, hsl: hslColour, cmyk: cmykColour, hsv }; copyToClipboard(JSON.stringify(payload,null,2),'All Formats'); }}>Copy All</Button>
                       </div>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2 items-stretch">
+                    <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 items-stretch">
                       <div className="text-xs space-y-1 leading-relaxed">
                         <p>Current colour: <span className="font-mono">{lastValidHexRef.current}</span></p>
                         <p>Recommended text: <span style={{color:contrast.recommended}} className="font-mono">{contrast.recommended}</span></p>
@@ -837,7 +837,7 @@ export default function ColourPickerPage() {
                         <p>Status: <span>{contrast.passesAA? 'AA pass':'AA fail'}</span> / <span>{contrast.passesAAA? 'AAA pass':'AAA fail'}</span></p>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <div className="rounded-md border border-border h-20 overflow-hidden grid grid-cols-2 text-[11px] font-mono">
+                        <div className="rounded-md border border-border h-16 md:h-20 overflow-hidden grid grid-cols-2 text-[11px] font-mono">
                           <div style={{background:lastValidHexRef.current,color:contrast.recommended}} className="flex flex-col items-center justify-center gap-1">
                             <span>Aa</span>
                             <span className="text-[9px] opacity-70">FG {contrast.recommended}</span>
@@ -857,14 +857,14 @@ export default function ColourPickerPage() {
               {/* Right Panel: Pick from Image & Magnifier */}
               <Card className="minimal-card">
                 <CardHeader className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center justify-between gap-3 md:gap-4 flex-wrap">
                     <CardTitle className="shrink-0 font-headline text-lg md:text-xl tracking-tight">Pick Colour from Image</CardTitle>
                     <div className="flex gap-2">
                       <Button
                         id="image-upload-button"
                         variant="outline"
                         onClick={() => fileInputRef.current?.click()}
-                        className="h-10 px-4"
+                        className="h-9 md:h-10 px-3 md:px-4 text-sm"
                       >
                         <Upload className="mr-2 h-4 w-4" /> Upload
                       </Button>
@@ -872,7 +872,7 @@ export default function ColourPickerPage() {
                         <Button
                           variant="outline"
                           onClick={resetImage}
-                          className="h-10 px-3 hover:bg-destructive/5 hover:border-destructive/30 hover:text-destructive"
+                          className="h-9 md:h-10 px-2 md:px-3 hover:bg-destructive/5 hover:border-destructive/30 hover:text-destructive"
                           title="Remove current image"
                         >
                           <X className="h-4 w-4" />
@@ -889,10 +889,10 @@ export default function ColourPickerPage() {
                     className="hidden"
                   />
                 </CardHeader>
-                <CardContent className="space-y-6 md:space-y-8">
-                  <div className="space-y-4">
+                <CardContent className="space-y-4 md:space-y-6">
+                  <div className="space-y-3 md:space-y-4">
                   {uploadedImage ? (
-                    <div className="flex flex-col items-center space-y-4 relative">
+                    <div className="flex flex-col items-center space-y-3 md:space-y-4 relative">
                       <div className="w-full flex flex-col gap-3">
                         <div className="flex items-center gap-3">
                           <Label className="text-xs w-10 text-muted-foreground">Zoom</Label>
@@ -913,7 +913,7 @@ export default function ColourPickerPage() {
                           </div>
                           <span className="text-[11px] tabular-nums w-12 text-right text-muted-foreground">{(scale*100).toFixed(0)}%</span>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 text-[11px]">
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3 text-[10px] md:text-[11px]">
                           <div className="flex items-center gap-1">
                             <Label className="text-[11px]">Mode</Label>
                             <select className="bg-input border rounded px-1 py-1" value={samplingMode} onChange={(e)=> setSamplingMode(e.target.value as any)}>
@@ -936,7 +936,7 @@ export default function ColourPickerPage() {
                       <div
                         ref={canvasContainerRef}
                         className="relative rounded-lg border-2 border-border max-w-full shadow-lg hover:shadow-xl transition-shadow duration-200 overflow-hidden outline-none overscroll-contain bg-neutral-950/40 dark:bg-neutral-900/40 select-none"
-                        style={{ width: '100%', height: 300, touchAction: 'none', backgroundImage: 'linear-gradient(45deg,#444 25%,transparent 25%),linear-gradient(-45deg,#444 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#444 75%),linear-gradient(-45deg,transparent 75%,#444 75%)', backgroundSize: '20px 20px', backgroundPosition: '0 0,0 10px,10px -10px,-10px 0' }}
+                        style={{ width: '100%', height: 250, touchAction: 'none', backgroundImage: 'linear-gradient(45deg,#444 25%,transparent 25%),linear-gradient(-45deg,#444 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#444 75%),linear-gradient(-45deg,transparent 75%,#444 75%)', backgroundSize: '20px 20px', backgroundPosition: '0 0,0 10px,10px -10px,-10px 0' }}
                         tabIndex={0}
                         // wheel handled by custom listener (non-passive) for zoom-to-cursor
                         onPointerDown={handlePointerDown}
@@ -1013,7 +1013,7 @@ export default function ColourPickerPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center h-48 border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-muted-foreground/40 transition-colors duration-200 text-center px-4">
+                    <div className="flex items-center justify-center h-40 md:h-48 border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-muted-foreground/40 transition-colors duration-200 text-center px-4">
                       <div className="text-center text-muted-foreground">
                         <Upload className="h-12 w-12 mx-auto mb-3 opacity-40" />
                         <p className="text-sm font-medium">Upload an image to extract colours</p>
@@ -1025,16 +1025,16 @@ export default function ColourPickerPage() {
                   {/* Image Palette */}
                   {imagePalette.length > 0 && (
                     <div className="space-y-3 pt-6 border-t">
-                      <div className="flex items-center gap-3 mb-1">
+                      <div className="flex items-center gap-2 md:gap-3 mb-1 flex-wrap">
                         <Palette className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-medium">Image Palette</h3>
+                        <h3 className="text-base md:text-lg font-medium">Image Palette</h3>
                         <span className="text-sm text-muted-foreground">({imagePalette.length}/{paletteSize})</span>
                         <div className="ml-auto flex items-center gap-2">
                           <button
                             type="button"
                             onClick={()=> setPaletteSize(s=> Math.max(4, s-1))}
                             disabled={paletteSize<=4}
-                            className="w-7 h-7 border border-border rounded-sm flex items-center justify-center text-lg leading-none font-mono hover:bg-accent/30 disabled:opacity-40"
+                            className="w-6 h-6 md:w-7 md:h-7 border border-border rounded-sm flex items-center justify-center text-sm md:text-lg leading-none font-mono hover:bg-accent/30 disabled:opacity-40 touch-manipulation"
                             title="Decrease palette size"
                             aria-label="Decrease palette size"
                           >−</button>
@@ -1042,7 +1042,7 @@ export default function ColourPickerPage() {
                             type="button"
                             onClick={()=> setPaletteSize(s=> Math.min(16, s+1))}
                             disabled={paletteSize>=16}
-                            className="w-7 h-7 border border-border rounded-sm flex items-center justify-center text-lg leading-none font-mono hover:bg-accent/30 disabled:opacity-40"
+                            className="w-6 h-6 md:w-7 md:h-7 border border-border rounded-sm flex items-center justify-center text-sm md:text-lg leading-none font-mono hover:bg-accent/30 disabled:opacity-40 touch-manipulation"
                             title="Increase palette size"
                             aria-label="Increase palette size"
                           >+</button>
@@ -1053,7 +1053,7 @@ export default function ColourPickerPage() {
                           <button
                             key={index}
                             onClick={() => { setHexColour(colour); copyToClipboard(colour, 'HEX'); }}
-                            className="relative w-full h-8 rounded-sm border border-border/70 hover:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary group transition-colors"
+                            className="relative w-full h-7 md:h-8 rounded-sm border border-border/70 hover:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary group transition-colors touch-manipulation"
                             style={{backgroundColor: colour}}
                             aria-label={`Use palette colour ${colour}`}
                             title={`Click to use ${colour}`}
@@ -1068,7 +1068,7 @@ export default function ColourPickerPage() {
                   {lockedSamples.length > 0 && (
                     <div className="space-y-3 pt-6 border-t">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-medium">Locked Samples</h3>
+                        <h3 className="text-base md:text-lg font-medium">Locked Samples</h3>
                         <span className="text-sm text-muted-foreground">({lockedSamples.length})</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -1077,7 +1077,7 @@ export default function ColourPickerPage() {
                             key={`${c}-${i}`}
                             onClick={()=> copyToClipboard(c,'HEX')}
                             onContextMenu={(e)=>{ e.preventDefault(); setLockedSamples(ls => ls.filter((_,idx)=> idx!==i)); }}
-                            className="relative w-10 h-10 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-primary group"
+                            className="relative w-9 h-9 md:w-10 md:h-10 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-primary group touch-manipulation"
                             style={{ background: c }}
                             aria-label={`Locked sample ${c}. Click to copy. Right-click to remove.`}
                           >

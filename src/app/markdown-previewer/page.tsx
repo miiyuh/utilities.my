@@ -158,12 +158,12 @@ And another to the [Mozilla Developer Network][mdn].
 
 ## 5. Images
 
-![A placeholder image for demonstration](https://placehold.co/400x200.png "Placeholder Image 400x200")
+![A placeholder image for demonstration](https://picsum.photos/200/300 "Beautiful Landscape 200x300")
 
 Images can also be linked using reference style:
 ![Another placeholder][placeholder-img]
 
-[placeholder-img]: https://placehold.co/300x150.png "Placeholder Image 300x150"
+[placeholder-img]: https://picsum.photos/200/300 "Nature Photo 200x300"
 
 ## 6. Code
 
@@ -266,7 +266,7 @@ const markdownExamples = [
   },
   {
     title: "Links & Images",
-    content: `[I'm an inline-style link](https://www.google.com)\n\n![alt text](https://placehold.co/100x50.png "Logo Title Text 1")`,
+    content: `[I'm an inline-style link](https://www.google.com)\n\n![alt text](https://picsum.photos/100/50 "Beautiful Photo 100x50")`,
   },
   {
     title: "Code (Inline & Fenced)",
@@ -384,12 +384,27 @@ export default function MarkdownPreviewerPage() {
     const handleMove = (ev: MouseEvent) => {
       if (!draggingRef.current || !rect) return;
       const x = ev.clientX - rect.left;
-      const ratio = Math.min(0.8, Math.max(0.2, x / rect.width));
+      const containerWidth = rect.width;
+      
+      // Responsive minimum panel width: smaller on mobile, larger on desktop
+      const minPanelWidth = containerWidth < 768 ? 150 : 200;
+      
+      // Calculate ratio limits based on container width and minimum panel widths
+      const minRatio = minPanelWidth / containerWidth;
+      const maxRatio = (containerWidth - minPanelWidth) / containerWidth;
+      
+      const ratio = Math.min(maxRatio, Math.max(minRatio, x / containerWidth));
       setPanelRatio(ratio);
     };
     const handleUp = () => { draggingRef.current = false; window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', handleUp); };
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', handleUp);
+  };
+
+  const resetToCenter = () => {
+    if (viewMode === 'split') {
+      setPanelRatio(0.5);
+    }
   };
 
   const wordCount = useMemo(() => markdownText.trim() ? markdownText.trim().split(/\s+/).length : 0, [markdownText]);
@@ -422,19 +437,19 @@ export default function MarkdownPreviewerPage() {
             </div>
             
             {/* Controls Bar */}
-            <div className="flex flex-wrap gap-3 items-center border rounded-md p-3 bg-background/60 sm:justify-start justify-between overflow-x-auto">
+            <div className="flex flex-wrap gap-3 items-center border rounded-md p-3 bg-background/60 justify-center sm:justify-start overflow-x-auto">
               <div className="flex items-center gap-1">
-                <Button variant={viewMode==='edit'?'default':'outline'} size="sm" onClick={()=>setViewMode('edit')} title="Editor only"><FileText className="h-4 w-4"/></Button>
-                <Button variant={viewMode==='preview'?'default':'outline'} size="sm" onClick={()=>setViewMode('preview')} title="Preview only"><Eye className="h-4 w-4"/></Button>
-                <Button variant={viewMode==='split'?'default':'outline'} size="sm" onClick={()=>setViewMode('split')} title="Split view"><Columns className="h-4 w-4"/></Button>
+                <Button variant={viewMode==='edit'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('edit')} title="Editor only"><FileText className="h-4 w-4"/></Button>
+                <Button variant={viewMode==='preview'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('preview')} title="Preview only"><Eye className="h-4 w-4"/></Button>
+                <Button variant={viewMode==='split'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('split')} title="Split view"><Columns className="h-4 w-4"/></Button>
               </div>
               <div className="h-6 w-px bg-border" />
               <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" onClick={handleCopyMarkdown} title="Copy Markdown"><Copy className="h-4 w-4"/></Button>
-                <Button variant="outline" size="sm" onClick={handleCopyHtml} title="Copy Rendered HTML"><CodeIconFallback />{/* fallback icon */}</Button>
-                <Button variant="outline" size="sm" onClick={handleDownload} title="Download .md"><Download className="h-4 w-4"/></Button>
-                <Button variant="outline" size="sm" onClick={handleClearInput} title="Clear"><Trash2 className="h-4 w-4"/></Button>
-                <Button variant="outline" size="sm" onClick={handleResetDemo} title="Reset Demo Content"><RefreshIconFallback /></Button>
+                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleCopyMarkdown} title="Copy Markdown"><Copy className="h-4 w-4"/></Button>
+                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleCopyHtml} title="Copy Rendered HTML"><CodeIconFallback />{/* fallback icon */}</Button>
+                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleDownload} title="Download .md"><Download className="h-4 w-4"/></Button>
+                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleClearInput} title="Clear"><Trash2 className="h-4 w-4"/></Button>
+                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleResetDemo} title="Reset Demo Content"><RefreshIconFallback /></Button>
               </div>
               <div className="h-6 w-px bg-border" />
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -448,8 +463,9 @@ export default function MarkdownPreviewerPage() {
             <div
               ref={containerRef}
               className={
-                "relative w-full rounded-lg border overflow-hidden bg-card/40 backdrop-blur flex flex-col h-[60vh] sm:h-[65vh] " +
-                (viewMode==='split' ? 'md:h-[70vh]' : 'md:h-[65vh]')
+                "relative w-full rounded-lg border overflow-hidden bg-card/40 backdrop-blur flex flex-col " +
+                "h-[60vh] sm:h-[70vh] md:h-[75vh] lg:h-[80vh] " +
+                (viewMode==='split' ? 'xl:h-[85vh]' : '')
               }
             >
               {viewMode === 'edit' && (
@@ -464,18 +480,20 @@ export default function MarkdownPreviewerPage() {
               )}
               {viewMode === 'split' && (
                 <div className="flex flex-1 h-full w-full select-none flex-col md:flex-row">
-                  <div style={{flexBasis: `${panelRatio*100}%`}} className="min-h-[35%] md:min-h-0 md:min-w-[30%] md:max-w-[80%] flex flex-col border-b md:border-b-0 md:border-r">
+                  <div style={{flexBasis: `${panelRatio*100}%`}} className="min-h-[35%] md:min-h-0 min-w-[150px] md:min-w-[200px] md:max-w-[calc(100%-150px)] lg:max-w-[calc(100%-200px)] flex flex-col border-b md:border-b-0 md:border-r">
                     <EditorPane markdownText={markdownText} setMarkdownText={setMarkdownText} wrap={wrap} />
                   </div>
                   {/* Drag handle: vertical on desktop only */}
                   <div
                     onMouseDown={startDrag}
+                    onDoubleClick={resetToCenter}
                     className="hidden md:block w-1 cursor-col-resize hover:bg-primary/50 bg-border/60 transition-colors"
                     role="separator"
                     aria-orientation="vertical"
-                    aria-label="Resize panels"
+                    aria-label="Resize panels (double-click to center)"
+                    title="Drag to resize panels, double-click to reset to center"
                   />
-                  <div className="flex-1 flex flex-col min-h-[35%]">
+                  <div className="flex-1 flex flex-col min-h-[35%] min-w-[150px] md:min-w-[200px]">
                     <PreviewPane htmlOutput={htmlOutput} />
                   </div>
                 </div>

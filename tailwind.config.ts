@@ -15,7 +15,7 @@ export default {
         paragraph: ['Noto Sans', 'system-ui', 'sans-serif'], // Paragraphs - Noto Sans
         'serif-display': ['Noto Serif Display', 'serif'], // Display serif for special content
         headline: ['Inter', 'system-ui', 'sans-serif'], // Headlines - Inter
-        code: ['Fira Code', 'Source Code Pro', 'monospace'],
+        code: ['Noto Mono', 'Source Code Pro', 'Fira Code', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
