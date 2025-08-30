@@ -21,6 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/timezone-converter',
     '/unit-converter',
     '/unix-timestamp-converter',
+    '/morse-code-generator',
   ];
   const now = new Date();
   return routes.map((path) => ({

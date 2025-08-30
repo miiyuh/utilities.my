@@ -2,7 +2,7 @@
 import type { LucideIcon } from "lucide-react";
 import { 
   CaseSensitive, Palette, Ruler, Home, 
-  FileText, QrCode, Timer, Globe, CalendarRange, Baseline, ArrowDownUp, Disc3, Activity, Image
+  FileText, QrCode, Timer, Globe, CalendarRange, Baseline, ArrowDownUp, Disc3, Activity, Image, Zap
 } from "lucide-react";
 
 export interface Tool {
@@ -27,4 +27,5 @@ export const tools: Tool[] = [
   { name: "Text Statistics", path: "/text-statistics", icon: Baseline, description: "Analyze text for word count, character count, and more." },
   { name: "Sorter", path: "/sorter", icon: ArrowDownUp, description: "Sort lines of text alphabetically or numerically." },
   { name: "Spin the Wheel", path: "/spin-the-wheel", icon: Disc3, description: "A fun utility to pick a random item from a list." },
+  { name: "Morse Code Generator", path: "/morse-code-generator", icon: Zap, description: "Convert text to Morse code and vice versa with audio, visual, and vibration playback." },
 ];

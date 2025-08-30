@@ -5,16 +5,15 @@ import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { SettingsProvider } from '@/contexts/settings-context';
 
-// Assumes production URL is https://utilities.my
 const metadataBase = new URL('https://utilities.my');
 
 export const metadata: Metadata = {
   metadataBase,
   title: {
-    default: 'utilities.my — Useful online tools',
+    default: 'utilities.my - Useful online tools',
     template: '%s | utilities.my',
   },
-  description: 'A fast, privacy-friendly collection of useful tools: BMI calculator, QR code generator, color picker, unit converter, and more — by miiyuh.',
+  description: 'A fast, privacy-friendly collection of useful tools: BMI calculator, QR code generator, color picker, unit converter, and more - by miiyuh.',
   keywords: [
     'utilities',
     'online tools',
@@ -28,6 +27,11 @@ export const metadata: Metadata = {
     'text case',
     'text statistics',
     'sorter',
+    'morse code',
+    'morse code generator',
+    'morse code decoder',
+    'text to morse',
+    'morse to text'
   ],
   authors: [{ name: 'miiyuh' }],
   creator: 'miiyuh',
@@ -40,14 +44,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: '/',
     siteName: 'utilities.my',
-    title: 'utilities.my — Useful online tools',
+    title: 'utilities.my - Useful online tools',
     description: 'A fast, privacy-friendly collection of useful tools.',
     images: [
       {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'utilities.my — Useful online tools',
+        alt: 'utilities.my - Useful online tools',
       },
     ],
   },
@@ -55,7 +59,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     creator: '@miiyuh',
     site: '@miiyuh',
-    title: 'utilities.my — Useful online tools',
+    title: 'utilities.my - Useful online tools',
     description: 'A fast, privacy-friendly collection of useful tools.',
     images: ['/twitter-image'],
   },

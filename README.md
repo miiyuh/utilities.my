@@ -44,6 +44,9 @@ utilities.my is a productivity-focused web application that consolidates essenti
 ### 🎲 Fun Utilities
 - **Spin the Wheel** - Customizable decision-making wheel with animations and multiple options
 
+### 🔤 Communication Tools
+- **Morse Code Generator** - Convert text to Morse code and vice versa with audio, visual, and vibration playback. Customizable speed, pitch, and volume controls.
+
 ### 📜 Additional Pages
 - **About** - Comprehensive project information, technology stack, and contribution guidelines
 - **Settings** - Application configuration including theme preferences and default units
@@ -82,6 +85,7 @@ src/
 │   ├── date-diff-calculator/ # Date difference calculator
 │   ├── image-converter/   # Image format conversion and resizing
 │   ├── markdown-previewer/ # Markdown editor and live preview
+│   ├── morse-code-generator/ # Morse code generator and decoder
 │   ├── privacy/           # Privacy policy page
 │   ├── qr-code-generator/ # QR code generation utility
 │   ├── settings/          # Application settings and preferences
