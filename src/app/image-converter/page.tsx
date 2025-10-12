@@ -52,6 +52,7 @@ export default function ImageConverterPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
 
   const aspectRatioRef = useRef<number | null>(null)
   const dropRef = useRef<HTMLDivElement | null>(null)
@@ -80,6 +81,7 @@ export default function ImageConverterPage() {
     setPreviewUrl(null)
     setMessage(null)
     setError(null)
+    setImageLoaded(false)
   }, [])
 
   useEffect(() => {
@@ -97,8 +99,8 @@ export default function ImageConverterPage() {
     aspectRatioRef.current = el.naturalWidth / el.naturalHeight
     if (width === '') setWidth(el.naturalWidth)
     if (height === '') setHeight(el.naturalHeight)
-    // Trigger initial preview generation
-    generatePreview()
+    setImageLoaded(true)
+    // Note: Preview will be generated automatically via useEffect, no need to call here
   }
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,7 +160,16 @@ export default function ImageConverterPage() {
   }, [width, height, lockAspect, naturalWidth, naturalHeight])
 
   const convert = async () => {
-    if (!imgSrc || !file) return
+    if (!imgSrc || !file) {
+      setError('Please upload an image first')
+      return
+    }
+    
+    if (!imageLoaded || !naturalWidth || !naturalHeight) {
+      setError('Image is still loading. Please wait a moment and try again.')
+      return
+    }
+    
     setProcessing(true)
     setMessage(null)
     setError(null)
@@ -234,11 +245,12 @@ export default function ImageConverterPage() {
     setMessage(null)
     setError(null)
     setIsDragOver(false)
+    setImageLoaded(false)
   }
 
   // Generate live preview based on current settings
   const generatePreview = useCallback(async () => {
-    if (!imgSrc) {
+    if (!imgSrc || !imageLoaded) {
       setPreviewUrl(null)
       return
     }
@@ -288,7 +300,7 @@ export default function ImageConverterPage() {
       console.error('Preview generation error:', e)
       setPreviewUrl(null)
     }
-  }, [imgSrc, format, width, height, quality])
+  }, [imgSrc, format, width, height, quality, imageLoaded])
 
   // Generate preview when settings change
   useEffect(() => {
@@ -394,7 +406,12 @@ export default function ImageConverterPage() {
                         <div className="flex-1 min-w-0 text-center sm:text-left">
                           <div className="font-medium text-foreground truncate" title={filename}>{filename}</div>
                           <div className="text-sm text-muted-foreground">
-                            {humanSize(size)} • {naturalWidth && naturalHeight ? `${naturalWidth}×${naturalHeight}px` : 'Loading...'}
+                            {humanSize(size)} • {imageLoaded && naturalWidth && naturalHeight ? `${naturalWidth}×${naturalHeight}px` : (
+                              <span className="inline-flex items-center gap-1">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Loading dimensions...
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="flex gap-2 mt-2 sm:mt-0">
@@ -662,7 +679,7 @@ export default function ImageConverterPage() {
                       <div className="flex flex-col gap-3 sm:gap-4">
                         <Button
                           onClick={convert}
-                          disabled={!imgSrc || processing}
+                          disabled={!imgSrc || !imageLoaded || processing}
                           size="lg"
                           className="w-full h-12 text-base font-medium"
                         >
@@ -670,6 +687,11 @@ export default function ImageConverterPage() {
                             <>
                               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                               Converting...
+                            </>
+                          ) : !imageLoaded && imgSrc ? (
+                            <>
+                              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                              Loading Image...
                             </>
                           ) : (
                             <>
