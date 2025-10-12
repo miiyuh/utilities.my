@@ -368,3 +368,12 @@ html { scrollbar-width: thin; scrollbar-color: hsl(var(--primary)/0.55) hsl(var(
 .scrollbar-rounded::-webkit-scrollbar-thumb { border-radius: 999px; }
 .scrollbar-primary::-webkit-scrollbar-thumb { background: hsl(var(--primary)/0.6); }
 .scrollbar-muted::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground)/0.4); }
+
+/* Prefer Noto Color Emoji for flag glyphs, with sensible fallbacks */
+.flag-emoji {
+  font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', system-ui, -apple-system;
+  line-height: 1;
+  display: inline-block;
+  transform: translateY(1px); /* nudge to vertically center across fonts */
+  -webkit-font-smoothing: antialiased;
+}

@@ -4,6 +4,9 @@
 
 A comprehensive collection of web-based utilities for everyday tasks, all centralized in one modern, responsive web application.
 
+<img src=".\public\assets\img\screenshots\screenshot-01.png" alt="utilities.my logo" height="256px" />
+<img src=".\public\assets\img\screenshots\screenshot-02.png" alt="utilities.my logo" height="256px" />
+
 ## Overview
 
 utilities.my is a productivity-focused web application that consolidates essential online tools into a single, unified platform. Built with modern web technologies and designed with accessibility in mind, it eliminates the need to switch between multiple websites by providing a consistent, responsive interface across all utilities.
@@ -266,12 +269,10 @@ We're always looking for useful utilities to add! Some ideas include:
 - Random Number Generator
 
 **Health & Fitness**
-- BMI Calculator with health classifications
 - Metric and imperial unit support
 - Health recommendations and ideal weight ranges
 
 **Image Processing**
-- Multi-format image conversion (PNG, JPG, WebP)
 - Intelligent resizing with aspect ratio preservation
 - Quality control for optimized file sizes
 - Drag-and-drop file handling

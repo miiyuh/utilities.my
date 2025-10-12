@@ -32,10 +32,24 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 10;
+  // Make the wheel as large as possible in the canvas, with a visible border
+  const borderWidth = 12;
+  const borderRadius = Math.min(centerX, centerY) - borderWidth / 2;
+  const radius = borderRadius - borderWidth / 2 - 2;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw outer border ring (subtle gray, thick)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, borderRadius, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#1a1a1a'; // Tailwind border-border
+  ctx.lineWidth = borderWidth;
+  ctx.shadowColor = 'rgba(0,0,0,0.08)';
+  ctx.shadowBlur = 8;
+  ctx.stroke();
+  ctx.restore();
 
     if (items.length === 0) {
       // Draw empty wheel
@@ -82,28 +96,72 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Draw text
+      // Draw text with smart sizing and wrapping
       const textAngle = startAngle + anglePerSlice / 2;
-      const textRadius = radius * 0.7;
+      const textRadius = radius * 0.8; // Moved closer to center for more padding
       const textX = Math.cos(textAngle) * textRadius;
       const textY = Math.sin(textAngle) * textRadius;
 
       ctx.save();
       ctx.translate(textX, textY);
       ctx.rotate(textAngle + Math.PI / 2);
-      
+
       ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(12, Math.min(16, radius / 8))}px system-ui`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      
-      // Truncate long text
+
+      // Smart text sizing and handling
       let text = items[i];
-      if (text.length > 12) {
-        text = text.substring(0, 10) + '...';
-      }
+      // Reduced max width to ensure text stays well within section borders
+      const maxWidth = Math.min(radius * 0.25, (radius * anglePerSlice * 0.6)); // Maximum text width based on slice
+      const minFontSize = 10;
+      const maxFontSize = Math.max(12, Math.min(18, radius / 6));
       
-      ctx.fillText(text, 0, 0);
+      // Calculate optimal font size
+      let fontSize = maxFontSize;
+      let textWidth = 0;
+      
+      do {
+        ctx.font = `bold ${fontSize}px system-ui`;
+        textWidth = ctx.measureText(text).width;
+        if (textWidth <= maxWidth || fontSize <= minFontSize) break;
+        fontSize -= 0.5;
+      } while (fontSize > minFontSize);
+
+      // If text is still too wide, try wrapping or truncating
+      if (textWidth > maxWidth) {
+        const words = text.split(' ');
+        if (words.length > 1) {
+          // Try to wrap text into 2 lines
+          const line1 = words[0];
+          const line2 = words.slice(1).join(' ');
+          
+          const line1Width = ctx.measureText(line1).width;
+          const line2Width = ctx.measureText(line2).width;
+          
+          if (line1Width <= maxWidth && line2Width <= maxWidth) {
+            // Draw two lines
+            const lineHeight = fontSize * 0.8;
+            ctx.fillText(line1, 0, -lineHeight / 2);
+            ctx.fillText(line2, 0, lineHeight / 2);
+          } else {
+            // Fallback to truncation
+            while (ctx.measureText(text + '...').width > maxWidth && text.length > 1) {
+              text = text.slice(0, -1);
+            }
+            ctx.fillText(text + (text !== items[i] ? '...' : ''), 0, 0);
+          }
+        } else {
+          // Single word, truncate with ellipsis
+          while (ctx.measureText(text + '...').width > maxWidth && text.length > 1) {
+            text = text.slice(0, -1);
+          }
+          ctx.fillText(text + (text !== items[i] ? '...' : ''), 0, 0);
+        }
+      } else {
+        // Text fits in one line
+        ctx.fillText(text, 0, 0);
+      }
       ctx.restore();
     }
 
@@ -197,14 +255,14 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <div className="relative">
+    <div className="flex flex-col items-center space-y-4 w-full">
+      <div className="relative flex justify-center items-center w-full">
         <canvas
           ref={canvasRef}
-          width={300}
-          height={300}
-          className="border-2 border-border rounded-full shadow-lg"
-          style={{ maxWidth: '100%', height: 'auto' }}
+          width={400}
+          height={400}
+          className="border-0 rounded-full shadow-lg mx-auto"
+          style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
         />
         {isSpinning && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -214,7 +272,7 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
           </div>
         )}
       </div>
-      
+
       <Button
         onClick={handleSpin}
         disabled={disabled || isSpinning || items.length < 2}
@@ -233,7 +291,7 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
           </>
         )}
       </Button>
-      
+
       {winner && !isSpinning && (
         <div className="text-center">
           <p className="text-sm text-muted-foreground">Last winner:</p>

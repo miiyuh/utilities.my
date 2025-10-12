@@ -16,7 +16,8 @@ marked.setOptions({
 
 export function MarkdownView({ markdown, lastUpdated }: MarkdownViewProps) {
   const htmlContent = React.useMemo(() => {
-    return marked(markdown);
+    // marked() can be typed as string | Promise<string> in some versions; assert string here
+    return marked(markdown) as string;
   }, [markdown]);
 
   return (

@@ -2,7 +2,7 @@
 import type { LucideIcon } from "lucide-react";
 import { 
   CaseSensitive, Palette, Ruler, Home, 
-  FileText, QrCode, Timer, Globe, CalendarRange, Baseline, ArrowDownUp, Disc3, Activity, Image, Zap
+  FileText, QrCode, Timer, Globe, CalendarRange, Baseline, ArrowDownUp, Disc3, Activity, Image, Zap, Clock
 } from "lucide-react";
 
 export interface Tool {
@@ -23,6 +23,7 @@ export const tools: Tool[] = [
   { name: "QR Code Generator", path: "/qr-code-generator", icon: QrCode, description: "Generate QR codes from text or URLs." },
   { name: "Unix Timestamp Converter", path: "/unix-timestamp-converter", icon: Timer, description: "Convert Unix timestamps to human-readable dates and vice-versa." },
   { name: "Timezone Converter", path: "/timezone-converter", icon: Globe, description: "Convert times between different timezones." },
+  { name: "World Clock", path: "/world-clock", icon: Clock, description: "View current time in all major cities and timezones around the world." },
   { name: "Date Difference Calculator", path: "/date-diff-calculator", icon: CalendarRange, description: "Calculate the difference between two dates." },
   { name: "Text Statistics", path: "/text-statistics", icon: Baseline, description: "Analyze text for word count, character count, and more." },
   { name: "Sorter", path: "/sorter", icon: ArrowDownUp, description: "Sort lines of text alphabetically or numerically." },

@@ -9,14 +9,17 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { RotateCcw, Trash2, Plus, Disc3, Shuffle, FilterX, ArrowDownUp, Upload, Download, Share2, Copy } from 'lucide-react';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { SpinWheelCanvas } from '@/components/spin-wheel-canvas';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useSearchParams } from 'next/navigation';
 
-const DEFAULT_ITEMS = ["Pizza","Burgers","Sushi","Pasta","Tacos","Salad"];
+const DEFAULT_ITEMS = [
+  "Sushi", "Ramen", "Tempura", "Katsudon", "Takoyaki", "Okonomiyaki", // Japanese
+  "Nasi Lemak", "Char Kuey Teow", "Roti Canai", "Satay", "Laksa", "Hainanese Chicken Rice" // Malaysian
+];
 const PRESETS: Record<string,string[]> = {
   "Lunch": DEFAULT_ITEMS,
   "Yes/No": ["Yes","No"],
@@ -187,74 +190,112 @@ export default function SpinTheWheelPage() {
 
   return (
     <>
-      <Sidebar className="z-50">
+      <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <div className="flex h-full flex-col">
-          <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-            <div className="flex items-center gap-3">
-              <Disc3 className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold font-headline">Spin the Wheel</h1>
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger className="lg:hidden" />
+            <Disc3 className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-semibold font-headline">Spin the Wheel</h1>
+          </div>
+          <ThemeToggleButton />
+        </header>
+        
+        <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
+            {/* Big heading */}
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
+                Spin the Wheel
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                A fun utility to pick a random item from a list. Perfect for making decisions!
+              </p>
             </div>
-            <ThemeToggleButton />
-          </header>
-          
-          <div className="flex-1 p-4 lg:p-8">
-            <div className="w-full max-w-7xl mx-auto space-y-6">
-              {/* Big heading */}
-              <div className="mb-8">
-                <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Spin the Wheel</h1>
-                <p className="text-lg text-muted-foreground">A fun utility to pick a random item from a list.</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-muted-foreground">Add your choices and spin to randomly select one. Perfect for making decisions!</p>
-              </div>
 
-              <div className="bg-card rounded-lg border p-6 space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Wheel Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium">Wheel</h3>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">
-                          {items.length} {items.length === 1 ? 'option' : 'options'}
-                        </Badge>
-                      </div>
+            {/* Main Content */}
+            <div className="grid gap-6 lg:gap-8 lg:grid-cols-2">
+              {/* Wheel Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Disc3 className="h-5 w-5" />
+                      Wheel
                     </div>
-                    
-                    <div className="flex justify-center">
-                      <SpinWheelCanvas 
-                        items={items}
-                        onSpin={handleSpin}
-                        disabled={items.length < 2}
-                      />
+                    <Badge variant="secondary">
+                      {items.length} {items.length === 1 ? 'option' : 'options'}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-center items-center w-full">
+                    <SpinWheelCanvas 
+                      items={items}
+                      onSpin={handleSpin}
+                      disabled={items.length < 2}
+                    />
+                  </div>
+                  {items.length < 2 && (
+                    <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center">
+                        Add at least 2 items to spin the wheel.
+                      </p>
                     </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Controls Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Items & Controls</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Import/Export/Share Actions */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input 
+                      ref={fileInputRef} 
+                      type="file" 
+                      accept=".txt,.csv,.tsv,text/plain" 
+                      className="hidden" 
+                      onChange={(e)=>{
+                        const f=e.currentTarget.files?.[0]; 
+                        if (f) handleImport(f); 
+                        e.currentTarget.value='';
+                      }} 
+                    />
+                    <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}>
+                      <Download className="w-4 h-4 mr-2" /> Import
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleExport} disabled={!items.length}>
+                      <Upload className="w-4 h-4 mr-2" /> Export
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleShare} disabled={!items.length}>
+                      <Share2 className="w-4 h-4 mr-2" /> Share
+                    </Button>
                   </div>
 
-                  {/* Controls Section */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <input ref={fileInputRef} type="file" accept=".txt,.csv,.tsv,text/plain" className="hidden" onChange={(e)=>{ const f=e.currentTarget.files?.[0]; if (f) handleImport(f); e.currentTarget.value=''; }} />
-                        <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="w-4 h-4 mr-1"/> Import</Button>
-                        <Button variant="outline" size="sm" onClick={handleExport} disabled={!items.length}><Upload className="w-4 h-4 mr-1"/> Export</Button>
-                        <Button variant="outline" size="sm" onClick={handleShare} disabled={!items.length}><Share2 className="w-4 h-4 mr-1"/> Share</Button>
-                      </div>
-                      <Label htmlFor="itemsInput">Items (one per line)</Label>
-                      <Textarea
-                        id="itemsInput"
-                        rows={10}
-                        value={itemsInput}
-                        onChange={(e) => setItemsInput(e.target.value)}
-                        className="resize-none font-mono text-sm"
-                        placeholder="Enter your options here...&#10;Example:&#10;Pizza&#10;Burgers&#10;Sushi&#10;Pasta"
-                      />
-                    </div>
+                  {/* Items Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="itemsInput">Items (one per line)</Label>
+                    <Textarea
+                      id="itemsInput"
+                      rows={8}
+                      value={itemsInput}
+                      onChange={(e) => setItemsInput(e.target.value)}
+                      className="resize-none font-mono text-sm h-48"
+                      placeholder="Enter your options here...&#10;Example:&#10;Pizza&#10;Burgers&#10;Sushi&#10;Pasta"
+                    />
+                  </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {/* Settings */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Settings</h4>
+                    <div className="grid grid-cols-1 gap-3">
                       <div className="flex items-center space-x-2">
                         <Checkbox id="trimLines" checked={trimLines} onCheckedChange={(c)=> setTrimLines(Boolean(c))} />
                         <Label htmlFor="trimLines" className="text-sm cursor-pointer">Trim each line</Label>
@@ -268,68 +309,87 @@ export default function SpinTheWheelPage() {
                         <Label htmlFor="removeAfterWin" className="text-sm cursor-pointer">Remove winners automatically</Label>
                       </div>
                     </div>
+                  </div>
 
+                  {/* Action Buttons */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Actions</h4>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={handleAddItem}><Plus className="w-4 h-4 mr-1" /> Add Item</Button>
-                      <Button variant="outline" size="sm" onClick={handleShuffle} disabled={items.length<2}><Shuffle className="w-4 h-4 mr-1"/> Shuffle</Button>
-                      <Button variant="outline" size="sm" onClick={handleDedupe} disabled={items.length<2}><FilterX className="w-4 h-4 mr-1"/> Dedupe</Button>
-                      <Button variant="outline" size="sm" onClick={handleSortAZ} disabled={items.length<2}><ArrowDownUp className="w-4 h-4 mr-1 rotate-90"/> A→Z</Button>
-                      <Button variant="outline" size="sm" onClick={handleSortZA} disabled={items.length<2}><ArrowDownUp className="w-4 h-4 mr-1 -rotate-90"/> Z→A</Button>
-                      <Button variant="outline" size="sm" onClick={handleReset}><RotateCcw className="w-4 h-4 mr-1" /> Reset</Button>
-                      <Button variant="outline" size="sm" onClick={handleClear}><Trash2 className="w-4 h-4 mr-1" /> Clear All</Button>
+                      <Button variant="outline" size="sm" onClick={handleAddItem}>
+                        <Plus className="w-4 h-4 mr-1" /> Add Item
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleShuffle} disabled={items.length<2}>
+                        <Shuffle className="w-4 h-4 mr-1"/> Shuffle
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleDedupe} disabled={items.length<2}>
+                        <FilterX className="w-4 h-4 mr-1"/> Dedupe
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleSortAZ} disabled={items.length<2}>
+                        <ArrowDownUp className="w-4 h-4 mr-1 rotate-90"/> A→Z
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleSortZA} disabled={items.length<2}>
+                        <ArrowDownUp className="w-4 h-4 mr-1 -rotate-90"/> Z→A
+                      </Button>
                     </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" onClick={handleReset}>
+                        <RotateCcw className="w-4 h-4 mr-1" /> Reset
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={handleClear}>
+                        <Trash2 className="w-4 h-4 mr-1" /> Clear All
+                      </Button>
+                    </div>
+                  </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Quick presets:</span>
+                  {/* Quick Presets */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Quick Presets</h4>
+                    <div className="flex flex-wrap gap-2">
                       {Object.entries(PRESETS).map(([k,v])=> (
-                        <Button key={k} variant="secondary" size="sm" onClick={()=> setItemsInput(v.join('\n'))}>{k}</Button>
+                        <Button key={k} variant="secondary" size="sm" onClick={()=> setItemsInput(v.join('\n'))}>
+                          {k}
+                        </Button>
                       ))}
                     </div>
-
-                    {items.length < 2 && (
-                      <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                        <p className="text-sm text-yellow-800 dark:text-yellow-200">Add at least 2 items to spin the wheel.</p>
-                      </div>
-                    )}
                   </div>
-                </div>
-
-                {/* Winner History */}
-                {winners.length > 0 && (
-                  <>
-                    <Separator />
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-sm">Winner History ({winners.length})</h4>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={handleCopyWinners} disabled={!winners.length}><Copy className="w-4 h-4 mr-1"/> Copy</Button>
-                          <Button variant="outline" size="sm" onClick={handleExportWinners} disabled={!winners.length}><Download className="w-4 h-4 mr-1"/> Export CSV</Button>
-                          <Button variant="outline" size="sm" onClick={()=> setWinners([])} disabled={!winners.length}><Trash2 className="w-4 h-4 mr-1"/> Clear</Button>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {winners.map((winner, index) => (
-                          <Badge
-                            key={index}
-                            variant="secondary"
-                            className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
-                          >
-                            #{index + 1} {winner}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-              
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleClear} className="h-10">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Clear All
-                </Button>
-              </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Winner History */}
+            {winners.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Winner History ({winners.length})</span>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handleCopyWinners}>
+                        <Copy className="w-4 h-4 mr-2"/> Copy
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleExportWinners}>
+                        <Download className="w-4 h-4 mr-2"/> Export CSV
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={()=> setWinners([])}>
+                        <Trash2 className="w-4 h-4 mr-2"/> Clear
+                      </Button>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {winners.map((winner, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
+                      >
+                        #{index + 1} {winner}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </SidebarInset>
