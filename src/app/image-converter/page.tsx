@@ -53,9 +53,14 @@ export default function ImageConverterPage() {
   const [error, setError] = useState<string | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [generatingPreview, setGeneratingPreview] = useState(false)
+  const [downloadBlob, setDownloadBlob] = useState<Blob | null>(null)
 
   const aspectRatioRef = useRef<number | null>(null)
   const dropRef = useRef<HTMLDivElement | null>(null)
+  const isGeneratingRef = useRef(false)
+  const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const currentPreviewUrlRef = useRef<string | null>(null)
 
   const handleFile = useCallback((f: File) => {
     if (!f) return
@@ -72,28 +77,58 @@ export default function ImageConverterPage() {
       return
     }
     
-    const url = URL.createObjectURL(f)
-    setFile(f)
-    setImgSrc(url)
-    setFilename(f.name)
-    setSize(f.size)
-    setDownloadUrl(null)
-    setPreviewUrl(null)
-    setMessage(null)
-    setError(null)
-    setImageLoaded(false)
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (imgSrc) URL.revokeObjectURL(imgSrc)
-      if (downloadUrl) URL.revokeObjectURL(downloadUrl)
-      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    // Clean up previous URLs
+    if (imgSrc) URL.revokeObjectURL(imgSrc)
+    if (downloadUrl && downloadUrl.startsWith('blob:')) URL.revokeObjectURL(downloadUrl)
+    if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl)
+    
+    // Use FileReader for better mobile compatibility
+    const reader = new FileReader()
+    
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string
+      if (dataUrl) {
+        setFile(f)
+        setImgSrc(dataUrl)
+        setFilename(f.name)
+        setSize(f.size)
+        setDownloadUrl(null)
+        setPreviewUrl(null)
+        setMessage(null)
+        setError(null)
+        setImageLoaded(false)
+      }
+    }
+    
+    reader.onerror = () => {
+      setError('Failed to load image. The file may be corrupted or in an unsupported format. Please try a different image.')
+    }
+    
+    // Read the file as data URL (base64)
+    try {
+      reader.readAsDataURL(f)
+    } catch (err) {
+      console.error('FileReader error:', err)
+      setError('Failed to read the image file. Please try again.')
     }
   }, [imgSrc, downloadUrl, previewUrl])
 
+  useEffect(() => {
+    return () => {
+      // Clean up blob URLs (downloadUrl and previewUrl are still blob URLs)
+      if (downloadUrl && downloadUrl.startsWith('blob:')) URL.revokeObjectURL(downloadUrl)
+      if (currentPreviewUrlRef.current && currentPreviewUrlRef.current.startsWith('blob:')) {
+        URL.revokeObjectURL(currentPreviewUrlRef.current)
+      }
+    }
+  }, [downloadUrl])
+
   const onPreviewLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const el = e.currentTarget
+    if (!el.naturalWidth || !el.naturalHeight) {
+      setError('Failed to load image dimensions. Please try a different image.')
+      return
+    }
     setNaturalWidth(el.naturalWidth)
     setNaturalHeight(el.naturalHeight)
     aspectRatioRef.current = el.naturalWidth / el.naturalHeight
@@ -101,6 +136,11 @@ export default function ImageConverterPage() {
     if (height === '') setHeight(el.naturalHeight)
     setImageLoaded(true)
     // Note: Preview will be generated automatically via useEffect, no need to call here
+  }
+
+  const onPreviewError = () => {
+    setError('Failed to load image. Please try uploading a different image or check the file format.')
+    setImageLoaded(false)
   }
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -215,9 +255,10 @@ export default function ImageConverterPage() {
 
       if (!blob) throw new Error('Failed to create output')
 
-      if (downloadUrl) URL.revokeObjectURL(downloadUrl)
+      if (downloadUrl && downloadUrl.startsWith('blob:')) URL.revokeObjectURL(downloadUrl)
       const outUrl = URL.createObjectURL(blob)
       setDownloadUrl(outUrl)
+      setDownloadBlob(blob) // Store blob for mobile download
       setMessage(`Conversion complete! File size: ${humanSize(blob.size)}`)
     } catch (e) {
       console.error(e)
@@ -228,10 +269,46 @@ export default function ImageConverterPage() {
     }
   }
 
+  // Mobile-friendly download function
+  const handleDownload = () => {
+    if (!downloadBlob) return
+
+    const fileName = `${filename ? filename.replace(/\.[^/.]+$/, '') : 'converted'}.${format === 'image/png' ? 'png' : format === 'image/jpeg' ? 'jpg' : 'webp'}`
+    
+    // Check if we're on iOS/Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    
+    if (isIOS || isSafari) {
+      // For iOS/Safari: Use FileReader to convert blob to data URL
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        const link = document.createElement('a')
+        link.href = dataUrl
+        link.download = fileName
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+      reader.readAsDataURL(downloadBlob)
+    } else {
+      // For other browsers: Use blob URL
+      const link = document.createElement('a')
+      link.href = downloadUrl!
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }
+
   const clear = () => {
-    if (imgSrc) URL.revokeObjectURL(imgSrc)
-    if (downloadUrl) URL.revokeObjectURL(downloadUrl)
-    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    // Clean up blob URLs only
+    if (downloadUrl && downloadUrl.startsWith('blob:')) URL.revokeObjectURL(downloadUrl)
+    if (currentPreviewUrlRef.current && currentPreviewUrlRef.current.startsWith('blob:')) {
+      URL.revokeObjectURL(currentPreviewUrlRef.current)
+    }
     setFile(null)
     setImgSrc(null)
     setFilename('')
@@ -241,25 +318,45 @@ export default function ImageConverterPage() {
     setWidth('')
     setHeight('')
     setDownloadUrl(null)
+    setDownloadBlob(null)
     setPreviewUrl(null)
+    currentPreviewUrlRef.current = null
     setMessage(null)
     setError(null)
     setIsDragOver(false)
     setImageLoaded(false)
+    setGeneratingPreview(false)
   }
 
   // Generate live preview based on current settings
   const generatePreview = useCallback(async () => {
     if (!imgSrc || !imageLoaded) {
       setPreviewUrl(null)
+      setGeneratingPreview(false)
+      isGeneratingRef.current = false
       return
     }
 
+    // Prevent multiple simultaneous generations
+    if (isGeneratingRef.current) {
+      return
+    }
+
+    isGeneratingRef.current = true
+    setGeneratingPreview(true)
+    
     try {
       const img = await new Promise<HTMLImageElement>((res, rej) => {
         const i = new Image()
-        i.onload = () => res(i)
-        i.onerror = () => rej(new Error('Failed to load image'))
+        const timeout = setTimeout(() => rej(new Error('Image load timeout')), 10000)
+        i.onload = () => {
+          clearTimeout(timeout)
+          res(i)
+        }
+        i.onerror = () => {
+          clearTimeout(timeout)
+          rej(new Error('Failed to load image'))
+        }
         i.src = imgSrc
       })
 
@@ -269,6 +366,8 @@ export default function ImageConverterPage() {
       // Skip if invalid dimensions
       if (targetW <= 0 || targetH <= 0 || targetW > 8000 || targetH > 8000) {
         setPreviewUrl(null)
+        setGeneratingPreview(false)
+        isGeneratingRef.current = false
         return
       }
 
@@ -276,39 +375,79 @@ export default function ImageConverterPage() {
       canvas.width = Math.max(1, Math.floor(targetW))
       canvas.height = Math.max(1, Math.floor(targetH))
       const ctx = canvas.getContext('2d')
-      if (!ctx) return
+      if (!ctx) {
+        setGeneratingPreview(false)
+        isGeneratingRef.current = false
+        return
+      }
 
       ctx.imageSmoothingEnabled = true
       ctx.imageSmoothingQuality = 'high'
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
       const mime = format
-      const blob: Blob | null = await new Promise(resolve =>
+      // Add timeout to toBlob for mobile compatibility
+      const blob: Blob | null = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          console.warn('toBlob timeout, falling back to dataURL method')
+          reject(new Error('Blob conversion timeout'))
+        }, 5000) // 5 second timeout
+        
         canvas.toBlob(
-          b => resolve(b),
+          b => {
+            clearTimeout(timeout)
+            resolve(b)
+          },
           mime,
           mime === 'image/jpeg' || mime === 'image/webp' ? quality : undefined
         )
-      )
+      })
 
-      if (!blob) return
+      if (!blob) {
+        console.warn('toBlob returned null')
+        setGeneratingPreview(false)
+        isGeneratingRef.current = false
+        return
+      }
 
-      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      // Clean up old preview URL before creating new one
+      if (currentPreviewUrlRef.current && currentPreviewUrlRef.current.startsWith('blob:')) {
+        URL.revokeObjectURL(currentPreviewUrlRef.current)
+      }
       const newPreviewUrl = URL.createObjectURL(blob)
+      currentPreviewUrlRef.current = newPreviewUrl
       setPreviewUrl(newPreviewUrl)
+      setGeneratingPreview(false)
+      isGeneratingRef.current = false
     } catch (e) {
       console.error('Preview generation error:', e)
-      setPreviewUrl(null)
+      // On error, try to use original image as fallback
+      if (imgSrc && currentPreviewUrlRef.current !== imgSrc) {
+        setPreviewUrl(imgSrc)
+        currentPreviewUrlRef.current = imgSrc
+      }
+      setGeneratingPreview(false)
+      isGeneratingRef.current = false
     }
   }, [imgSrc, format, width, height, quality, imageLoaded])
 
   // Generate preview when settings change
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    // Clear any existing timeout
+    if (previewTimeoutRef.current) {
+      clearTimeout(previewTimeoutRef.current)
+    }
+    
+    // Debounce preview generation to prevent flashing
+    previewTimeoutRef.current = setTimeout(() => {
       generatePreview()
-    }, 300) // Debounce to avoid too many calls
+    }, 500) // Increased debounce to 500ms for smoother experience
 
-    return () => clearTimeout(timeoutId)
+    return () => {
+      if (previewTimeoutRef.current) {
+        clearTimeout(previewTimeoutRef.current)
+      }
+    }
   }, [generatePreview])
 
   const humanSize = (bytes: number) => {
@@ -396,6 +535,10 @@ export default function ImageConverterPage() {
                             src={imgSrc}
                             alt="preview"
                             className="w-16 h-16 object-contain rounded-lg border border-border bg-background shadow-sm"
+                            onError={(e) => {
+                              // Fallback: show a placeholder on error
+                              e.currentTarget.style.display = 'none'
+                            }}
                           />
                           <div className="absolute -top-1 -right-1">
                             <Badge className="bg-green-500 hover:bg-green-600 text-white shadow-md text-xs px-1.5 py-0.5">
@@ -454,6 +597,7 @@ export default function ImageConverterPage() {
                         src={imgSrc}
                         alt=""
                         onLoad={onPreviewLoad}
+                        onError={onPreviewError}
                         className="sr-only"
                       />
                     )}
@@ -646,7 +790,15 @@ export default function ImageConverterPage() {
                       <div className="bg-muted/30 border border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-6 flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
                         {imgSrc ? (
                           <div className="relative w-full h-full flex items-center justify-center">
-                            {previewUrl ? (
+                            {generatingPreview ? (
+                              <div className="text-center space-y-3 sm:space-y-4">
+                                <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
+                                </div>
+                                <div className="text-sm font-medium text-muted-foreground">Generating preview...</div>
+                                <div className="text-xs text-muted-foreground/70">This may take a moment on mobile</div>
+                              </div>
+                            ) : previewUrl ? (
                               <img
                                 src={previewUrl}
                                 alt="Live Preview"
@@ -658,7 +810,7 @@ export default function ImageConverterPage() {
                                 <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
                                   <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
                                 </div>
-                                <div className="text-sm font-medium text-muted-foreground">Generating preview...</div>
+                                <div className="text-sm font-medium text-muted-foreground">Loading preview...</div>
                               </div>
                             )}
                           </div>
@@ -701,30 +853,25 @@ export default function ImageConverterPage() {
                           )}
                         </Button>
 
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          {downloadUrl && (
-                            <Button
-                              asChild
-                              variant="outline"
-                              size="lg"
-                              className="flex-1 h-12 text-base font-medium border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950"
-                            >
-                              <a
-                                href={downloadUrl}
-                                download={`${filename ? filename.replace(/\.[^/.]+$/, '') : 'converted'}.${format === 'image/png' ? 'png' : format === 'image/jpeg' ? 'jpg' : 'webp'}`}
-                              >
-                                <Download className="h-5 w-5 mr-2" />
-                                Download Result
-                              </a>
-                            </Button>
-                          )}
+                        {downloadUrl && downloadBlob && (
+                          <Button
+                            onClick={handleDownload}
+                            variant="outline"
+                            size="lg"
+                            className="w-full h-12 text-base font-medium border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950"
+                          >
+                            <Download className="h-5 w-5 mr-2" />
+                            Download Result
+                          </Button>
+                        )}
 
+                        <div className="flex flex-col sm:flex-row gap-3">
                           <Button
                             variant="outline"
                             onClick={clear}
                             disabled={processing}
                             size="lg"
-                            className={`h-12 ${downloadUrl ? 'flex-initial' : 'w-full'}`}
+                            className="w-full h-12"
                           >
                             <RotateCcw className="h-5 w-5 mr-2" />
                             Reset
