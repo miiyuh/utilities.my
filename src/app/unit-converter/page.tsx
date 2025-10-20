@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRightLeft, Copy, Ruler, Thermometer, Box, Square, Gauge, Clock, Dumbbell } from 'lucide-react';
+import { ArrowRightLeft, Copy, Ruler, Thermometer, Box, Square, Gauge, Clock, Dumbbell, Wifi, HardDrive } from 'lucide-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -98,6 +98,35 @@ const unitCategories: UnitCategory[] = [
       { value: 'week', label: 'Weeks (wk)', factor: 604800 },
     ],
   },
+  {
+    name: 'Storage', baseUnit: 'byte',
+    units: [
+      { value: 'bit', label: 'Bits (b)', factor: 0.125 },
+      { value: 'byte', label: 'Bytes (B)', factor: 1 },
+      { value: 'kilobyte', label: 'Kilobytes (KB)', factor: 1000 },
+      { value: 'megabyte', label: 'Megabytes (MB)', factor: 1000000 },
+      { value: 'gigabyte', label: 'Gigabytes (GB)', factor: 1000000000 },
+      { value: 'terabyte', label: 'Terabytes (TB)', factor: 1000000000000 },
+      { value: 'petabyte', label: 'Petabytes (PB)', factor: 1000000000000000 },
+      { value: 'kibibyte', label: 'Kibibytes (KiB)', factor: 1024 },
+      { value: 'mebibyte', label: 'Mebibytes (MiB)', factor: 1048576 },
+      { value: 'gibibyte', label: 'Gibibytes (GiB)', factor: 1073741824 },
+      { value: 'tebibyte', label: 'Tebibytes (TiB)', factor: 1099511627776 },
+    ],
+  },
+  {
+    name: 'Internet Speed', baseUnit: 'bit_per_second',
+    units: [
+      { value: 'bit_per_second', label: 'Bits/second (bps)', factor: 1 },
+      { value: 'kilobit_per_second', label: 'Kilobits/second (Kbps)', factor: 1000 },
+      { value: 'megabit_per_second', label: 'Megabits/second (Mbps)', factor: 1000000 },
+      { value: 'gigabit_per_second', label: 'Gigabits/second (Gbps)', factor: 1000000000 },
+      { value: 'byte_per_second', label: 'Bytes/second (B/s)', factor: 8 },
+      { value: 'kilobyte_per_second', label: 'Kilobytes/second (KB/s)', factor: 8000 },
+      { value: 'megabyte_per_second', label: 'Megabytes/second (MB/s)', factor: 8000000 },
+      { value: 'gigabyte_per_second', label: 'Gigabytes/second (GB/s)', factor: 8000000000 },
+    ],
+  },
 ];
 
 export default function UnitConverterPage() {
@@ -157,6 +186,8 @@ export default function UnitConverterPage() {
       case 'Area': return <Square className={cls} />;
       case 'Speed': return <Gauge className={cls} />;
       case 'Time': return <Clock className={cls} />;
+      case 'Storage': return <HardDrive className={cls} />;
+      case 'Internet Speed': return <Wifi className={cls} />;
       default: return <Ruler className={cls} />;
     }
   };

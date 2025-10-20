@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { SettingsProvider } from '@/contexts/settings-context';
+import Script from "next/script";
 
 const metadataBase = new URL('https://utilities.my');
 
@@ -126,6 +127,11 @@ export default function RootLayout({
             <SettingsProvider>
               <SidebarProvider>
                 {children}
+                <Script
+                  src="https://rybbit.local.miiyuh.com/api/script.js"
+                  data-site-id="2"
+                  strategy="afterInteractive"
+                />
                 <Toaster />
               </SidebarProvider>
             </SettingsProvider>
