@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { ThemeProvider } from '@/components/theme-provider';
-import { Toaster } from '@/components/ui/toaster';
+import { ThemeProvider } from 'next-themes';
+import { Toaster } from 'sonner';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { SettingsProvider } from '@/contexts/settings-context';
+import { InteractiveGridBackground } from '@/components/interactive-grid-background';
+import { inter, sourceCodePro } from '@/lib/fonts';
 import Script from "next/script";
 
 const metadataBase = new URL('https://utilities.my');
@@ -11,48 +13,52 @@ const metadataBase = new URL('https://utilities.my');
 export const metadata: Metadata = {
   metadataBase,
   title: {
-    default: 'utilities.my - Useful online tools',
+    default: 'utilities.my - Free Online Tools',
     template: '%s | utilities.my',
   },
-  description: 'A fast, privacy-friendly collection of useful tools: BMI calculator, QR code generator, color picker, unit converter, and more - by miiyuh.',
+  description: 'A fast, privacy-friendly collection of free online tools: BMI calculator, QR code generator, color picker, unit converter, and more. No signup required - by miiyuh.',
   keywords: [
+    'free online tools',
     'utilities',
-    'online tools',
+    'no signup required',
+    'privacy-first tools',
     'qr code generator',
     'BMI calculator',
     'color picker',
     'markdown preview',
     'unit converter',
     'timezone converter',
-    'date difference',
-    'text case',
+    'world clock',
+    'date difference calculator',
+    'text case converter',
     'text statistics',
     'sorter',
-    'morse code',
     'morse code generator',
-    'morse code decoder',
-    'text to morse',
-    'morse to text'
+    'percentage calculator',
+    'shoe size converter',
+    'image converter',
+    'spin the wheel',
   ],
-  authors: [{ name: 'miiyuh' }],
+  authors: [{ name: 'miiyuh', url: 'https://miiyuh.com' }],
   creator: 'miiyuh',
   publisher: 'utilities.my',
   alternates: {
     canonical: '/',
   },
+  manifest: '/manifest.json',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: '/',
     siteName: 'utilities.my',
-    title: 'utilities.my - Useful online tools',
-    description: 'A fast, privacy-friendly collection of useful tools.',
+    title: 'utilities.my - Free Online Tools',
+    description: 'A fast, privacy-friendly collection of free online tools. No signup required.',
     images: [
       {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'utilities.my - Useful online tools',
+        alt: 'utilities.my - Free Online Tools',
       },
     ],
   },
@@ -60,25 +66,46 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     creator: '@miiyuh',
     site: '@miiyuh',
-    title: 'utilities.my - Useful online tools',
-    description: 'A fast, privacy-friendly collection of useful tools.',
+    title: 'utilities.my - Free Online Tools',
+    description: 'A fast, privacy-friendly collection of free online tools. No signup required.',
     images: ['/twitter-image'],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   category: 'utilities',
   applicationName: 'utilities.my',
   icons: {
-    shortcut: ['/favicon.ico'],
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'utilities.my',
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#1f2937',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f7ece6' },
+    { media: '(prefers-color-scheme: dark)', color: '#141415' },
+  ],
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 5,
   colorScheme: 'dark light',
 };
 
@@ -88,27 +115,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${sourceCodePro.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet" />
         {/* Structured data */}
         <script
           type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
               name: 'utilities.my',
               url: metadataBase.origin,
+              description: 'A fast, privacy-friendly collection of free online tools.',
               potentialAction: {
                 '@type': 'SearchAction',
                 target: {
@@ -121,9 +139,23 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased">
-        <ThemeProvider defaultTheme="dark" storageKey="utilities.my-theme">
-          <div className="relative z-20">
+      <body className="font-sans antialiased">
+        {/* Skip to content link for accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-foreground focus:top-0 focus:left-0"
+        >
+          Skip to main content
+        </a>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+          storageKey="utilities.my-theme"
+        >
+          <InteractiveGridBackground />
+          <div id="main-content" className="relative z-20">
             <SettingsProvider>
               <SidebarProvider>
                 {children}
@@ -132,7 +164,20 @@ export default function RootLayout({
                   data-site-id="2"
                   strategy="afterInteractive"
                 />
-                <Toaster />
+                <Toaster 
+                  position="bottom-right"
+                  closeButton
+                  toastOptions={{
+                    duration: 4000,
+                    className: 'font-sans',
+                    style: {
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    },
+                  }}
+                  theme="system"
+                />
               </SidebarProvider>
             </SettingsProvider>
           </div>

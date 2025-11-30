@@ -377,3 +377,37 @@ html { scrollbar-width: thin; scrollbar-color: hsl(var(--primary)/0.55) hsl(var(
   transform: translateY(1px); /* nudge to vertically center across fonts */
   -webkit-font-smoothing: antialiased;
 }
+
+/* Sonner toast styling to match website theme */
+[data-sonner-toaster] [data-sonner-toast] {
+  --normal-bg: hsl(var(--card));
+  --normal-border: hsl(var(--border));
+  --normal-text: hsl(var(--foreground));
+  --success-bg: hsl(var(--card));
+  --success-border: hsl(142 76% 36%);
+  --success-text: hsl(var(--foreground));
+  --error-bg: hsl(var(--card));
+  --error-border: hsl(var(--destructive));
+  --error-text: hsl(var(--foreground));
+  font-family: var(--font-inter), system-ui, sans-serif;
+  border-radius: var(--radius);
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-title] {
+  font-weight: 500;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-description] {
+  color: hsl(var(--muted-foreground));
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-close-button] {
+  background: hsl(var(--muted));
+  border-color: hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-close-button]:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--foreground));
+}

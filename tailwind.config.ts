@@ -10,12 +10,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'], // Main font - Inter
-        body: ['Inter', 'system-ui', 'sans-serif'], // Body text - Inter  
-        paragraph: ['Noto Sans', 'system-ui', 'sans-serif'], // Paragraphs - Noto Sans
-        'serif-display': ['Noto Serif Display', 'serif'], // Display serif for special content
-        headline: ['Inter', 'system-ui', 'sans-serif'], // Headlines - Inter
-        code: ['Noto Mono', 'Source Code Pro', 'Fira Code', 'monospace'],
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        body: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        headline: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'Fira Code', 'monospace'],
+        code: ['var(--font-mono)', 'Fira Code', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',

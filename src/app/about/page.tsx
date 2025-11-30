@@ -25,7 +25,6 @@ import {
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { DotGridBackground } from "@/components/dot-grid-background";
 
 export default function AboutPage() {
   return (
@@ -44,7 +43,6 @@ export default function AboutPage() {
           <ThemeToggleButton />
         </header>
         <div className="relative flex flex-1 flex-col p-4 lg:p-8">
-          <DotGridBackground dotSize={2} spacing={44} />
           <div className="w-full max-w-6xl mx-auto space-y-10">
             {/* Hero */}
             <section className="relative overflow-hidden rounded-md border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">

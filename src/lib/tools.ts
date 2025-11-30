@@ -22,7 +22,7 @@ export const tools: Tool[] = [
   { name: "Markdown Previewer", path: "/markdown-previewer", icon: FileText, description: "Write Markdown and see a live preview." },
   { name: "QR Code Generator", path: "/qr-code-generator", icon: QrCode, description: "Generate QR codes from text or URLs." },
   { name: "Unix Timestamp Converter", path: "/unix-timestamp-converter", icon: Timer, description: "Convert Unix timestamps to human-readable dates and vice-versa." },
-  { name: "Timezone Converter", path: "/timezone-converter", icon: Globe, description: "Convert times between different timezones." },
+  { name: "World Time Buddy", path: "/timezone-converter", icon: Globe, description: "Compare times across multiple timezones with a visual timeline." },
   { name: "World Clock", path: "/world-clock", icon: Clock, description: "View current time in all major cities and timezones around the world." },
   { name: "Date Difference Calculator", path: "/date-diff-calculator", icon: CalendarRange, description: "Calculate the difference between two dates." },
   { name: "Text Statistics", path: "/text-statistics", icon: Baseline, description: "Analyze text for word count, character count, and more." },

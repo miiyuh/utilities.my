@@ -22,12 +22,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/unit-converter',
     '/unix-timestamp-converter',
     '/morse-code-generator',
+    '/world-clock',
+    '/image-converter',
+    '/percentage-calculator',
+    '/foot-size-converter',
   ];
   const now = new Date();
   return routes.map((path) => ({
     url: `${base}${path}`,
     lastModified: now,
     changeFrequency: 'weekly',
-    priority: path === '' ? 1.0 : 0.7,
+    priority: path === '' ? 1.0 : 0.8,
   }));
 }
