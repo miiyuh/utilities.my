@@ -123,50 +123,50 @@ export function MarkdownView({ content, lastUpdated }: MarkdownViewProps) {
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeSlug]}
               components={{
-                h1: ({ node, ...props }) => (
-                  <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4" {...props} />
+                h1: ({ node, children }) => (
+                  <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">{children}</h1>
                 ),
-                h2: ({ node, ...props }) => (
-                  <h2 className="text-3xl font-semibold mt-12 mb-6 text-foreground border-b border-border pb-2" {...props} />
+                h2: ({ node, children }) => (
+                  <h2 className="text-3xl font-semibold mt-12 mb-6 text-foreground border-b border-border pb-2">{children}</h2>
                 ),
-                h3: ({ node, ...props }) => (
-                  <h3 className="text-2xl font-medium mt-8 mb-4 text-foreground" {...props} />
+                h3: ({ node, children }) => (
+                  <h3 className="text-2xl font-medium mt-8 mb-4 text-foreground">{children}</h3>
                 ),
-                h4: ({ node, ...props }) => (
-                  <h4 className="text-xl font-medium mt-6 mb-3 text-foreground" {...props} />
+                h4: ({ node, children }) => (
+                  <h4 className="text-xl font-medium mt-6 mb-3 text-foreground">{children}</h4>
                 ),
-                p: ({ node, ...props }) => (
-                  <p className="leading-8 mb-6 text-foreground/90" {...props} />
+                p: ({ node, children }) => (
+                  <p className="leading-8 mb-6 text-foreground/90">{children}</p>
                 ),
-                ul: ({ node, ...props }) => (
-                  <ul className="my-6 ml-6 list-disc space-y-2" {...props} />
+                ul: ({ node, children }) => (
+                  <ul className="my-6 ml-6 list-disc space-y-2">{children}</ul>
                 ),
-                ol: ({ node, ...props }) => (
-                  <ol className="my-6 ml-6 list-decimal space-y-2" {...props} />
+                ol: ({ node, children }) => (
+                  <ol className="my-6 ml-6 list-decimal space-y-2">{children}</ol>
                 ),
-                li: ({ node, ...props }) => (
-                  <li className="leading-7 text-foreground/90" {...props} />
+                li: ({ node, children }) => (
+                  <li className="leading-7 text-foreground/90">{children}</li>
                 ),
-                a: ({ node, ...props }) => (
-                  <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors" {...props} />
+                a: ({ node, children, href }) => (
+                  <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors" href={href}>{children}</a>
                 ),
-                hr: ({ node, ...props }) => (
-                  <hr className="my-8 border-border" {...props} />
+                hr: () => (
+                  <hr className="my-8 border-border" />
                 ),
-                strong: ({ node, ...props }) => (
-                  <strong className="font-semibold text-foreground" {...props} />
+                strong: ({ node, children }) => (
+                  <strong className="font-semibold text-foreground">{children}</strong>
                 ),
-                em: ({ node, ...props }) => (
-                  <em className="italic text-foreground/80" {...props} />
+                em: ({ node, children }) => (
+                  <em className="italic text-foreground/80">{children}</em>
                 ),
-                blockquote: ({ node, ...props }) => (
-                  <blockquote className="mt-6 border-l-4 border-primary pl-6 italic text-foreground/80 bg-muted/30 py-4 rounded-r" {...props} />
+                blockquote: ({ node, children }) => (
+                  <blockquote className="mt-6 border-l-4 border-primary pl-6 italic text-foreground/80 bg-muted/30 py-4 rounded-r">{children}</blockquote>
                 ),
-                code: ({ node, ...props }) => (
-                  <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold" {...props} />
+                code: ({ node, children }) => (
+                  <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">{children}</code>
                 ),
-                pre: ({ node, ...props }) => (
-                  <pre className="mb-4 mt-6 overflow-x-auto rounded-lg border bg-muted p-4" {...props} />
+                pre: ({ node, children }) => (
+                  <pre className="mb-4 mt-6 overflow-x-auto rounded-lg border bg-muted p-4">{children}</pre>
                 ),
               }}
             >

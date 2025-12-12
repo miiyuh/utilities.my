@@ -5,7 +5,7 @@ export const runtime = 'edge';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-export default function handler() {
+export async function GET() {
   const { width, height } = size;
   return new ImageResponse(
     (
