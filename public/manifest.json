@@ -1,7 +1,7 @@
 {
-  "name": "utilities.my - Free Online Tools",
+  "name": "utilities.my - free online tools",
   "short_name": "utilities.my",
-  "description": "A fast, privacy-friendly collection of free online tools. No signup required.",
+  "description": "a fast, privacy-friendly collection of free online tools. no signup required.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#141415",

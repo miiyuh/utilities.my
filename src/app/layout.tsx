@@ -13,10 +13,10 @@ const metadataBase = new URL('https://utilities.my');
 export const metadata: Metadata = {
   metadataBase,
   title: {
-    default: 'utilities.my - Free Online Tools',
+    default: 'utilities.my - free online tools',
     template: '%s | utilities.my',
   },
-  description: 'A fast, privacy-friendly collection of free online tools: BMI calculator, QR code generator, color picker, unit converter, and more. No signup required - by miiyuh.',
+  description: 'a fast, privacy-friendly collection of free online tools by miiyuh.',
   keywords: [
     'free online tools',
     'utilities',
@@ -51,14 +51,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: '/',
     siteName: 'utilities.my',
-    title: 'utilities.my - Free Online Tools',
-    description: 'A fast, privacy-friendly collection of free online tools. No signup required.',
+    title: 'utilities.my - free online tools',
+    description: 'a fast, privacy-friendly collection of free online tools. no signup required.',
     images: [
       {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'utilities.my - Free Online Tools',
+        alt: 'utilities.my - free online tools',
       },
     ],
   },
@@ -66,8 +66,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     creator: '@miiyuh',
     site: '@miiyuh',
-    title: 'utilities.my - Free Online Tools',
-    description: 'A fast, privacy-friendly collection of free online tools. No signup required.',
+    title: 'utilities.my - free online tools',
+    description: 'a fast, privacy-friendly collection of free online tools. no signup required.',
     images: ['/twitter-image'],
   },
   robots: {
@@ -126,7 +126,7 @@ export default function RootLayout({
               '@type': 'WebSite',
               name: 'utilities.my',
               url: metadataBase.origin,
-              description: 'A fast, privacy-friendly collection of free online tools.',
+              description: 'a fast, privacy-friendly collection of free online tools.',
               potentialAction: {
                 '@type': 'SearchAction',
                 target: {
@@ -159,11 +159,6 @@ export default function RootLayout({
             <SettingsProvider>
               <SidebarProvider>
                 {children}
-                <Script
-                  src="https://rybbit.local.miiyuh.com/api/script.js"
-                  data-site-id="2"
-                  strategy="afterInteractive"
-                />
                 <Toaster 
                   position="bottom-right"
                   closeButton
