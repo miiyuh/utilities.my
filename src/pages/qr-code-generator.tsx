@@ -779,26 +779,10 @@ export default function QrCodeGeneratorPage() {
                         {outputFormat === 'png' ? (
                           <div ref={qrCanvasRef} className="relative inline-block">
                              <QRCodeCanvas {...commonQrProps} />
-                             {logoSrc && (
-                               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                 <div
-                                   className={`border-2 border-dashed rounded-sm flex items-center justify-center text-[11px] text-muted-foreground/80 bg-white/70 dark:bg-black/60`}
-                                   style={{ width: `${Math.round(256 * logoSize)}px`, height: `${Math.round(256 * logoSize)}px` }}
-                                 >Logo area</div>
-                               </div>
-                             )}
                           </div>
                         ) : (
                           <div className="relative inline-block">
                             <QRCodeSVG {...commonQrProps} ref={qrSvgRef} />
-                            {logoSrc && (
-                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div
-                                  className={`border-2 border-dashed rounded-sm flex items-center justify-center text-[11px] text-muted-foreground/80 bg-white/70 dark:bg-black/60`}
-                                  style={{ width: `${Math.round(256 * logoSize)}px`, height: `${Math.round(256 * logoSize)}px` }}
-                                >Logo area</div>
-                              </div>
-                            )}
                           </div>
                         )}
                       </div>
