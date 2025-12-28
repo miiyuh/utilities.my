@@ -20,6 +20,26 @@ import {
   Clock,
   Calendar as CalendarIcon,
 } from 'lucide-react';
+
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverlay,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  useSortable,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   Sidebar,
   SidebarTrigger,
@@ -190,6 +210,45 @@ export default function TimezoneConverterPage() {
 
   const tzData = TIMEZONE_LIST.find(tz => tz.value === referenceTimezone) || TIMEZONE_LIST[0];
 
+  // dnd-kit state & handlers
+  const [activeId, setActiveId] = React.useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+  const handleDragStart = (event: DragStartEvent) => setActiveId(event.active.id as string);
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const from = selectedTimezones.indexOf(active.id as string);
+      const to = selectedTimezones.indexOf(over.id as string);
+      if (from !== -1 && to !== -1) setSelectedTimezones(prev => arrayMove(prev, from, to));
+    }
+  };
+
+  const activeTzInfo = activeId ? TIMEZONE_LIST.find(t => t.value === activeId) : null;
+
+  function SortableItem({ id, children }: { id: string; children: (opts: { isDragging: boolean }) => React.ReactNode }) {
+    const { listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+    const style: React.CSSProperties = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      touchAction: 'manipulation',
+    };
+    const handlePointerDown = (e: React.PointerEvent) => {
+      const tgt = e.target as HTMLElement | null;
+      if (!tgt) return;
+      if (tgt.closest && tgt.closest('button, a, input, select, textarea')) return;
+      listeners?.onPointerDown?.(e);
+    };
+    return (
+      <div ref={setNodeRef} style={style} onPointerDown={handlePointerDown} className="col-span-1">
+        {children({ isDragging })}
+      </div>
+    );
+  }
+
   return (
     <>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -348,70 +407,95 @@ export default function TimezoneConverterPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {conversions.map(conversion => {
-                    const tzInfo = TIMEZONE_LIST.find(t => t.value === conversion.timezone);
-                    return (
-                      <Card key={conversion.timezone} className="flex flex-col">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-lg flex items-center justify-between">
-                            <span className="flex items-center gap-2 min-w-0">
-                              <span className="flag-emoji">{tzInfo?.flag}</span>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                    <SortableContext items={selectedTimezones} strategy={rectSortingStrategy}>
+                      {selectedTimezones.map(tz => {
+                        const conversion = conversions.find(c => c.timezone === tz) as (typeof conversions)[0];
+                        const tzInfo = TIMEZONE_LIST.find(t => t.value === tz);
+                        return (
+                          <SortableItem key={tz} id={tz}>
+                            {({ isDragging }) => (
+                              <Card data-tz={tz} className={`flex flex-col ${isDragging ? 'opacity-60 cursor-grabbing' : ''}`}>
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-lg flex items-center justify-between">
+                                    <span className="flex items-center gap-2 min-w-0">
+                                      <span className="flag-emoji">{tzInfo?.flag}</span>
+                                      <div className="min-w-0">
+                                        <div className="truncate">{tzInfo?.city}</div>
+                                        <div className="text-xs font-normal text-muted-foreground">{conversion.abbr}</div>
+                                      </div>
+                                    </span>
+                                    <button
+                                      onClick={() =>
+                                        copyTimeInfo(
+                                          conversion.timezone,
+                                          conversion.time,
+                                          conversion.date
+                                        )
+                                      }
+                                      className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0"
+                                      title="Copy"
+                                    >
+                                      <Copy className="h-4 w-4 text-muted-foreground" />
+                                    </button>
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex-1 space-y-4">
+                                  <div>
+                                    <div className="text-4xl font-mono font-bold text-primary">
+                                      {conversion.time}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-2">
+                                      {conversion.date}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-between pt-3 border-t border-border">
+                                    <span className="text-xs text-muted-foreground">UTC Offset</span>
+                                    <span className="font-mono font-semibold">{conversion.utcOffset}</span>
+                                  </div>
+                                  {conversion.timezone !== referenceTimezone && (
+                                    <button
+                                      onClick={() => {
+                                        setReferenceTimezone(conversion.timezone);
+                                        setReferenceTime(conversion.time);
+                                        setReferenceDate(referenceMoment.clone().tz(conversion.timezone).format('YYYY-MM-DD'));
+                                      }}
+                                      className="w-full py-2 px-3 text-sm font-medium bg-muted hover:bg-muted/80 rounded transition-colors"
+                                    >
+                                      Use as Reference
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => removeTimezone(conversion.timezone)}
+                                    className="w-full py-2 px-3 text-sm font-medium text-destructive hover:bg-destructive/10 rounded transition-colors flex items-center justify-center gap-1"
+                                  >
+                                    <X className="h-4 w-4" />
+                                    Remove
+                                  </button>
+                                </CardContent>
+                              </Card>
+                            )}
+                          </SortableItem>
+                        );
+                      })}
+                    </SortableContext>
+
+                    <DragOverlay>
+                      {activeId && activeTzInfo && (
+                        <div className="w-64 bg-background border rounded shadow-lg p-3 opacity-95">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="flag-emoji">{activeTzInfo.flag}</span>
                               <div className="min-w-0">
-                                <div className="truncate">{tzInfo?.city}</div>
-                                <div className="text-xs font-normal text-muted-foreground">{conversion.abbr}</div>
+                                <div className="truncate text-sm font-medium">{activeTzInfo.city}</div>
+                                <div className="text-xs text-muted-foreground">{activeId}</div>
                               </div>
-                            </span>
-                            <button
-                              onClick={() =>
-                                copyTimeInfo(
-                                  conversion.timezone,
-                                  conversion.time,
-                                  conversion.date
-                                )
-                              }
-                              className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0"
-                              title="Copy"
-                            >
-                              <Copy className="h-4 w-4 text-muted-foreground" />
-                            </button>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-1 space-y-4">
-                          <div>
-                            <div className="text-4xl font-mono font-bold text-primary">
-                              {conversion.time}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-2">
-                              {conversion.date}
                             </div>
                           </div>
-                          <div className="flex items-center justify-between pt-3 border-t border-border">
-                            <span className="text-xs text-muted-foreground">UTC Offset</span>
-                            <span className="font-mono font-semibold">{conversion.utcOffset}</span>
-                          </div>
-                          {conversion.timezone !== referenceTimezone && (
-                            <button
-                              onClick={() => {
-                                setReferenceTimezone(conversion.timezone);
-                                setReferenceTime(conversion.time);
-                                setReferenceDate(referenceMoment.clone().tz(conversion.timezone).format('YYYY-MM-DD'));
-                              }}
-                              className="w-full py-2 px-3 text-sm font-medium bg-muted hover:bg-muted/80 rounded transition-colors"
-                            >
-                              Use as Reference
-                            </button>
-                          )}
-                          <button
-                            onClick={() => removeTimezone(conversion.timezone)}
-                            className="w-full py-2 px-3 text-sm font-medium text-destructive hover:bg-destructive/10 rounded transition-colors flex items-center justify-center gap-1"
-                          >
-                            <X className="h-4 w-4" />
-                            Remove
-                          </button>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                        </div>
+                      )}
+                    </DragOverlay>
+                  </DndContext>
                 </div>
               </div>
 

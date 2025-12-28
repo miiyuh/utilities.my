@@ -1,14 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { Baseline, Type, RemoveFormatting, WrapText, ScanLine, Pilcrow, Clock, FileUp, FileDown, Copy, BarChartHorizontal, Hash, Upload, Download } from 'lucide-react';
+import { Baseline, Type, RemoveFormatting, WrapText, ScanLine, Pilcrow, Clock, Copy, BarChartHorizontal, Hash, Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 
@@ -49,7 +48,7 @@ export default function TextStatisticsPage() {
   const timerRef = useRef<ReturnType<typeof setTimeout>|null>(null);
 
   // compute helper
-  const computeStats = (text: string): FullStats => {
+  const computeStats = useCallback((text: string): FullStats => {
     const characters = text.length;
     const charactersNoSpaces = text.replace(/\s/g, '').length;
     const lines = text ? text.split('\n').length : 0;
@@ -96,7 +95,7 @@ export default function TextStatisticsPage() {
     }
 
     return { characters, charactersNoSpaces, words, uniqueWords, sentences, paragraphs, lines, avgWordLength, longestWord, longestSentenceWords, readingTimeMinutes, speakingTimeMinutes, estimatedPages, topWords, charFreq };
-  };
+  }, [caseSensitive, ignoreStopwords, countNumbers]);
 
   // load from localStorage on mount
   useEffect(()=>{
@@ -122,7 +121,7 @@ export default function TextStatisticsPage() {
       }
     }, debounceMs);
     return ()=> { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [inputText, caseSensitive, ignoreStopwords, countNumbers, selection, debounceMs]);
+  }, [inputText, computeStats, selection, debounceMs]);
 
   // selection tracking
   const onSelect = () => {

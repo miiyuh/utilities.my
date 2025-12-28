@@ -107,6 +107,10 @@ export default function QrCodeGeneratorPage() {
       toast({ title: 'Missing SSID', description: 'Please enter a Wi‑Fi SSID (network name).', variant: 'destructive' });
       return false;
     }
+    if (logoSrc && logoSize > 0.2) {
+      toast({ title: 'Logo too large', description: 'Logo must be ≤20% of the QR area for reliable scanning.', variant: 'destructive' });
+      return false;
+    }
     if (payloadTooLarge) {
       toast({ title: 'Payload too large', description: 'The QR payload is too large — shorten the text or reduce options.', variant: 'destructive' });
       return false;
@@ -352,7 +356,13 @@ export default function QrCodeGeneratorPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         setLogoSrc(e.target?.result as string);
-        toast({ title: 'Logo Uploaded', description: file.name });
+        // Enforce max logo size of 20% for reliable scanning
+        if (logoSize > 0.2) {
+          setLogoSize(0.2);
+          toast({ title: 'Logo Uploaded', description: `${file.name} — logo size exceeded 20% and was clamped for reliability.` });
+        } else {
+          toast({ title: 'Logo Uploaded', description: file.name });
+        }
       };
       reader.readAsDataURL(file);
     } else {
@@ -367,6 +377,14 @@ export default function QrCodeGeneratorPage() {
     }
     toast({ title: 'Logo Cleared' });
   };
+
+  // Auto-upgrade error correction to H when a logo is present for more resilience
+  useEffect(() => {
+    if (logoSrc && errorCorrectionLevel !== 'H') {
+      setErrorCorrectionLevel('H');
+      toast({ title: 'Error Correction Upgraded', description: 'Increased to H because a logo is present to improve scan reliability.' });
+    }
+  }, [logoSrc, errorCorrectionLevel, toast]);
   
   const handleHexColorInput = (value: string, setColorHex: React.Dispatch<React.SetStateAction<string>>) => {
     let newHex = value;
@@ -724,14 +742,20 @@ export default function QrCodeGeneratorPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="logoSize">Logo Size: {Math.round(logoSize * 100)}% of QR Code</Label>
-                                    <Slider
+                                    <div className="flex flex-col gap-1">
+                                      <Slider
                                         id="logoSize"
-                                        min={5} 
-                                        max={30} 
+                                        min={5}
+                                        max={20}
                                         step={1}
-                                        value={[logoSize * 100]}
-                                        onValueChange={(val) => setLogoSize(val[0] / 100)}
-                                    />
+                                        value={[Math.min(20, logoSize * 100)]}
+                                        onValueChange={(val) => {
+                                          const v = Math.min(20, val[0]);
+                                          setLogoSize(v / 100);
+                                        }}
+                                      />
+                                      <div className="text-xs text-muted-foreground">Max 20% recommended to ensure QR remains scannable on devices like iPhone camera.</div>
+                                    </div>
                                 </div>
                                 <Button variant="outline" onClick={clearLogo} className="w-full text-destructive hover:text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" /> Clear Logo
@@ -751,13 +775,31 @@ export default function QrCodeGeneratorPage() {
                   </CardHeader>
                   <CardContent className="flex flex-col items-center space-y-4 md:space-y-5">
                     {qrValue ? (
-                      <div className={`p-4 rounded-sm inline-block border border-border ${bgTransparent? 'bg-[linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%),linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%)] bg-[length:12px_12px] bg-[0_0,6px_6px] dark:bg-[linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%),linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%)] dark:bg-[length:12px_12px] dark:bg-[0_0,6px_6px]':''} bg-background`}> 
+                      <div className={`p-4 rounded-sm inline-block border border-border ${bgTransparent? 'bg-[linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%),linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%)] bg-[length:12px_12px] bg-[0_0,6px_6px] dark:bg-[linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%),linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%)] dark:bg-[length:12px_12px] dark:bg-[0_0,6px_6px]':''} bg-background relative`}> 
                         {outputFormat === 'png' ? (
-                          <div ref={qrCanvasRef}>
+                          <div ref={qrCanvasRef} className="relative inline-block">
                              <QRCodeCanvas {...commonQrProps} />
+                             {logoSrc && (
+                               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                 <div
+                                   className={`border-2 border-dashed rounded-sm flex items-center justify-center text-[11px] text-muted-foreground/80 bg-white/70 dark:bg-black/60`}
+                                   style={{ width: `${Math.round(256 * logoSize)}px`, height: `${Math.round(256 * logoSize)}px` }}
+                                 >Logo area</div>
+                               </div>
+                             )}
                           </div>
                         ) : (
-                          <QRCodeSVG {...commonQrProps} ref={qrSvgRef} />
+                          <div className="relative inline-block">
+                            <QRCodeSVG {...commonQrProps} ref={qrSvgRef} />
+                            {logoSrc && (
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div
+                                  className={`border-2 border-dashed rounded-sm flex items-center justify-center text-[11px] text-muted-foreground/80 bg-white/70 dark:bg-black/60`}
+                                  style={{ width: `${Math.round(256 * logoSize)}px`, height: `${Math.round(256 * logoSize)}px` }}
+                                >Logo area</div>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     ) : (
