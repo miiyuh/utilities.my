@@ -29,7 +29,7 @@ export function useToolSettings() {
   };
 
   const formatCurrency = (amount: number): string => {
-    const currencySymbols = {
+    const currencySymbols: Record<string, string> = {
       USD: '$',
       EUR: '€',
       GBP: '£',
@@ -38,6 +38,7 @@ export function useToolSettings() {
       AUD: 'A$',
       CHF: 'CHF',
       CNY: '¥',
+      MYR: 'RM',
     };
 
     const symbol = currencySymbols[settings.currency] || '$';
