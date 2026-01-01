@@ -4,57 +4,52 @@
 
 A comprehensive collection of web-based utilities for everyday tasks, all centralized in one modern, responsive web application.
 
-<img src=".\public\assets\img\screenshots\screenshot-01.png" alt="utilities.my logo" height="256px" />
-<img src=".\public\assets\img\screenshots\screenshot-02.png" alt="utilities.my logo" height="256px" />
-
 ## Overview
 
-utilities.my is a productivity-focused web application that consolidates essential online tools into a single, unified platform. Built with modern web technologies and designed with accessibility in mind, it eliminates the need to switch between multiple websites by providing a consistent, responsive interface across all utilities.
+utilities.my is a productivity-focused web application that consolidates essential online tools into a single, unified platform. Built with React and modern web technologies, it provides a consistent, responsive interface across all utilities with support for both dark and light themes.
 
 **Key Benefits:**
 - 🎯 **Centralized Access** - All your frequently-used tools in one place
 - 📱 **Fully Responsive** - Optimized for mobile, tablet, and desktop devices
 - 🎨 **Modern Design** - Clean, intuitive interface with dark/light theme support
-- ♿ **Accessible** - Built with accessibility-first principles
-- ⚡ **High Performance** - Server-side rendering and optimized loading
+- ⚡ **High Performance** - Fast, lightweight Vite-powered development and builds
 
 ## Features
 
 ### 📝 Text Utilities
 - **Text Case Converter** - Transform text between multiple case formats (uppercase, lowercase, title case, camel case, snake case, and more)
-- **Text Statistics** - Comprehensive text analysis including character count, word count, paragraph count, reading time, and readability metrics
+- **Text Statistics** - Comprehensive text analysis including character count, word count, paragraph count, and reading time
 - **Text Sorter** - Sort lines of text alphabetically, numerically, or by length with customizable options
 
 ### 🛠️ Development Tools
-- **Markdown Previewer** - Live markdown editor with real-time preview, syntax highlighting, and comprehensive formatting support
-- **QR Code Generator** - Create customizable QR codes from text or URLs with size and styling options
-- **Color Picker** - Advanced color selection tool with support for HEX, RGB, HSL, CMYK, and HSV formats. Includes image color extraction and accessibility contrast checking
+- **Markdown Previewer** - Live markdown editor with real-time preview and syntax highlighting
+- **QR Code Generator** - Create QR codes from text or URLs
+
+### 🎨 Design Tools
+- **Colour Picker** - Advanced colour selection tool with support for HEX, RGB, HSL, CMYK, and HSV formats
 
 ### ⏰ Date & Time Utilities
-- **Unix Timestamp Converter** - Bidirectional conversion between Unix timestamps and human-readable dates with timezone support
+- **Unix Timestamp Converter** - Convert between Unix timestamps and human-readable dates with timezone support
 - **Timezone Converter** - Convert times across global timezones with major city presets and DST handling
-- **Date Difference Calculator** - Calculate precise time differences with multiple output formats (years, months, days, hours, etc.)
+- **Date Difference Calculator** - Calculate precise time differences between dates
+- **World Clock** - View current time across multiple timezones
 
-### 📏 Measurement Tools
-- **Unit Converter** - Convert between various units including length, weight, temperature, volume, area, and more
-- **BMI Calculator** - Calculate Body Mass Index with metric and imperial units, including health classifications and ideal weight ranges
+### 📏 Measurement & Conversion Tools
+- **Unit Converter** - Convert between various units including length, weight, temperature, and volume
+- **BMI Calculator** - Calculate Body Mass Index with metric and imperial units
+- **Footsize Converter** - Convert between different footsize scales
+- **Percentage Calculator** - Calculate percentages, percentage changes, and more
 
-### 📁 File & Image Tools
-- **File Compressor** - Create ZIP archives from multiple files with compression options
-- **Image Converter** - Convert images between different formats (PNG, JPG, WebP) with resizing and quality control
-- **Image to ASCII Converter** - Transform images into ASCII art with adjustable resolution and character sets
-
-### 🎲 Fun Utilities
-- **Spin the Wheel** - Customizable decision-making wheel with animations and multiple options
-
-### 🔤 Communication Tools
-- **Morse Code Generator** - Convert text to Morse code and vice versa with audio, visual, and vibration playback. Customizable speed, pitch, and volume controls.
+### 🎲 Image & Fun Tools
+- **Image Converter** - Convert images between different formats (PNG, JPG, WebP) with resizing
+- **Spin the Wheel** - Customizable decision-making wheel with animations
+- **Morse Code Generator** - Convert text to Morse code and vice versa with audio and visual playback
 
 ### 📜 Additional Pages
-- **About** - Comprehensive project information, technology stack, and contribution guidelines
-- **Settings** - Application configuration including theme preferences and default units
-- **Privacy Policy** - Privacy information and data handling practices
-- **Terms of Service** - Terms and conditions for using the application
+- **About** - Project information and details
+- **Settings** - Application configuration and preferences
+- **Privacy Policy** - Privacy information and data handling
+- **Terms of Service** - Terms and conditions
 
 ## Technology Stack
 
@@ -111,20 +106,16 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 2. **Install dependencies**
    ```bash
-   npm install
-   # or
-   yarn install
+   bun install
    ```
 
 3. **Start development server**
    ```bash
-   npm run dev
-   # or
-   yarn dev
+   bun run dev
    ```
 
 4. **Open your browser**
-   Navigate to `http://localhost:9002`
+   Navigate to `http://localhost:5173` (or the port shown in terminal)
 
 ### 📋 Available Scripts
 
@@ -138,133 +129,79 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 ## 🎨 Design Philosophy
 
-### 🎯 User-Centered Design
-- **Intuitive Interface** - Clean, uncluttered layouts that prioritize functionality
-- **Responsive Design** - Seamless experience across mobile, tablet, and desktop devices
-- **Progressive Enhancement** - Core features work everywhere, enhanced features where supported
+### User-Centered Design
+- **Intuitive Interface** - Clean, uncluttered layouts focused on functionality
+- **Responsive** - Seamless experience across all device sizes
+- **Theme Support** - Beautiful dark and light themes
 
-### ♿ Accessibility First
-- **WCAG Compliance** - Built with accessibility-first components from Radix UI
-- **Keyboard Navigation** - Full keyboard accessibility for all interactive elements
-- **Screen Reader Support** - Proper ARIA labels and semantic HTML structure
-- **Color Contrast** - High contrast ratios and colorblind-friendly palettes
-- **Touch Targets** - Minimum 44px touch targets for mobile devices
-
-### ⚡ Performance Optimized
-- **Server-Side Rendering** - Fast initial page loads with Next.js SSR
-- **Code Splitting** - Optimized bundle sizes with automatic code splitting
-- **Image Optimization** - Automatic image optimization and lazy loading
-- **Caching Strategy** - Efficient caching for static assets and dynamic content
-
-### 🎨 Visual Consistency
-- **Design System** - Unified color palette, typography, and spacing scales
-- **Component Library** - Reusable shadcn/ui components for consistency
-- **Theme Support** - Beautiful dark and light themes with smooth transitions
-- **Micro-interactions** - Subtle animations and feedback for better UX
+### Code Quality
+- **TypeScript** - Full type safety throughout the codebase
+- **Component-Based** - Modular, reusable components
+- **Consistent Styling** - Tailwind CSS with custom design system
 
 ## Contributing
 
-Contributions are welcome and encouraged! This project is open-source and benefits from community input. Whether you're fixing bugs, adding new utilities, improving documentation, or enhancing existing features, your contributions help make this tool better for everyone.
+Contributions are welcome! Whether you're fixing bugs, improving documentation, or adding new utilities, your contributions help make this better.
 
 ### How to Contribute
 
 1. **Fork the repository** and create your feature branch
-
    ```bash
-   git checkout -b feature/amazing-new-utility
+   git checkout -b feature/new-utility
    ```
 
-2. **Make your changes** following the project's coding standards
-3. **Test your changes** thoroughly across different screen sizes and themes
-4. **Commit your changes** with clear, descriptive messages
-
+2. **Make your changes** following the project's code patterns
+3. **Test thoroughly** across different screen sizes and themes
+4. **Commit with clear messages**
    ```bash
-   git commit -m "Add new password generator utility"
+   git commit -m "Add new utility description"
    ```
 
-5. **Push to your branch** and create a Pull Request
-
+5. **Push and create a Pull Request**
    ```bash
-   git push origin feature/amazing-new-utility
+   git push origin feature/new-utility
    ```
 
 ### Development Guidelines
 
 #### Adding New Utilities
 
-1. Create a new page in the `src/app/[utility-name]/` directory
-2. Add the utility to the tools list in `src/lib/tools.ts` with appropriate icon and description
-3. Follow the established component patterns and styling guidelines
-4. Ensure responsive design works on mobile, tablet, and desktop
-5. Test both dark and light theme compatibility
-6. Verify accessibility with keyboard navigation and screen readers
+1. Create a new file in `src/pages/[utility-name].tsx`
+2. Add the utility to `src/lib/tools.ts` with icon and description
+3. Follow existing component patterns and styling
+4. Ensure responsive design for mobile, tablet, and desktop
+5. Test with both dark and light themes
+6. Test keyboard navigation and accessibility
 
 #### Code Standards
 
-- Use TypeScript for all new code
-- Follow the existing component structure and naming conventions
+- Use TypeScript for all code
+- Follow existing component structure and naming conventions
+- Use Tailwind CSS classes for styling
+- Use shadcn/ui components when available
 - Implement proper error handling and user feedback
-- Add appropriate loading states for async operations
-- Use existing UI components from `src/components/ui/` when possible
-- Maintain consistent styling with Tailwind CSS classes
+- Add loading states for async operations
 
-#### Design Consistency
+### Ideas for Contributions
 
-- Follow the established header pattern with icons and tool names
-- Include large heading sections with tool descriptions
-- Use consistent container widths (`max-w-7xl mx-auto`)
-- Apply standard padding (`p-4 lg:p-8`)
-- Maintain the sidebar navigation structure
+We're open to new utilities! Some potential additions:
 
-### 💡 Ideas for Contributions
-
-We're always looking for useful utilities to add! Some ideas include:
-
-**Encoding & Decoding**
 - Base64 Encoder/Decoder
 - URL Encoder/Decoder
-- HTML Entity Encoder/Decoder
-
-**Development Tools**
 - JSON Formatter and Validator
-- Regular Expression Tester
-- CSS Formatter and Minifier
-- JWT Token Decoder
-
-**Text & Content**
-- Lorem Ipsum Generator
-- Password Generator with customizable rules
-- Text Diff Checker
-- Slug Generator
-
-**Data & Math**
-- Hash Generator (MD5, SHA-256, etc.)
+- Password Generator
+- Hash Generator (MD5, SHA-256)
 - Binary/Decimal/Hex Converter
-- Percentage Calculator
-- Random Number Generator
-
-**Health & Fitness**
-- Metric and imperial unit support
-- Health recommendations and ideal weight ranges
-
-**Image Processing**
-- Intelligent resizing with aspect ratio preservation
-- Quality control for optimized file sizes
-- Drag-and-drop file handling
+- Regular Expression Tester
 
 ### Reporting Issues
 
-Found a bug or have a feature request? Please create an issue with:
-
-- Clear description of the problem or feature
-- Steps to reproduce (for bugs)
+Found a bug? Please create an issue with:
+- Clear description of the problem
+- Steps to reproduce
 - Expected vs actual behavior
 - Screenshots if applicable
-- Browser and device information
-
-### Questions and Support
-
-Feel free to open an issue for questions about the codebase, contribution process, or feature discussions. Community input helps shape the direction of this project.
+- Browser and device info
 
 ## License
 

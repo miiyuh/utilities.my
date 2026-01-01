@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export type UnitSystem = 'metric' | 'imperial';
 export type DateFormat = 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'ISO';
 export type NumberFormat = 'period' | 'comma';
-export type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CAD' | 'AUD' | 'CHF' | 'CNY';
+export type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CAD' | 'AUD' | 'CHF' | 'CNY' | 'MYR';
 
 export interface ToolSettings {
   defaultUnits: UnitSystem;
@@ -23,10 +23,10 @@ interface SettingsContextType {
 
 const defaultSettings: ToolSettings = {
   defaultUnits: 'metric',
-  dateFormat: 'MM/DD/YYYY',
+  dateFormat: 'DD/MM/YYYY',
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   numberFormat: 'period',
-  currency: 'USD',
+  currency: 'MYR',
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
