@@ -58,63 +58,47 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 ## Technology Stack
 
-### Frontend Framework
-- **Next.js 15.3.3** - React framework with App Router, server-side rendering, and Turbopack for fast development
-- **React 18** - Modern React with hooks, concurrent features, and server components
-- **TypeScript** - Full type safety with comprehensive IntelliSense support
+### Frontend
+- **React 19** - Latest React with hooks and modern features
+- **TypeScript** - Full type safety and IntelliSense
+- **Vite** - Ultra-fast build tool and dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **Radix UI** - Accessible component primitives
+- **Lucide React** - Icon library
 
-### UI & Styling
-- **Tailwind CSS 3.4.1** - Utility-first CSS framework with custom design system
-- **Radix UI** - Accessible, unstyled component primitives
-- **shadcn/ui** - Beautiful, reusable component library built on Radix UI
-- **Lucide React** - Consistent, customizable icon library
+### Routing & State Management
+- **React Router DOM 7** - Client-side routing
+- **React Context** - State management for settings and preferences
+- **next-themes** - Theme switching and persistence
 
-### Additional Libraries
-- **marked** - Markdown parsing and rendering with extensions
-- **DOMPurify** - XSS protection for user-generated content
-- **dayjs** - Lightweight date manipulation library
+### UI & Animation
+- **Framer Motion** - Smooth animations and transitions
+- **sonner** - Toast notifications
+- **dnd-kit** - Drag and drop utilities
+- **Radix UI Dialog, Popover, Select** - Advanced components
+
+### Libraries & Utilities
+- **dayjs** - Lightweight date manipulation with timezone support
+- **date-fns** - Additional date utilities
+- **marked** - Markdown parsing with GitHub Flavored Markdown
+- **marked-footnote** - Markdown footnote support
+- **react-markdown** - React component for rendering markdown
+- **rehype-slug** - Auto-generating heading IDs
+- **remark-gfm** - GitHub Flavored Markdown support
 - **qrcode.react** - QR code generation
-- **jszip** - Client-side ZIP file creation
-- **Google Fonts** - Noto Sans, Noto Mono, and Inter typography
-
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── about/             # About page with project information
-│   ├── bmi-calculator/    # BMI calculation with health metrics
-│   ├── color-picker/      # Advanced color picker and palette tool
-│   ├── date-diff-calculator/ # Date difference calculator
-│   ├── image-converter/   # Image format conversion and resizing
-│   ├── markdown-previewer/ # Markdown editor and live preview
-│   ├── morse-code-generator/ # Morse code generator and decoder
-│   ├── privacy/           # Privacy policy page
-│   ├── qr-code-generator/ # QR code generation utility
-│   ├── settings/          # Application settings and preferences
-│   ├── sorter/            # Text sorting utility
-│   ├── spin-the-wheel/    # Random decision wheel
-│   ├── terms/             # Terms of service page
-│   ├── text-case/         # Text case converter
-│   ├── text-statistics/   # Text analysis and statistics
-│   ├── timezone-converter/ # Timezone conversion tool
-│   ├── unit-converter/    # Unit measurement converter
-│   └── unix-timestamp-converter/ # Unix timestamp converter
-├── components/            # Reusable React components
-│   ├── ui/               # shadcn/ui components
-│   ├── sidebar-content.tsx # Navigation sidebar
-│   ├── theme-provider.tsx # Dark/light theme provider
-│   └── theme-toggle-button.tsx # Theme switcher
-├── hooks/                # Custom React hooks
-├── lib/                  # Utility functions and configurations
-└── ai/                   # AI integration files
-```
+- **DOMPurify** - XSS protection
+- **react-colorful** - Color picker component
+- **browser-image-compression** - Client-side image compression
+- **color** - Color manipulation utilities
+- **leaflet & react-leaflet** - Interactive maps
+- **canvas-confetti** - Confetti animations
+- **react-day-picker** - Calendar component
 
 ## 🚀 Installation & Development
 
 ### Prerequisites
 - **Node.js 18+** (Latest LTS recommended)
-- **npm** or **yarn** package manager
+- **bun 1.1+** (or npm/yarn)
 - **Git** for version control
 
 ### Quick Start
@@ -146,20 +130,11 @@ src/
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server with Turbopack (hot reload) |
-| `npm run build` | Build optimized production bundle |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint for code quality |
-| `npm run typecheck` | Run TypeScript compiler checks |
-| `npm run genkit:dev` | Start Genkit AI development server |
-| `npm run genkit:watch` | Start Genkit AI with file watching |
-
-### 🔧 Development Environment
-
-- **Hot Reload**: Instant updates during development
-- **TypeScript**: Full type checking and IntelliSense
-- **ESLint**: Code quality and consistency
-- **Turbopack**: Ultra-fast bundling and compilation
+| `bun run dev` | Start development server with hot reload on `http://localhost:5173` |
+| `bun run build` | Build optimized production bundle with TypeScript checking |
+| `bun run preview` | Preview production build locally |
+| `bun run lint` | Run ESLint for code quality with strict warnings |
+| `bun run typecheck` | Check TypeScript types without emitting files |
 
 ## 🎨 Design Philosophy
 
