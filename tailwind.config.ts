@@ -15,6 +15,7 @@ export default {
         headline: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'Fira Code', 'monospace'],
         code: ['var(--font-mono)', 'Fira Code', 'monospace'],
+        serif: ['"Instrument Serif"', 'serif'],
       },
       colors: {
         background: 'hsl(var(--background))',

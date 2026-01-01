@@ -1,13 +1,10 @@
-import { Inter, Source_Code_Pro } from 'next/font/google';
+// Font configuration for Vite project
+// Fonts are loaded via @import in globals.css
 
-export const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
+export const inter = {
   variable: '--font-inter',
-});
+};
 
-export const sourceCodePro = Source_Code_Pro({
-  subsets: ['latin'],
-  display: 'swap',
+export const sourceCodePro = {
   variable: '--font-mono',
-});
+};
