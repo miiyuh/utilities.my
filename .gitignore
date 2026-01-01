@@ -9,7 +9,7 @@
 !.yarn/versions
 
 # Build outputs
-/dist
+/dist/
 /build
 /.next/
 /out/

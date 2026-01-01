@@ -6,6 +6,7 @@ import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { SettingsProvider } from '@/contexts/settings-context'
+import { Analytics } from "@vercel/analytics/react"
 import App from './App'
 import './globals.css'
 
@@ -38,6 +39,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   }}
                   theme="system"
                 />
+                <Analytics />
               </SidebarProvider>
             </SettingsProvider>
           </div>
