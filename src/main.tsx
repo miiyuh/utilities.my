@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
+import { Analytics } from '@vercel/analytics/react'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { SettingsProvider } from '@/contexts/settings-context'
 import App from './App'
@@ -38,6 +39,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   }}
                   theme="system"
                 />
+                <Analytics />
               </SidebarProvider>
             </SettingsProvider>
           </div>
