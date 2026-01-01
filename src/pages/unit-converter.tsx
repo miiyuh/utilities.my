@@ -247,109 +247,136 @@ export default function UnitConverterPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
-            <div className="mb-8">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Unit Converter</h1>
-              <p className="text-lg text-muted-foreground">Convert between units with live two-way input, precision control, and more categories.</p>
+            <div className="mb-8 text-center md:text-left">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">Unit Converter</h1>
+              <p className="text-lg text-muted-foreground max-w-2xl">Convert between units with live two-way input, precision control, and more categories.</p>
             </div>
 
             <div className="flex flex-1 items-center justify-center">
-              <Card className="w-full mx-auto shadow-sm">
-                <CardContent className="space-y-6 p-6 lg:p-8">
-                  <div className="p-3 rounded-md border bg-muted/40 text-sm text-foreground/90" aria-live="polite">
-                    {conversionSummary}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger id="category">
-                          <div className="flex items-center gap-2">
-                            {getCategoryIcon(selectedCategory)}
-                            <span>{selectedCategory}</span>
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitCategories.map(cat => (
-                            <SelectItem key={cat.name} value={cat.name}>
-                              <div className="flex items-center gap-2">
-                                {getCategoryIcon(cat.name)}
-                                <span>{cat.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="precision">Precision</Label>
-                      <Select value={String(precision)} onValueChange={(v)=> setPrecision(Number(v))}>
-                        <SelectTrigger id="precision"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {[0,1,2,3,4,5,6,7,8,9,10].map(p=> (<SelectItem key={p} value={String(p)}>{p} decimals</SelectItem>))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-end">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="zeros" checked={keepZeros} onCheckedChange={(c)=> setKeepZeros(Boolean(c))} />
-                        <Label htmlFor="zeros" className="font-normal">Keep trailing zeros</Label>
-                      </div>
-                    </div>
+              <Card className="w-full mx-auto shadow-lg border-muted rounded-sm">
+                <CardContent className="space-y-8 p-6 lg:p-10">
+                  
+                  {/* Category Selector */}
+                  <div className="space-y-3">
+                    <Label htmlFor="category" className="text-base font-medium text-muted-foreground">Category</Label>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger id="category" className="h-10 text-base rounded-sm w-full bg-muted/10 border-muted-foreground/20">
+                        <div className="flex items-center gap-3">
+                          {getCategoryIcon(selectedCategory)}
+                          <span className="font-medium">{selectedCategory}</span>
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent className="rounded-sm max-h-[50vh]">
+                        {unitCategories.map(cat => (
+                          <SelectItem key={cat.name} value={cat.name} className="text-base rounded-sm py-2 cursor-pointer">
+                            <div className="flex items-center gap-3">
+                              {getCategoryIcon(cat.name)}
+                              <span>{cat.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-start md:items-end gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fromValue">From</Label>
-                      <div className="relative">
-                        <Input id="fromValue" type="number" value={fromValue} onChange={(e)=> { setFromValue(e.target.value); setActiveSide('from'); recalc('from', e.target.value); }} placeholder="Enter value" className="pr-10" />
-                        <Button type="button" variant="ghost" size="icon" className="absolute right-1.5 top-1/2 -translate-y-1/2" onClick={()=> copy(fromValue)} disabled={!fromValue} title="Copy">
-                          <Copy className="h-4 w-4" />
-                        </Button>
+                  {/* Main Converter Area */}
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 items-start">
+                    {/* From Section */}
+                    <div className="space-y-4">
+                      <Label htmlFor="fromValue" className="text-base font-medium text-muted-foreground">From</Label>
+                      <div className="space-y-3">
+                        <div className="relative group">
+                            <Input
+                                id="fromValue"
+                                type="number"
+                                value={fromValue}
+                                onChange={(e) => { setFromValue(e.target.value); setActiveSide('from'); recalc('from', e.target.value); }}
+                                placeholder="0"
+                                className="text-xl h-10 pr-12 font-mono tracking-tight shadow-sm transition-shadow focus-visible:ring-2 rounded-sm"
+                            />
+                             <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors rounded-sm h-8 w-8" onClick={()=> copy(fromValue)} disabled={!fromValue} title="Copy">
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <Select value={fromUnit} onValueChange={(v) => setFromUnit(v)}>
+                          <SelectTrigger className="h-10 text-base rounded-sm">
+                            <SelectValue placeholder="Select unit" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-sm max-h-[40vh]">
+                            {currentCategory.units.map((u) => (
+                              <SelectItem key={u.value} value={u.value} className="text-base rounded-sm py-2 cursor-pointer">{u.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Select value={fromUnit} onValueChange={(v)=> { setFromUnit(v); }}>
-                        <SelectTrigger>
-                          <span>{getUnitLabel(fromUnit)}</span>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {currentCategory.units.map(unit => (
-                            <SelectItem key={unit.value} value={unit.value}>
-                              <span>{unit.label}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleSwapUnits}
-                      className="justify-self-center self-center my-2 md:my-0"
-                      title="Swap units"
-                    >
-                      <ArrowRightLeft className="h-5 w-5" />
-                    </Button>
+                    {/* Swap Button */}
+                    <div className="flex justify-center md:pt-12">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleSwapUnits}
+                        className="rounded-sm h-10 w-10 border-2 hover:bg-muted hover:border-primary/50 transition-colors"
+                        title="Swap units"
+                      >
+                        <ArrowRightLeft className="h-4 w-4" />
+                      </Button>
+                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="toValue">To</Label>
-                      <div className="relative">
-                        <Input id="toValue" type="number" value={toValue} onChange={(e)=> { setToValue(e.target.value); setActiveSide('to'); recalc('to', e.target.value); }} placeholder="Result" className="bg-muted/50 text-lg font-semibold pr-10" />
-                        <Button type="button" variant="ghost" size="icon" className="absolute right-1.5 top-1/2 -translate-y-1/2" onClick={()=> copy(toValue)} disabled={!toValue} title="Copy">
-                          <Copy className="h-4 w-4" />
-                        </Button>
+                    {/* To Section */}
+                    <div className="space-y-4">
+                      <Label htmlFor="toValue" className="text-base font-medium text-muted-foreground">To</Label>
+                      <div className="space-y-3">
+                         <div className="relative group">
+                            <Input
+                                id="toValue"
+                                type="number"
+                                value={toValue}
+                                onChange={(e) => { setToValue(e.target.value); setActiveSide('to'); recalc('to', e.target.value); }}
+                                placeholder="0"
+                                className="text-xl h-10 pr-12 font-mono tracking-tight bg-muted/30 shadow-sm focus-visible:ring-2 rounded-sm"
+                            />
+                            <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors rounded-sm h-8 w-8" onClick={()=> copy(toValue)} disabled={!toValue} title="Copy">
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <Select value={toUnit} onValueChange={(v) => setToUnit(v)}>
+                          <SelectTrigger className="h-10 text-base rounded-sm">
+                            <SelectValue placeholder="Select unit" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-sm max-h-[40vh]">
+                            {currentCategory.units.map((u) => (
+                              <SelectItem key={u.value} value={u.value} className="text-base rounded-sm py-2 cursor-pointer">{u.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Select value={toUnit} onValueChange={(v)=> { setToUnit(v); }}>
-                        <SelectTrigger>
-                          <span>{getUnitLabel(toUnit)}</span>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {currentCategory.units.map(unit => (
-                            <SelectItem key={unit.value} value={unit.value}>
-                              <span>{unit.label}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Summary & Settings */}
+                  <div className="pt-8 border-t space-y-6">
+                    <div className="p-4 rounded-sm bg-primary/5 border border-primary/10 text-primary text-center font-medium text-lg md:text-xl break-words">
+                        {conversionSummary}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground bg-muted/20 p-4 rounded-sm">
+                        <div className="flex items-center gap-3">
+                            <Label htmlFor="precision" className="whitespace-nowrap font-medium">Precision:</Label>
+                            <Select value={String(precision)} onValueChange={(v)=> setPrecision(Number(v))}>
+                                <SelectTrigger id="precision" className="w-[130px] h-9 bg-background rounded-sm">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-sm">
+                                    {[0,1,2,3,4,5,6,7,8,9,10].map(p=> (<SelectItem key={p} value={String(p)} className="rounded-sm">{p} decimals</SelectItem>))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="zeros" checked={keepZeros} onCheckedChange={(c)=> setKeepZeros(Boolean(c))} className="rounded-sm" />
+                            <Label htmlFor="zeros" className="font-normal cursor-pointer select-none">Keep trailing zeros</Label>
+                        </div>
                     </div>
                   </div>
                 </CardContent>

@@ -11,6 +11,7 @@ import { Download, Settings2, Upload, Trash2, QrCode as QrCodeIcon, Copy, QrCode
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
+import { ColorPicker } from '@/components/ui/color-picker';
 import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -670,12 +671,9 @@ export default function QrCodeGeneratorPage() {
                             placeholder="#000000"
                             className="font-mono flex-grow"
                           />
-                          <Input
-                            id="fgColorSwatch"
-                            type="color"
+                          <ColorPicker
                             value={isValidHexColor(fgColor) ? fgColor : '#000000'}
-                            onChange={(e) => setFgColor(e.target.value)}
-                            className="h-10 w-12 min-w-[3rem] p-1 cursor-pointer flex-shrink-0"
+                            onChange={(hex: string) => setFgColor(hex)}
                           />
                         </div>
                       </div>
@@ -691,13 +689,9 @@ export default function QrCodeGeneratorPage() {
                             className="font-mono flex-grow"
                             disabled={bgTransparent}
                           />
-                          <Input
-                            id="bgColorSwatch"
-                            type="color"
+                          <ColorPicker
                             value={isValidHexColor(bgColorHex) ? bgColorHex : '#FFFFFF'}
-                            onChange={(e) => setBgColorHex(e.target.value)}
-                            className="h-10 w-12 min-w-[3rem] p-1 cursor-pointer flex-shrink-0"
-                            disabled={bgTransparent}
+                            onChange={(hex: string) => setBgColorHex(hex)}
                           />
                         </div>
                       </div>

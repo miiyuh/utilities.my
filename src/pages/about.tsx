@@ -50,6 +50,7 @@ export default function About() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
               <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
                 <div className="shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/assets/img/utilities-my_text.svg"
                     alt="utilities.my"
@@ -101,7 +102,7 @@ export default function About() {
             </section>
 
             {/* Tech & Contribute */}
-            <section className="rounded-md border bg-card p-6">
+            <section className="rounded-md border bg-card/60 p-6">
               <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                   <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
@@ -132,7 +133,7 @@ export default function About() {
             </section>
 
             {/* Open Source */}
-            <section className="rounded-md border bg-card p-6">
+            <section className="rounded-md border bg-card/60 p-6">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-xl font-semibold flex items-center gap-2">

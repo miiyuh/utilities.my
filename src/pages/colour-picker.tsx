@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -157,19 +157,26 @@ export default function ColourPickerPage() {
   }, [colorHistory]);
 
   // Function to add a color to history (max 10, no duplicates, most recent first)
-  const addToColorHistory = (hex: string) => {
+  const addToColorHistory = useCallback((hex: string) => {
     if (!/^#[0-9A-F]{6}$/i.test(hex)) return;
     setColorHistory(prev => {
       const filtered = prev.filter(c => c.toUpperCase() !== hex.toUpperCase());
       return [hex.toUpperCase(), ...filtered].slice(0, 10);
     });
-  };
+  }, []);
 
   // Track last fully valid 6-digit HEX to keep previews stable during partial typing
   const lastValidHexRef = useRef<string>(hexColour);
   useEffect(() => {
+    let validHex = '';
     if (/^#[0-9A-F]{6}$/i.test(hexColour)) {
-      const rgb = hexToRgb(hexColour);
+      validHex = hexColour;
+    } else if (/^#[0-9A-F]{3}$/i.test(hexColour)) {
+      validHex = '#' + hexColour[1] + hexColour[1] + hexColour[2] + hexColour[2] + hexColour[3] + hexColour[3];
+    }
+
+    if (validHex) {
+      const rgb = hexToRgb(validHex);
       setRgbColour(rgb);
       if (rgb) {
         setHslColour(rgbToHsl(rgb.r, rgb.g, rgb.b));
@@ -178,11 +185,9 @@ export default function ColourPickerPage() {
         setHslColour(null);
         setCmykColour(null);
       }
-      lastValidHexRef.current = hexColour;
+      lastValidHexRef.current = validHex;
     } else if (hexColour === '' || /^#[0-9A-F]{0,5}$/i.test(hexColour)) {
       // Partial input: don't recompute, keep previous valid conversions
-    } else {
-      // Invalid characters removed below in handler; no state change here
     }
   }, [hexColour]);
 
@@ -240,12 +245,12 @@ export default function ColourPickerPage() {
     }
   }, [hexColour]);
 
-  const updateHexFromHsv = (next: {h: number; s: number; v: number}) => {
+  const updateHexFromHsv = useCallback((next: {h: number; s: number; v: number}) => {
     const { r, g, b } = hsvToRgb(next.h, next.s, next.v);
     const nextHex = rgbToHex(r,g,b);
     internalHexUpdateRef.current = true;
     setHexColour(nextHex);
-  };
+  }, []);
 
   // WCAG Luminance & Contrast utilities
   const hexToLuminance = (hex:string) => {
@@ -253,11 +258,11 @@ export default function ColourPickerPage() {
     const toLinear = (c:number)=>{ const ch=c/255; return ch<=0.03928? ch/12.92 : Math.pow((ch+0.055)/1.055,2.4);};
     const L = 0.2126*toLinear(rgb.r)+0.7152*toLinear(rgb.g)+0.0722*toLinear(rgb.b); return L;
   };
-  const contrastRatio = (hex1:string, hex2:string) => {
-    const L1 = hexToLuminance(hex1); const L2 = hexToLuminance(hex2);
-    const lighter = Math.max(L1,L2)+0.05; const darker=Math.min(L1,L2)+0.05; return +(lighter/darker).toFixed(2);
-  };
-  const computeContrast = (colourHex:string) => {
+  const computeContrast = useCallback((colourHex:string) => {
+    const contrastRatio = (hex1:string, hex2:string) => {
+      const L1 = hexToLuminance(hex1); const L2 = hexToLuminance(hex2);
+      const lighter = Math.max(L1,L2)+0.05; const darker=Math.min(L1,L2)+0.05; return +(lighter/darker).toFixed(2);
+    };
     // Get background hsl(var(--background)) -> convert to hex first
     const styles = getComputedStyle(document.documentElement);
     const bgHslRaw = styles.getPropertyValue('--background').trim(); // e.g. "29 23% 91%"
@@ -274,10 +279,10 @@ export default function ColourPickerPage() {
     const blackRatio = contrastRatio(colourHex,'#000000');
     const recommended = whiteRatio>blackRatio ? '#FFFFFF' : '#000000';
     setContrast({ ratio, recommended, passesAA: ratio>=4.5, passesAAA: ratio>=7 });
-  };
-  useEffect(()=>{ if(/^#[0-9A-F]{6}$/i.test(hexColour)) computeContrast(hexColour); },[hexColour]);
+  }, []);
+  useEffect(()=>{ if(/^#[0-9A-F]{6}$/i.test(hexColour)) computeContrast(hexColour); },[hexColour, computeContrast]);
 
-  const copyToClipboard = async (text: string, label: string) => {
+  const copyToClipboard = useCallback(async (text: string, label: string) => {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
@@ -293,9 +298,9 @@ export default function ColourPickerPage() {
         variant: 'destructive' 
       });
     }
-  };
+  }, [toast]);
 
-  const generateRandomColour = () => {
+  const generateRandomColour = useCallback(() => {
     const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase();
   setPreviousHex(hexColour);
   setHexColour(randomHex);
@@ -304,10 +309,10 @@ export default function ColourPickerPage() {
       description: `New colour: ${randomHex}`,
       duration: 2000 
     });
-  };
+  }, [hexColour, toast]);
 
   // Extract dominant colours from image for palette
-  const extractImagePalette = (canvas: HTMLCanvasElement) => {
+  const extractImagePalette = useCallback((canvas: HTMLCanvasElement) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -343,7 +348,7 @@ export default function ColourPickerPage() {
       .map(([colour]) => colour);
     
     setImagePalette(sortedColours);
-  };
+  }, [paletteSize]);
 
   const resetImage = () => {
     setUploadedImage(null);
@@ -391,7 +396,7 @@ export default function ColourPickerPage() {
   }, [toast]);
 
   // Precise single-pixel colour sampling (no averaging) to reflect exact clicked pixel
-  const getPixelColour = (canvas: HTMLCanvasElement, offsetX: number, offsetY: number) => {
+  const getPixelColour = useCallback((canvas: HTMLCanvasElement, offsetX: number, offsetY: number) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
     // Use floor for deterministic pixel selection. The intrinsic canvas pixel (i,j)
@@ -420,15 +425,15 @@ export default function ColourPickerPage() {
     const r = Math.round(rSum / count), g = Math.round(gSum / count), b = Math.round(bSum / count);
     const hex = `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`.toUpperCase();
     return { r, g, b, hex };
-  };
+  }, [samplingMode, averageSize]);
 
   // Map pointer to intrinsic image coordinates
-  const translatePointerToImageCoords = (e: React.MouseEvent | React.PointerEvent, container: HTMLDivElement) => {
+  const translatePointerToImageCoords = useCallback((e: React.MouseEvent | React.PointerEvent | PointerEvent, container: HTMLDivElement) => {
     const rect = container.getBoundingClientRect();
     const xScreen = e.clientX - rect.left - pan.x;
     const yScreen = e.clientY - rect.top - pan.y;
     return { offsetX: xScreen / scale, offsetY: yScreen / scale };
-  };
+  }, [pan, scale]);
 
   // Wheel zoom handled via explicit non-passive listener (see useEffect below)
   // so we don't define a React onWheel handler here.
@@ -466,10 +471,7 @@ export default function ColourPickerPage() {
       const inside = ev.clientX>=rect.left && ev.clientX<=rect.right && ev.clientY>=rect.top && ev.clientY<=rect.bottom;
       if (dist < DRAG_THRESHOLD && inside) {
         // Click sample
-        const cursorX = ev.clientX - rect.left;
-        const cursorY = ev.clientY - rect.top;
-        const offsetX = (cursorX - panRef.current.x) / scaleRef.current;
-        const offsetY = (cursorY - panRef.current.y) / scaleRef.current;
+        const { offsetX, offsetY } = translatePointerToImageCoords(ev, container);
         const colourData = getPixelColour(canvasRef.current, offsetX, offsetY);
         if (colourData) {
           setHexColour(colourData.hex);
@@ -507,7 +509,7 @@ export default function ColourPickerPage() {
     };
     el.addEventListener('keydown', handleKey);
     return () => el.removeEventListener('keydown', handleKey);
-  }, [crosshair, samplingMode, averageSize]);
+  }, [crosshair, getPixelColour]);
 
   // Re-clamp pan whenever scale changes to keep image framed
   useEffect(() => {
@@ -546,10 +548,10 @@ export default function ColourPickerPage() {
       panRef.current = nextPan; setPan(nextPan);
     };
     el.addEventListener('wheel', wheelHandler, { passive: false });
-    return () => el.removeEventListener('wheel', wheelHandler as any);
+    return () => el.removeEventListener('wheel', wheelHandler);
   }, [uploadedImage]);
 
-  const processImageFile = (file: File) => {
+  const processImageFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({
         title: 'Invalid File',
@@ -569,7 +571,7 @@ export default function ColourPickerPage() {
       });
     };
     reader.readAsDataURL(file);
-  };
+  }, [toast]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -604,13 +606,14 @@ export default function ColourPickerPage() {
         const img = new Image();
         img.onload = () => {
           const MAX_WIDTH = canvas.parentElement?.clientWidth ? Math.min(400, canvas.parentElement.clientWidth - 20) : 380;
-          const MAX_HEIGHT = 300;
+          const MAX_HEIGHT = 250;
           let { width, height } = img;
-            if (width > height) {
-              if (width > MAX_WIDTH) { height = Math.round(height * (MAX_WIDTH / width)); width = MAX_WIDTH; }
-            } else {
-              if (height > MAX_HEIGHT) { width = Math.round(width * (MAX_HEIGHT / height)); height = MAX_HEIGHT; }
-            }
+          const scaleW = width > MAX_WIDTH ? MAX_WIDTH / width : 1;
+          const scaleH = height > MAX_HEIGHT ? MAX_HEIGHT / height : 1;
+          const scaleFactor = Math.min(scaleW, scaleH);
+          width = Math.round(width * scaleFactor);
+          height = Math.round(height * scaleFactor);
+          
           canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
           imageSizeRef.current = { w: width, h: height };
           setScale(1); scaleRef.current = 1;
@@ -626,18 +629,18 @@ export default function ColourPickerPage() {
         img.src = uploadedImage;
       }
     }
-  }, [uploadedImage]);
+  }, [uploadedImage, extractImagePalette]);
 
   // Recompute palette when user changes desired palette size
   useEffect(() => {
     if (uploadedImage && canvasRef.current) {
       extractImagePalette(canvasRef.current);
     }
-  }, [paletteSize]);
+  }, [paletteSize, extractImagePalette, uploadedImage]);
 
   // handleCanvasClick removed (sampling now occurs in pointerup when not dragging)
 
-  const handleMouseMoveOnCanvas = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseMoveOnCanvas = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) return; // no live preview while dragging
     if (!canvasRef.current || !uploadedImage || !canvasContainerRef.current) return;
     const { offsetX, offsetY } = translatePointerToImageCoords(event, canvasContainerRef.current);
@@ -758,7 +761,7 @@ export default function ColourPickerPage() {
                             const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};
                             window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);move(e.nativeEvent as unknown as MouseEvent);
                           }}
-                          onKeyDown={(e)=>{ let {h,s,v}=hsv; const step=e.shiftKey?10:1; let changed=false; if(e.key==='ArrowRight'){s=Math.min(100,s+step);changed=true;} if(e.key==='ArrowLeft'){s=Math.max(0,s-step);changed=true;} if(e.key==='ArrowUp'){v=Math.min(100,v+step);changed=true;} if(e.key==='ArrowDown'){v=Math.max(0,v-step);changed=true;} if(changed){ const next={h,s,v}; setHsv(next); updateHexFromHsv(next); e.preventDefault();}}}
+                          onKeyDown={(e)=>{ const {h}=hsv; let {s,v}=hsv; const step=e.shiftKey?10:1; let changed=false; if(e.key==='ArrowRight'){s=Math.min(100,s+step);changed=true;} if(e.key==='ArrowLeft'){s=Math.max(0,s-step);changed=true;} if(e.key==='ArrowUp'){v=Math.min(100,v+step);changed=true;} if(e.key==='ArrowDown'){v=Math.max(0,v-step);changed=true;} if(changed){ const next={h,s,v}; setHsv(next); updateHexFromHsv(next); e.preventDefault();}}}
                         >
                           <div className="absolute inset-0" style={{background:'linear-gradient(to right,#fff,rgba(255,255,255,0))'}} />
                           <div className="absolute inset-0" style={{background:'linear-gradient(to top,#000,rgba(0,0,0,0))'}} />
@@ -977,7 +980,7 @@ export default function ColourPickerPage() {
                         <div className="flex flex-wrap items-center gap-2 md:gap-3 text-[10px] md:text-[11px]">
                           <div className="flex items-center gap-1">
                             <Label className="text-[11px]">Mode</Label>
-                            <select className="bg-input border rounded px-1 py-1" value={samplingMode} onChange={(e)=> setSamplingMode(e.target.value as any)}>
+                            <select className="bg-input border rounded px-1 py-1" value={samplingMode} onChange={(e)=> setSamplingMode(e.target.value as 'point' | 'average')}>
                               <option value="point">Point</option>
                               <option value="average">Average</option>
                             </select>
@@ -1001,7 +1004,7 @@ export default function ColourPickerPage() {
                         tabIndex={0}
                         // wheel handled by custom listener (non-passive) for zoom-to-cursor
                         onPointerDown={handlePointerDown}
-                        onMouseMove={(e)=> handleMouseMoveOnCanvas(e as unknown as React.MouseEvent<HTMLCanvasElement>)}
+                        onMouseMove={(e)=> handleMouseMoveOnCanvas(e as React.MouseEvent<HTMLDivElement>)}
                         onMouseEnter={() => handleMouseEnterCanvas()}
                         onMouseLeave={() => handleMouseLeaveCanvas()}
                         // click sampling handled in pointerup inside handlePointerDown

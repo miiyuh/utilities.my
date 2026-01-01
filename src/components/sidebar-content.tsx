@@ -46,8 +46,12 @@ export function SidebarContent() {
           alt="utilities.my"
           width={120}
           height={24}
-          className="object-contain transition-all duration-200 group-data-[collapsible=icon]:scale-90"
+          className="object-contain transition-all duration-200 group-data-[collapsible=icon]:scale-90 group-data-[collapsible=icon]:hidden"
         />
+        {/* compact fallback shown only when collapsed */}
+        <div className="hidden group-data-[collapsible=icon]:inline-flex items-center justify-center rounded-md h-8 w-8">
+          <span className="font-medium">U</span>
+        </div>
       </SidebarHeader>
       <SidebarScrollableContent className="flex-1 p-3 pt-2 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pt-2">
         <ScrollArea className="h-full">
@@ -69,7 +73,7 @@ export function SidebarContent() {
                       <span className={cn(
                         "group-data-[collapsible=icon]:hidden font-medium",
                         pathname === tool.path ? "text-primary" : "text-foreground"
-                      )} style={{ display: 'inline-block' }}>{tool.name}</span>
+                      )}>{tool.name}</span>
                     </div>
                   </Link>
                 </SidebarMenuButton>
