@@ -257,11 +257,11 @@ export default function QrCodeGeneratorPage() {
         document.body.removeChild(downloadRef);
     } else if (outputFormat === 'svg') {
         if (qrSvgRef.current) {
-            // Clone the SVG and resize it to download size
+            // Clone the SVG and resize it to download size (fixed at 512px for SVG)
             const svgClone = qrSvgRef.current.cloneNode(true) as SVGSVGElement;
-            svgClone.setAttribute('width', String(qrSize));
-            svgClone.setAttribute('height', String(qrSize));
-            svgClone.setAttribute('viewBox', `0 0 ${qrSize} ${qrSize}`);
+            svgClone.setAttribute('width', '512');
+            svgClone.setAttribute('height', '512');
+            svgClone.setAttribute('viewBox', '0 0 512 512');
             
             const svgString = new XMLSerializer().serializeToString(svgClone);
             const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
@@ -642,22 +642,24 @@ export default function QrCodeGeneratorPage() {
                       </div>
                     </TooltipProvider>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="qrSize">QR Code Size: {qrSize}px</Label>
-                      <Slider
-                        id="qrSize"
-                        min={64}
-                        max={1024}
-                        step={16}
-                        value={[qrSize]}
-                        onValueChange={(value) => setQrSize(value[0])}
-                      />
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {[128,256,384,512,768,1024].map(sz => (
-                          <button key={sz} type="button" onClick={()=> setQrSize(sz)} className={`px-2 h-7 text-[11px] rounded-sm border border-border/70 hover:border-primary/60 hover:bg-accent/30 font-mono ${qrSize===sz?'bg-accent/40 border-primary/60':''}`}>{sz}px</button>
-                        ))}
+                    {outputFormat === 'png' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="qrSize">QR Code Size: {qrSize}px</Label>
+                        <Slider
+                          id="qrSize"
+                          min={64}
+                          max={1024}
+                          step={16}
+                          value={[qrSize]}
+                          onValueChange={(value) => setQrSize(value[0])}
+                        />
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {[128,256,384,512,768,1024].map(sz => (
+                            <button key={sz} type="button" onClick={()=> setQrSize(sz)} className={`px-2 h-7 text-[11px] rounded-sm border border-border/70 hover:border-primary/60 hover:bg-accent/30 font-mono ${qrSize===sz?'bg-accent/40 border-primary/60':''}`}>{sz}px</button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
