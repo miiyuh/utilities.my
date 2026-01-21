@@ -223,34 +223,42 @@ export default function QrCodeGeneratorPage() {
           } : undefined,
         };
 
+        // Cleanup function to ensure proper resource disposal
+        const cleanup = (root: ReturnType<typeof createRoot>) => {
+          root.unmount();
+          if (tempContainer.parentNode) {
+            document.body.removeChild(tempContainer);
+          }
+        };
+
         // Render a high-resolution QRCodeCanvas at the actual download size
         const root = createRoot(tempContainer);
         root.render(<QRCodeCanvas {...downloadQrProps} />);
         
-        // Wait for the canvas to be rendered
+        // Canvas rendering delay - allows React to complete rendering before extraction
+        // QRCodeCanvas renders synchronously but DOM updates may be batched
+        const CANVAS_RENDER_DELAY_MS = 100;
+        
         setTimeout(() => {
           const highResCanvas = tempContainer.querySelector('canvas');
           if (highResCanvas) {
             const pngUrl = highResCanvas.toDataURL('image/png');
             downloadLink.href = pngUrl;
             
-            // Cleanup
-            root.unmount();
-            document.body.removeChild(tempContainer);
+            cleanup(root);
+            
+            // Complete the download
+            downloadLink.download = finalFilename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            toast({ title: 'QR Code Downloaded', description: `${finalFilename} has been downloaded.` });
           } else {
-            root.unmount();
-            document.body.removeChild(tempContainer);
+            cleanup(root);
             toast({ title: 'Download Error', description: 'Could not render high-resolution QR code.', variant: 'destructive' });
             return;
           }
-          
-          // Complete the download
-          downloadLink.download = finalFilename;
-          document.body.appendChild(downloadLink);
-          downloadLink.click();
-          document.body.removeChild(downloadLink);
-          toast({ title: 'QR Code Downloaded', description: `${finalFilename} has been downloaded.` });
-        }, 100);
+        }, CANVAS_RENDER_DELAY_MS);
      } else if (outputFormat === 'svg') {
         if (qrSvgRef.current) {
             // Clone the SVG and resize it to download size
