@@ -21,6 +21,8 @@ type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type WifiEncryption = "WPA" | "WEP" | "nopass";
 type OutputFormat = "png" | "svg";
 
+// SVG output size constant (512x512 pixels)
+const SVG_OUTPUT_SIZE = 512;
 
 // Helper function to validate HEX color
 const isValidHexColor = (color: string): boolean => {
@@ -257,11 +259,11 @@ export default function QrCodeGeneratorPage() {
         document.body.removeChild(downloadRef);
     } else if (outputFormat === 'svg') {
         if (qrSvgRef.current) {
-            // Clone the SVG and resize it to download size (fixed at 512px for SVG)
+            // Clone the SVG and resize it to download size (fixed size for SVG)
             const svgClone = qrSvgRef.current.cloneNode(true) as SVGSVGElement;
-            svgClone.setAttribute('width', '512');
-            svgClone.setAttribute('height', '512');
-            svgClone.setAttribute('viewBox', '0 0 512 512');
+            svgClone.setAttribute('width', String(SVG_OUTPUT_SIZE));
+            svgClone.setAttribute('height', String(SVG_OUTPUT_SIZE));
+            svgClone.setAttribute('viewBox', `0 0 ${SVG_OUTPUT_SIZE} ${SVG_OUTPUT_SIZE}`);
             
             const svgString = new XMLSerializer().serializeToString(svgClone);
             const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
