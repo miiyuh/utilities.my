@@ -61,7 +61,7 @@ export default function QrCodeGeneratorPage() {
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('png');
   const [downloadFilename, setDownloadFilename] = useState('qrcode.png');
   const [manualFilenameEdited, setManualFilenameEdited] = useState(false);
-  const [includeMargin, setIncludeMargin] = useState(true);
+  const [marginSize, setMarginSize] = useState(4);
 
   const qrCanvasRef = useRef<HTMLDivElement>(null);
   const qrSvgRef = useRef<SVGSVGElement>(null);
@@ -340,7 +340,7 @@ export default function QrCodeGeneratorPage() {
     setLogoSrc(null);
     setLogoSize(0.15);
     setOutputFormat('png');
-    setIncludeMargin(true);
+    setMarginSize(4);
     setManualFilenameEdited(false);
     suggestedFilenameRef.current = 'qrcode';
     toast({ title: 'Reset', description: 'All settings reverted.' });
@@ -515,7 +515,7 @@ export default function QrCodeGeneratorPage() {
     fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
     bgColor: getFinalBgColor(),
     level: errorCorrectionLevel,
-    includeMargin,
+    marginSize,
     imageSettings: logoSrc ? {
       src: logoSrc,
       height: 256 * logoSize, // Use fixed preview size instead of qrSize
@@ -701,9 +701,21 @@ export default function QrCodeGeneratorPage() {
                           <Switch id="bgTransparent" checked={bgTransparent} onCheckedChange={setBgTransparent} />
                           <Label htmlFor="bgTransparent">Transparent BG</Label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                          <Switch id="includeMargin" checked={includeMargin} onCheckedChange={setIncludeMargin} />
-                          <Label htmlFor="includeMargin">Quiet Zone</Label>
+                    </div>
+
+                    {/* Border Size Section */}
+                    <div className="space-y-2">
+                      <Label htmlFor="marginSize">Border Size (Quiet Zone): {marginSize}px</Label>
+                      <div className="flex flex-col gap-1">
+                        <Slider
+                          id="marginSize"
+                          min={1}
+                          max={64}
+                          step={1}
+                          value={[marginSize]}
+                          onValueChange={(val) => setMarginSize(val[0])}
+                        />
+                        <div className="text-xs text-muted-foreground">Adjust the border (quiet zone) around the QR code from 1 to 64 pixels.</div>
                       </div>
                     </div>
 
