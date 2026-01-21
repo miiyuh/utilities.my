@@ -340,7 +340,7 @@ export default function QrCodeGeneratorPage() {
     setLogoSrc(null);
     setLogoSize(0.15);
     setOutputFormat('png');
-    setIncludeMargin(true);
+    setMarginSize(4);
     setManualFilenameEdited(false);
     suggestedFilenameRef.current = 'qrcode';
     toast({ title: 'Reset', description: 'All settings reverted.' });
