@@ -711,13 +711,13 @@ export default function QrCodeGeneratorPage() {
                       <div className="flex flex-col gap-1">
                         <Slider
                           id="marginSize"
-                          min={1}
+                          min={0}
                           max={64}
                           step={1}
                           value={[marginSize]}
                           onValueChange={(val) => setMarginSize(val[0])}
                         />
-                        <div className="text-xs text-muted-foreground">Adjust the border (quiet zone) around the QR code from 1 to 64 pixels.</div>
+                        <div className="text-xs text-muted-foreground">Adjust the border (quiet zone) around the QR code from 0 to 64 pixels.</div>
                       </div>
                     </div>
 
