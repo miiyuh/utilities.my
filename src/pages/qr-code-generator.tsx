@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -206,56 +207,59 @@ export default function QrCodeGeneratorPage() {
         tempContainer.style.left = '-9999px';
         document.body.appendChild(tempContainer);
         
-        // Create canvas with download size
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
+        // Create props for the high-resolution QR code
+        const downloadQrProps = {
+          value: qrValue,
+          size: qrSize, // Use actual download size for high resolution
+          fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
+          bgColor: getFinalBgColor(),
+          level: errorCorrectionLevel,
+          includeMargin,
+          imageSettings: logoSrc ? {
+            src: logoSrc,
+            height: qrSize * logoSize,
+            width: qrSize * logoSize,
+            excavate: true,
+          } : undefined,
+        };
+
+        // Cleanup function to ensure proper resource disposal
+        const cleanup = (root: ReturnType<typeof createRoot>) => {
+          root.unmount();
+          if (tempContainer.parentNode) {
             document.body.removeChild(tempContainer);
-            toast({ title: 'Download Error', description: 'Could not create canvas context.', variant: 'destructive' });
-            return;
-        }
+          }
+        };
 
-        // Render QR code to the temporary canvas using the download props
-        canvas.width = qrSize;
-        canvas.height = qrSize;
+        // Render a high-resolution QRCodeCanvas at the actual download size
+        const root = createRoot(tempContainer);
+        root.render(<QRCodeCanvas {...downloadQrProps} />);
         
-        // We'll use QRCodeCanvas from the ref but first render it at download size
-        const downloadRef = document.createElement('div');
-        downloadRef.style.position = 'absolute';
-        downloadRef.style.left = '-9999px';
-        document.body.appendChild(downloadRef);
-
-        // For now, get the preview canvas and scale it
-        if (qrCanvasRef.current) {
-            const previewCanvas = qrCanvasRef.current.querySelector('canvas');
-            if (previewCanvas) {
-                // Create a new canvas with the desired download size
-                const downloadCanvas = document.createElement('canvas');
-                downloadCanvas.width = qrSize;
-                downloadCanvas.height = qrSize;
-                const downloadCtx = downloadCanvas.getContext('2d');
-                if (downloadCtx) {
-                    // Draw the preview canvas scaled to download size
-                    downloadCtx.drawImage(previewCanvas, 0, 0, qrSize, qrSize);
-                    const pngUrl = downloadCanvas.toDataURL('image/png');
-                    downloadLink.href = pngUrl;
-                } else {
-                    document.body.removeChild(downloadRef);
-                    toast({ title: 'Download Error', description: 'Could not create canvas.', variant: 'destructive' });
-                    return;
-                }
-            } else {
-              document.body.removeChild(downloadRef);
-              toast({ title: 'Download Error', description: 'Preview canvas missing.', variant: 'destructive' });
-              return;
-            }
-        } else {
-          document.body.removeChild(downloadRef);
-          toast({ title: 'Download Error', description: 'Preview element missing.', variant: 'destructive' });
-          return;
-        }
-        document.body.removeChild(downloadRef);
-    } else if (outputFormat === 'svg') {
+        // Canvas rendering delay - allows React to complete rendering before extraction
+        // QRCodeCanvas renders synchronously but DOM updates may be batched
+        const CANVAS_RENDER_DELAY_MS = 100;
+        
+        setTimeout(() => {
+          const highResCanvas = tempContainer.querySelector('canvas');
+          if (highResCanvas) {
+            const pngUrl = highResCanvas.toDataURL('image/png');
+            downloadLink.href = pngUrl;
+            
+            cleanup(root);
+            
+            // Complete the download
+            downloadLink.download = finalFilename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            toast({ title: 'QR Code Downloaded', description: `${finalFilename} has been downloaded.` });
+          } else {
+            cleanup(root);
+            toast({ title: 'Download Error', description: 'Could not render high-resolution QR code.', variant: 'destructive' });
+            return;
+          }
+        }, CANVAS_RENDER_DELAY_MS);
+     } else if (outputFormat === 'svg') {
         if (qrSvgRef.current) {
             // Clone the SVG and resize it to download size
             const svgClone = qrSvgRef.current.cloneNode(true) as SVGSVGElement;
@@ -266,6 +270,13 @@ export default function QrCodeGeneratorPage() {
             const svgString = new XMLSerializer().serializeToString(svgClone);
             const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
             downloadLink.href = URL.createObjectURL(blob);
+            
+            downloadLink.download = finalFilename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(downloadLink.href);
+            toast({ title: 'QR Code Downloaded', description: `${finalFilename} has been downloaded.` });
         } else {
             toast({ title: 'Download Error', description: 'Could not find QR code SVG element.', variant: 'destructive' });
             return;
@@ -274,15 +285,6 @@ export default function QrCodeGeneratorPage() {
         toast({ title: 'Unsupported Format', description: 'Selected format is not supported for download.', variant: 'destructive' });
         return;
     }
-    
-    downloadLink.download = finalFilename;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    if (outputFormat === 'svg') {
-      URL.revokeObjectURL(downloadLink.href);
-    }
-    toast({ title: 'QR Code Downloaded', description: `${finalFilename} has been downloaded.` });
   };
 
   const copyPngToClipboard = async () => {
