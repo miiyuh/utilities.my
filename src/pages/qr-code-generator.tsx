@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -71,6 +71,16 @@ export default function QrCodeGeneratorPage() {
   const qrSvgDownloadRef = useRef<SVGSVGElement>(null);
   const suggestedFilenameRef = useRef<string>('qrcode');
 
+  // Memoized validated colors
+  const validFgColor = useMemo(() => 
+    isValidHexColor(fgColor) ? fgColor : '#000000',
+    [fgColor]
+  );
+
+  const validBgColor = useMemo(() => 
+    bgTransparent ? 'transparent' : (isValidHexColor(bgColorHex) ? bgColorHex : '#FFFFFF'),
+    [bgTransparent, bgColorHex]
+  );
 
   // Validation helpers and payload limits
   const MAX_PAYLOAD_BYTES = 2048; // 2 KiB limit (tunable)
@@ -86,7 +96,7 @@ export default function QrCodeGeneratorPage() {
   const isValidEmail = (v: string) => /^(?:[a-zA-Z0-9_'^&+=%$!*~`{|}.-]+)@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/.test(v);
   const isValidPhone = (v: string) => !!v && /^[+\d][\d ()-]{4,}$/.test(v);
 
-  const validatePayload = (): boolean => {
+  const validatePayload = useCallback((): boolean => {
     if (!qrValue) {
       toast({ title: 'Input Empty', description: 'Please enter data to generate a QR code.', variant: 'destructive' });
       return false;
@@ -121,9 +131,9 @@ export default function QrCodeGeneratorPage() {
       return false;
     }
     return true;
-  };
+  }, [qrValue, payloadType, urlInput, emailTo, smsNumber, telNumber, wifiSsid, logoSrc, logoSize, payloadTooLarge, toast]);
 
-  // Effect to update qrValue based on payloadType and its fields (debounced)
+  // Effect to update qrValue and filename based on payload (debounced)
   useEffect(() => {
     let newQrValue = '';
     switch (payloadType) {
@@ -158,40 +168,39 @@ export default function QrCodeGeneratorPage() {
       setQrValue(newQrValue);
       const bytes = new TextEncoder().encode(newQrValue || '').length;
       setPayloadTooLarge(bytes > MAX_PAYLOAD_BYTES);
+      
+      // Update suggested filename based on new QR value
+      if (!manualFilenameEdited) {
+        const raw = newQrValue || 'qrcode';
+        const base = raw
+          .replace(/^https?:\/\//i, '')
+          .slice(0, 50)
+          .replace(/[^a-z0-9-_]+/gi, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '') || 'qrcode';
+        suggestedFilenameRef.current = base.toLowerCase();
+        setDownloadFilename(`${suggestedFilenameRef.current}.${outputFormat}`);
+      }
     }, 300);
     return () => clearTimeout(handle);
-  }, [payloadType, urlInput, plainTextInput, emailTo, emailSubject, emailBody, smsNumber, smsMessage, telNumber, wifiSsid, wifiPassword, wifiEncryption]);
+  }, [payloadType, urlInput, plainTextInput, emailTo, emailSubject, emailBody, smsNumber, smsMessage, telNumber, wifiSsid, wifiPassword, wifiEncryption, manualFilenameEdited, outputFormat]);
 
-  // Update filename extension or suggest base when format changes
-  useEffect(() => {
-    setDownloadFilename(prev => {
-      if (!manualFilenameEdited) {
-        const base = suggestedFilenameRef.current || 'qrcode';
-        return `${base}.${outputFormat}`;
-      }
-      const dot = prev.lastIndexOf('.');
-      const base = dot > 0 ? prev.slice(0, dot) : prev || 'qrcode';
-      return `${base}.${outputFormat}`;
-    });
-  }, [outputFormat, manualFilenameEdited]);
-
-  // Suggest filename based on current payload value
+  // Update filename extension when format changes
   useEffect(() => {
     if (!manualFilenameEdited) {
-      const raw = qrValue || 'qrcode';
-      const base = raw
-        .replace(/^https?:\/\//i, '')
-        .slice(0, 50)
-        .replace(/[^a-z0-9-_]+/gi, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '') || 'qrcode';
-      suggestedFilenameRef.current = base.toLowerCase();
-      setDownloadFilename(`${suggestedFilenameRef.current}.${outputFormat}`);
+      const base = suggestedFilenameRef.current || 'qrcode';
+      setDownloadFilename(`${base}.${outputFormat}`);
+    } else {
+      setDownloadFilename(prev => {
+        const dot = prev.lastIndexOf('.');
+        const base = dot > 0 ? prev.slice(0, dot) : prev || 'qrcode';
+        return `${base}.${outputFormat}`;
+      });
     }
-  }, [qrValue, manualFilenameEdited, outputFormat]);
+  }, [outputFormat, manualFilenameEdited]);
 
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     if (!qrValue) {
       toast({ title: 'Input Empty', description: 'Please enter data to generate a QR code.', variant: 'destructive' });
       return;
@@ -214,8 +223,8 @@ export default function QrCodeGeneratorPage() {
         const downloadQrProps = {
           value: qrValue,
           size: qrSize, // Use actual download size for high resolution
-          fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
-          bgColor: getFinalBgColor(),
+          fgColor: validFgColor,
+          bgColor: validBgColor,
           level: errorCorrectionLevel,
           marginSize,
           imageSettings: logoSrc ? {
@@ -283,9 +292,9 @@ export default function QrCodeGeneratorPage() {
         toast({ title: 'Unsupported Format', description: 'Selected format is not supported for download.', variant: 'destructive' });
         return;
     }
-  };
+  }, [qrValue, outputFormat, downloadFilename, qrSize, validFgColor, validBgColor, errorCorrectionLevel, marginSize, logoSrc, logoSize, qrSvgDownloadRef, validatePayload, toast]);
 
-  const copyPngToClipboard = async () => {
+  const copyPngToClipboard = useCallback(async () => {
     if (outputFormat !== 'png') {
       toast({ title: 'PNG Only', description: 'Switch to PNG to copy image.', variant: 'destructive' });
       return;
@@ -317,9 +326,9 @@ export default function QrCodeGeneratorPage() {
     } catch (e) {
       toast({ title: 'Copy Failed', description: String(e), variant: 'destructive' });
     }
-  };
+  }, [outputFormat, qrValue, qrCanvasRef, toast]);
 
-  const resetAll = () => {
+  const resetAll = useCallback(() => {
     setPayloadType('url');
     setUrlInput('');
     setPlainTextInput('');
@@ -344,14 +353,9 @@ export default function QrCodeGeneratorPage() {
     setManualFilenameEdited(false);
     suggestedFilenameRef.current = 'qrcode';
     toast({ title: 'Reset', description: 'All settings reverted.' });
-  };
-  
-  const getFinalBgColor = (): string => {
-    if (bgTransparent) return 'transparent';
-    return isValidHexColor(bgColorHex) ? bgColorHex : '#FFFFFF';
-  };
+  }, [toast]);
 
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -369,15 +373,15 @@ export default function QrCodeGeneratorPage() {
     } else {
       setLogoSrc(null);
     }
-  };
+  }, [logoSize, toast]);
 
-  const clearLogo = () => {
+  const clearLogo = useCallback(() => {
     setLogoSrc(null);
     if (logoFileInputRef.current) {
       logoFileInputRef.current.value = "";
     }
     toast({ title: 'Logo Cleared' });
-  };
+  }, [logoFileInputRef, toast]);
 
   // Auto-upgrade error correction to H when a logo is present for more resilience
   useEffect(() => {
@@ -385,9 +389,10 @@ export default function QrCodeGeneratorPage() {
       setErrorCorrectionLevel('H');
       toast({ title: 'Error Correction Upgraded', description: 'Increased to H because a logo is present to improve scan reliability.' });
     }
-  }, [logoSrc, errorCorrectionLevel, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logoSrc, errorCorrectionLevel]);
   
-  const handleHexColorInput = (value: string, setColorHex: React.Dispatch<React.SetStateAction<string>>) => {
+  const handleHexColorInput = useCallback((value: string, setColorHex: React.Dispatch<React.SetStateAction<string>>) => {
     let newHex = value;
     if (!newHex.startsWith('#')) {
       newHex = '#' + newHex;
@@ -397,9 +402,9 @@ export default function QrCodeGeneratorPage() {
     } else if (value === "" || value === "#") { 
        setColorHex(value);
     }
-  };
+  }, []);
 
-  const handleCopyHtmlEmbed = async () => {
+  const handleCopyHtmlEmbed = useCallback(async () => {
     if (!qrValue) {
         toast({ title: 'Cannot Copy', description: 'Generate a QR code first.', variant: 'destructive' });
         return;
@@ -425,7 +430,7 @@ export default function QrCodeGeneratorPage() {
     } else {
         toast({ title: 'Cannot Copy', description: `Could not generate embed code for ${outputFormat.toUpperCase()}.`, variant: 'destructive' });
     }
-  };
+  }, [qrValue, outputFormat, qrSize, qrCanvasRef, qrSvgRef, toast]);
 
   const renderPayloadInputs = () => {
     switch (payloadType) {
@@ -509,55 +514,50 @@ export default function QrCodeGeneratorPage() {
     }
   };
   
-  const commonQrProps = {
+  const commonQrProps = useMemo(() => ({
     value: qrValue,
-    size: 256, // Fixed preview size (256px for display)
-    fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
-    bgColor: getFinalBgColor(),
+    size: 256,
+    fgColor: validFgColor,
+    bgColor: validBgColor,
     level: errorCorrectionLevel,
     marginSize,
-    imageSettings: logoSrc ? {
-      src: logoSrc,
-      height: 256 * logoSize, // Use fixed preview size instead of qrSize
-      width: 256 * logoSize,
-      excavate: true,
-    } : undefined,
-  };
-
-  // Props for SVG with preview size (for consistency with PNG preview)
-  const svgQrProps = {
-    value: qrValue,
-    size: 256, // Use same preview size as PNG for consistency
-    fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
-    bgColor: getFinalBgColor(),
-    level: errorCorrectionLevel,
-    includeMargin: marginSize > 0,
     imageSettings: logoSrc ? {
       src: logoSrc,
       height: 256 * logoSize,
       width: 256 * logoSize,
       excavate: true,
     } : undefined,
-  };
+  }), [qrValue, validFgColor, validBgColor, errorCorrectionLevel, marginSize, logoSrc, logoSize]);
 
-  // Props for SVG with proper output size for download
-  const svgQrPropsDownload = {
+  const svgQrProps = useMemo(() => ({
     value: qrValue,
-    size: SVG_OUTPUT_SIZE, // Use full output size for SVG download
-    fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
-    bgColor: getFinalBgColor(),
+    size: 256,
+    fgColor: validFgColor,
+    bgColor: validBgColor,
     level: errorCorrectionLevel,
-    includeMargin: marginSize > 0,
+    margin: marginSize,
+    imageSettings: logoSrc ? {
+      src: logoSrc,
+      height: 256 * logoSize,
+      width: 256 * logoSize,
+      excavate: true,
+    } : undefined,
+  }), [qrValue, validFgColor, validBgColor, errorCorrectionLevel, marginSize, logoSrc, logoSize]);
+
+  const svgQrPropsDownload = useMemo(() => ({
+    value: qrValue,
+    size: SVG_OUTPUT_SIZE,
+    fgColor: validFgColor,
+    bgColor: validBgColor,
+    level: errorCorrectionLevel,
+    margin: marginSize,
     imageSettings: logoSrc ? {
       src: logoSrc,
       height: SVG_OUTPUT_SIZE * logoSize,
       width: SVG_OUTPUT_SIZE * logoSize,
       excavate: true,
     } : undefined,
-  };
-
-  // Props for download with actual qrSize
-
+  }), [qrValue, validFgColor, validBgColor, errorCorrectionLevel, marginSize, logoSrc, logoSize]);
 
   const qrByteLength = new TextEncoder().encode(qrValue || '').length;
   const complexityHint = (() => {
