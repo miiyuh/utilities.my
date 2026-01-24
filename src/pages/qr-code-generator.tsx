@@ -68,6 +68,7 @@ export default function QrCodeGeneratorPage() {
 
   const qrCanvasRef = useRef<HTMLDivElement>(null);
   const qrSvgRef = useRef<SVGSVGElement>(null);
+  const qrSvgDownloadRef = useRef<SVGSVGElement>(null);
   const suggestedFilenameRef = useRef<string>('qrcode');
 
 
@@ -262,9 +263,9 @@ export default function QrCodeGeneratorPage() {
           }
         }, CANVAS_RENDER_DELAY_MS);
      } else if (outputFormat === 'svg') {
-        if (qrSvgRef.current) {
+        if (qrSvgDownloadRef.current) {
             // SVG is already generated at the correct size (512px)
-            const svgString = new XMLSerializer().serializeToString(qrSvgRef.current);
+            const svgString = new XMLSerializer().serializeToString(qrSvgDownloadRef.current);
             const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
             downloadLink.href = URL.createObjectURL(blob);
             
@@ -523,10 +524,26 @@ export default function QrCodeGeneratorPage() {
     } : undefined,
   };
 
-  // Props for SVG with proper output size
+  // Props for SVG with preview size (for consistency with PNG preview)
   const svgQrProps = {
     value: qrValue,
-    size: SVG_OUTPUT_SIZE, // Use full output size for SVG
+    size: 256, // Use same preview size as PNG for consistency
+    fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
+    bgColor: getFinalBgColor(),
+    level: errorCorrectionLevel,
+    includeMargin: marginSize > 0,
+    imageSettings: logoSrc ? {
+      src: logoSrc,
+      height: 256 * logoSize,
+      width: 256 * logoSize,
+      excavate: true,
+    } : undefined,
+  };
+
+  // Props for SVG with proper output size for download
+  const svgQrPropsDownload = {
+    value: qrValue,
+    size: SVG_OUTPUT_SIZE, // Use full output size for SVG download
     fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
     bgColor: getFinalBgColor(),
     level: errorCorrectionLevel,
@@ -860,6 +877,13 @@ export default function QrCodeGeneratorPage() {
             </div>
           </div>
         </div>
+        
+        {/* Hidden high-resolution SVG for download */}
+        {outputFormat === 'svg' && (
+          <div className="hidden">
+            <QRCodeSVG {...svgQrPropsDownload} ref={qrSvgDownloadRef} />
+          </div>
+        )}
       </SidebarInset>
     </>
   );
