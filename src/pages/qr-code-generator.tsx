@@ -24,6 +24,9 @@ type OutputFormat = "png" | "svg";
 
 // SVG output size constant (512x512 pixels)
 const SVG_OUTPUT_SIZE = 512;
+// Fixed preview size inside the preview card
+const PREVIEW_SIZE = 256;
+// Outer preview box stays constant even when QR is absent
 
 // Helper function to validate HEX color
 const isValidHexColor = (color: string): boolean => {
@@ -64,7 +67,7 @@ export default function QrCodeGeneratorPage() {
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('png');
   const [downloadFilename, setDownloadFilename] = useState('qrcode.png');
   const [manualFilenameEdited, setManualFilenameEdited] = useState(false);
-  const [marginSize, setMarginSize] = useState(4);
+  const [marginSize, setMarginSize] = useState(12);
 
   const qrCanvasRef = useRef<HTMLDivElement>(null);
   const qrSvgRef = useRef<SVGSVGElement>(null);
@@ -81,6 +84,12 @@ export default function QrCodeGeneratorPage() {
     bgTransparent ? 'transparent' : (isValidHexColor(bgColorHex) ? bgColorHex : '#FFFFFF'),
     [bgTransparent, bgColorHex]
   );
+
+  // Keep preview square size constant while adjusting inner QR size and padding
+  const previewQrSize = useMemo(() => {
+    const inner = PREVIEW_SIZE - marginSize * 2;
+    return Math.max(32, inner); // avoid collapsing if margin is large
+  }, [marginSize]);
 
   // Validation helpers and payload limits
   const MAX_PAYLOAD_BYTES = 2048; // 2 KiB limit (tunable)
@@ -226,7 +235,7 @@ export default function QrCodeGeneratorPage() {
           fgColor: validFgColor,
           bgColor: validBgColor,
           level: errorCorrectionLevel,
-          margin: marginSize,
+          marginSize,
           imageSettings: logoSrc ? {
             src: logoSrc,
             height: qrSize * logoSize,
@@ -349,7 +358,7 @@ export default function QrCodeGeneratorPage() {
     setLogoSrc(null);
     setLogoSize(0.15);
     setOutputFormat('png');
-    setMarginSize(4);
+    setMarginSize(12);
     setManualFilenameEdited(false);
     suggestedFilenameRef.current = 'qrcode';
     toast({ title: 'Reset', description: 'All settings reverted.' });
@@ -516,33 +525,33 @@ export default function QrCodeGeneratorPage() {
   
   const commonQrProps = useMemo(() => ({
     value: qrValue,
-    size: 256,
+    size: previewQrSize,
     fgColor: validFgColor,
     bgColor: validBgColor,
     level: errorCorrectionLevel,
-    margin: marginSize,
+    marginSize,
     imageSettings: logoSrc ? {
       src: logoSrc,
       height: 256 * logoSize,
       width: 256 * logoSize,
       excavate: true,
     } : undefined,
-  }), [qrValue, validFgColor, validBgColor, errorCorrectionLevel, marginSize, logoSrc, logoSize]);
+  }), [qrValue, validFgColor, validBgColor, errorCorrectionLevel, marginSize, logoSrc, logoSize, previewQrSize]);
 
   const svgQrProps = useMemo(() => ({
     value: qrValue,
-    size: 256,
+    size: previewQrSize,
     fgColor: validFgColor,
     bgColor: validBgColor,
     level: errorCorrectionLevel,
-    margin: marginSize,
+    marginSize,
     imageSettings: logoSrc ? {
       src: logoSrc,
       height: 256 * logoSize,
       width: 256 * logoSize,
       excavate: true,
     } : undefined,
-  }), [qrValue, validFgColor, validBgColor, errorCorrectionLevel, marginSize, logoSrc, logoSize]);
+  }), [qrValue, validFgColor, validBgColor, errorCorrectionLevel, marginSize, logoSrc, logoSize, previewQrSize]);
 
   const svgQrPropsDownload = useMemo(() => ({
     value: qrValue,
@@ -550,7 +559,7 @@ export default function QrCodeGeneratorPage() {
     fgColor: validFgColor,
     bgColor: validBgColor,
     level: errorCorrectionLevel,
-    margin: marginSize,
+    marginSize,
     imageSettings: logoSrc ? {
       src: logoSrc,
       height: SVG_OUTPUT_SIZE * logoSize,
@@ -558,6 +567,25 @@ export default function QrCodeGeneratorPage() {
       excavate: true,
     } : undefined,
   }), [qrValue, validFgColor, validBgColor, errorCorrectionLevel, marginSize, logoSrc, logoSize]);
+
+  // Quiet zone padding for preview (simulates adjustable border size)
+  const previewQuietZoneStyle = useMemo(() => ({
+    padding: `${marginSize}px`,
+    width: `${PREVIEW_SIZE}px`,
+    height: `${PREVIEW_SIZE}px`,
+    boxSizing: 'border-box' as const, // keep total container size 1:1 including padding
+    backgroundColor: validBgColor === 'transparent' ? 'transparent' : validBgColor,
+    display: 'inline-block',
+  }), [marginSize, validBgColor]);
+
+  const previewOuterStyle = useMemo(() => ({
+      width: `${PREVIEW_SIZE + 32}px`,
+      height: `${PREVIEW_SIZE + 32}px`,
+    boxSizing: 'border-box' as const,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    }), []);
 
   const qrByteLength = new TextEncoder().encode(qrValue || '').length;
   const complexityHint = (() => {
@@ -815,13 +843,13 @@ export default function QrCodeGeneratorPage() {
                   </CardHeader>
                   <CardContent className="flex flex-col items-center space-y-4 md:space-y-5">
                     {qrValue ? (
-                      <div className={`p-4 rounded-sm inline-block border border-border ${bgTransparent? 'bg-[linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%),linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%)] bg-[length:12px_12px] bg-[0_0,6px_6px] dark:bg-[linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%),linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%)] dark:bg-[length:12px_12px] dark:bg-[0_0,6px_6px]':''} bg-background relative`}> 
+                      <div style={previewOuterStyle} className={`p-4 rounded-sm inline-block border border-border ${bgTransparent? 'bg-[linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%),linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%)] bg-[length:12px_12px] bg-[0_0,6px_6px] dark:bg-[linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%),linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%)] dark:bg-[length:12px_12px] dark:bg-[0_0,6px_6px]':''} bg-background relative`}> 
                         {outputFormat === 'png' ? (
-                          <div ref={qrCanvasRef} className="relative inline-block">
+                          <div ref={qrCanvasRef} className="relative inline-block" style={previewQuietZoneStyle}>
                              <QRCodeCanvas {...commonQrProps} />
                           </div>
                         ) : (
-                          <div className="relative inline-block">
+                          <div className="relative inline-block" style={previewQuietZoneStyle}>
                             <QRCodeSVG {...svgQrProps} ref={qrSvgRef} />
                           </div>
                         )}
