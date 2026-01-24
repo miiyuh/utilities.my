@@ -67,7 +67,7 @@ export default function QrCodeGeneratorPage() {
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('png');
   const [downloadFilename, setDownloadFilename] = useState('qrcode.png');
   const [manualFilenameEdited, setManualFilenameEdited] = useState(false);
-  const [marginSize, setMarginSize] = useState(12);
+  const [marginSize, setMarginSize] = useState(4);
 
   const qrCanvasRef = useRef<HTMLDivElement>(null);
   const qrSvgRef = useRef<SVGSVGElement>(null);
@@ -358,7 +358,7 @@ export default function QrCodeGeneratorPage() {
     setLogoSrc(null);
     setLogoSize(0.15);
     setOutputFormat('png');
-    setMarginSize(12);
+    setMarginSize(4);
     setManualFilenameEdited(false);
     suggestedFilenameRef.current = 'qrcode';
     toast({ title: 'Reset', description: 'All settings reverted.' });
