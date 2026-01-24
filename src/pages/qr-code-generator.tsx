@@ -22,6 +22,8 @@ type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type WifiEncryption = "WPA" | "WEP" | "nopass";
 type OutputFormat = "png" | "svg";
 
+// SVG output size constant (512x512 pixels)
+const SVG_OUTPUT_SIZE = 512;
 
 // Helper function to validate HEX color
 const isValidHexColor = (color: string): boolean => {
@@ -261,13 +263,8 @@ export default function QrCodeGeneratorPage() {
         }, CANVAS_RENDER_DELAY_MS);
      } else if (outputFormat === 'svg') {
         if (qrSvgRef.current) {
-            // Clone the SVG and resize it to download size
-            const svgClone = qrSvgRef.current.cloneNode(true) as SVGSVGElement;
-            svgClone.setAttribute('width', String(qrSize));
-            svgClone.setAttribute('height', String(qrSize));
-            svgClone.setAttribute('viewBox', `0 0 ${qrSize} ${qrSize}`);
-            
-            const svgString = new XMLSerializer().serializeToString(svgClone);
+            // SVG is already generated at the correct size (512px)
+            const svgString = new XMLSerializer().serializeToString(qrSvgRef.current);
             const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
             downloadLink.href = URL.createObjectURL(blob);
             
@@ -526,6 +523,22 @@ export default function QrCodeGeneratorPage() {
     } : undefined,
   };
 
+  // Props for SVG with proper output size
+  const svgQrProps = {
+    value: qrValue,
+    size: SVG_OUTPUT_SIZE, // Use full output size for SVG
+    fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
+    bgColor: getFinalBgColor(),
+    level: errorCorrectionLevel,
+    includeMargin,
+    imageSettings: logoSrc ? {
+      src: logoSrc,
+      height: SVG_OUTPUT_SIZE * logoSize,
+      width: SVG_OUTPUT_SIZE * logoSize,
+      excavate: true,
+    } : undefined,
+  };
+
   // Props for download with actual qrSize
 
 
@@ -644,22 +657,24 @@ export default function QrCodeGeneratorPage() {
                       </div>
                     </TooltipProvider>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="qrSize">QR Code Size: {qrSize}px</Label>
-                      <Slider
-                        id="qrSize"
-                        min={64}
-                        max={1024}
-                        step={16}
-                        value={[qrSize]}
-                        onValueChange={(value) => setQrSize(value[0])}
-                      />
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {[128,256,384,512,768,1024].map(sz => (
-                          <button key={sz} type="button" onClick={()=> setQrSize(sz)} className={`px-2 h-7 text-[11px] rounded-sm border border-border/70 hover:border-primary/60 hover:bg-accent/30 font-mono ${qrSize===sz?'bg-accent/40 border-primary/60':''}`}>{sz}px</button>
-                        ))}
+                    {outputFormat === 'png' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="qrSize">QR Code Size: {qrSize}px</Label>
+                        <Slider
+                          id="qrSize"
+                          min={64}
+                          max={1024}
+                          step={16}
+                          value={[qrSize]}
+                          onValueChange={(value) => setQrSize(value[0])}
+                        />
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {[128,256,384,512,768,1024].map(sz => (
+                            <button key={sz} type="button" onClick={()=> setQrSize(sz)} className={`px-2 h-7 text-[11px] rounded-sm border border-border/70 hover:border-primary/60 hover:bg-accent/30 font-mono ${qrSize===sz?'bg-accent/40 border-primary/60':''}`}>{sz}px</button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -790,7 +805,7 @@ export default function QrCodeGeneratorPage() {
                           </div>
                         ) : (
                           <div className="relative inline-block">
-                            <QRCodeSVG {...commonQrProps} ref={qrSvgRef} />
+                            <QRCodeSVG {...svgQrProps} ref={qrSvgRef} />
                           </div>
                         )}
                       </div>
