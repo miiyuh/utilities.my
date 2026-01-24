@@ -226,7 +226,7 @@ export default function QrCodeGeneratorPage() {
           fgColor: validFgColor,
           bgColor: validBgColor,
           level: errorCorrectionLevel,
-          marginSize,
+          margin: marginSize,
           imageSettings: logoSrc ? {
             src: logoSrc,
             height: qrSize * logoSize,
@@ -520,7 +520,7 @@ export default function QrCodeGeneratorPage() {
     fgColor: validFgColor,
     bgColor: validBgColor,
     level: errorCorrectionLevel,
-    marginSize,
+    margin: marginSize,
     imageSettings: logoSrc ? {
       src: logoSrc,
       height: 256 * logoSize,
