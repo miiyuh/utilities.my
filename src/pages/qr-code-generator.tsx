@@ -530,7 +530,7 @@ export default function QrCodeGeneratorPage() {
     fgColor: isValidHexColor(fgColor) ? fgColor : '#000000',
     bgColor: getFinalBgColor(),
     level: errorCorrectionLevel,
-    includeMargin,
+    includeMargin: marginSize > 0,
     imageSettings: logoSrc ? {
       src: logoSrc,
       height: SVG_OUTPUT_SIZE * logoSize,
