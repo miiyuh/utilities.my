@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, RotateCcw } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import type { default as ConfettiType } from 'canvas-confetti';
 
 interface SpinWheelCanvasProps {
   items: string[];
@@ -22,6 +22,13 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [winner, setWinner] = useState<string>('');
+  const [confetti, setConfetti] = useState<any>(null);
+
+  useEffect(() => {
+    import('canvas-confetti').then((mod) => {
+      setConfetti(() => mod.default || mod)
+    })
+  }, [])
 
   const drawWheel = useCallback(() => {
     const canvas = canvasRef.current;
@@ -187,6 +194,8 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
   }, [drawWheel]);
 
   const triggerConfetti = () => {
+    if (!confetti) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 

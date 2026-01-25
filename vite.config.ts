@@ -16,5 +16,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-ui': ['clsx', 'class-variance-authority'],
+          'vendor-map': ['leaflet', 'react-leaflet', 'lucide-react'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1500,
   },
 })

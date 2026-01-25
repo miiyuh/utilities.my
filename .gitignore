@@ -86,3 +86,4 @@ firestore-debug.log
 .kiro/
 .turbo/
 .next/
+.claude/

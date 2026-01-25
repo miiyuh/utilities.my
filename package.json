@@ -48,6 +48,7 @@
     "dayjs": "^1.11.19",
     "dompurify": "^3.3.1",
     "framer-motion": "^12.23.26",
+    "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
     "leaflet-terminator": "^0.1.0",
     "lucide-react": "^0.562.0",
