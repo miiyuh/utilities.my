@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -144,34 +144,40 @@ export default function UnitConverterPage() {
     // when category changes, reset units appropriately
     setFromUnit(currentCategory.units[0].value);
     setToUnit(currentCategory.units[Math.min(1, currentCategory.units.length-1)].value);
-  }, [selectedCategory]);
+  }, [currentCategory]);
 
-  const getUnit = (key: string): Unit | undefined => currentCategory.units.find(u=> u.value===key);
+  const getUnit = useCallback(
+    (key: string): Unit | undefined => currentCategory.units.find((u) => u.value === key),
+    [currentCategory],
+  );
 
-  const convert = (val: number, from: Unit, to: Unit): number => {
+  const convert = useCallback((val: number, from: Unit, to: Unit): number => {
     const base = isLinear(from) ? val * from.factor : from.toBase(val);
     const out = isLinear(to) ? base / to.factor : to.fromBase(base);
     return out;
-  };
+  }, []);
 
-  const format = (n: number): string => {
+  const format = useCallback((n: number): string => {
     if (!isFinite(n)) return '';
     let s = n.toFixed(precision);
     if (!keepZeros) s = s.replace(/\.0+$|(?<=\.\d*?)0+$/,'').replace(/\.$/,'');
     return s;
-  };
+  }, [keepZeros, precision]);
 
-  const getUnitLabel = (val: string): string => {
-    const u = currentCategory.units.find(u=> u.value===val);
-    // @ts-ignore - both shapes have label
-    return u?.label ?? val;
-  };
+  const getUnitLabel = useCallback((val: string): string => {
+    const unit = getUnit(val);
+    return unit?.label ?? val;
+  }, [getUnit]);
 
-  const recalc = (origin: 'from'|'to', input: string) => {
+  const recalc = useCallback((origin: 'from'|'to', input: string) => {
     const val = parseFloat(input);
     const uFrom = getUnit(fromUnit); const uTo = getUnit(toUnit);
     if (!uFrom || !uTo || isNaN(val)) {
-      origin==='from'? setToValue('') : setFromValue('');
+      if (origin === 'from') {
+        setToValue('');
+      } else {
+        setFromValue('');
+      }
       return;
     }
     if (origin==='from') {
@@ -181,7 +187,7 @@ export default function UnitConverterPage() {
       const out = convert(val, uTo, uFrom);
       setFromValue(format(out));
     }
-  };
+  }, [convert, format, fromUnit, getUnit, toUnit]);
 
   const conversionSummary = useMemo(() => {
     const fromLabel = getUnitLabel(fromUnit);
@@ -189,7 +195,7 @@ export default function UnitConverterPage() {
     if (!fromValue) return `Enter a value to convert ${fromLabel} → ${toLabel}`;
     if (!toValue) return `Enter a valid number to see ${fromLabel} → ${toLabel}`;
     return `${fromValue} ${fromLabel} = ${toValue} ${toLabel}`;
-  }, [fromUnit, toUnit, fromValue, toValue]);
+  }, [fromUnit, toUnit, fromValue, toValue, getUnitLabel]);
 
   const getCategoryIcon = (name: string) => {
     const cls = "h-4 w-4 text-muted-foreground";
@@ -207,8 +213,11 @@ export default function UnitConverterPage() {
     }
   };
 
-  // Recalc when units or settings change, using active side as source
-  useEffect(()=>{ recalc(activeSide, activeSide==='from'? fromValue : toValue); }, [fromUnit, toUnit, precision, keepZeros]);
+  // Recalc when units, values, or formatting settings change.
+  useEffect(() => {
+    const sourceValue = activeSide === 'from' ? fromValue : toValue;
+    recalc(activeSide, sourceValue);
+  }, [activeSide, fromValue, recalc, toValue]);
 
   const handleSwapUnits = () => {
     setFromUnit(toUnit); setToUnit(fromUnit);
