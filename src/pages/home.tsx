@@ -1,6 +1,5 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
-import { Button } from "@/components/ui/button"
 import { ThemeToggleButton } from "@/components/theme-toggle-button"
 import {
   Sidebar,

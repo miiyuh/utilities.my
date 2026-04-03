@@ -3,7 +3,8 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, RotateCcw } from 'lucide-react';
-import type { default as ConfettiType } from 'canvas-confetti';
+
+type ConfettiLauncher = (options?: Record<string, unknown>) => unknown;
 
 interface SpinWheelCanvasProps {
   items: string[];
@@ -22,7 +23,7 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [winner, setWinner] = useState<string>('');
-  const [confetti, setConfetti] = useState<any>(null);
+  const [confetti, setConfetti] = useState<ConfettiLauncher | null>(null);
 
   useEffect(() => {
     import('canvas-confetti').then((mod) => {
@@ -40,23 +41,23 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
   // Make the wheel as large as possible in the canvas, with a visible border
-  const borderWidth = 12;
-  const borderRadius = Math.min(centerX, centerY) - borderWidth / 2;
-  const radius = borderRadius - borderWidth / 2 - 2;
+    const borderWidth = 12;
+    const borderRadius = Math.min(centerX, centerY) - borderWidth / 2;
+    const radius = borderRadius - borderWidth / 2 - 2;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Draw outer border ring (subtle gray, thick)
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, borderRadius, 0, 2 * Math.PI);
-  ctx.strokeStyle = '#1a1a1a'; // Tailwind border-border
-  ctx.lineWidth = borderWidth;
-  ctx.shadowColor = 'rgba(0,0,0,0.08)';
-  ctx.shadowBlur = 8;
-  ctx.stroke();
-  ctx.restore();
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, borderRadius, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#1a1a1a'; // Tailwind border-border
+    ctx.lineWidth = borderWidth;
+    ctx.shadowColor = 'rgba(0,0,0,0.08)';
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.restore();
 
     if (items.length === 0) {
       // Draw empty wheel
@@ -209,7 +210,9 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
       origin: { x, y },
       colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57']
     });
-  };  const handleSpin = () => {
+  };
+
+  const handleSpin = () => {
     if (disabled || isSpinning || items.length < 2) return;
 
     setIsSpinning(true);
@@ -235,7 +238,8 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
       setRotation(currentRotation);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);      } else {
+        requestAnimationFrame(animate);
+      } else {
         // Spin complete - calculate which slice the pointer lands on
         const finalAngle = (rotation + finalRotation) % 360;
         const anglePerSlice = 360 / items.length;

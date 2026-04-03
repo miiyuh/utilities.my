@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { Copy, Trash2, Play, Pause, StopCircle, Volume2, Zap, Sun, Smartphone, Upload, Download, Eye, Languages, Code, Settings } from 'lucide-react';
+import { Copy, Trash2, Play, Pause, StopCircle, Volume2, Zap, Smartphone, Upload, Download, Eye, Languages, Code, Settings } from 'lucide-react';
 
 // Morse code alphabet
 const MORSE_CODE_MAP: { [key: string]: string } = {
@@ -114,7 +114,9 @@ export default function MorseCodeGeneratorPage() {
   // Play audio beep
   const playBeep = (duration: number) => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContextConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!audioContextConstructor) return;
+      audioContextRef.current = new audioContextConstructor();
     }
     
     const audioContext = audioContextRef.current;
@@ -360,7 +362,7 @@ export default function MorseCodeGeneratorPage() {
         setInputMorse(text.replace(/\r\n?/g, '\n'));
       }
       toast({ title: 'File imported successfully' });
-    } catch (error) {
+    } catch {
       toast({ title: 'Import failed', description: 'Could not read the file.', variant: 'destructive' });
     }
     

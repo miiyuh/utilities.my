@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 type Gender = 'men' | 'women' | 'kids';
+type Region = 'us' | 'uk' | 'eu' | 'cm';
 
 // Comprehensive shoe size conversion tables
 const shoeSizeData = {
@@ -74,7 +75,7 @@ const shoeSizeData = {
 export default function FootSizeConverterPage() {
   const [gender, setGender] = useState<Gender>('men');
   const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedRegion, setSelectedRegion] = useState<'us' | 'uk' | 'eu' | 'cm'>('us');
+  const [selectedRegion, setSelectedRegion] = useState<Region>('us');
   const [searchTerm, setSearchTerm] = useState('');
 
   const currentData = shoeSizeData[gender];
@@ -203,7 +204,7 @@ export default function FootSizeConverterPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="region">Region/System</Label>
-                        <Select value={selectedRegion} onValueChange={(value: any) => setSelectedRegion(value)}>
+                        <Select value={selectedRegion} onValueChange={(value) => setSelectedRegion(value as Region)}>
                           <SelectTrigger className="h-12">
                             <SelectValue />
                           </SelectTrigger>
@@ -232,7 +233,7 @@ export default function FootSizeConverterPage() {
                       <div className="mt-6 p-6 bg-primary/10 border border-primary/20 rounded-lg">
                         <div className="text-center mb-4">
                           <Badge variant="secondary" className="text-base px-4 py-2">
-                            {gender.charAt(0).toUpperCase() + gender.slice(1)}'s Size Conversions
+                            {gender.charAt(0).toUpperCase() + gender.slice(1)}&apos;s Size Conversions
                           </Badge>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
