@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Footprints, ArrowRightLeft, Info, User, Users } from 'lucide-react';
+import { Person, ArrowsLeftRight, Info, User, Users } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -107,7 +107,7 @@ export default function FootSizeConverterPage() {
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="lg:hidden" />
-            <Footprints className="h-5 w-5 text-primary" />
+            <Person className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-semibold font-headline">Shoe Size Converter</h1>
           </div>
           <ThemeToggleButton />
@@ -116,7 +116,7 @@ export default function FootSizeConverterPage() {
         <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
                 Shoe Size Converter & Reference
               </h1>
@@ -128,7 +128,7 @@ export default function FootSizeConverterPage() {
             <Tabs defaultValue="converter" className="w-full">
               <TabsList className="grid w-full grid-cols-2 h-auto">
                 <TabsTrigger value="converter" className="text-sm sm:text-base py-3">
-                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  <ArrowsLeftRight className="h-4 w-4 mr-2" />
                   Size Converter
                 </TabsTrigger>
                 <TabsTrigger value="reference" className="text-sm sm:text-base py-3">
@@ -196,7 +196,7 @@ export default function FootSizeConverterPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Footprints className="h-5 w-5" />
+                      <Person className="h-5 w-5" />
                       Enter Your Size
                     </CardTitle>
                   </CardHeader>

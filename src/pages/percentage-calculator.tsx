@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Percent, Calculator, TrendingUp, Divide, PlusCircle, MinusCircle, Copy } from 'lucide-react';
+import { Percent, Calculator, TrendUp, Divide, PlusCircle, MinusCircle, Copy } from 'phosphor-react';
 import { Button } from '@/components/ui/button';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
@@ -90,7 +90,7 @@ export default function PercentageCalculatorPage() {
         <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
                 Percentage Calculator
               </h1>
@@ -223,7 +223,7 @@ export default function PercentageCalculatorPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5" />
+                      <TrendUp className="h-5 w-5" />
                       Percentage Change
                     </CardTitle>
                   </CardHeader>

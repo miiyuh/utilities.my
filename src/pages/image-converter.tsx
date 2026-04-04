@@ -18,22 +18,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { 
   Upload, 
   Download, 
-  RotateCcw, 
+  ArrowCounterClockwise, 
   Image as ImageIcon, 
-  FileImage, 
-  Loader2, 
-  CheckCircle2 as CheckCircle, 
-  AlertCircle,
+  Image as ImageFile, 
+  Spinner, 
+  CheckCircle, 
+  Warning,
   Info,
-  Trash2,
-  RefreshCw,
+  Trash,
+  ArrowClockwise,
   Palette,
-  Settings2,
-  Layers,
+  Gear,
+  Stack,
   X,
   Play,
   Archive
-} from 'lucide-react'
+} from 'phosphor-react'
 
 import {
   type OutputFormat,
@@ -718,7 +718,7 @@ export default function ImageConverterPage() {
         <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* Big heading */}
-            <div className="mb-6 sm:mb-8">
+            <div className="mb-6 sm:mb-8 hidden sm:block">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">Image Converter & Resizer</h1>
               <p className="text-base sm:text-lg text-muted-foreground">Convert images between formats, resize, and download the result.</p>
             </div>
@@ -744,7 +744,7 @@ export default function ImageConverterPage() {
                   disabled={processing || batchProcessing}
                 />
                 <div className="flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-muted-foreground" />
+                  <Stack className="h-5 w-5 text-muted-foreground" />
                   <span className={`text-sm font-medium ${batchMode ? 'text-foreground' : 'text-muted-foreground'}`}>Batch (Max 20)</span>
                 </div>
                 {batchMode && batchFiles.length > 0 && (
@@ -814,7 +814,7 @@ export default function ImageConverterPage() {
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
                           isDragOver ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
                         }`}>
-                          <Layers className="h-6 w-6" />
+                          <Stack className="h-6 w-6" />
                         </div>
                         <div className="text-center sm:text-left flex-1">
                           <div className="font-medium text-foreground mb-1">
@@ -830,7 +830,7 @@ export default function ImageConverterPage() {
                       <div className="w-full text-left" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b">
                           <Badge variant="secondary" className="text-sm">
-                            <Layers className="h-3.5 w-3.5 mr-1" />
+                            <Stack className="h-3.5 w-3.5 mr-1" />
                             {batchFiles.length}/20 files
                           </Badge>
                           <Button
@@ -868,12 +868,12 @@ export default function ImageConverterPage() {
                               <div className="flex-shrink-0">
                                 {item.status === 'queued' && (
                                   <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                                    <FileImage className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <ImageFile className="h-3.5 w-3.5 text-muted-foreground" />
                                   </div>
                                 )}
                                 {item.status === 'processing' && (
                                   <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                    <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin" />
+                                    <Spinner className="h-3.5 w-3.5 text-blue-500 animate-spin" />
                                   </div>
                                 )}
                                 {item.status === 'completed' && (
@@ -883,7 +883,7 @@ export default function ImageConverterPage() {
                                 )}
                                 {item.status === 'error' && (
                                   <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center">
-                                    <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                                    <Warning className="h-3.5 w-3.5 text-destructive" />
                                   </div>
                                 )}
                               </div>
@@ -919,7 +919,7 @@ export default function ImageConverterPage() {
                                     }}
                                     title="Retry"
                                   >
-                                    <RefreshCw className="h-3.5 w-3.5" />
+                                    <ArrowClockwise className="h-3.5 w-3.5" />
                                   </Button>
                                 )}
                                 {!batchProcessing && (
@@ -968,7 +968,7 @@ export default function ImageConverterPage() {
                           <div className="text-sm text-muted-foreground">
                             {humanSize(size)} • {imageLoaded && naturalWidth && naturalHeight ? `${naturalWidth}×${naturalHeight}px` : (
                               <span className="inline-flex items-center gap-1">
-                                <Loader2 className="h-3 w-3 animate-spin" />
+                                <Spinner className="h-3 w-3 animate-spin" />
                                 Loading dimensions...
                               </span>
                             )}
@@ -987,7 +987,7 @@ export default function ImageConverterPage() {
                               ;(e.target as HTMLButtonElement).blur()
                             }}
                           >
-                            <RefreshCw className="h-4 w-4 mr-1" />
+                            <ArrowClockwise className="h-4 w-4 mr-1" />
                             Change
                           </Button>
                           <Button
@@ -999,7 +999,7 @@ export default function ImageConverterPage() {
                               clear()
                             }}
                           >
-                            <Trash2 className="h-4 w-4 mr-1" />
+                            <Trash className="h-4 w-4 mr-1" />
                             Remove
                           </Button>
                         </div>
@@ -1029,7 +1029,7 @@ export default function ImageConverterPage() {
                   {/* Error Display - Single Mode */}
                   {!batchMode && error && (
                     <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 mt-4">
-                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                      <Warning className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-destructive text-sm mb-1">Upload Error</div>
                         <div className="text-sm text-destructive/80 leading-snug">{error}</div>
@@ -1040,7 +1040,7 @@ export default function ImageConverterPage() {
                   {/* Error Display - Batch Mode */}
                   {batchMode && batchError && (
                     <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 mt-4">
-                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                      <Warning className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-destructive text-sm mb-1">Batch Error</div>
                         <div className="text-sm text-destructive/80 leading-snug whitespace-pre-line">{batchError}</div>
@@ -1056,7 +1056,7 @@ export default function ImageConverterPage() {
               <Card className="minimal-card">
                 <CardHeader className="pb-3 sm:pb-4">
                   <CardTitle className="font-headline text-lg sm:text-xl md:text-2xl tracking-tight flex items-center gap-2">
-                    <Settings2 className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <Gear className="h-5 w-5 sm:h-6 sm:w-6" />
                     <span className="truncate">
                       {batchMode ? 'Conversion Settings' : 'Conversion Settings & Live Preview'}
                     </span>
@@ -1096,7 +1096,7 @@ export default function ImageConverterPage() {
                               </SelectItem>
                               <SelectItem value="image/webp">
                                 <div className="flex items-center gap-2">
-                                  <FileImage className="h-4 w-4" />
+                                  <ImageFile className="h-4 w-4" />
                                   <span className="hidden sm:inline">WebP - Modern</span>
                                   <span className="sm:hidden">WebP</span>
                                 </div>
@@ -1190,7 +1190,7 @@ export default function ImageConverterPage() {
                       {!batchMode && imgSrc && (
                         <div className="space-y-3 sm:space-y-4">
                           <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
-                            <FileImage className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <ImageFile className="h-4 w-4 sm:h-5 sm:w-5" />
                             Output Information
                           </h3>
                           <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -1272,7 +1272,7 @@ export default function ImageConverterPage() {
                     {!batchMode && (
                       <div className="space-y-3 sm:space-y-4">
                         <div className="flex items-center gap-2 text-base sm:text-lg font-semibold text-foreground">
-                          <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <ArrowClockwise className="h-4 w-4 sm:h-5 sm:w-5" />
                           Live Preview
                         </div>
                         <div className="bg-muted/30 border border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-6 flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
@@ -1281,7 +1281,7 @@ export default function ImageConverterPage() {
                               {generatingPreview ? (
                                 <div className="text-center space-y-3 sm:space-y-4">
                                   <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                                    <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
+                                    <Spinner className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
                                   </div>
                                   <div className="text-sm font-medium text-muted-foreground">Generating preview...</div>
                                   <div className="text-xs text-muted-foreground/70">This may take a moment on mobile</div>
@@ -1299,7 +1299,7 @@ export default function ImageConverterPage() {
                               ) : (
                                 <div className="text-center space-y-3 sm:space-y-4">
                                   <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                                    <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
+                                    <Spinner className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
                                   </div>
                                   <div className="text-sm font-medium text-muted-foreground">Loading preview...</div>
                                 </div>
@@ -1330,12 +1330,12 @@ export default function ImageConverterPage() {
                           >
                             {processing ? (
                               <>
-                                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                <Spinner className="h-5 w-5 mr-2 animate-spin" />
                                 Converting & Downloading...
                               </>
                             ) : !imageLoaded && imgSrc ? (
                               <>
-                                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                <Spinner className="h-5 w-5 mr-2 animate-spin" />
                                 Loading Image...
                               </>
                           ) : downloadUrl && downloadBlobState ? (
@@ -1366,7 +1366,7 @@ export default function ImageConverterPage() {
                             size="lg"
                             className="w-full sm:w-44 h-12 sm:h-14"
                           >
-                            <RotateCcw className="h-5 w-5 mr-2" />
+                            <ArrowCounterClockwise className="h-5 w-5 mr-2" />
                             Reset
                           </Button>
                         </div>
@@ -1434,7 +1434,7 @@ export default function ImageConverterPage() {
                             size="lg"
                             className="h-12 sm:h-14 px-3 sm:px-6"
                           >
-                            <Trash2 className="h-5 w-5" />
+                            <Trash className="h-5 w-5" />
                             <span className="hidden sm:inline ml-2">Clear</span>
                           </Button>
                         </div>
@@ -1445,7 +1445,7 @@ export default function ImageConverterPage() {
                     {!batchMode && message && !message.includes('Downloaded') && (
                       <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div className="w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-400 flex items-center justify-center flex-shrink-0">
-                          <Loader2 className="h-3 w-3 text-white animate-spin" />
+                          <Spinner className="h-3 w-3 text-white animate-spin" />
                         </div>
                         <div className="text-sm text-blue-800 dark:text-blue-200 font-medium leading-snug">{message}</div>
                       </div>
@@ -1453,7 +1453,7 @@ export default function ImageConverterPage() {
                     
                     {!batchMode && error && (
                       <div className="p-3 sm:p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                        <Warning className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                         <div className="text-sm text-destructive leading-snug font-medium">{error}</div>
                       </div>
                     )}

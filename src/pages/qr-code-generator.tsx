@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Settings2, Upload, Trash2, QrCode as QrCodeIcon, Copy, QrCode, ImageDown, RefreshCcw, Info } from 'lucide-react';
+import { Download, Gear, Upload, Trash, QrCode as QrCodeIcon, Copy, QrCode, DownloadSimple, ArrowClockwise, Info } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -616,7 +616,7 @@ export default function QrCodeGeneratorPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">QR Code Generator</h1>
               <p className="text-lg text-muted-foreground">Generate QR codes from text or URLs.</p>
             </div>
@@ -651,10 +651,10 @@ export default function QrCodeGeneratorPage() {
                             <Copy className="h-3.5 w-3.5 mr-1" /> HTML
                           </Button>
                           <Button type="button" variant="outline" size="sm" disabled={!qrValue || outputFormat!=='png'} onClick={copyPngToClipboard} className="h-8 px-3">
-                            <ImageDown className="h-3.5 w-3.5 mr-1" /> PNG
+                            <DownloadSimple className="h-3.5 w-3.5 mr-1" /> PNG
                           </Button>
                           <Button type="button" variant="outline" size="sm" onClick={resetAll} className="h-8 px-3">
-                            <RefreshCcw className="h-3.5 w-3.5 mr-1" /> Reset
+                            <ArrowClockwise className="h-3.5 w-3.5 mr-1" /> Reset
                           </Button>
                         </div>
                         <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -672,7 +672,7 @@ export default function QrCodeGeneratorPage() {
                 {/* Customization Section */}
                 <Card className="minimal-card">
                   <CardHeader className="pb-3 md:pb-4">
-                    <CardTitle className="flex items-center font-headline text-lg md:text-xl tracking-tight"><Settings2 className="mr-2 h-5 w-5" /> Customization</CardTitle>
+                    <CardTitle className="flex items-center font-headline text-lg md:text-xl tracking-tight"><Gear className="mr-2 h-5 w-5" /> Customization</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 md:space-y-5">
                     <TooltipProvider delayDuration={200}>
@@ -826,7 +826,7 @@ export default function QrCodeGeneratorPage() {
                                     </div>
                                 </div>
                                 <Button variant="outline" onClick={clearLogo} className="w-full text-destructive hover:text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Clear Logo
+                                    <Trash className="mr-2 h-4 w-4" /> Clear Logo
                                 </Button>
                             </div>
                         )}

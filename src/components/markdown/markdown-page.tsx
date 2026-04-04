@@ -1,14 +1,14 @@
 "use client";
 
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import type { Icon } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { MarkdownView } from './markdown-view';
 
 interface MarkdownPageProps {
-  icon: LucideIcon;
+  icon: Icon;
   title: string;
   content: string;
 }

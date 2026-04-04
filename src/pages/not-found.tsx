@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { Home, Search, ArrowLeft } from 'lucide-react'
+import { House, MagnifyingGlass, ArrowLeft } from 'phosphor-react'
 import { Button } from '@/components/ui/button'
 import { tools } from '@/lib/tools'
 
@@ -33,7 +33,7 @@ export default function NotFound() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg">
               <Link to="/">
-                <Home className="h-4 w-4 mr-2" />
+                <House className="h-4 w-4 mr-2" />
                 Go to Homepage
               </Link>
             </Button>
@@ -46,7 +46,7 @@ export default function NotFound() {
           {/* Suggested Tools */}
           <div className="pt-8 border-t">
             <h3 className="text-lg font-medium text-foreground mb-4 flex items-center justify-center gap-2">
-              <Search className="h-5 w-5" />
+              <MagnifyingGlass className="h-5 w-5" />
               Popular Tools
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

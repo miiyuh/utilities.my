@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Sidebar, SidebarInset, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { Activity, Ruler, Dumbbell, Sparkles, Info, ArrowDown, Heart, TrendingUp, AlertTriangle, RotateCcw, Copy, Share2 } from "lucide-react";
+import { Activity, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, Copy, ShareNetwork } from "phosphor-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -26,8 +26,8 @@ function classifyBMI(bmi: number) {
   if (!isFinite(bmi) || bmi <= 0) return { label: "—", color: "", hint: "Enter height and weight", icon: null };
   if (bmi < 18.5) return { label: "Underweight", color: "text-blue-500", hint: "Below healthy range", icon: ArrowDown };
   if (bmi < 25) return { label: "Healthy", color: "text-green-500", hint: "Within healthy range", icon: Heart };
-  if (bmi < 30) return { label: "Overweight", color: "text-amber-500", hint: "Above healthy range", icon: TrendingUp };
-  return { label: "Obesity", color: "text-red-500", hint: "Significantly above healthy range", icon: AlertTriangle };
+  if (bmi < 30) return { label: "Overweight", color: "text-amber-500", hint: "Above healthy range", icon: TrendUp };
+  return { label: "Obesity", color: "text-red-500", hint: "Significantly above healthy range", icon: Warning };
 }
 
 export default function BmiCalculatorPage() {
@@ -225,9 +225,9 @@ export default function BmiCalculatorPage() {
           <ThemeToggleButton />
         </header>
 
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
-            <div className="mb-8">
+        <div className="flex flex-1 flex-col px-8 p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">BMI Calculator</h1>
               <p className="text-lg text-muted-foreground max-w-3xl">Compute your Body Mass Index (BMI) using metric or imperial units.</p>
             </div>
@@ -242,14 +242,14 @@ export default function BmiCalculatorPage() {
                         <SelectTrigger><SelectValue placeholder="Select units" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="metric"><div className="flex items-center gap-2"><Ruler className="h-4 w-4" /> Metric (kg, cm)</div></SelectItem>
-                          <SelectItem value="imperial"><div className="flex items-center gap-2"><Dumbbell className="h-4 w-4" /> Imperial (lb, ft/in)</div></SelectItem>
+                          <SelectItem value="imperial"><div className="flex items-center gap-2"><Scales className="h-4 w-4" /> Imperial (lb, ft/in)</div></SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-2 sm:flex-wrap">
-                      <Button type="button" variant="outline" onClick={handleReset} disabled={!hasInputs} className="h-10 w-full sm:w-auto"><RotateCcw className="h-4 w-4" /> Reset</Button>
-                      <Button type="button" variant="outline" onClick={copyBMI} disabled={!Number.isFinite(rounded)} className="h-10 w-full sm:w-auto"><Copy className="h-4 w-4" /> Copy BMI</Button>
-                      <Button type="button" variant="outline" onClick={shareBMI} disabled={!Number.isFinite(rounded)} className="h-10 w-full sm:w-auto"><Share2 className="h-4 w-4" /> Share</Button>
+                    <div className="flex flex-row w-full gap-2">
+                      <Button type="button" variant="outline" onClick={handleReset} disabled={!hasInputs} className="h-10 flex-1 sm:flex-initial sm:w-auto"><ArrowCounterClockwise className="h-4 w-4" /> <span className="hidden sm:inline">Reset</span></Button>
+                      <Button type="button" variant="outline" onClick={copyBMI} disabled={!Number.isFinite(rounded)} className="h-10 flex-1 sm:flex-initial sm:w-auto"><Copy className="h-4 w-4" /> <span className="hidden sm:inline">Copy BMI</span></Button>
+                      <Button type="button" variant="outline" onClick={shareBMI} disabled={!Number.isFinite(rounded)} className="h-10 flex-1 sm:flex-initial sm:w-auto"><ShareNetwork className="h-4 w-4" /> <span className="hidden sm:inline">Share</span></Button>
                     </div>
                   </div>
 
@@ -348,7 +348,7 @@ export default function BmiCalculatorPage() {
                     {abnormal && (
                       <Alert className="mt-2 text-xs">
                         <AlertDescription className="flex items-start gap-2">
-                          <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          <Sparkle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                           <span>
                             Those numbers look unusual for humans.
                             {abnormal === "so-tall" && " Measuring a skyscraper?"}

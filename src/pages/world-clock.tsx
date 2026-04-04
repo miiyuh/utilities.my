@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Search, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, MagnifyingGlass, Gear, CaretDown, CaretUp } from 'phosphor-react';
 import { Switch } from '@/components/ui/switch';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
@@ -114,7 +114,7 @@ export default function WorldClockPage() {
         <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
                 World Clock
               </h1>
@@ -128,7 +128,7 @@ export default function WorldClockPage() {
               <CardHeader className="pb-4 sm:pb-6">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <Gear className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="hidden sm:inline">Controls</span>
                     <span className="sm:hidden text-sm">Settings</span>
                   </CardTitle>
@@ -140,12 +140,12 @@ export default function WorldClockPage() {
                   >
                     {showControls ? (
                       <>
-                        <ChevronUp className="h-3 w-3" />
+                        <CaretUp className="h-3 w-3" />
                         <span className="text-xs">Hide</span>
                       </>
                     ) : (
                       <>
-                        <ChevronDown className="h-3 w-3" />
+                        <CaretDown className="h-3 w-3" />
                         <span className="text-xs">Show</span>
                       </>
                     )}
@@ -173,7 +173,7 @@ export default function WorldClockPage() {
                   <div className="w-full">
                     <Label htmlFor="search" className="text-xs sm:text-sm md:text-base mb-2 block">Search Cities or Countries</Label>
                     <div className="relative">
-                      <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                      <MagnifyingGlass className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                       <Input
                         id="search"
                         placeholder="Search cities, countries..."

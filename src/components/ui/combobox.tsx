@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, CaretDown } from "phosphor-react"
 
 import { cn } from "@/lib/utils"
 
@@ -104,7 +104,7 @@ export function Combobox({
           "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-muted-foreground/60",
           "transition-colors duration-200"
         )}>
-          <ChevronsUpDown className="size-4" />
+          <CaretDown className="size-4" />
         </div>
       </div>
 

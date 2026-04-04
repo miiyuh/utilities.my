@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRightLeft, Copy, CalendarIcon, Timer } from 'lucide-react';
+import { ArrowsLeftRight, Copy, Calendar as CalendarIcon, Timer } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -196,7 +196,7 @@ export default function UnixTimestampConverterPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Unix Timestamp Converter</h1>
               <p className="text-lg text-muted-foreground">Convert Unix timestamps to human-readable dates and vice-versa.</p>
             </div>
@@ -229,7 +229,7 @@ export default function UnixTimestampConverterPage() {
 
                 <div className="flex justify-center my-6">
                   <Button variant="outline" size="icon" onClick={() => handleSwap()} className="h-14 w-14 bg-muted/20 border border-border rounded-md">
-                    <ArrowRightLeft className="h-6 w-6 text-foreground" />
+                    <ArrowsLeftRight className="h-6 w-6 text-foreground" />
                   </Button>
                 </div>
 

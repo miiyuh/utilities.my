@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownUp, ALargeSmall, FilterX, Trash2, Copy, Upload, Download, Shuffle, ArrowLeftRight, Info } from 'lucide-react';
+import { SortAscending, TextAa, X, Trash, Copy, Upload, Download, Shuffle, ArrowsLeftRight, Info } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -222,7 +222,7 @@ export default function SorterPage() {
   <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="lg:hidden" />
-            <ArrowDownUp className="h-5 w-5 text-primary" />
+            <SortAscending className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-semibold font-headline">Sorter</h1>
           </div>
           <ThemeToggleButton />
@@ -230,7 +230,7 @@ export default function SorterPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Sorter</h1>
               <p className="text-lg text-muted-foreground">Sort lines of text alphabetically, numerically, by length, or by any column.</p>
             </div>
@@ -245,7 +245,7 @@ export default function SorterPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <input ref={fileInputRef} type="file" accept=".txt,.csv,.tsv,text/plain" className="hidden" onChange={(e)=>{ const f=e.currentTarget.files?.[0]; if (f) handleUpload(f); e.currentTarget.value=''; }} />
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Upload className="h-4 w-4 mr-1"/> Upload file</Button>
-                    <Button variant="outline" size="sm" onClick={handleClear}><Trash2 className="h-4 w-4 mr-1"/> Clear</Button>
+                    <Button variant="outline" size="sm" onClick={handleClear}><Trash className="h-4 w-4 mr-1"/> Clear</Button>
                     <div className="text-sm text-muted-foreground ml-auto">Lines: <span className="font-medium">{stats.inCount}</span></div>
                   </div>
                   <div className="space-y-2">
@@ -323,7 +323,7 @@ export default function SorterPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <Checkbox id="caseSensitive" checked={caseSensitive} onCheckedChange={(c)=> setCaseSensitive(Boolean(c))} />
-                        <Label htmlFor="caseSensitive" className="font-normal flex items-center"><ALargeSmall className="mr-2 h-4 w-4 text-muted-foreground" /> Case Sensitive</Label>
+                        <Label htmlFor="caseSensitive" className="font-normal flex items-center"><TextAa className="mr-2 h-4 w-4 text-muted-foreground" /> Case Sensitive</Label>
                       </div>
                     </div>
                     <div className="space-y-3">
@@ -337,14 +337,14 @@ export default function SorterPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <Checkbox id="removeDuplicates" checked={removeDuplicates} onCheckedChange={(c)=> setRemoveDuplicates(Boolean(c))} />
-                        <Label htmlFor="removeDuplicates" className="font-normal flex items-center"><FilterX className="mr-2 h-4 w-4 text-muted-foreground" /> Remove Duplicates</Label>
+                        <Label htmlFor="removeDuplicates" className="font-normal flex items-center"><X className="mr-2 h-4 w-4 text-muted-foreground" /> Remove Duplicates</Label>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 pt-2">
                     {!autoSort && (
-                      <Button onClick={handleSort} className="h-10"><ArrowDownUp className="mr-2 h-4 w-4"/> Sort</Button>
+                      <Button onClick={handleSort} className="h-10"><SortAscending className="mr-2 h-4 w-4"/> Sort</Button>
                     )}
                     <Button variant="outline" onClick={()=> { setSortOrder(o=> o==='asc'? 'desc':'asc'); if (!autoSort) setTimeout(()=> handleSort(), 0); }} className="h-10">Reverse order</Button>
                     <Button variant="outline" onClick={handleShuffle} className="h-10"><Shuffle className="mr-2 h-4 w-4"/> Shuffle</Button>
@@ -359,7 +359,7 @@ export default function SorterPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex flex-wrap items-center gap-3">
-                    <Button variant="outline" size="sm" onClick={()=> { if (outputText) { setInputText(outputText); toast({ title: 'Replaced input with output' }); } }}><ArrowLeftRight className="h-4 w-4 mr-1"/> Use as Input</Button>
+                    <Button variant="outline" size="sm" onClick={()=> { if (outputText) { setInputText(outputText); toast({ title: 'Replaced input with output' }); } }}><ArrowsLeftRight className="h-4 w-4 mr-1"/> Use as Input</Button>
                     <Button variant="outline" size="sm" onClick={handleDownload} disabled={!outputText}><Download className="h-4 w-4 mr-1"/> Download</Button>
                     <Button size="sm" onClick={handleCopy} disabled={!outputText}><Copy className="h-4 w-4 mr-1"/> Copy</Button>
                     <div className="text-sm text-muted-foreground ml-auto">Lines: <span className="font-medium">{stats.outCount}</span></div>

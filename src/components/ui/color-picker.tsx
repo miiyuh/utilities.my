@@ -1,5 +1,5 @@
 import Color from 'color';
-import { Copy, PipetteIcon, Check } from 'lucide-react';
+import { Copy, Eye, Check } from 'phosphor-react';
 import { useCallback, useEffect, useRef, useState, type HTMLAttributes } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -361,7 +361,7 @@ export function ColorPicker({
               type="button"
               title="Pick color from screen"
             >
-              <PipetteIcon size={16} />
+              <Eye size={16} />
             </Button>
           </div>
         </div>

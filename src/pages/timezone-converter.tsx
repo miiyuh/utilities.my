@@ -17,9 +17,9 @@ import {
   Copy,
   Clock,
   Calendar as CalendarIcon,
-  Trash2,
-  RefreshCcw,
-} from 'lucide-react';
+  Trash,
+  ArrowClockwise,
+} from 'phosphor-react';
 
 import {
   DndContext,
@@ -385,7 +385,7 @@ export default function TimezoneConverterPage() {
                           className="px-4"
                           title="Set to today"
                         >
-                          <RefreshCcw className="h-4 w-4" />
+                          <ArrowClockwise className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
@@ -527,7 +527,7 @@ export default function TimezoneConverterPage() {
                                           aria-label={`Remove ${tzInfo?.city}`}
                                           className="h-11 w-11 p-0 flex-shrink-0 group hover:bg-destructive hover:text-destructive-foreground"
                                         >
-                                          <Trash2 className="h-4 w-4 text-destructive transition-colors group-hover:text-white" />
+                                          <Trash className="h-4 w-4 text-destructive transition-colors group-hover:text-white" />
                                         </Button>
                                       </div>
                                     )}

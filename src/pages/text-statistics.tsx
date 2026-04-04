@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { Baseline, Type, RemoveFormatting, WrapText, ScanLine, Pilcrow, Clock, Copy, BarChartHorizontal, Hash, Upload, Download } from 'lucide-react';
+import { TextAa, TextStrikethrough, ChartBar, Eye, Note, Clock, Copy, Hash, Upload, Download } from 'phosphor-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -175,7 +175,7 @@ export default function TextStatisticsPage() {
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="lg:hidden" />
-            <Baseline className="h-5 w-5 text-primary" />
+            <TextAa className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-semibold font-headline">Text Statistics</h1>
           </div>
           <ThemeToggleButton />
@@ -183,7 +183,7 @@ export default function TextStatisticsPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Statistics</h1>
               <p className="text-lg text-muted-foreground">Analyze text for counts, reading time, and distributions with live options.</p>
             </div>
@@ -255,18 +255,18 @@ export default function TextStatisticsPage() {
                       </TabsList>
                       <TabsContent value="overview" className="pt-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <StatCard icon={Type} label="Characters (incl. spaces)" value={stats.characters} />
-                          <StatCard icon={RemoveFormatting} label="Characters (no spaces)" value={stats.charactersNoSpaces} />
-                          <StatCard icon={WrapText} label="Words" value={`${stats.words} (unique ${stats.uniqueWords})`} />
-                          <StatCard icon={ScanLine} label="Sentences" value={stats.sentences} />
-                          <StatCard icon={Pilcrow} label="Paragraphs" value={stats.paragraphs} />
+                          <StatCard icon={TextAa} label="Characters (incl. spaces)" value={stats.characters} />
+                          <StatCard icon={TextStrikethrough} label="Characters (no spaces)" value={stats.charactersNoSpaces} />
+                          <StatCard icon={TextAa} label="Words" value={`${stats.words} (unique ${stats.uniqueWords})`} />
+                          <StatCard icon={Eye} label="Sentences" value={stats.sentences} />
+                          <StatCard icon={Note} label="Paragraphs" value={stats.paragraphs} />
                           <StatCard icon={Hash} label="Lines" value={stats.lines} />
-                          <StatCard icon={Type} label="Avg word length" value={stats.avgWordLength} />
-                          <StatCard icon={Type} label="Longest word" value={stats.longestWord || '-'} />
-                          <StatCard icon={WrapText} label="Longest sentence (words)" value={stats.longestSentenceWords} />
+                          <StatCard icon={TextAa} label="Avg word length" value={stats.avgWordLength} />
+                          <StatCard icon={TextAa} label="Longest word" value={stats.longestWord || '-'} />
+                          <StatCard icon={TextAa} label="Longest sentence (words)" value={stats.longestSentenceWords} />
                           <StatCard icon={Clock} label="Reading time" value={`~${stats.readingTimeMinutes} min`} />
                           <StatCard icon={Clock} label="Speaking time" value={`~${stats.speakingTimeMinutes} min`} />
-                          <StatCard icon={BarChartHorizontal} label="Estimated pages (~500 wpp)" value={`~${stats.estimatedPages}`} />
+                          <StatCard icon={ChartBar} label="Estimated pages (~500 wpp)" value={`~${stats.estimatedPages}`} />
                         </div>
                       </TabsContent>
                       <TabsContent value="words" className="pt-4">
@@ -304,7 +304,7 @@ export default function TextStatisticsPage() {
                   ) : (
                     <div className="flex items-center justify-center h-full text-muted-foreground">
                       <div className="text-center">
-                        <Type className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <TextAa className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p>Enter text to see statistics</p>
                       </div>
                     </div>

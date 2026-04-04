@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'phosphor-react';
 import { MarkdownPage } from '@/components/markdown/markdown-page';
 
 const PRIVACY_CONTENT = `# Privacy Policy

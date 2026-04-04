@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRightLeft, Copy, Ruler, Thermometer, Box, Square, Gauge, Clock, Dumbbell, Wifi, HardDrive } from 'lucide-react';
+import { ArrowsLeftRight, Copy, Ruler, Thermometer, Cube, Square, Gauge, Clock, Scales, WifiHigh, HardDrive } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -201,14 +201,14 @@ export default function UnitConverterPage() {
     const cls = "h-4 w-4 text-muted-foreground";
     switch (name) {
       case 'Length': return <Ruler className={cls} />;
-      case 'Weight': return <Dumbbell className={cls} />;
+      case 'Weight': return <Scales className={cls} />;
       case 'Temperature': return <Thermometer className={cls} />;
-      case 'Volume': return <Box className={cls} />;
+      case 'Volume': return <Cube className={cls} />;
       case 'Area': return <Square className={cls} />;
       case 'Speed': return <Gauge className={cls} />;
       case 'Time': return <Clock className={cls} />;
       case 'Storage': return <HardDrive className={cls} />;
-      case 'Internet Speed': return <Wifi className={cls} />;
+      case 'Internet Speed': return <WifiHigh className={cls} />;
       default: return <Ruler className={cls} />;
     }
   };
@@ -256,7 +256,7 @@ export default function UnitConverterPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
-            <div className="mb-8 text-center md:text-left">
+            <div className="mb-8 text-center md:text-left hidden sm:block">
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">Unit Converter</h1>
               <p className="text-lg text-muted-foreground max-w-2xl">Convert between units with live two-way input, precision control, and more categories.</p>
             </div>
@@ -329,7 +329,7 @@ export default function UnitConverterPage() {
                         className="rounded-sm h-10 w-10 border-2 hover:bg-muted hover:border-primary/50 transition-colors"
                         title="Swap units"
                       >
-                        <ArrowRightLeft className="h-4 w-4" />
+                        <ArrowsLeftRight className="h-4 w-4" />
                       </Button>
                     </div>
 

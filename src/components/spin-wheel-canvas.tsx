@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, RotateCcw } from 'lucide-react';
+import { Play, ArrowCounterClockwise } from 'phosphor-react';
 
 type ConfettiLauncher = (options?: Record<string, unknown>) => unknown;
 
@@ -294,7 +294,7 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
       >
         {isSpinning ? (
           <>
-            <RotateCcw className="w-4 h-4 mr-2 animate-spin" />
+            <ArrowCounterClockwise className="w-4 h-4 mr-2 animate-spin" />
             Spinning...
           </>
         ) : (

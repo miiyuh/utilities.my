@@ -10,7 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { Copy, Trash2, Play, Pause, StopCircle, Volume2, Zap, Smartphone, Upload, Download, Eye, Languages, Code, Settings } from 'lucide-react';
+import { Copy, Trash, Play, Pause, Stop, SpeakerHigh, Lightning, DeviceMobile, Upload, Download, Eye, Translate, Code, Gear } from 'phosphor-react';
+import { WebHaptics } from 'web-haptics';
 
 // Morse code alphabet
 const MORSE_CODE_MAP: { [key: string]: string } = {
@@ -64,6 +65,7 @@ export default function MorseCodeGeneratorPage() {
   const visualRef = useRef<HTMLDivElement>(null);
   const pausedPositionRef = useRef(0);
   const morseSequenceRef = useRef<string>('');
+  const hapticEngineRef = useRef<InstanceType<typeof WebHaptics> | null>(null);
 
   // Convert text to Morse code
   const textToMorse = (text: string): string => {
@@ -104,10 +106,19 @@ export default function MorseCodeGeneratorPage() {
     }
   }, [inputText, inputMorse, activeTab]);
 
-  // Cleanup on unmount
+  // Initialize WebHaptics and cleanup on unmount
   useEffect(() => {
+    // Initialize haptic engine if supported
+    if (WebHaptics.isSupported) {
+      hapticEngineRef.current = new WebHaptics();
+    }
+
     return () => {
       stopPlayback();
+      // Cleanup haptic engine
+      if (hapticEngineRef.current) {
+        hapticEngineRef.current.destroy();
+      }
     };
   }, []);
 
@@ -141,8 +152,26 @@ export default function MorseCodeGeneratorPage() {
     oscillatorRef.current = oscillator;
   };
 
-  // Vibrate device
-  const vibrate = (duration: number) => {
+  // Vibrate device with haptic feedback using web-haptics
+  const vibrate = (duration: number, intensity: number = 1) => {
+    // Try web-haptics first if available
+    if (hapticEngineRef.current) {
+      try {
+        hapticEngineRef.current.trigger({
+          pattern: [{ duration, intensity: Math.min(intensity, 1) }]
+        }).catch(() => {
+          // Fallback to native vibration if web-haptics fails
+          if ('vibrate' in navigator) {
+            navigator.vibrate(duration);
+          }
+        });
+        return;
+      } catch {
+        // Continue to fallback
+      }
+    }
+
+    // Fallback to native vibration
     if ('vibrate' in navigator) {
       navigator.vibrate(duration);
     }
@@ -173,7 +202,7 @@ export default function MorseCodeGeneratorPage() {
     
     if (symbol === '.') {
       if (audioEnabled) playBeep(adjustedDot);
-      if (vibrationEnabled) vibrate(adjustedDot);
+      if (vibrationEnabled) vibrate(adjustedDot, 0.8); // Lighter vibration for dot
       if (visualEnabled) {
         flashLight(adjustedDot);
         visualSignal(adjustedDot);
@@ -184,7 +213,7 @@ export default function MorseCodeGeneratorPage() {
       }, adjustedDot + adjustedGap);
     } else if (symbol === '-') {
       if (audioEnabled) playBeep(adjustedDash);
-      if (vibrationEnabled) vibrate(adjustedDash);
+      if (vibrationEnabled) vibrate(adjustedDash, 1.0); // Stronger vibration for dash
       if (visualEnabled) {
         flashLight(adjustedDash);
         visualSignal(adjustedDash);
@@ -272,7 +301,15 @@ export default function MorseCodeGeneratorPage() {
       oscillatorRef.current = null;
     }
     
-    // Stop vibration
+    // Stop vibration - try web-haptics first, fallback to native
+    if (hapticEngineRef.current) {
+      try {
+        hapticEngineRef.current.cancel();
+      } catch {
+        // Fallback
+      }
+    }
+    
     if ('vibrate' in navigator) {
       navigator.vibrate(0);
     }
@@ -314,7 +351,15 @@ export default function MorseCodeGeneratorPage() {
       oscillatorRef.current = null;
     }
     
-    // Stop vibration
+    // Stop vibration - try web-haptics first, fallback to native
+    if (hapticEngineRef.current) {
+      try {
+        hapticEngineRef.current.cancel();
+      } catch {
+        // Fallback
+      }
+    }
+    
     if ('vibrate' in navigator) {
       navigator.vibrate(0);
     }
@@ -403,7 +448,7 @@ export default function MorseCodeGeneratorPage() {
           <div className="flex items-center gap-2">
             <SidebarTrigger className="lg:hidden" />
             <div className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
+              <Lightning className="h-5 w-5 text-primary" />
               <h1 className="text-xl font-semibold font-headline">Morse Code Generator</h1>
             </div>
           </div>
@@ -412,7 +457,7 @@ export default function MorseCodeGeneratorPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Morse Code Generator</h1>
               <p className="text-lg text-muted-foreground">Convert between text and Morse code with audio, vibration, and visual signals.</p>
             </div>
@@ -421,7 +466,7 @@ export default function MorseCodeGeneratorPage() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="text-to-morse" className="flex items-center gap-2">
-                  <Languages className="h-4 w-4" />
+                  <Translate className="h-4 w-4" />
                   Text to Morse
                 </TabsTrigger>
                 <TabsTrigger value="morse-to-text" className="flex items-center gap-2">
@@ -460,7 +505,7 @@ export default function MorseCodeGeneratorPage() {
                           <Upload className="h-4 w-4 mr-2" /> Import
                         </Button>
                         <Button variant="outline" onClick={handleClear}>
-                          <Trash2 className="h-4 w-4 mr-2" /> Clear
+                          <Trash className="h-4 w-4 mr-2" /> Clear
                         </Button>
                       </div>
                     </CardContent>
@@ -521,7 +566,7 @@ export default function MorseCodeGeneratorPage() {
                           <Upload className="h-4 w-4 mr-2" /> Import
                         </Button>
                         <Button variant="outline" onClick={handleClear}>
-                          <Trash2 className="h-4 w-4 mr-2" /> Clear
+                          <Trash className="h-4 w-4 mr-2" /> Clear
                         </Button>
                       </div>
                     </CardContent>
@@ -591,12 +636,12 @@ export default function MorseCodeGeneratorPage() {
                       variant="outline"
                       className="flex items-center gap-2"
                     >
-                      <StopCircle className="h-4 w-4" /> Stop
+                      <Stop className="h-4 w-4" /> Stop
                     </Button>
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <Volume2 className="h-4 w-4" />
+                    <SpeakerHigh className="h-4 w-4" />
                     <Label htmlFor="audio-toggle">Audio</Label>
                     <Switch
                       id="audio-toggle"
@@ -606,7 +651,7 @@ export default function MorseCodeGeneratorPage() {
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <Smartphone className="h-4 w-4" />
+                    <DeviceMobile className="h-4 w-4" />
                     <Label htmlFor="vibration-toggle">Vibration</Label>
                     <Switch
                       id="vibration-toggle"
@@ -631,7 +676,7 @@ export default function MorseCodeGeneratorPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <Label htmlFor="volume" className="flex items-center gap-2">
-                        <Volume2 className="h-4 w-4" /> Volume
+                        <SpeakerHigh className="h-4 w-4" /> Volume
                       </Label>
                       <span className="text-sm text-muted-foreground">{Math.round(volume * 100)}%</span>
                     </div>
@@ -650,7 +695,7 @@ export default function MorseCodeGeneratorPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <Label htmlFor="pitch" className="flex items-center gap-2">
-                        <Zap className="h-4 w-4" /> Pitch
+                        <Lightning className="h-4 w-4" /> Pitch
                       </Label>
                       <span className="text-sm text-muted-foreground">{pitch}Hz</span>
                     </div>
@@ -715,7 +760,7 @@ export default function MorseCodeGeneratorPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-sm text-muted-foreground flex items-start gap-2">
-                  <Languages className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <Translate className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span><strong>Text to Morse:</strong> Enter text in the input field and see the Morse code translation. Use the Play button to hear/feel/see the Morse code.</span>
                 </p>
                 <p className="text-sm text-muted-foreground flex items-start gap-2">
@@ -723,7 +768,7 @@ export default function MorseCodeGeneratorPage() {
                   <span><strong>Morse to Text:</strong> Enter Morse code using dots (.) and dashes (-). Separate letters with spaces and words with / or double spaces.</span>
                 </p>
                 <p className="text-sm text-muted-foreground flex items-start gap-2">
-                  <Settings className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <Gear className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span><strong>Controls:</strong> Adjust volume, pitch, and speed of the audio playback. Enable vibration and visual signals for mobile devices.</span>
                 </p>
               </CardContent>

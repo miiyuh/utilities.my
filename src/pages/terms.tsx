@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { BookOpenText } from 'lucide-react';
+import { BookOpen } from 'phosphor-react';
 import { MarkdownPage } from '@/components/markdown/markdown-page';
 
 const TERMS_CONTENT = `# Terms of Service
@@ -112,7 +112,7 @@ export default function TermsPage() {
       </Helmet>
       <MarkdownPage
         title="Terms of Service"
-        icon={BookOpenText}
+        icon={BookOpen}
         content={TERMS_CONTENT}
       />
     </>

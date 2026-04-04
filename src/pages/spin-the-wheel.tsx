@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { RotateCcw, Trash2, Plus, Disc3, Shuffle, FilterX, ArrowDownUp, Upload, Download, Share2, Copy } from 'lucide-react';
+import { ArrowCounterClockwise, Trash, Plus, Disc, Shuffle, X, SortAscending, Upload, Download, ShareNetwork, Copy } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -194,7 +194,7 @@ export default function SpinTheWheelPage() {
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="lg:hidden" />
-            <Disc3 className="h-5 w-5 text-primary" />
+            <Disc className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-semibold font-headline">Spin the Wheel</h1>
           </div>
           <ThemeToggleButton />
@@ -203,7 +203,7 @@ export default function SpinTheWheelPage() {
         <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
                 Spin the Wheel
               </h1>
@@ -219,7 +219,7 @@ export default function SpinTheWheelPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Disc3 className="h-5 w-5" />
+                      <Disc className="h-5 w-5" />
                       Wheel
                     </div>
                     <Badge variant="secondary">
@@ -271,7 +271,7 @@ export default function SpinTheWheelPage() {
                       <Upload className="w-4 h-4 mr-2" /> Export
                     </Button>
                     <Button variant="outline" size="sm" onClick={handleShare} disabled={!items.length}>
-                      <Share2 className="w-4 h-4 mr-2" /> Share
+                      <ShareNetwork className="w-4 h-4 mr-2" /> Share
                     </Button>
                   </div>
 
@@ -318,21 +318,21 @@ export default function SpinTheWheelPage() {
                         <Shuffle className="w-4 h-4 mr-1"/> Shuffle
                       </Button>
                       <Button variant="outline" size="sm" onClick={handleDedupe} disabled={items.length<2}>
-                        <FilterX className="w-4 h-4 mr-1"/> Dedupe
+                        <X className="w-4 h-4 mr-1"/> Dedupe
                       </Button>
                       <Button variant="outline" size="sm" onClick={handleSortAZ} disabled={items.length<2}>
-                        <ArrowDownUp className="w-4 h-4 mr-1 rotate-90"/> A→Z
+                        <SortAscending className="w-4 h-4 mr-1 rotate-90"/> A→Z
                       </Button>
                       <Button variant="outline" size="sm" onClick={handleSortZA} disabled={items.length<2}>
-                        <ArrowDownUp className="w-4 h-4 mr-1 -rotate-90"/> Z→A
+                        <SortAscending className="w-4 h-4 mr-1 -rotate-90"/> Z→A
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" size="sm" onClick={handleReset}>
-                        <RotateCcw className="w-4 h-4 mr-1" /> Reset
+                        <ArrowCounterClockwise className="w-4 h-4 mr-1" /> Reset
                       </Button>
                       <Button variant="destructive" size="sm" onClick={handleClear}>
-                        <Trash2 className="w-4 h-4 mr-1" /> Clear All
+                        <Trash className="w-4 h-4 mr-1" /> Clear All
                       </Button>
                     </div>
                   </div>
@@ -366,7 +366,7 @@ export default function SpinTheWheelPage() {
                         <Download className="w-4 h-4 mr-2"/> Export CSV
                       </Button>
                       <Button variant="outline" size="sm" onClick={()=> setWinners([])}>
-                        <Trash2 className="w-4 h-4 mr-2"/> Clear
+                        <Trash className="w-4 h-4 mr-2"/> Clear
                       </Button>
                     </div>
                   </CardTitle>

@@ -11,7 +11,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Info } from "lucide-react"
+import { Info } from "phosphor-react"
 import { tools as originalTools } from "@/lib/tools"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"

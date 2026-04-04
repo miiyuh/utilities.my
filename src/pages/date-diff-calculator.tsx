@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { CalendarIcon, Copy, RotateCcw, Check } from 'lucide-react';
+import { Calendar as CalendarIcon, Copy, ArrowCounterClockwise, Check } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -323,9 +323,9 @@ export default function DateDiffCalculatorPage() {
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <div className="flex flex-1 flex-col px-8 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 text-center md:text-left">
+            <div className="mb-8 text-center md:text-left hidden sm:block">
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">Date Difference Calculator</h1>
               <p className="text-lg text-muted-foreground max-w-2xl">Calculate the difference between two dates with precision.</p>
             </div>
@@ -347,7 +347,7 @@ export default function DateDiffCalculatorPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={handleReset} className="rounded-sm h-8">
-                      <RotateCcw className="h-3.5 w-3.5 mr-2" />
+                       <ArrowCounterClockwise className="h-3.5 w-3.5 mr-2" />
                       Reset
                     </Button>
                   </div>

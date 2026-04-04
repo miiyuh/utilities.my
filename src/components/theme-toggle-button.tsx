@@ -1,7 +1,7 @@
 // src/components/theme-toggle-button.tsx
 "use client";
 
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun, Monitor } from "phosphor-react";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,

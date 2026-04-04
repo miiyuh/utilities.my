@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { CaretLeft, CaretRight } from "phosphor-react"
 import { DayPicker, DropdownProps } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
@@ -89,10 +89,10 @@ function Calendar({
       }}
       components={{
         IconLeft: ({ className: iconClassName, ...iconProps }) => ( 
-          <ChevronLeft className={cn("h-4 w-4", iconClassName)} {...iconProps} />
+          <CaretLeft className={cn("h-4 w-4", iconClassName)} {...iconProps} />
         ),
         IconRight: ({ className: iconClassName, ...iconProps }) => ( 
-          <ChevronRight className={cn("h-4 w-4", iconClassName)} {...iconProps} />
+          <CaretRight className={cn("h-4 w-4", iconClassName)} {...iconProps} />
         ),
         Dropdown: ({ value, onChange, children }: DropdownProps) => {
           const options = React.Children.toArray(children) as React.ReactElement<React.HTMLProps<HTMLOptionElement>>[]

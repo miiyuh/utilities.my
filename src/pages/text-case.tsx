@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Trash2, CaseSensitive, ArrowLeftRight, Upload, Download } from 'lucide-react';
+import { Copy, Trash, TextAa, ArrowsLeftRight, Upload, Download } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -113,7 +113,7 @@ export default function TextCaseConverterPage() {
           <div className="flex items-center gap-2">
             <SidebarTrigger className="lg:hidden" />
             <div className="flex items-center gap-2">
-              <CaseSensitive className="h-5 w-5 text-primary" />
+              <TextAa className="h-5 w-5 text-primary" />
               <h1 className="text-xl font-semibold font-headline">Text Case Converter</h1>
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function TextCaseConverterPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Case Converter</h1>
               <p className="text-lg text-muted-foreground">Convert text between letter cases with smart options.</p>
             </div>
@@ -138,8 +138,8 @@ export default function TextCaseConverterPage() {
                     <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) handleImport(f); e.currentTarget.value=''; }} />
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="h-4 w-4 mr-1"/> Import</Button>
                     <Button variant="outline" size="sm" onClick={handleExport} disabled={!outputText}><Upload className="h-4 w-4 mr-1"/> Export</Button>
-                    <Button variant="outline" size="sm" onClick={handleSwap} disabled={!outputText}><ArrowLeftRight className="h-4 w-4 mr-1"/> Swap</Button>
-                    <Button variant="outline" size="sm" onClick={handleClear} className="ml-auto"><Trash2 className="h-4 w-4 mr-1"/> Clear</Button>
+                    <Button variant="outline" size="sm" onClick={handleSwap} disabled={!outputText}><ArrowsLeftRight className="h-4 w-4 mr-1"/> Swap</Button>
+                    <Button variant="outline" size="sm" onClick={handleClear} className="ml-auto"><Trash className="h-4 w-4 mr-1"/> Clear</Button>
                   </div>
                   <Textarea id="inputText" placeholder="Enter text here..." value={inputText} onChange={(e)=> setInputText(e.target.value)} className="resize-none min-h-[240px]" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

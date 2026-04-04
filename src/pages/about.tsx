@@ -1,23 +1,21 @@
 import { Helmet } from 'react-helmet-async'
 import {
   Info,
-  Github,
-  Sparkles,
-  Blocks,
-  Zap,
+  GithubLogo,
+  Sparkle,
+  Cube,
+  Lightning,
   Heart,
-  LayoutGrid,
+  GridFour,
   Wrench,
   HardDrive,
-  Code2,
+  Code,
   Keyboard,
-  Minimize2,
+  Prohibit,
   Target,
-  Hammer,
   Wind,
-  Boxes,
-  Shapes,
-} from 'lucide-react'
+  Path,
+} from 'phosphor-react'
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
 import { ThemeToggleButton } from "@/components/theme-toggle-button"
@@ -66,13 +64,13 @@ export default function About() {
                   </p>
                   <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1">
-                      <Sparkles className="h-3.5 w-3.5 text-primary" /> Polished UX
+                      <Sparkle className="h-3.5 w-3.5 text-primary" /> Polished UX
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1">
-                      <Blocks className="h-3.5 w-3.5 text-primary" /> Modular tools
+                      <Cube className="h-3.5 w-3.5 text-primary" /> Modular tools
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1">
-                      <Zap className="h-3.5 w-3.5 text-primary" /> Fast & accessible
+                      <Lightning className="h-3.5 w-3.5 text-primary" /> Fast & accessible
                     </span>
                   </div>
                 </div>
@@ -83,12 +81,12 @@ export default function About() {
             <section className="rounded-md border bg-card/60 p-5">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {[
-                  { icon: LayoutGrid, title: 'Thoughtful design', desc: 'Consistent, minimal, and responsive. Dark mode included.' },
+                  { icon: GridFour, title: 'Thoughtful design', desc: 'Consistent, minimal, and responsive. Dark mode included.' },
                   { icon: Wrench, title: 'Useful by default', desc: 'Practical tools like unit, time, text, and QR utilities.' },
                   { icon: HardDrive, title: 'Local-first', desc: 'Settings and inputs persist where it helps, no account needed.' },
-                  { icon: Code2, title: 'Open source', desc: 'MIT-licensed. Explore, modify, and contribute freely.' },
+                  { icon: Code, title: 'Open source', desc: 'MIT-licensed. Explore, modify, and contribute freely.' },
                   { icon: Keyboard, title: 'Keyboard-friendly', desc: 'Snappy interactions and predictable focus behavior.' },
-                  { icon: Minimize2, title: 'No clutter', desc: 'Just the essentials. No ads. No noise.' },
+                  { icon: Prohibit, title: 'No clutter', desc: 'Just the essentials. No ads. No noise.' },
                 ].map((f) => (
                   <div key={f.title}>
                     <div className="flex items-center gap-2 text-sm font-semibold mb-1">
@@ -119,14 +117,14 @@ export default function About() {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                    <Hammer className="h-5 w-5 text-primary" />
+                    <Wrench className="h-5 w-5 text-primary" />
                     Built with
                   </h3>
                   <ul className="text-sm text-muted-foreground space-y-2">
-                    <li className="flex items-center gap-2"><Code2 className="h-4 w-4 text-primary" /> Vite, React, TypeScript</li>
+                    <li className="flex items-center gap-2"><Code className="h-4 w-4 text-primary" /> Vite, React, TypeScript</li>
                     <li className="flex items-center gap-2"><Wind className="h-4 w-4 text-primary" /> Tailwind CSS</li>
-                    <li className="flex items-center gap-2"><Boxes className="h-4 w-4 text-primary" /> Radix UI, shadcn/ui</li>
-                    <li className="flex items-center gap-2"><Shapes className="h-4 w-4 text-primary" /> Lucide icons</li>
+                    <li className="flex items-center gap-2"><Cube className="h-4 w-4 text-primary" /> Radix UI, shadcn/ui</li>
+                    <li className="flex items-center gap-2"><Path className="h-4 w-4 text-primary" /> Phosphor icons</li>
                   </ul>
                 </div>
               </div>
@@ -137,7 +135,7 @@ export default function About() {
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-xl font-semibold flex items-center gap-2">
-                    <Github className="h-5 w-5 text-primary" />
+                    <GithubLogo className="h-5 w-5 text-primary" />
                     Open source on GitHub
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -150,7 +148,7 @@ export default function About() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent"
                 >
-                  <Github className="h-4 w-4" />
+                  <GithubLogo className="h-4 w-4" />
                   View repository
                 </a>
               </div>

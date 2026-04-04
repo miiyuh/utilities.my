@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Download, Eye, FileText, Trash2, Info, Columns } from 'lucide-react';
+import { Copy, Download, Eye, Article, Trash, Info, Columns } from 'phosphor-react';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -526,7 +526,7 @@ export default function MarkdownPreviewerPage() {
           <div className="flex items-center gap-2">
             <SidebarTrigger className="lg:hidden" />
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
+              <Article className="h-5 w-5 text-primary" />
               <h1 className="text-xl font-semibold font-headline">Markdown Previewer</h1>
             </div>
           </div>
@@ -535,7 +535,7 @@ export default function MarkdownPreviewerPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
-            <div className="mb-8">
+            <div className="mb-8 hidden sm:block">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Markdown Previewer</h1>
               <p className="text-lg text-muted-foreground">Write Markdown and see a live preview.</p>
             </div>
@@ -543,7 +543,7 @@ export default function MarkdownPreviewerPage() {
             {/* Controls Bar */}
             <div className="flex flex-wrap gap-3 items-center border rounded-md p-3 bg-background/60 justify-center sm:justify-start overflow-x-auto">
               <div className="flex items-center gap-1">
-                <Button variant={viewMode==='edit'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('edit')} title="Editor only"><FileText className="h-4 w-4"/></Button>
+                <Button variant={viewMode==='edit'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('edit')} title="Editor only"><Article className="h-4 w-4"/></Button>
                 <Button variant={viewMode==='preview'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('preview')} title="Preview only"><Eye className="h-4 w-4"/></Button>
                 <Button variant={viewMode==='split'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('split')} title="Split view"><Columns className="h-4 w-4"/></Button>
               </div>
@@ -552,7 +552,7 @@ export default function MarkdownPreviewerPage() {
                 <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleCopyMarkdown} title="Copy Markdown"><Copy className="h-4 w-4"/></Button>
                 <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleCopyHtml} title="Copy Rendered HTML"><CodeIconFallback />{/* fallback icon */}</Button>
                 <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleDownload} title="Download .md"><Download className="h-4 w-4"/></Button>
-                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleClearInput} title="Clear"><Trash2 className="h-4 w-4"/></Button>
+                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleClearInput} title="Clear"><Trash className="h-4 w-4"/></Button>
                 <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleResetDemo} title="Reset Demo Content"><RefreshIconFallback /></Button>
               </div>
               <div className="h-6 w-px bg-border" />

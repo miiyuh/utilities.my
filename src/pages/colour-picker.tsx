@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Upload, Palette, Shuffle, X } from 'lucide-react';
+import { Copy, Upload, Palette, Shuffle, X } from 'phosphor-react';
 import { Slider } from '@/components/ui/slider';
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
@@ -729,10 +729,10 @@ export default function ColourPickerPage() {
           </div>
           <ThemeToggleButton />
         </header>
-        <div className="flex flex-1 flex-col p-3 md:p-4 lg:p-8">
+        <div className="flex flex-1 flex-col p-8 px-8 md:p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* Big heading */}
-            <div className="mb-6 md:mb-8">
+            <div className="mb-6 md:mb-8 hidden sm:block">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 md:mb-6 text-foreground border-b border-border pb-3 md:pb-4">Colour Picker</h1>
               <p className="text-base md:text-lg text-muted-foreground">Pick colours and get their codes in various formats.</p>
             </div>

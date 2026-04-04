@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { RotateCcw, Settings } from 'lucide-react'
+import { ArrowCounterClockwise, Gear } from 'phosphor-react'
 import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
 import { ThemeToggleButton } from "@/components/theme-toggle-button"
@@ -43,7 +43,7 @@ export default function SettingsPage() {
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="lg:hidden" />
-            <Settings className="h-5 w-5 text-primary" />
+            <Gear className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-semibold font-headline">Settings</h1>
           </div>
           <ThemeToggleButton />
@@ -188,7 +188,7 @@ export default function SettingsPage() {
                       onClick={resetSettings}
                       className="flex items-center gap-2"
                     >
-                      <RotateCcw className="h-4 w-4" />
+                      <ArrowCounterClockwise className="h-4 w-4" />
                       Reset to Defaults
                     </Button>
                     <p className="text-sm text-muted-foreground mt-2">
