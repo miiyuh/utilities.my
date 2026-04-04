@@ -17,10 +17,16 @@ export default defineConfig({
         sourcemap: true,
         rollupOptions: {
             output: {
-                manualChunks: {
-                    'vendor-react': ['react', 'react-dom'],
-                    'vendor-ui': ['clsx', 'class-variance-authority'],
-                    'vendor-map': ['leaflet', 'react-leaflet', 'lucide-react'],
+                manualChunks(id) {
+                    if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                        return 'vendor-react';
+                    }
+                    if (id.includes('node_modules/clsx') || id.includes('node_modules/class-variance-authority')) {
+                        return 'vendor-ui';
+                    }
+                    if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet') || id.includes('node_modules/lucide-react')) {
+                        return 'vendor-map';
+                    }
                 },
             },
         },
