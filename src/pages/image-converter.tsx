@@ -1,9 +1,8 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
-import { ThemeToggleButton } from "@/components/theme-toggle-button"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,6 +34,7 @@ import {
   Archive
 } from 'phosphor-react'
 
+import { PageHeader } from "@/components/page-header";
 import {
   type OutputFormat,
   type BatchFileItem,
@@ -704,16 +704,7 @@ export default function ImageConverterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-primary" />
-              <h1 className="text-lg sm:text-xl font-semibold font-headline truncate">Image Converter</h1>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={ImageIcon} title="Image Converter" />
 
         <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
@@ -772,7 +763,7 @@ export default function ImageConverterPage() {
                       }
                     }}
                     className={`
-                      relative border-2 border-dashed rounded-lg p-4 sm:p-6 flex items-center justify-center text-center transition-all duration-200 cursor-pointer
+                      relative border-2 border-dashed rounded-lg p-4 sm:p-6 flex items-center justify-center text-center transition-all duration-quick cursor-pointer
                         ${isDragOver 
                         ? 'border-primary bg-primary/5 scale-[1.01]' 
                         : 'border-muted-foreground/25'
@@ -794,7 +785,7 @@ export default function ImageConverterPage() {
                     {/* Single Mode Upload Content */}
                     {!batchMode && !imgSrc && (
                       <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
                           isDragOver ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
                         }`}>
                           <Upload className="h-6 w-6" />
@@ -811,7 +802,7 @@ export default function ImageConverterPage() {
                     {/* Batch Mode Upload Content */}
                     {batchMode && batchFiles.length === 0 && (
                       <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
                           isDragOver ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
                         }`}>
                           <Stack className="h-6 w-6" />
@@ -1443,7 +1434,7 @@ export default function ImageConverterPage() {
 
                     {/* Status Messages - Single Mode */}
                     {!batchMode && message && !message.includes('Downloaded') && (
-                      <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-medium">
                         <div className="w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-400 flex items-center justify-center flex-shrink-0">
                           <Spinner className="h-3 w-3 text-white animate-spin" />
                         </div>
@@ -1452,7 +1443,7 @@ export default function ImageConverterPage() {
                     )}
                     
                     {!batchMode && error && (
-                      <div className="p-3 sm:p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="p-3 sm:p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-medium">
                         <Warning className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                         <div className="text-sm text-destructive leading-snug font-medium">{error}</div>
                       </div>

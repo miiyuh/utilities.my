@@ -2,14 +2,15 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { TextAa, TextStrikethrough, ChartBar, Eye, Note, Clock, Copy, Hash, Upload, Download } from 'phosphor-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { PageHeader } from "@/components/page-header";
+import { useToast } from '@/hooks/use-toast';
 
 type WordCount = { word: string; count: number };
 interface FullStats {
@@ -35,6 +36,7 @@ const STOPWORDS = new Set([
 ]);
 
 export default function TextStatisticsPage() {
+  const { toast } = useToast();
   const [inputText, setInputText] = useState('');
   const [stats, setStats] = useState<FullStats | null>(null);
   const [selStats, setSelStats] = useState<FullStats | null>(null);
@@ -147,7 +149,12 @@ export default function TextStatisticsPage() {
       `Speaking time: ~${stats.speakingTimeMinutes} min`,
       `Estimated pages (~500 wpp): ~${stats.estimatedPages}`,
     ];
-    await navigator.clipboard.writeText(lines.join('\n'));
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      toast({ title: 'Copied to clipboard', description: 'Summary copied.' });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
   };
   const handleExportJson = () => {
     if (!stats) return;
@@ -172,14 +179,7 @@ export default function TextStatisticsPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <TextAa className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Text Statistics</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={TextAa} title="Text Statistics" />
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}

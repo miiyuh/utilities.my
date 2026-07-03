@@ -4,11 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Percent, Calculator, TrendUp, Divide, PlusCircle, MinusCircle, Copy } from 'phosphor-react';
 import { Button } from '@/components/ui/button';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
+import { PageHeader } from "@/components/page-header";
+import { useToast } from '@/hooks/use-toast';
 
 export default function PercentageCalculatorPage() {
+  const { toast } = useToast();
   // What is X% of Y?
   const [percentOf, setPercentOf] = useState({ percent: '', value: '', result: '' });
   
@@ -26,7 +28,12 @@ export default function PercentageCalculatorPage() {
 
 
   const copyToClipboard = async (text: string) => {
-    try { await navigator.clipboard.writeText(text); } catch {}
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: 'Copied to clipboard' });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
   };
   // Pure calculation functions
   const calculatePercentOfValue = (percent: string, value: string) => {
@@ -78,14 +85,7 @@ export default function PercentageCalculatorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Percent className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Percentage Calculator</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Percent} title="Percentage Calculator" />
 
         <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">

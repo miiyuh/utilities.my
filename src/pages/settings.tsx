@@ -4,10 +4,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { ArrowCounterClockwise, Gear } from 'phosphor-react'
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
 import { ThemeToggleButton } from "@/components/theme-toggle-button"
 import { useSettings, UnitSystem, DateFormat, NumberFormat, Currency } from '@/contexts/settings-context'
+import { PageHeader } from "@/components/page-header";
 
 export default function SettingsPage() {
   const { settings, updateSetting, resetSettings } = useSettings()
@@ -40,14 +41,7 @@ export default function SettingsPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Gear className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Settings</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Gear} title="Settings" />
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="flex flex-1 items-start justify-center">
             <div className="w-full max-w-7xl mx-auto space-y-6">

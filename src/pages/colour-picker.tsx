@@ -6,9 +6,9 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, Upload, Palette, Shuffle, X } from 'phosphor-react';
 import { Slider } from '@/components/ui/slider';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
+import { PageHeader } from "@/components/page-header";
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -719,16 +719,7 @@ export default function ColourPickerPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex items-center gap-2">
-              <Palette className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold font-headline">Colour Picker</h1>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </header>
+  <PageHeader icon={Palette} title="Colour Picker" />
         <div className="flex flex-1 flex-col p-8 px-8 md:p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* Big heading */}
@@ -999,7 +990,7 @@ export default function ColourPickerPage() {
                       </div>
                       <div
                         ref={canvasContainerRef}
-                        className="relative rounded-lg border-2 border-border max-w-full shadow-lg hover:shadow-xl transition-shadow duration-200 overflow-hidden outline-none overscroll-contain bg-neutral-950/40 dark:bg-neutral-900/40 select-none"
+                        className="relative rounded-lg border-2 border-border max-w-full shadow-lg hover:shadow-xl transition-shadow duration-quick overflow-hidden outline-none overscroll-contain bg-neutral-950/40 dark:bg-neutral-900/40 select-none"
                         style={{ width: '100%', height: 250, touchAction: 'none', backgroundImage: 'linear-gradient(45deg,#444 25%,transparent 25%),linear-gradient(-45deg,#444 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#444 75%),linear-gradient(-45deg,transparent 75%,#444 75%)', backgroundSize: '20px 20px', backgroundPosition: '0 0,0 10px,10px -10px,-10px 0' }}
                         tabIndex={0}
                         // wheel handled by custom listener (non-passive) for zoom-to-cursor
@@ -1082,7 +1073,7 @@ export default function ColourPickerPage() {
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
                       onClick={() => fileInputRef.current?.click()}
-                      className={`flex items-center justify-center h-40 md:h-48 border-2 border-dashed rounded-lg text-center px-4 cursor-pointer transition-all duration-200 ${
+                      className={`flex items-center justify-center h-40 md:h-48 border-2 border-dashed rounded-lg text-center px-4 cursor-pointer transition-all duration-quick ${
                         isDragOver 
                           ? 'border-primary bg-primary/10 shadow-md' 
                           : 'border-muted-foreground/25 hover:border-muted-foreground/40'

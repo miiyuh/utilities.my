@@ -3,11 +3,7 @@ import tailwindcssAnimate from 'tailwindcss-animate';
 
 export default {
   darkMode: ['class'],
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
       fontFamily: {
@@ -75,6 +71,22 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      transitionDuration: {
+        stagger: 'var(--duration-stagger)',
+        micro: 'var(--duration-micro)',
+        quick: 'var(--duration-quick)',
+        fast: 'var(--duration-fast)',
+        medium: 'var(--duration-medium)',
+        slow: 'var(--duration-slow)',
+        'very-slow': 'var(--duration-very-slow)',
+      },
+      transitionTimingFunction: {
+        out: 'var(--ease-out)',
+        'in-out': 'var(--ease-in-out)',
+        'smooth-out': 'var(--ease-smooth-out)',
+        bounce: 'var(--ease-bounce)',
+        'bounce-strong': 'var(--ease-bounce-strong)',
+      },
       keyframes: {
         'accordion-down': {
           from: {
@@ -110,8 +122,8 @@ export default {
         },
       },
       animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
+        'accordion-down': 'accordion-down var(--duration-fast) var(--ease-out)',
+        'accordion-up': 'accordion-up var(--duration-fast) var(--ease-out)',
         'neu-float': 'neu-float 6s ease-in-out infinite',
         'neu-pulse': 'neu-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },

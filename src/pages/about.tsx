@@ -16,9 +16,9 @@ import {
   Wind,
   Path,
 } from 'phosphor-react'
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
-import { ThemeToggleButton } from "@/components/theme-toggle-button"
+import { PageHeader } from "@/components/page-header";
 
 export default function About() {
   return (
@@ -33,14 +33,7 @@ export default function About() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Info className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">About utilities.my</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Info} title="About utilities.my" />
         <div className="relative flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-6xl mx-auto space-y-10">
             {/* Hero */}

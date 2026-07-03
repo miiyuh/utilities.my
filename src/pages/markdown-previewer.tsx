@@ -3,14 +3,14 @@ import DOMPurify from 'dompurify';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Copy, Download, Eye, Article, Trash, Info, Columns } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { marked, Renderer, Tokens } from 'marked';
 import markedFootnote from 'marked-footnote';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { PageHeader } from "@/components/page-header";
 
 // Fallback simple icons for actions not present in lucide-react selection
 const CodeIconFallback = () => (
@@ -522,16 +522,7 @@ export default function MarkdownPreviewerPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex items-center gap-2">
-              <Article className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold font-headline">Markdown Previewer</h1>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </header>
+  <PageHeader icon={Article} title="Markdown Previewer" />
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}

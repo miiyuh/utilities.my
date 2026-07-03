@@ -7,13 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, MagnifyingGlass, Gear, CaretDown, CaretUp } from 'phosphor-react';
 import { Switch } from '@/components/ui/switch';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { WorldMapClock, MAJOR_CITIES } from '@/components/world-map-clock';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { PageHeader } from "@/components/page-header";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -102,14 +102,7 @@ export default function WorldClockPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Clock className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">World Clock</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Clock} title="World Clock" />
 
         <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
@@ -253,7 +246,7 @@ export default function WorldClockPage() {
                         {groupedByContinent[continent].map(city => (
                           <div
                             key={`${city.timezone}-${city.city}`}
-                            className="border border-border rounded-lg p-3 sm:p-4 md:p-6 hover:border-primary/50 hover:shadow-lg transition-all duration-300 bg-card"
+                            className="border border-border rounded-lg p-3 sm:p-4 md:p-6 hover:border-primary/50 hover:shadow-lg transition-all duration-quick bg-card"
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-2">

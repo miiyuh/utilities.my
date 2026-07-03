@@ -9,13 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Download, Gear, Upload, Trash, QrCode as QrCodeIcon, Copy, QrCode, DownloadSimple, ArrowClockwise, Info } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { ColorPicker } from '@/components/ui/color-picker';
 import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { PageHeader } from "@/components/page-header";
 
 type PayloadType = "url" | "text" | "email" | "sms" | "tel" | "wifi";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
@@ -603,16 +603,7 @@ export default function QrCodeGeneratorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex items-center gap-2">
-              <QrCode className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold font-headline">QR Code Generator</h1>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </header>
+  <PageHeader icon={QrCode} title="QR Code Generator" />
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* Big heading */}

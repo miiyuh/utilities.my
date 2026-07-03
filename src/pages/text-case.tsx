@@ -6,11 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, Trash, TextAa, ArrowsLeftRight, Upload, Download } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageHeader } from "@/components/page-header";
 
 type Mode = 'uppercase' | 'lowercase' | 'title' | 'sentence' | 'toggle' | 'camel' | 'pascal' | 'snake' | 'kebab' | 'constant';
 
@@ -109,16 +109,7 @@ export default function TextCaseConverterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex items-center gap-2">
-              <TextAa className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold font-headline">Text Case Converter</h1>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={TextAa} title="Text Case Converter" />
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}

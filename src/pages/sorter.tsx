@@ -6,10 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { SortAscending, TextAa, X, Trash, Copy, Upload, Download, Shuffle, ArrowsLeftRight, Info } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
 
 export default function SorterPage() {
   const { toast } = useToast();
@@ -219,14 +219,7 @@ export default function SorterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <SortAscending className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Sorter</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+  <PageHeader icon={SortAscending} title="Sorter" />
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}

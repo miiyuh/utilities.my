@@ -1,8 +1,7 @@
 import React from "react";
 import { Helmet } from 'react-helmet-async';
-import { Sidebar, SidebarInset, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Activity, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, Copy, ShareNetwork } from "phosphor-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -15,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from '@/hooks/use-toast';
+import { PageHeader } from "@/components/page-header";
 
 type UnitSystem = "metric" | "imperial";
 
@@ -125,7 +125,12 @@ export default function BmiCalculatorPage() {
   const copyBMI = async () => {
     if (!Number.isFinite(rounded)) return;
     const text = `BMI: ${rounded.toFixed(1)} (${cls.label})`;
-    try { await navigator.clipboard.writeText(text); } catch {}
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: 'Copied', description: 'BMI result copied to clipboard.' });
+    } catch {
+      toast({ title: 'Copy failed', description: 'Unable to copy the BMI result.', variant: 'destructive' });
+    }
   };
 
   const shareBMI = async () => {
@@ -216,14 +221,7 @@ export default function BmiCalculatorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Activity className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">BMI Calculator</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Activity} title="BMI Calculator" />
 
         <div className="flex flex-1 flex-col px-8 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">

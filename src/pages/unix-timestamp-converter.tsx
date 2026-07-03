@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowsLeftRight, Copy, Calendar as CalendarIcon, Timer } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { format, parseISO, fromUnixTime, getUnixTime } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/page-header";
 
 export default function UnixTimestampConverterPage() {
   const { toast } = useToast();
@@ -185,14 +185,7 @@ export default function UnixTimestampConverterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Timer className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Unix Timestamp Converter</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+  <PageHeader icon={Timer} title="Unix Timestamp Converter" />
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}

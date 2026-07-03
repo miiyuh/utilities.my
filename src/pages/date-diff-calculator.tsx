@@ -2,9 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar as CalendarIcon, Copy, ArrowCounterClockwise, Check } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { format, differenceInYears, differenceInMonths, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, isValid, startOfDay, addYears, addMonths, addDays, addHours, addMinutes, addWeeks } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -12,6 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from '@/hooks/use-toast';
+import { PageHeader } from "@/components/page-header";
 
 interface DateDiff {
   years: number;
@@ -315,14 +315,7 @@ export default function DateDiffCalculatorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <CalendarIcon className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Date Difference Calculator</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+  <PageHeader icon={CalendarIcon} title="Date Difference Calculator" />
         <div className="flex flex-1 flex-col px-8 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             <div className="mb-8 text-center md:text-left hidden sm:block">

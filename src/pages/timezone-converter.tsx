@@ -42,15 +42,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   Sidebar,
-  SidebarTrigger,
   SidebarInset,
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
-import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { PageHeader } from "@/components/page-header";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -305,14 +304,7 @@ export default function TimezoneConverterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Globe className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Timezone Converter</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Globe} title="Timezone Converter" />
 
         <div className="flex flex-1 flex-col overflow-auto">
           <div className="flex-1 p-4 sm:p-6 lg:p-8">
@@ -459,7 +451,7 @@ export default function TimezoneConverterPage() {
                           <SortableItem key={tz} id={tz}>
                             {({ isDragging }) => (
                               <Card data-tz={tz} className={cn(
-                                "flex flex-col h-full transition-all duration-200",
+                                "flex flex-col h-full transition-all duration-quick",
                                 isDragging ? "opacity-60 cursor-grabbing scale-[1.02] shadow-2xl z-50" : "hover:shadow-md hover:border-primary/20"
                               )}>
                                 <CardHeader className="pb-4">

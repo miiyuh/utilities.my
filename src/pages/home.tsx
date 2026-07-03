@@ -1,10 +1,8 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { PreviewCard } from '@base-ui/react/preview-card'
-import { ThemeToggleButton } from "@/components/theme-toggle-button"
 import {
   Sidebar,
-  SidebarTrigger,
   SidebarInset,
   SidebarRail,
 } from "@/components/ui/sidebar"
@@ -15,6 +13,7 @@ import {
   ArrowUpRight,
 } from "phosphor-react"
 import { tools } from "@/lib/tools"
+import { PageHeader } from "@/components/page-header";
 
 export default function Home() {
   // Create a handle for the preview card with description payload
@@ -66,16 +65,7 @@ export default function Home() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex items-center gap-2">
-              <Lightning className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold font-headline">Essential utilities for all!</h1>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Lightning} title="Essential utilities for all!" />
         <div className="min-h-screen px-8 py-4 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-12 md:space-y-16">
             <div className="mb-20">
@@ -93,30 +83,24 @@ export default function Home() {
                   <PreviewCard.Trigger
                     key={tool.path}
                     handle={toolPreviewCardHandle}
-                    href={`#${tool.path}`}
                     payload={{ description: tool.description }}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      window.location.hash = tool.path
-                    }}
+                    render={<Link to={tool.path} />}
                   >
-                    <Link to={tool.path}>
-                      <div className="minimal-card group cursor-pointer sm:aspect-square h-full w-full flex flex-col p-4 overflow-hidden">
-                        <div className="flex items-start justify-between mb-0 sm:mb-2">
-                          <div className="flex flex-row sm:flex-col gap-2 sm:gap-4 items-center sm:items-start">
-                            <div className="minimal-icon-container">
-                              <tool.icon className="h-6 w-6" />
-                            </div>
-                            <h3 className="text-heading-3 text-foreground mb-0 sm:mb-1 group-hover:text-primary transition-colors">
-                              {tool.name}
-                            </h3>
+                    <div className="minimal-card group cursor-pointer sm:aspect-square h-full w-full flex flex-col p-4 overflow-hidden">
+                      <div className="flex items-start justify-between mb-0 sm:mb-2">
+                        <div className="flex flex-row sm:flex-col gap-2 sm:gap-4 items-center sm:items-start">
+                          <div className="minimal-icon-container">
+                            <tool.icon className="h-6 w-6" />
                           </div>
-                          <div className="minimal-button-ghost opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ArrowUpRight className="h-6 w-6 text-primary" />
-                          </div>
+                          <h3 className="text-heading-3 text-foreground mb-0 sm:mb-1 group-hover:text-primary transition-colors">
+                            {tool.name}
+                          </h3>
+                        </div>
+                        <div className="minimal-button-ghost opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ArrowUpRight className="h-6 w-6 text-primary" />
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   </PreviewCard.Trigger>
                 ))}
               </div>

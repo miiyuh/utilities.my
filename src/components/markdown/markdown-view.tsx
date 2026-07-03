@@ -91,7 +91,7 @@ function TableOfContents({ items }: { items: TocItem[] }) {
               key={id}
               onClick={() => handleClick(id)}
               className={`
-                block w-full text-left text-sm transition-colors duration-200 py-1 hover:text-foreground
+                block w-full text-left text-sm transition-colors duration-quick py-1 hover:text-foreground
                 font-normal pl-2
                 ${
                   activeId === id

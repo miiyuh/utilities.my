@@ -46,7 +46,7 @@ export function SidebarContent() {
           alt="utilities.my"
           width={120}
           height={24}
-          className="object-contain transition-all duration-200 group-data-[collapsible=icon]:scale-90 group-data-[collapsible=icon]:hidden"
+          className="object-contain transition-all duration-quick group-data-[collapsible=icon]:scale-90 group-data-[collapsible=icon]:hidden"
         />
         {/* compact fallback shown only when collapsed */}
         <div className="hidden group-data-[collapsible=icon]:inline-flex items-center justify-center rounded-md h-8 w-8">

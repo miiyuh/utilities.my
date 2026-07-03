@@ -96,13 +96,13 @@ export function Combobox({
             "hover:border-primary/60",
             "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
             "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted",
-            "transition-all duration-200 shadow-sm",
+            "transition-all duration-quick shadow-sm",
             "pr-10"
           )}
         />
         <div className={cn(
           "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-muted-foreground/60",
-          "transition-colors duration-200"
+          "transition-colors duration-quick"
         )}>
           <CaretDown className="size-4" />
         </div>
@@ -118,7 +118,7 @@ export function Combobox({
             className={cn(
               "z-[10000] w-[var(--anchor-width)] max-h-[min(var(--available-height),20rem)] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl outline-none overflow-hidden",
               "origin-[var(--transform-origin)]",
-              "transition-[transform,opacity] duration-200 ease-out",
+              "transition-[transform,opacity] duration-fast ease-out",
               "data-[starting-style]:opacity-0 data-[starting-style]:scale-95",
               "data-[ending-style]:opacity-0 data-[ending-style]:scale-95",
               "data-[side=bottom]:data-[starting-style]:-translate-y-2",

@@ -7,11 +7,11 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Copy, Trash, Play, Pause, Stop, SpeakerHigh, Lightning, DeviceMobile, Upload, Download, Eye, Translate, Code, Gear } from 'phosphor-react';
 import { WebHaptics } from 'web-haptics';
+import { PageHeader } from "@/components/page-header";
 
 // Morse code alphabet
 const MORSE_CODE_MAP: { [key: string]: string } = {
@@ -444,16 +444,7 @@ export default function MorseCodeGeneratorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex items-center gap-2">
-              <Lightning className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold font-headline">Morse Code Generator</h1>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Lightning} title="Morse Code Generator" />
         <div className="flex flex-1 flex-col p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
@@ -736,7 +727,7 @@ export default function MorseCodeGeneratorPage() {
                     </div>
                     <div 
                       ref={visualRef}
-                      className={`w-full h-24 rounded-lg flex items-center justify-center transition-all duration-100 ${
+                      className={`w-full h-24 rounded-lg flex items-center justify-center transition-all duration-micro ${
                         visualActive 
                           ? 'bg-yellow-400 shadow-lg shadow-yellow-400/50' 
                           : 'bg-muted border-2 border-dashed'
