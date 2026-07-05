@@ -193,6 +193,12 @@
 
   html {
     @apply font-sans;
+    /* Reserve the scrollbar's width up front so switching between a page
+       that scrolls and one that doesn't never shifts the layout sideways.
+       `overflow-y: scroll` does the actual reserving (scrollbar-gutter alone
+       has no effect on the root element while its overflow is `visible`). */
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
   }
 
   body {
