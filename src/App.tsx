@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 
 // Home stays eager so the landing page renders without a second request.
 import Home from './pages/home'
@@ -43,7 +43,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/text-case" element={<TextCase />} />
-        <Route path="/color-picker" element={<ColorPicker />} />
+        <Route path="/colour-picker" element={<ColorPicker />} />
+        <Route path="/color-picker" element={<Navigate to="/colour-picker" replace />} />
         <Route path="/unit-converter" element={<UnitConverter />} />
         <Route path="/bmi-calculator" element={<BmiCalculator />} />
         <Route path="/image-converter" element={<ImageConverter />} />

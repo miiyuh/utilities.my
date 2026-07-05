@@ -57,7 +57,7 @@ export default function NotFound() {
                   className="p-4 rounded-lg border bg-card hover:bg-accent transition-colors text-left group"
                 >
                   <div className="flex items-center gap-3">
-                    <tool.icon className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                    <tool.icon className="h-5 w-5 text-muted-foreground group-hover:scale-110 transition-transform" />
                     <span className="text-sm font-medium text-foreground">{tool.name}</span>
                   </div>
                 </Link>

@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Download, Eye, Article, Trash, Info, Columns } from 'phosphor-react';
+import { Download, Eye, Article, Trash, Info, Columns } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { marked, Renderer, Tokens } from 'marked';
 import markedFootnote from 'marked-footnote';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from "@/components/page-header";
 
@@ -58,7 +59,7 @@ marked.use({ renderer: new AppRenderer(), gfm: true, breaks: true });
 
 interface EditorPaneProps { markdownText: string; setMarkdownText: (v: string)=>void; wrap: boolean; }
 const EditorPane: React.FC<EditorPaneProps> = ({ markdownText, setMarkdownText, wrap }) => (
-  <div className="flex flex-col h-full min-h-[300px] md:min-h-[400px]">
+  <div className="flex flex-col h-full min-h-0 md:min-h-[400px]">
     <div className="flex items-center justify-between px-3 py-2 border-b bg-background/70">
       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Markdown</span>
       <span className="text-[10px] text-muted-foreground">{markdownText.length.toLocaleString()} chars</span>
@@ -66,14 +67,14 @@ const EditorPane: React.FC<EditorPaneProps> = ({ markdownText, setMarkdownText, 
     <Textarea
       value={markdownText}
       onChange={(e)=>setMarkdownText(e.target.value)}
-      className={"flex-1 resize-none font-code text-sm p-3 bg-transparent border-0 focus-visible:ring-0 focus-visible:outline-none " + (wrap ? 'whitespace-pre-wrap' : 'whitespace-pre')}
+      className={"field-sizing-fixed flex-1 min-h-0 resize-none font-code text-sm p-3 bg-transparent border-0 focus-visible:ring-0 focus-visible:outline-none overflow-y-auto " + (wrap ? 'whitespace-pre-wrap' : 'whitespace-pre')}
       placeholder="Type your Markdown here..."
     />
   </div>
 );
 
 const PreviewPane: React.FC<{ htmlOutput: string }> = ({ htmlOutput }) => (
-  <div className="flex flex-col h-full min-h-[300px] md:min-h-[400px]">
+  <div className="flex flex-col h-full min-h-0 md:min-h-[400px]">
     <div className="flex items-center justify-between px-3 py-2 border-b bg-background/70">
       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Preview</span>
     </div>
@@ -342,24 +343,6 @@ export default function MarkdownPreviewerPage() {
     toast({ title: 'Demo Reset', description: 'Restored example markdown.' });
   };
 
-  const handleCopyMarkdown = async () => {
-    try {
-      await navigator.clipboard.writeText(markdownText);
-      toast({ title: 'Markdown Copied', description: 'Source markdown copied to clipboard.' });
-    } catch {
-      toast({ title: 'Copy Failed', description: 'Could not copy markdown to clipboard.' });
-      // Optionally log error.
-    }
-  };
-  const handleCopyHtml = async () => {
-    try {
-      await navigator.clipboard.writeText(htmlOutput);
-      toast({ title: 'HTML Copied', description: 'Rendered HTML copied to clipboard.' });
-    } catch {
-      toast({ title: 'Copy Failed', description: 'Could not copy HTML to clipboard.' });
-      // Optionally log error.
-    }
-  };
   const handleDownload = () => {
     const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -523,7 +506,7 @@ export default function MarkdownPreviewerPage() {
       </Sidebar>
       <SidebarInset>
   <PageHeader icon={Article} title="Markdown Previewer" />
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
             <div className="mb-8 hidden sm:block">
@@ -532,22 +515,41 @@ export default function MarkdownPreviewerPage() {
             </div>
             
             {/* Controls Bar */}
-            <div className="flex flex-wrap gap-3 items-center border rounded-md p-3 bg-background/60 justify-center sm:justify-start overflow-x-auto">
-              <div className="flex items-center gap-1">
-                <Button variant={viewMode==='edit'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('edit')} title="Editor only"><Article className="h-4 w-4"/></Button>
-                <Button variant={viewMode==='preview'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('preview')} title="Preview only"><Eye className="h-4 w-4"/></Button>
-                <Button variant={viewMode==='split'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={()=>setViewMode('split')} title="Split view"><Columns className="h-4 w-4"/></Button>
+            <div className="flex flex-nowrap gap-3 items-center border rounded-md p-3 bg-background/60 justify-start overflow-x-auto">
+              <div className="flex items-center gap-1 shrink-0">
+                <Button variant={viewMode==='edit'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={()=>setViewMode('edit')} title="Editor only"><Article className="h-4 w-4"/></Button>
+                <Button variant={viewMode==='preview'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={()=>setViewMode('preview')} title="Preview only"><Eye className="h-4 w-4"/></Button>
+                <Button variant={viewMode==='split'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={()=>setViewMode('split')} title="Split view"><Columns className="h-4 w-4"/></Button>
               </div>
-              <div className="h-6 w-px bg-border" />
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleCopyMarkdown} title="Copy Markdown"><Copy className="h-4 w-4"/></Button>
-                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleCopyHtml} title="Copy Rendered HTML"><CodeIconFallback />{/* fallback icon */}</Button>
-                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleDownload} title="Download .md"><Download className="h-4 w-4"/></Button>
-                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleClearInput} title="Clear"><Trash className="h-4 w-4"/></Button>
-                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto" onClick={handleResetDemo} title="Reset Demo Content"><RefreshIconFallback /></Button>
+              <div className="h-6 w-px bg-border shrink-0" />
+              <div className="flex items-center gap-1 shrink-0">
+                <CopyButton
+                  value={() => markdownText}
+                  label=""
+                  variant="outline"
+                  size="sm"
+                  className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0"
+                  title="Copy Markdown"
+                  toastTitle="Markdown Copied"
+                  toastDescription="Source markdown copied to clipboard."
+                />
+                <CopyButton
+                  value={() => htmlOutput}
+                  label=""
+                  icon={<CodeIconFallback />}
+                  variant="outline"
+                  size="sm"
+                  className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0"
+                  title="Copy Rendered HTML"
+                  toastTitle="HTML Copied"
+                  toastDescription="Rendered HTML copied to clipboard."
+                />
+                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={handleDownload} title="Download .md"><Download className="h-4 w-4"/></Button>
+                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={handleClearInput} title="Clear"><Trash className="h-4 w-4"/></Button>
+                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={handleResetDemo} title="Reset Demo Content"><RefreshIconFallback /></Button>
               </div>
-              <div className="h-6 w-px bg-border" />
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="h-6 w-px bg-border shrink-0" />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                 <span>{wordCount.toLocaleString()} words</span>
                 <span>{lineCount} lines</span>
                 <span>{charCount.toLocaleString()} chars</span>
@@ -575,7 +577,7 @@ export default function MarkdownPreviewerPage() {
               )}
               {viewMode === 'split' && (
                 <div className="flex flex-1 h-full w-full select-none flex-col md:flex-row">
-                  <div style={{flexBasis: `${panelRatio*100}%`}} className="min-h-[35%] md:min-h-[300px] min-w-[150px] md:min-w-[200px] md:max-w-[calc(100%-150px)] lg:max-w-[calc(100%-200px)] flex flex-col border-b md:border-b-0 md:border-r">
+                  <div style={{flexBasis: `${panelRatio*100}%`}} className="min-h-[80px] md:min-h-[300px] min-w-[150px] md:min-w-[200px] md:max-w-[calc(100%-150px)] lg:max-w-[calc(100%-200px)] flex flex-col border-b md:border-b-0 md:border-r overflow-hidden">
                     <EditorPane markdownText={markdownText} setMarkdownText={setMarkdownText} wrap={wrap} />
                   </div>
 
@@ -613,7 +615,7 @@ export default function MarkdownPreviewerPage() {
                     aria-valuenow={Math.round(panelRatio*100)}
                   />
 
-                  <div className="flex-1 flex flex-col min-h-[35%] md:min-h-[300px] min-w-[150px] md:min-w-[200px]">
+                  <div className="flex-1 flex flex-col min-h-[80px] md:min-h-[300px] min-w-[150px] md:min-w-[200px] overflow-hidden">
                     <PreviewPane htmlOutput={htmlOutput} />
                   </div>
                 </div>
@@ -633,7 +635,7 @@ export default function MarkdownPreviewerPage() {
             <Card className="shadow-lg">
               <CardHeader className="pb-6">
                 <div className="flex items-center gap-2">
-                  <Info className="h-5 w-5 text-primary" />
+                  <Info className="h-5 w-5 text-muted-foreground" />
                   <CardTitle className="text-xl font-headline">Markdown Quick Reference</CardTitle>
                 </div>
               </CardHeader>

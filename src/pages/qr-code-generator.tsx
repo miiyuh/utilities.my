@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { createRoot } from 'react-dom/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Gear, Upload, Trash, QrCode as QrCodeIcon, Copy, QrCode, DownloadSimple, ArrowClockwise, Info } from 'phosphor-react';
+import { Download, Gear, Upload, Trash, QrCode as QrCodeIcon, QrCode, DownloadSimple, ArrowClockwise, Info } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -136,7 +137,7 @@ export default function QrCodeGeneratorPage() {
       return false;
     }
     if (payloadTooLarge) {
-      toast({ title: 'Payload too large', description: 'The QR payload is too large — shorten the text or reduce options.', variant: 'destructive' });
+      toast({ title: 'Payload too large', description: 'The QR payload is too large, shorten the text or reduce options.', variant: 'destructive' });
       return false;
     }
     return true;
@@ -373,7 +374,7 @@ export default function QrCodeGeneratorPage() {
         // Enforce max logo size of 20% for reliable scanning
         if (logoSize > 0.2) {
           setLogoSize(0.2);
-          toast({ title: 'Logo Uploaded', description: `${file.name} — logo size exceeded 20% and was clamped for reliability.` });
+          toast({ title: 'Logo Uploaded', description: `${file.name}: logo size exceeded 20% and was clamped for reliability.` });
         } else {
           toast({ title: 'Logo Uploaded', description: file.name });
         }
@@ -413,33 +414,21 @@ export default function QrCodeGeneratorPage() {
     }
   }, []);
 
-  const handleCopyHtmlEmbed = useCallback(async () => {
-    if (!qrValue) {
-        toast({ title: 'Cannot Copy', description: 'Generate a QR code first.', variant: 'destructive' });
-        return;
-    }
-    let embedCode = '';
+  const buildHtmlEmbed = useCallback(() => {
+    if (!qrValue) return '';
     if (outputFormat === 'png' && qrCanvasRef.current) {
         const canvas = qrCanvasRef.current.querySelector('canvas');
         if (canvas) {
             const dataUrl = canvas.toDataURL('image/png');
-            embedCode = `<img src="${dataUrl}" alt="QR Code" width="${qrSize}" height="${qrSize}">`;
+            return `<img src="${dataUrl}" alt="QR Code" width="${qrSize}" height="${qrSize}">`;
         }
-    } else if (outputFormat === 'svg' && qrSvgRef.current) {
-        embedCode = qrSvgRef.current.outerHTML;
+        return '';
     }
-
-    if (embedCode) {
-        try {
-            await navigator.clipboard.writeText(embedCode);
-            toast({ title: 'HTML Embed Copied!', description: `${outputFormat === 'svg' ? '<svg> markup' : '<img> tag'} copied to clipboard.` });
-        } catch (err) {
-            toast({ title: 'Copy Failed', description: `Could not copy HTML embed code. Error: ${err}`, variant: 'destructive' });
-        }
-    } else {
-        toast({ title: 'Cannot Copy', description: `Could not generate embed code for ${outputFormat.toUpperCase()}.`, variant: 'destructive' });
+    if (outputFormat === 'svg' && qrSvgRef.current) {
+        return qrSvgRef.current.outerHTML;
     }
-  }, [qrValue, outputFormat, qrSize, qrCanvasRef, qrSvgRef, toast]);
+    return '';
+  }, [qrValue, outputFormat, qrSize, qrCanvasRef, qrSvgRef]);
 
   const renderPayloadInputs = () => {
     switch (payloadType) {
@@ -604,16 +593,16 @@ export default function QrCodeGeneratorPage() {
       </Sidebar>
       <SidebarInset>
   <PageHeader icon={QrCode} title="QR Code Generator" />
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* Big heading */}
             <div className="mb-8 hidden sm:block">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">QR Code Generator</h1>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">QR Code Generator</h1>
               <p className="text-lg text-muted-foreground">Generate QR codes from text or URLs.</p>
             </div>
             
             <div className="space-y-8">
-              <div className="grid lg:grid-cols-3 gap-6 xl:gap-8 h-full">
+              <div className="grid lg:grid-cols-3 gap-8 h-full">
               {/* Left Panel: Inputs & Customization */}
               <div className="lg:col-span-2 space-y-8">
                 <Card className="minimal-card">
@@ -638,9 +627,15 @@ export default function QrCodeGeneratorPage() {
                     <div className="pt-2 space-y-3">
                         {renderPayloadInputs()}
                         <div className="flex flex-wrap gap-2">
-                          <Button type="button" variant="outline" size="sm" disabled={!qrValue} onClick={handleCopyHtmlEmbed} className="h-8 px-3">
-                            <Copy className="h-3.5 w-3.5 mr-1" /> HTML
-                          </Button>
+                          <CopyButton
+                            value={buildHtmlEmbed}
+                            label="HTML"
+                            size="sm"
+                            disabled={!qrValue}
+                            className="h-8"
+                            toastTitle="HTML Embed Copied!"
+                            toastDescription={`${outputFormat === 'svg' ? '<svg> markup' : '<img> tag'} copied to clipboard.`}
+                          />
                           <Button type="button" variant="outline" size="sm" disabled={!qrValue || outputFormat!=='png'} onClick={copyPngToClipboard} className="h-8 px-3">
                             <DownloadSimple className="h-3.5 w-3.5 mr-1" /> PNG
                           </Button>
@@ -714,7 +709,7 @@ export default function QrCodeGeneratorPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="fgColorText">Foreground Color</Label>
+                        <Label htmlFor="fgColorText">Foreground Colour</Label>
                         <div className="flex items-center gap-2">
                           <Input
                             id="fgColorText"
@@ -731,7 +726,7 @@ export default function QrCodeGeneratorPage() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="bgColorText">Background Color</Label>
+                        <Label htmlFor="bgColorText">Background Colour</Label>
                          <div className="flex items-center gap-2">
                           <Input
                             id="bgColorText"
@@ -854,7 +849,7 @@ export default function QrCodeGeneratorPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="minimal-card">
+                <Card className="minimal-card @container">
                   <CardHeader className="pb-3 md:pb-4">
                     <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Download</CardTitle>
                   </CardHeader>
@@ -872,20 +867,25 @@ export default function QrCodeGeneratorPage() {
                       </div>
                       <div className="flex-1 space-y-1">
                           <Label htmlFor="downloadFilename">Filename</Label>
-              <Input 
-                id="downloadFilename" 
-                value={downloadFilename} 
+              <Input
+                id="downloadFilename"
+                value={downloadFilename}
                 onChange={(e) => { setDownloadFilename(e.target.value); setManualFilenameEdited(true); }}
                 placeholder={`qrcode.${outputFormat}`}
               />
                       </div>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <Button onClick={handleCopyHtmlEmbed} variant="outline" className="w-full">
-                          <Copy className="mr-2 h-4 w-4" /> HTML Embed
-                      </Button>
-                      <Button onClick={handleDownload} disabled={!qrValue} className="w-full">
-                        <Download className="mr-2 h-4 w-4" /> Download
+                    <div className="grid gap-2 @xs:grid-cols-2">
+                      <CopyButton
+                        value={buildHtmlEmbed}
+                        label="HTML Embed"
+                        disabled={!qrValue}
+                        className="w-full min-w-0"
+                        toastTitle="HTML Embed Copied!"
+                        toastDescription={`${outputFormat === 'svg' ? '<svg> markup' : '<img> tag'} copied to clipboard.`}
+                      />
+                      <Button onClick={handleDownload} disabled={!qrValue} className="w-full min-w-0">
+                        <Download className="mr-2 h-4 w-4 shrink-0" /> <span className="truncate min-w-0">Download</span>
                       </Button>
                     </div>
           <p className="text-[11px] text-muted-foreground leading-snug">Tip: SVG stays vector for print; PNG is raster. Include a quiet zone for better scanning.</p>

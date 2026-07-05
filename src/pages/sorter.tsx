@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { SortAscending, TextAa, X, Trash, Copy, Upload, Download, Shuffle, ArrowsLeftRight, Info } from 'phosphor-react';
+import { SortAscending, TextAa, X, Trash, Upload, Download, Shuffle, ArrowsLeftRight, Info } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,14 +139,6 @@ export default function SorterPage() {
     toast({ title: 'Text Sorted!', description: `Sorted ${sorted.length} lines.` });
   }, [inputText, buildProcessedLines, sortLines, toast]);
   
-  const handleCopy = async () => {
-    if (!outputText) {
-      toast({ title: 'Nothing to copy', variant: 'destructive' });
-      return;
-    }
-    await navigator.clipboard.writeText(outputText);
-    toast({ title: 'Copied to clipboard!' });
-  };
 
   const handleClear = useCallback(() => {
     setInputText('');
@@ -220,15 +213,15 @@ export default function SorterPage() {
       </Sidebar>
       <SidebarInset>
   <PageHeader icon={SortAscending} title="Sorter" />
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
             <div className="mb-8 hidden sm:block">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Sorter</h1>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Sorter</h1>
               <p className="text-lg text-muted-foreground">Sort lines of text alphabetically, numerically, by length, or by any column.</p>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-8 lg:grid-cols-2">
               {/* Left: Input & Controls */}
               <Card className="minimal-card">
                 <CardHeader className="pb-2">
@@ -354,7 +347,7 @@ export default function SorterPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <Button variant="outline" size="sm" onClick={()=> { if (outputText) { setInputText(outputText); toast({ title: 'Replaced input with output' }); } }}><ArrowsLeftRight className="h-4 w-4 mr-1"/> Use as Input</Button>
                     <Button variant="outline" size="sm" onClick={handleDownload} disabled={!outputText}><Download className="h-4 w-4 mr-1"/> Download</Button>
-                    <Button size="sm" onClick={handleCopy} disabled={!outputText}><Copy className="h-4 w-4 mr-1"/> Copy</Button>
+                    <CopyButton value={() => outputText} label="Copy" size="sm" disabled={!outputText} toastTitle="Copied to clipboard!" />
                     <div className="text-sm text-muted-foreground ml-auto">Lines: <span className="font-medium">{stats.outCount}</span></div>
                   </div>
                   <div className="space-y-2">

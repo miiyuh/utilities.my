@@ -1,304 +1,209 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
-import { Combobox } from '@/components/ui/combobox';
-import { cn } from '@/lib/utils';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Globe,
-  Copy,
-  Clock,
-  Calendar as CalendarIcon,
-  Trash,
-  ArrowClockwise,
-} from 'phosphor-react';
-
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  DragStartEvent,
-  DragEndEvent,
-  DragOverlay,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  arrayMove,
-  rectSortingStrategy,
-  useSortable,
-  sortableKeyboardCoordinates,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import {
-  Sidebar,
-  SidebarInset,
-  SidebarRail,
-} from '@/components/ui/sidebar';
-import { SidebarContent } from '@/components/sidebar-content';
+import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { PageHeader } from "@/components/page-header";
+import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
+import { SidebarContent } from '@/components/sidebar-content';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
+import { Combobox } from '@/components/ui/combobox';
+import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { CITY_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
+import { Globe, X, ArrowLeft, ArrowRight, ArrowClockwise, CaretUp, CaretDown, Calendar as CalendarIcon } from 'phosphor-react';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// Get timezone abbreviation
-const getTimezoneAbbr = (tz: string, date: dayjs.Dayjs): string => {
-  try {
-    const formatter = new Intl.DateTimeFormat('en-MY', {
-      timeZone: tz,
-      timeZoneName: 'short'
-    });
-    const parts = formatter.formatToParts(date.toDate());
-    return parts.find(part => part.type === 'timeZoneName')?.value || 'UTC';
-  } catch {
-    return 'UTC';
-  }
-};
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const STORAGE_KEY = 'utilities.timezone-converter.zones';
+/** Width of the zone-label column in px - must match the `w-40` class on labels. */
+const LABEL_W = 160;
 
-// Timezone data with metadata
-interface TimezoneItem {
-  value: string;
-  city: string;
-  country: string;
-  code: string;
+interface HourRange {
+  start: number;
+  end: number;
 }
 
-const TIMEZONE_LIST: TimezoneItem[] = [
-  { value: 'UTC', city: 'UTC', country: 'Coordinated Universal Time', code: 'un' },
-  { value: 'America/New_York', city: 'New York', country: 'United States', code: 'us' },
-  { value: 'America/Los_Angeles', city: 'Los Angeles', country: 'United States', code: 'us' },
-  { value: 'America/Chicago', city: 'Chicago', country: 'United States', code: 'us' },
-  { value: 'America/Denver', city: 'Denver', country: 'United States', code: 'us' },
-  { value: 'America/Toronto', city: 'Toronto', country: 'Canada', code: 'ca' },
-  { value: 'America/Vancouver', city: 'Vancouver', country: 'Canada', code: 'ca' },
-  { value: 'America/Mexico_City', city: 'Mexico City', country: 'Mexico', code: 'mx' },
-  { value: 'America/Sao_Paulo', city: 'São Paulo', country: 'Brazil', code: 'br' },
-  { value: 'America/Buenos_Aires', city: 'Buenos Aires', country: 'Argentina', code: 'ar' },
-  { value: 'Europe/London', city: 'London', country: 'United Kingdom', code: 'gb' },
-  { value: 'Europe/Paris', city: 'Paris', country: 'France', code: 'fr' },
-  { value: 'Europe/Berlin', city: 'Berlin', country: 'Germany', code: 'de' },
-  { value: 'Europe/Rome', city: 'Rome', country: 'Italy', code: 'it' },
-  { value: 'Europe/Madrid', city: 'Madrid', country: 'Spain', code: 'es' },
-  { value: 'Europe/Amsterdam', city: 'Amsterdam', country: 'Netherlands', code: 'nl' },
-  { value: 'Europe/Brussels', city: 'Brussels', country: 'Belgium', code: 'be' },
-  { value: 'Europe/Vienna', city: 'Vienna', country: 'Austria', code: 'at' },
-  { value: 'Europe/Zurich', city: 'Zurich', country: 'Switzerland', code: 'ch' },
-  { value: 'Europe/Stockholm', city: 'Stockholm', country: 'Sweden', code: 'se' },
-  { value: 'Europe/Oslo', city: 'Oslo', country: 'Norway', code: 'no' },
-  { value: 'Europe/Copenhagen', city: 'Copenhagen', country: 'Denmark', code: 'dk' },
-  { value: 'Europe/Helsinki', city: 'Helsinki', country: 'Finland', code: 'fi' },
-  { value: 'Europe/Warsaw', city: 'Warsaw', country: 'Poland', code: 'pl' },
-  { value: 'Europe/Prague', city: 'Prague', country: 'Czech Republic', code: 'cz' },
-  { value: 'Europe/Athens', city: 'Athens', country: 'Greece', code: 'gr' },
-  { value: 'Europe/Istanbul', city: 'Istanbul', country: 'Turkey', code: 'tr' },
-  { value: 'Europe/Moscow', city: 'Moscow', country: 'Russia', code: 'ru' },
-  { value: 'Asia/Tokyo', city: 'Tokyo', country: 'Japan', code: 'jp' },
-  { value: 'Asia/Shanghai', city: 'Shanghai', country: 'China', code: 'cn' },
-  { value: 'Asia/Hong_Kong', city: 'Hong Kong', country: 'Hong Kong', code: 'hk' },
-  { value: 'Asia/Singapore', city: 'Singapore', country: 'Singapore', code: 'sg' },
-  { value: 'Asia/Seoul', city: 'Seoul', country: 'South Korea', code: 'kr' },
-  { value: 'Asia/Bangkok', city: 'Bangkok', country: 'Thailand', code: 'th' },
-  { value: 'Asia/Manila', city: 'Manila', country: 'Philippines', code: 'ph' },
-  { value: 'Asia/Jakarta', city: 'Jakarta', country: 'Indonesia', code: 'id' },
-  { value: 'Asia/Kuala_Lumpur', city: 'Kuala Lumpur', country: 'Malaysia', code: 'my' },
-  { value: 'Asia/Ho_Chi_Minh', city: 'Ho Chi Minh', country: 'Vietnam', code: 'vn' },
-  { value: 'Asia/Mumbai', city: 'Mumbai', country: 'India', code: 'in' },
-  { value: 'Asia/Kolkata', city: 'Kolkata', country: 'India', code: 'in' },
-  { value: 'Asia/Dubai', city: 'Dubai', country: 'United Arab Emirates', code: 'ae' },
-  { value: 'Asia/Karachi', city: 'Karachi', country: 'Pakistan', code: 'pk' },
-  { value: 'Asia/Dhaka', city: 'Dhaka', country: 'Bangladesh', code: 'bd' },
-  { value: 'Australia/Sydney', city: 'Sydney', country: 'Australia', code: 'au' },
-  { value: 'Australia/Melbourne', city: 'Melbourne', country: 'Australia', code: 'au' },
-  { value: 'Australia/Brisbane', city: 'Brisbane', country: 'Australia', code: 'au' },
-  { value: 'Pacific/Auckland', city: 'Auckland', country: 'New Zealand', code: 'nz' },
-  { value: 'Africa/Cairo', city: 'Cairo', country: 'Egypt', code: 'eg' },
-  { value: 'Africa/Lagos', city: 'Lagos', country: 'Nigeria', code: 'ng' },
-  { value: 'Africa/Johannesburg', city: 'Johannesburg', country: 'South Africa', code: 'za' },
-];
+/** Compact 12-hour label used on the hour ruler. */
+function hourRuler12(h: number): string {
+  if (h === 0) return '12a';
+  if (h === 12) return '12p';
+  return h < 12 ? `${h}a` : `${h - 12}p`;
+}
 
-const FlagImage = ({ code, className }: { code: string; className?: string }) => {
-  const url = code === 'un' 
-    ? 'https://flagcdn.com/w80/un.png' 
-    : `https://flagcdn.com/w80/${code.toLowerCase()}.png`;
-  
-  return (
-    <div className={cn("relative flex items-center justify-center bg-muted/30 overflow-hidden", className)}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img 
-        src={url} 
-        alt="" 
-        className="w-full h-full object-contain" 
-        loading="lazy"
-      />
-      <div className="absolute inset-0 pointer-events-none border border-black/5 rounded-[inherit]" />
-    </div>
-  );
-};
+/** Tailwind classes describing day / evening / night for a local hour. */
+function cellTone(hour: number, isNow: boolean, isSelected: boolean): string {
+  let base: string;
+  if (hour >= 9 && hour < 18) base = 'bg-primary/15 text-foreground'; // working hours
+  else if (hour >= 7 && hour < 21) base = 'bg-muted text-foreground'; // daytime
+  else base = 'bg-background text-muted-foreground/70'; // night
+  // Selection and "now" are drawn as an outline overlay on top of the grid
+  // (see the range/now overlay boxes below), not a per-cell fill, so only
+  // text emphasis is added here.
+  if (isSelected) base += ' text-foreground font-medium';
+  else if (isNow) base += ' text-foreground font-semibold';
+  return base;
+}
 
 export default function TimezoneConverterPage() {
-  const { toast } = useToast();
-  
-  // State for reference timezone and time
-  const [referenceTimezone, setReferenceTimezone] = useState(dayjs.tz.guess());
-  const [referenceDate, setReferenceDate] = useState(dayjs().format('YYYY-MM-DD'));
-  const [referenceTime, setReferenceTime] = useState(dayjs().format('HH:mm'));
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  
-  // Selected timezones to display
-  const [selectedTimezones, setSelectedTimezones] = useState<string[]>([
-    dayjs.tz.guess(),
-    'America/New_York',
-    'Europe/London',
-    'Asia/Tokyo',
-  ]);
+  const localZone = React.useMemo(() => dayjs.tz.guess(), []);
 
-  const prevReferenceRef = useRef(referenceTimezone);
-
-  const timezoneItems = useMemo(
-    () =>
-      TIMEZONE_LIST.map(tz => ({
-        value: tz.value,
-        label: tz.city,
-        description: `${tz.country} · ${tz.value}`,
-        leading: <FlagImage code={tz.code} className="w-8 h-4 rounded-[2px] shadow-sm" />,
-      })),
-    []
-  );
-
-  const availableAddItems = useMemo(
-    () => timezoneItems.filter(item => !selectedTimezones.includes(item.value)),
-    [selectedTimezones, timezoneItems]
-  );
-
-  useEffect(() => {
-    setSelectedTimezones(prev => {
-      const next = prev.filter(tz => tz !== referenceTimezone);
-      const prevRef = prevReferenceRef.current;
-      if (prevRef && prevRef !== referenceTimezone && !next.includes(prevRef)) {
-        return [...next, prevRef];
+  const [zones, setZones] = React.useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) return parsed;
       }
+    } catch {
+      /* ignore */
+    }
+    return [localZone, 'America/New_York', 'Europe/London', 'Asia/Tokyo'];
+  });
+
+  const [dayOffset, setDayOffset] = React.useState(0);
+  const [range, setRange] = React.useState<HourRange | null>(null);
+  const [dragging, setDragging] = React.useState(false);
+  const [use24h, setUse24h] = React.useState(true);
+  const dragAnchor = React.useRef<number | null>(null);
+  const gridRef = React.useRef<HTMLDivElement | null>(null);
+  const [now, setNow] = React.useState(() => dayjs());
+
+  React.useEffect(() => {
+    const id = setInterval(() => setNow(dayjs()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Map a pointer X coordinate to an hour-column index (0–23) inside the grid.
+  const columnFromClientX = React.useCallback((clientX: number): number => {
+    const el = gridRef.current;
+    if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    const cellW = (rect.width - LABEL_W) / HOURS.length;
+    const raw = Math.floor((clientX - rect.left - LABEL_W) / cellW);
+    return Math.min(HOURS.length - 1, Math.max(0, raw));
+  }, []);
+
+  const startDrag = (index: number) => {
+    dragAnchor.current = index;
+    setRange({ start: index, end: index });
+    setDragging(true);
+  };
+
+  // While dragging, track the pointer across the whole window so fast drags
+  // (and touch drags) never lose the selection between cells.
+  React.useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: PointerEvent) => {
+      const anchor = dragAnchor.current;
+      if (anchor == null) return;
+      const idx = columnFromClientX(e.clientX);
+      setRange({ start: Math.min(anchor, idx), end: Math.max(anchor, idx) });
+    };
+    const onUp = () => {
+      setDragging(false);
+      dragAnchor.current = null;
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    };
+  }, [dragging, columnFromClientX]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(zones));
+    } catch {
+      /* ignore */
+    }
+  }, [zones]);
+
+  const homeZone = zones[0] ?? localZone;
+  // Midnight of the viewed day in the home zone; each column is one absolute hour after it.
+  const base = React.useMemo(
+    () => now.tz(homeZone).startOf('day').add(dayOffset, 'day'),
+    [now, homeZone, dayOffset]
+  );
+  const instants = React.useMemo(() => HOURS.map((i) => base.add(i, 'hour')), [base]);
+
+  const nowIndex = dayOffset === 0 ? now.diff(base, 'hour', true) : -1;
+  const nowColumn = Math.floor(nowIndex);
+
+  // Selected range as absolute instants; end is exclusive (worldtimebuddy slot semantics).
+  const rangeStart = range ? base.add(range.start, 'hour') : null;
+  const rangeEnd = range ? base.add(range.end + 1, 'hour') : null;
+
+  const timeFmt = use24h ? 'HH:mm' : 'h:mm A';
+  const rangeTimeFmt = use24h ? 'HH:mm' : 'h:mm A';
+
+  const changeDay = (next: number) => {
+    setDayOffset(next);
+    setRange(null);
+    dragAnchor.current = null;
+    setDragging(false);
+  };
+
+  const handleDatePick = (date: Date | undefined) => {
+    if (!date) return;
+    const today = now.tz(homeZone).startOf('day');
+    const picked = dayjs(date).startOf('day');
+    changeDay(picked.diff(today, 'day'));
+  };
+
+  const buildRangeSummary = () => {
+    if (!rangeStart || !rangeEnd) return '';
+    return zones.map((tz) => {
+      const s = rangeStart.tz(tz);
+      const e = rangeEnd.tz(tz);
+      const endFmt = s.isSame(e, 'day') ? rangeTimeFmt : `ddd, MMM D · ${rangeTimeFmt}`;
+      return `${zoneLabel(tz)}: ${s.format(`ddd, MMM D · ${rangeTimeFmt}`)} – ${e.format(endFmt)} (${tz})`;
+    }).join('\n');
+  };
+
+  const addZone = (tz: string | null) => {
+    if (!tz || zones.includes(tz)) return;
+    setZones((prev) => [...prev, tz]);
+  };
+  const removeZone = (tz: string) => setZones((prev) => prev.filter((z) => z !== tz));
+  const moveZone = (tz: string, dir: -1 | 1) => {
+    setZones((prev) => {
+      const i = prev.indexOf(tz);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
       return next;
     });
-    prevReferenceRef.current = referenceTimezone;
-  }, [referenceTimezone]);
-
-  // Calculate the reference moment
-  const referenceMoment = useMemo(() => {
-    try {
-      return dayjs.tz(`${referenceDate} ${referenceTime}`, 'YYYY-MM-DD HH:mm', referenceTimezone);
-    } catch {
-      return dayjs().tz(referenceTimezone);
-    }
-  }, [referenceDate, referenceTime, referenceTimezone]);
-
-  // Get conversions for all selected timezones
-  const conversions = useMemo(() => {
-    return selectedTimezones.map(tz => {
-      const converted = referenceMoment.clone().tz(tz);
-      return {
-        timezone: tz,
-        time: converted.format('HH:mm'),
-        date: converted.format('ddd, DD MMM YYYY'),
-        utcOffset: converted.format('Z'),
-        abbr: getTimezoneAbbr(tz, converted),
-      };
-    });
-  }, [referenceMoment, selectedTimezones]);
-
-  const addTimezone = (tz: string) => {
-    if (selectedTimezones.includes(tz)) {
-      toast({
-        title: 'Already added',
-        description: 'This timezone is already in your list.',
-      });
-      return;
-    }
-    setSelectedTimezones([...selectedTimezones, tz]);
   };
 
-  const removeTimezone = (tz: string) => {
-    if (selectedTimezones.length === 1) {
-      toast({
-        title: 'Cannot remove',
-        description: 'You need at least one timezone.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setSelectedTimezones(selectedTimezones.filter(t => t !== tz));
-  };
-
-  const copyTimeInfo = (timezone: string, time: string, date: string) => {
-    const text = `${time} (${timezone})\n${date}`;
-    navigator.clipboard.writeText(text);
-    toast({
-      title: 'Copied!',
-      description: 'Time information copied to clipboard.',
-    });
-  };
-
-  const setToNow = () => {
-    const now = dayjs();
-    setReferenceDate(now.format('YYYY-MM-DD'));
-    setReferenceTime(now.format('HH:mm'));
-  };
-
-  const tzData = TIMEZONE_LIST.find(tz => tz.value === referenceTimezone) || TIMEZONE_LIST[0];
-
-  // dnd-kit state & handlers
-  const [activeId, setActiveId] = React.useState<string | null>(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  const comboItems = React.useMemo(
+    () =>
+      CITY_ZONES.filter((c) => !zones.includes(c.timezone)).map((c) => ({
+        value: c.timezone,
+        label: `${c.flag} ${c.city}`,
+        description: `${c.country} · ${c.timezone}`,
+      })),
+    [zones]
   );
-  const handleDragStart = (event: DragStartEvent) => setActiveId(event.active.id as string);
-  const handleDragEnd = (event: DragEndEvent) => {
-    setActiveId(null);
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const from = selectedTimezones.indexOf(active.id as string);
-      const to = selectedTimezones.indexOf(over.id as string);
-      if (from !== -1 && to !== -1) setSelectedTimezones(prev => arrayMove(prev, from, to));
-    }
-  };
-
-  const activeTzInfo = activeId ? TIMEZONE_LIST.find(t => t.value === activeId) : null;
-
-  function SortableItem({ id, children }: { id: string; children: (opts: { isDragging: boolean }) => React.ReactNode }) {
-    const { listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-    const style: React.CSSProperties = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      touchAction: 'manipulation',
-    };
-    const handlePointerDown = (e: React.PointerEvent) => {
-      const tgt = e.target as HTMLElement | null;
-      if (!tgt) return;
-      if (tgt.closest && tgt.closest('button, a, input, select, textarea')) return;
-      listeners?.onPointerDown?.(e);
-    };
-    return (
-      <div ref={setNodeRef} style={style} onPointerDown={handlePointerDown} className="col-span-1">
-        {children({ isDragging })}
-      </div>
-    );
-  }
 
   return (
     <>
+      <Helmet>
+        <title>Timezone Converter | utilities.my</title>
+        <meta name="description" content="Compare a full day across timezones on one aligned timeline. Find overlapping working hours at a glance, worldtimebuddy-style." />
+        <link rel="canonical" href="https://utilities.my/timezone-converter" />
+      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />
@@ -306,278 +211,235 @@ export default function TimezoneConverterPage() {
       <SidebarInset>
         <PageHeader icon={Globe} title="Timezone Converter" />
 
-        <div className="flex flex-1 flex-col overflow-auto">
-          <div className="flex-1 p-4 sm:p-6 lg:p-8">
-            <div className="w-full max-w-6xl mx-auto space-y-8">
-              {/* Main Heading */}
-              <div className="space-y-4">
-                <h1 className="text-5xl font-bold tracking-tight text-foreground">
-                  Timezone Converter
-                </h1>
-                <p className="text-xl text-muted-foreground max-w-3xl leading-relaxed">
-                  Plan meetings, track travel, or stay in touch across borders.
-                </p>
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-6">
+            <div className="hidden sm:block">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 text-foreground border-b border-border pb-4">
+                Timezone Converter
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-3xl">
+                Compare a whole day across timezones on one aligned timeline, spot overlapping working
+                hours instantly. Click an hour, or drag across hours, to select a time range in every zone.
+              </p>
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="w-full sm:w-96">
+                <Combobox
+                  items={comboItems}
+                  placeholder="Add a city or timezone…"
+                  onValueChange={addZone}
+                  resetOnSelect
+                  inputClassName="h-8 py-1 px-3 text-sm"
+                />
               </div>
-
-              {/* Reference Time Input Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Reference Time
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Timezone Selector */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ref-tz">Timezone</Label>
-                      <Combobox
-                        items={timezoneItems}
-                        value={referenceTimezone}
-                        onValueChange={setReferenceTimezone}
-                        placeholder="Search timezones"
-                        className="w-full"
-                      />
-                    </div>
-
-                    {/* Date Picker */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ref-date">Date</Label>
-                      <div className="flex gap-2">
-                        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="lg"
-                              className="flex-1 justify-between font-normal"
-                            >
-                              <span className="flex items-center gap-2">
-                                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                                {dayjs(referenceDate).format('ddd, DD MMM YYYY')}
-                              </span>
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent align="start" className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={dayjs(referenceDate).toDate()}
-                              onSelect={date => {
-                                if (!date) return;
-                                setReferenceDate(dayjs(date).format('YYYY-MM-DD'));
-                                setCalendarOpen(false);
-                              }}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <Button
-                          variant="outline"
-                          size="lg"
-                          onClick={setToNow}
-                          className="px-4"
-                          title="Set to today"
-                        >
-                          <ArrowClockwise className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Time Picker */}
-                  <div className="space-y-2">
-                    <Label htmlFor="ref-time">Time</Label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                      <Input
-                        id="ref-time"
-                        type="time"
-                        value={referenceTime}
-                        onChange={e => setReferenceTime(e.target.value)}
-                        className="h-11 pl-10"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Display Current Reference Info */}
-                  <div className="p-6 bg-primary/5 rounded-lg border border-primary/20">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
-                        <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-2">Current Reference</div>
-                        <div className="text-5xl font-mono font-bold text-primary tracking-tight">
-                          {referenceMoment.format('HH:mm')}
-                        </div>
-                        <div className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
-                          <FlagImage code={tzData.code} className="w-8 h-4 rounded-[2px] shadow-sm" />
-                          <span>{referenceMoment.format('ddd, DD MMM YYYY')}</span>
-                          <span className="text-muted-foreground/40">•</span>
-                          <span className="font-medium">{referenceTimezone}</span>
-                        </div>
-                      </div>
-                      <div className="sm:text-right pt-4 sm:pt-0 border-t sm:border-t-0 border-primary/10">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">UTC Offset</div>
-                        <div className="text-3xl font-mono font-bold text-foreground">
-                          {referenceMoment.format('Z')}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Conversions Grid */}
-              <div className="space-y-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
-                  <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Conversions</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Compare multiple timezones side-by-side.</p>
-                  </div>
-                  <div className="w-full sm:w-[360px]">
-                    <Combobox
-                      items={availableAddItems}
-                      placeholder="Search and add a city..."
-                      onValueChange={addTimezone}
-                      resetOnSelect
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-2 text-sm mr-2">
+                  <Switch checked={use24h} onCheckedChange={setUse24h} />
+                  <Label className="cursor-pointer select-none">24-hour</Label>
+                </label>
+                <Button variant="outline" size="default" className="h-8" onClick={() => changeDay(dayOffset - 1)}>
+                  <ArrowLeft className="h-4 w-4" /> Prev
+                </Button>
+                <Button
+                  variant={dayOffset === 0 ? 'secondary' : 'outline'}
+                  size="default"
+                  className="h-8"
+                  onClick={() => changeDay(0)}
+                >
+                  Today
+                </Button>
+                <Button variant="outline" size="default" className="h-8" onClick={() => changeDay(dayOffset + 1)}>
+                  Next <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="default" className="h-8">
+                      <CalendarIcon className="h-4 w-4" />
+                      {base.format('MMM D, YYYY')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={base.toDate()}
+                      onSelect={handleDatePick}
+                      autoFocus
                     />
+                  </PopoverContent>
+                </Popover>
+                {range && (
+                  <Button variant="ghost" size="default" className="h-8" onClick={() => setRange(null)}>
+                    <ArrowClockwise className="h-4 w-4" /> Clear selection
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Range summary - stays mounted through drags and clicks alike so it never flashes away. */}
+            {rangeStart && rangeEnd && range && (
+              <div className="rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-sm space-y-2 animate-in fade-in-0 duration-quick ease-smooth-out">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="font-medium text-foreground">
+                      {rangeStart.tz(homeZone).format(`ddd, MMM D · ${rangeTimeFmt}`)} –{' '}
+                      {rangeEnd.tz(homeZone).format(rangeStart.tz(homeZone).isSame(rangeEnd.tz(homeZone), 'day') ? rangeTimeFmt : `ddd, MMM D · ${rangeTimeFmt}`)}
+                    </span>{' '}
+                    <span className="text-muted-foreground">
+                      in {zoneLabel(homeZone)} · {range.end - range.start + 1}h
+                    </span>
                   </div>
+                  <CopyButton
+                    value={buildRangeSummary}
+                    label="Copy all zones"
+                    size="sm"
+                    toastDescription="Time range copied for all zones."
+                  />
                 </div>
+                <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+                  {zones.map((tz) => {
+                    const s = rangeStart.tz(tz);
+                    const e = rangeEnd.tz(tz);
+                    const endFmt = s.isSame(e, 'day') ? rangeTimeFmt : `ddd · ${rangeTimeFmt}`;
+                    return (
+                      <div key={tz} className="flex items-center gap-1.5 tabular-nums">
+                        <span className="flag-emoji">{findCityZone(tz)?.flag ?? '🌐'}</span>
+                        <span className="text-muted-foreground truncate">{zoneLabel(tz)}</span>
+                        <span className="ml-auto font-medium text-foreground">
+                          {s.format(`ddd · ${rangeTimeFmt}`)} – {e.format(endFmt)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                    <SortableContext items={selectedTimezones} strategy={rectSortingStrategy}>
-                      {selectedTimezones.map(tz => {
-                        const conversion = conversions.find(c => c.timezone === tz) as (typeof conversions)[0];
-                        const tzInfo = TIMEZONE_LIST.find(t => t.value === tz);
-                        return (
-                          <SortableItem key={tz} id={tz}>
-                            {({ isDragging }) => (
-                              <Card data-tz={tz} className={cn(
-                                "flex flex-col h-full transition-all duration-quick",
-                                isDragging ? "opacity-60 cursor-grabbing scale-[1.02] shadow-2xl z-50" : "hover:shadow-md hover:border-primary/20"
-                              )}>
-                                <CardHeader className="pb-4">
-                                  <CardTitle className="text-lg flex items-center justify-between">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <FlagImage 
-                                        code={tzInfo?.code || 'un'} 
-                                        className="w-16 h-8 rounded-sm shadow-sm" 
-                                      />
-                                      <div className="min-w-0">
-                                        <div className="truncate font-bold leading-tight">{tzInfo?.city}</div>
-                                        <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mt-0.5">{conversion.abbr}</div>
-                                      </div>
-                                    </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() =>
-                                        copyTimeInfo(
-                                          conversion.timezone,
-                                          conversion.time,
-                                          conversion.date
-                                        )
-                                      }
-                                      className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                      title="Copy"
-                                    >
-                                      <Copy className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex-1 flex flex-col gap-6">
-                                  <div>
-                                    <div className="text-4xl font-mono font-bold text-primary tracking-tight">
-                                      {conversion.time}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground mt-2 font-medium">
-                                      {conversion.date}
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="space-y-3 mt-auto">
-                                    <div className="flex items-center justify-between py-2 border-y border-border/50">
-                                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">UTC Offset</span>
-                                      <span className="font-mono font-bold text-sm">{conversion.utcOffset}</span>
-                                    </div>
-                                    
-                                    {conversion.timezone !== referenceTimezone && (
-                                      <div className="flex gap-2">
-                                        <Button
-                                          variant="outline"
-                                          size="lg"
-                                          onClick={() => {
-                                            setReferenceTimezone(conversion.timezone);
-                                            setReferenceTime(conversion.time);
-                                            setReferenceDate(referenceMoment.clone().tz(conversion.timezone).format('YYYY-MM-DD'));
-                                          }}
-                                          className="flex-1 h-11 text-xs font-bold uppercase tracking-widest"
-                                        >
-                                          Set Reference
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          onClick={() => removeTimezone(conversion.timezone)}
-                                          aria-label={`Remove ${tzInfo?.city}`}
-                                          className="h-11 w-11 p-0 flex-shrink-0 group hover:bg-destructive hover:text-destructive-foreground"
-                                        >
-                                          <Trash className="h-4 w-4 text-destructive transition-colors group-hover:text-white" />
-                                        </Button>
-                                      </div>
-                                    )}
-                                  </div>
-                                </CardContent>
-                              </Card>
+            {/* Grid */}
+            <Card className="p-0 overflow-hidden">
+              <div className="overflow-x-auto">
+                <div ref={gridRef} className="min-w-[760px] select-none">
+                  {/* Hour ruler */}
+                  <div className="flex border-b border-border bg-muted/30">
+                    <div className="w-40 shrink-0 px-3 py-2 text-xs font-medium text-muted-foreground">
+                      {base.format('ddd, MMM D')}
+                    </div>
+                    {HOURS.map((h) => (
+                      <div
+                        key={h}
+                        className={cn(
+                          'flex-1 text-center py-2 text-[10px] tabular-nums text-muted-foreground',
+                          h === nowColumn && 'text-foreground font-semibold'
+                        )}
+                      >
+                        {use24h ? String(h).padStart(2, '0') : hourRuler12(h)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Zone rows */}
+                  <div className="relative">
+                  {zones.map((tz, idx) => {
+                    const city = findCityZone(tz);
+                    const labelInstant = rangeStart ?? now;
+                    const local = labelInstant.tz(tz);
+                    return (
+                      <div key={tz} className="flex items-stretch group">
+                        {/* Label */}
+                        <div className={cn(
+                          "w-40 shrink-0 px-3 py-2 flex flex-col justify-center gap-0.5",
+                          idx !== zones.length - 1 && "border-b border-border"
+                        )}>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="flag-emoji text-sm">{city?.flag ?? '🌐'}</span>
+                            <span className="text-sm font-medium truncate">{zoneLabel(tz)}</span>
+                            {idx === 0 && (
+                              <span className="text-[9px] uppercase tracking-wide text-primary font-semibold">Home</span>
                             )}
-                          </SortableItem>
-                        );
-                      })}
-                    </SortableContext>
-
-                    <DragOverlay>
-                      {activeId && activeTzInfo && (
-                        <div className="w-64 bg-background border rounded-lg shadow-lg p-3 opacity-95">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <FlagImage code={activeTzInfo.code} className="w-8 h-4 rounded-[2px] shadow-sm" />
-                              <div className="min-w-0">
-                                <div className="truncate text-sm font-medium">{activeTzInfo.city}</div>
-                                <div className="text-xs text-muted-foreground">{activeId}</div>
-                              </div>
-                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
+                            <span className="text-foreground font-medium">{local.format(timeFmt)}</span>
+                            <span>GMT{local.format('Z').replace(':00', '')}</span>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button aria-label="Move up" onClick={() => moveZone(tz, -1)} className="text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={idx === 0}>
+                              <CaretUp className="h-3 w-3" />
+                            </button>
+                            <button aria-label="Move down" onClick={() => moveZone(tz, 1)} className="text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={idx === zones.length - 1}>
+                              <CaretDown className="h-3 w-3" />
+                            </button>
+                            <button aria-label="Remove" onClick={() => removeZone(tz)} className="text-muted-foreground hover:text-destructive">
+                              <X className="h-3 w-3" />
+                            </button>
                           </div>
                         </div>
-                      )}
-                    </DragOverlay>
-                  </DndContext>
+
+                        {/* Hour cells */}
+                        {instants.map((inst, i) => {
+                          const localHour = inst.tz(tz).hour();
+                          const isMidnight = localHour === 0;
+                          const inRange = range != null && i >= range.start && i <= range.end;
+                          return (
+                            <button
+                              key={i}
+                              onPointerDown={(e) => {
+                                e.preventDefault();
+                                startDrag(i);
+                              }}
+                              title={inst.tz(tz).format(`ddd, MMM D · ${rangeTimeFmt}`)}
+                              className={cn(
+                                'flex-1 min-h-[3rem] flex flex-col items-center justify-center border-l border-l-border/50 text-xs tabular-nums transition-colors touch-none cursor-pointer',
+                                idx !== zones.length - 1 && 'border-b border-b-border/50',
+                                cellTone(localHour, i === nowColumn, inRange)
+                              )}
+                            >
+                              <span>{use24h ? localHour : ((localHour % 12) || 12)}</span>
+                              {isMidnight && (
+                                <span className="text-[8px] text-muted-foreground leading-none mt-0.5">
+                                  {inst.tz(tz).format('M/D')}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+
+                  {/* Selected-range overlay - a single outline box (no fill) spanning every zone row. */}
+                  {range && (
+                    <div
+                      className="pointer-events-none absolute inset-y-0 rounded-md border-2 border-primary/60"
+                      style={{
+                        left: `calc(${LABEL_W}px + (100% - ${LABEL_W}px) * ${range.start} / 24)`,
+                        width: `calc((100% - ${LABEL_W}px) * ${range.end - range.start + 1} / 24)`,
+                      }}
+                    />
+                  )}
+
+                  {/* "Now" column overlay - same treatment, one column wide. */}
+                  {nowColumn >= 0 && nowColumn < HOURS.length && (
+                    <div
+                      className="pointer-events-none absolute inset-y-0 rounded-md border-2 border-foreground/50"
+                      style={{
+                        left: `calc(${LABEL_W}px + (100% - ${LABEL_W}px) * ${nowColumn} / 24)`,
+                        width: `calc((100% - ${LABEL_W}px) / 24)`,
+                      }}
+                    />
+                  )}
+                  </div>
                 </div>
               </div>
+            </Card>
 
-              {/* Usage Tips */}
-              <Card className="bg-muted/20 border-dashed">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    Quick Guide
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm text-muted-foreground">
-                  <div className="flex gap-2">
-                    <span className="text-primary font-bold">•</span>
-                    <p><strong>Set Reference</strong> &ndash; Choose your base timezone and time to start converting.</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-primary font-bold">•</span>
-                    <p><strong>Add Cities</strong> &ndash; Search and add as many cities as you need to compare.</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-primary font-bold">•</span>
-                    <p><strong>Reorder</strong> &ndash; Drag and drop cards to organize your most important timezones.</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-primary font-bold">•</span>
-                    <p><strong>Sync</strong> &ndash; Click &quot;Set Reference&quot; on any card to instantly pivot the view to that city.</p>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Legend */}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-primary/15" /> Working hours (9–18)</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-muted" /> Daytime</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-background border border-border" /> Night</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded ring-2 ring-foreground/50" /> Now</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-primary/30 ring-1 ring-primary/60" /> Selected range (drag to extend)</span>
             </div>
           </div>
         </div>

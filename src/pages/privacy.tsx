@@ -81,7 +81,7 @@ Anonymous, aggregated data helps us:
 
 We explicitly do **not**:
 
-- Create detailed user profiles or behavioral tracking
+- Create detailed user profiles or behavioural tracking
 - Share data with advertising networks or data brokers
 - Use data for marketing or promotional purposes
 - Track users across different websites or services

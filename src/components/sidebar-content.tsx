@@ -11,7 +11,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Info } from "phosphor-react"
+import { ArrowLeft, Info } from "phosphor-react"
 import { tools as originalTools } from "@/lib/tools"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -37,9 +37,19 @@ export function SidebarContent() {
 
   return (
     <>
-      <SidebarHeader 
-        className="border-b h-16 flex flex-row items-center justify-center px-4 group-data-[collapsible=icon]:px-2"
+      <SidebarHeader
+        className="border-b h-16 flex flex-row items-center justify-center px-4 group-data-[collapsible=icon]:px-2 relative"
       >
+        {isMobile && (
+          <button
+            type="button"
+            onClick={() => setOpenMobile(false)}
+            className="minimal-button-ghost absolute left-4 p-1.5"
+            aria-label="Close sidebar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/assets/img/utilities-my_text.svg"
@@ -50,12 +60,19 @@ export function SidebarContent() {
         />
         {/* compact fallback shown only when collapsed */}
         <div className="hidden group-data-[collapsible=icon]:inline-flex items-center justify-center rounded-md h-8 w-8">
-          <span className="font-medium">U</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/apple-touch-icon.png"
+            alt="utilities.my"
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-lg object-contain"
+          />
         </div>
       </SidebarHeader>
-      <SidebarScrollableContent className="flex-1 p-3 pt-2 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pt-2">
-        <ScrollArea className="h-full">
-          <SidebarMenu className="space-y-1.5">
+      <SidebarScrollableContent className="flex-1 p-3 pt-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
+        <ScrollArea className="h-full w-full">
+          <SidebarMenu className="space-y-1.5 group-data-[collapsible=icon]:items-center">
             {sortedTools.map((tool) => (
               <SidebarMenuItem key={tool.path}>
                 <SidebarMenuButton
@@ -63,17 +80,16 @@ export function SidebarContent() {
                   isActive={pathname === tool.path}
                   className={cn(
                     "w-full justify-start group-data-[collapsible=icon]:justify-center",
-                    !isCollapsed && "minimal-menu-item"
+                    !isCollapsed && pathname !== tool.path && "minimal-menu-item",
+                    pathname === tool.path &&
+                      "data-active:bg-primary data-active:text-primary-foreground data-active:hover:bg-primary/90 data-active:hover:text-primary-foreground"
                   )}
                   tooltip={tool.name}
                 >
                   <Link to={tool.path} onClick={handleLinkClick}>
                     <div className="flex items-center">
                       <tool.icon className="h-4 w-4 mr-3 group-data-[collapsible=icon]:mr-0" />
-                      <span className={cn(
-                        "group-data-[collapsible=icon]:hidden font-medium",
-                        pathname === tool.path ? "text-primary" : "text-foreground"
-                      )}>{tool.name}</span>
+                      <span className="group-data-[collapsible=icon]:hidden font-medium">{tool.name}</span>
                     </div>
                   </Link>
                 </SidebarMenuButton>
@@ -83,7 +99,7 @@ export function SidebarContent() {
         </ScrollArea>
       </SidebarScrollableContent>
       {/* Combined bottom section */}
-      <div className="p-3 pt-3 border-t border-sidebar-border group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pt-2">
+      <div className="p-3 pt-3 border-t border-sidebar-border group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
         <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
           {/* Left: Small text links - render only when expanded */}
           {!isCollapsed && (
@@ -109,19 +125,18 @@ export function SidebarContent() {
           <div className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link 
+                <Link
                   to="/about"
                   className={cn(
-                    "p-2 rounded-md transition-colors hover:bg-sidebar-accent",
-                    pathname === "/about" && "bg-sidebar-accent"
+                    "p-2 rounded-md transition-colors",
+                    pathname === "/about"
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "text-muted-foreground hover:bg-sidebar-accent"
                   )}
                   title="About"
                   onClick={handleLinkClick}
                 >
-                  <Info className={cn(
-                    "h-4 w-4",
-                    pathname === "/about" ? "text-primary" : "text-muted-foreground"
-                  )} />
+                  <Info className="h-4 w-4" />
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="right" align="center" hidden={state !== 'collapsed' || isMobile}>About</TooltipContent>

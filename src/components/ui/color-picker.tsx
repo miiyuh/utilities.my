@@ -1,7 +1,8 @@
 import Color from 'color';
-import { Copy, Eye, Check } from 'phosphor-react';
+import { Eye } from 'phosphor-react';
 import { useCallback, useEffect, useRef, useState, type HTMLAttributes } from 'react';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
@@ -147,7 +148,6 @@ export function ColorPicker({
   const [val, setVal] = useState(100);
   const [alpha, setAlpha] = useState(100);
   const [hexInput, setHexInput] = useState(defaultValue);
-  const [copied, setCopied] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -236,12 +236,6 @@ export function ColorPicker({
     } catch {
       // Not available or cancelled
     }
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(hexInput);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
   };
 
   const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -344,15 +338,12 @@ export function ColorPicker({
               placeholder="#000000"
               className="h-9 flex-1 font-mono text-sm"
             />
-            <Button
+            <CopyButton
+              value={() => hexInput}
+              label=""
               size="sm"
-              variant="outline"
-              onClick={handleCopy}
               className="h-9 w-9 p-0"
-              type="button"
-            >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-            </Button>
+            />
             <Button
               size="sm"
               variant="outline"

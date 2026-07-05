@@ -42,15 +42,15 @@ export default function SettingsPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Gear} title="Settings" />
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="flex flex-1 items-start justify-center">
-            <div className="w-full max-w-7xl mx-auto space-y-6">
+            <div className="w-full max-w-7xl mx-auto space-y-8">
               
               {/* Appearance Settings */}
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-2xl font-headline">Appearance</CardTitle>
-                  <CardDescription>Customize the look and feel of the application.</CardDescription>
+                  <CardDescription>Customise the look and feel of the application.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center justify-between rounded-lg border p-4">

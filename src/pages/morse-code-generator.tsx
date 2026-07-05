@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -9,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { Copy, Trash, Play, Pause, Stop, SpeakerHigh, Lightning, DeviceMobile, Upload, Download, Eye, Translate, Code, Gear } from 'phosphor-react';
+import { Trash, Play, Pause, Stop, SpeakerHigh, Lightning, DeviceMobile, Upload, Download, Eye, Translate, Code, Gear } from 'phosphor-react';
 import { WebHaptics } from 'web-haptics';
 import { PageHeader } from "@/components/page-header";
 
@@ -371,17 +372,6 @@ export default function MorseCodeGeneratorPage() {
     pausedPositionRef.current = 0;
   };
 
-  // Copy output to clipboard
-  const handleCopy = async () => {
-    const textToCopy = activeTab === 'text-to-morse' ? outputMorse : outputText;
-    if (!textToCopy) {
-      toast({ title: 'Nothing to copy', description: 'Output is empty.', variant: 'destructive' });
-      return;
-    }
-    await navigator.clipboard.writeText(textToCopy);
-    toast({ title: 'Copied to clipboard' });
-  };
-
   // Clear all fields
   const handleClear = () => {
     if (activeTab === 'text-to-morse') {
@@ -445,11 +435,11 @@ export default function MorseCodeGeneratorPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Lightning} title="Morse Code Generator" />
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
             <div className="mb-8 hidden sm:block">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Morse Code Generator</h1>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Morse Code Generator</h1>
               <p className="text-lg text-muted-foreground">Convert between text and Morse code with audio, vibration, and visual signals.</p>
             </div>
 
@@ -468,7 +458,7 @@ export default function MorseCodeGeneratorPage() {
               
               {/* Text to Morse Tab */}
               <TabsContent value="text-to-morse" className="mt-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Input */}
                   <Card className="flex flex-col overflow-hidden">
                     <CardHeader>
@@ -515,9 +505,7 @@ export default function MorseCodeGeneratorPage() {
                         className="resize-none bg-muted/50 min-h-[200px] font-mono" 
                       />
                       <div className="flex flex-wrap gap-2">
-                        <Button onClick={handleCopy} disabled={!outputMorse}>
-                          <Copy className="h-4 w-4 mr-2" /> Copy
-                        </Button>
+                        <CopyButton value={() => outputMorse} label="Copy" disabled={!outputMorse} />
                         <Button onClick={handleExport} disabled={!outputMorse}>
                           <Download className="h-4 w-4 mr-2" /> Export
                         </Button>
@@ -529,7 +517,7 @@ export default function MorseCodeGeneratorPage() {
               
               {/* Morse to Text Tab */}
               <TabsContent value="morse-to-text" className="mt-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Input */}
                   <Card className="flex flex-col overflow-hidden">
                     <CardHeader>
@@ -576,9 +564,7 @@ export default function MorseCodeGeneratorPage() {
                         className="resize-none bg-muted/50 min-h-[200px]" 
                       />
                       <div className="flex flex-wrap gap-2">
-                        <Button onClick={handleCopy} disabled={!outputText}>
-                          <Copy className="h-4 w-4 mr-2" /> Copy
-                        </Button>
+                        <CopyButton value={() => outputText} label="Copy" disabled={!outputText} />
                         <Button onClick={handleExport} disabled={!outputText}>
                           <Download className="h-4 w-4 mr-2" /> Export
                         </Button>

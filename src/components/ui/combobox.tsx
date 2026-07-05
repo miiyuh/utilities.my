@@ -22,6 +22,8 @@ export interface ComboboxProps {
   resetOnSelect?: boolean
   contentClassName?: string
   className?: string
+  /** Extra classes applied to the input itself (e.g. to override its default h-11 height). */
+  inputClassName?: string
   disabled?: boolean
 }
 
@@ -43,6 +45,7 @@ export function Combobox({
   resetOnSelect = false,
   contentClassName,
   className,
+  inputClassName,
   disabled = false,
 }: ComboboxProps) {
   const id = React.useId()
@@ -97,7 +100,8 @@ export function Combobox({
             "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
             "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted",
             "transition-all duration-quick shadow-sm",
-            "pr-10"
+            "pr-10",
+            inputClassName
           )}
         />
         <div className={cn(
@@ -126,7 +130,7 @@ export function Combobox({
               contentClassName
             )}
           >
-            <BaseCombobox.Empty className="px-4 pt-3 text-sm text-muted-foreground text-center">
+            <BaseCombobox.Empty className="empty:hidden px-4 pt-3 text-sm text-muted-foreground text-center">
               No results found.
             </BaseCombobox.Empty>
             <BaseCombobox.List className="overflow-y-auto overscroll-contain p-1.5 max-h-[min(var(--available-height),20rem)]">

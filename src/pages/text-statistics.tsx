@@ -4,13 +4,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { TextAa, TextStrikethrough, ChartBar, Eye, Note, Clock, Copy, Hash, Upload, Download } from 'phosphor-react';
+import { TextAa, TextStrikethrough, ChartBar, Eye, Note, Clock, Hash, Upload, Download } from 'phosphor-react';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from "@/components/page-header";
-import { useToast } from '@/hooks/use-toast';
 
 type WordCount = { word: string; count: number };
 interface FullStats {
@@ -36,7 +36,6 @@ const STOPWORDS = new Set([
 ]);
 
 export default function TextStatisticsPage() {
-  const { toast } = useToast();
   const [inputText, setInputText] = useState('');
   const [stats, setStats] = useState<FullStats | null>(null);
   const [selStats, setSelStats] = useState<FullStats | null>(null);
@@ -133,9 +132,9 @@ export default function TextStatisticsPage() {
 
   // actions
   const handleClear = () => { setInputText(''); setStats(null); setSelStats(null); };
-  const handleCopySummary = async () => {
-    if (!stats) return;
-    const lines = [
+  const buildSummary = () => {
+    if (!stats) return '';
+    return [
       `Characters: ${stats.characters}`,
       `Characters (no spaces): ${stats.charactersNoSpaces}`,
       `Words: ${stats.words} (unique: ${stats.uniqueWords})`,
@@ -148,13 +147,7 @@ export default function TextStatisticsPage() {
       `Reading time: ~${stats.readingTimeMinutes} min`,
       `Speaking time: ~${stats.speakingTimeMinutes} min`,
       `Estimated pages (~500 wpp): ~${stats.estimatedPages}`,
-    ];
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
-      toast({ title: 'Copied to clipboard', description: 'Summary copied.' });
-    } catch {
-      toast({ title: 'Copy failed', variant: 'destructive' });
-    }
+    ].join('\n');
   };
   const handleExportJson = () => {
     if (!stats) return;
@@ -179,27 +172,27 @@ export default function TextStatisticsPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <PageHeader icon={TextAa} title="Text Statistics" />
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <PageHeader icon={ChartBar} title="Text Statistics" />
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
             <div className="mb-8 hidden sm:block">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Statistics</h1>
-              <p className="text-lg text-muted-foreground">Analyze text for counts, reading time, and distributions with live options.</p>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Statistics</h1>
+              <p className="text-lg text-muted-foreground">Analyse text for counts, reading time, and distributions with live options.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Input Section */}
               <Card className="flex flex-col overflow-hidden">
                 <CardHeader>
                   <CardTitle>Enter Text</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) handleImportFile(f); e.currentTarget.value=''; }} />
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="h-4 w-4 mr-1"/> Import</Button>
                     <Button variant="outline" size="sm" onClick={handleExportJson} disabled={!stats}><Upload className="h-4 w-4 mr-1"/> Export JSON</Button>
-                    <Button size="sm" onClick={handleCopySummary} disabled={!stats}><Copy className="h-4 w-4 mr-1"/> Copy summary</Button>
+                    <CopyButton value={buildSummary} label="Copy summary" toastDescription="Summary copied." size="sm" disabled={!stats} />
                     <Button variant="outline" size="sm" onClick={handleClear} className="ml-auto">Clear</Button>
                   </div>
                   <Textarea
@@ -322,7 +315,7 @@ export default function TextStatisticsPage() {
 function StatCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-center p-4 rounded-lg border bg-card shadow-sm">
-      <Icon className="h-6 w-6 text-primary mr-4 shrink-0" />
+      <Icon className="h-6 w-6 text-muted-foreground mr-4 shrink-0" />
       <div>
         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
         <p className="text-xl font-semibold text-foreground">{value}</p>

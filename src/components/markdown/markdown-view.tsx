@@ -1,9 +1,8 @@
 "use client";
 
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeSlug from 'rehype-slug';
+import { Marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 interface MarkdownViewProps {
   content: string;
@@ -16,29 +15,48 @@ interface TocItem {
   level: number;
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Rendering trusted, in-repo static content (privacy / terms), sanitized anyway.
+const md = new Marked({ gfm: true });
+
+function renderMarkdown(content: string): string {
+  try {
+    const raw = md.parse(content) as string;
+    // Inject slug IDs into headings so the table-of-contents anchors resolve.
+    const withIds = raw.replace(/<h([1-6])>([\s\S]*?)<\/h\1>/g, (_m, level, inner) => {
+      const text = inner.replace(/<[^>]+>/g, '');
+      return `<h${level} id="${slugify(text)}">${inner}</h${level}>`;
+    });
+    return DOMPurify.sanitize(withIds);
+  } catch {
+    return '<p>Failed to render content.</p>';
+  }
+}
+
 function extractTableOfContents(content: string): TocItem[] {
   const tocItems: TocItem[] = [];
   const lines = content.split('\n');
-  
+
   for (const line of lines) {
     const match = line.match(/^(#{1,6})\s+(.+)$/);
     if (match && !line.includes('Table of Contents')) {
       const level = match[1].length;
       const title = match[2];
-      
+
       // Only include level 2 headings (main sections like 1.0, 2.0, etc.)
       if (level === 2) {
-        const id = title
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/^-+|-+$/g, '');
-
-        tocItems.push({ id, title, level });
+        tocItems.push({ id: slugify(title), title, level });
       }
     }
   }
-  
+
   return tocItems;
 }
 
@@ -67,16 +85,9 @@ function TableOfContents({ items }: { items: TocItem[] }) {
   const handleClick = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      const headerOffset = 100; // Adjust this value based on your header height
-      const elementPosition = element.offsetTop;
-      const offsetPosition = elementPosition - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-
-      // Update the URL hash without jumping
+      const headerOffset = 100;
+      const offsetPosition = element.offsetTop - headerOffset;
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
       history.replaceState(null, '', `#${id}`);
     }
   };
@@ -115,194 +126,48 @@ export function MarkdownView({ content }: MarkdownViewProps) {
   const scrollToId = (id: string) => {
     const element = document.getElementById(id);
     if (!element) return;
-    const elementPosition = element.offsetTop;
-    const offsetPosition = elementPosition - HEADER_OFFSET;
+    const offsetPosition = element.offsetTop - HEADER_OFFSET;
     window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     history.replaceState(null, '', `#${id}`);
   };
 
   const tocItems = React.useMemo(() => extractTableOfContents(content), [content]);
-  // Scroll to an ID if the URL contains a hash on load/content change
+
+  // Remove the inline "Table of Contents" section from the rendered body.
+  const contentWithoutToc = React.useMemo(
+    () => content.replace(/## Table of Contents[\s\S]*?(?=\n##\s|$)/i, '').trim(),
+    [content]
+  );
+  const html = React.useMemo(() => renderMarkdown(contentWithoutToc), [contentWithoutToc]);
+
+  // Scroll to an ID if the URL contains a hash on load/content change.
   React.useEffect(() => {
     const hash = window.location.hash;
     if (hash && hash.length > 1) {
       const id = hash.substring(1);
-      // Defer to allow DOM to render
       setTimeout(() => scrollToId(id), 80);
     }
   }, [tocItems]);
 
-  // When the content changes (navigating between markdown pages), reset scroll and clear any existing hash so the next page starts at the top.
+  // Reset scroll on content change (navigating between markdown pages).
   React.useEffect(() => {
-    // Reset scroll to top of page (accounting for header offset if needed)
     window.scrollTo({ top: 0, behavior: 'auto' });
-    // Remove hash from URL to avoid jumping to previous section
     if (window.location.hash) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
   }, [content]);
 
-  // Remove the TOC section from the content
-  const contentWithoutToc = content.replace(/## Table of Contents[\s\S]*?(?=##[^#]|\Z)/i, '').trim();
-
-  const slugify = (text: string): string => {
-    return text
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
-
   return (
-    <div className="flex flex-1 flex-col p-4 lg:p-8">
+    <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
       <div className="w-full max-w-7xl mx-auto">
         <div className="flex gap-8">
           {/* Main content */}
-          <article className="flex-1 prose dark:prose-invert prose-slate max-w-none prose-lg">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeSlug]}
-              components={{
-                h1: ({ children }) => {
-                  const text = React.Children.toArray(children).map((c) => {
-                    if (typeof c === 'string') return c;
-                    const props = (c as unknown as { props?: { children?: string } })?.props?.children;
-                    return String(props || '');
-                  }).join('');
-                  const id = slugify(text || '');
-                  return (
-                    <h1 id={id} className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4 group">
-                      <span className="inline-flex items-center">
-                        {children}
-                        {id && (
-                          <a
-                            href={`#${id}`}
-                            onClick={(e) => { e.preventDefault(); scrollToId(id); }}
-                            className="ml-3 text-muted-foreground hover:text-foreground text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                            aria-label={`Link to ${id}`}
-                          >
-                            #
-                          </a>
-                        )}
-                      </span>
-                    </h1>
-                  );
-                },
-                h2: ({ children }) => {
-                  const text = React.Children.toArray(children).map((c) => {
-                    if (typeof c === 'string') return c;
-                    const props = (c as unknown as { props?: { children?: string } })?.props?.children;
-                    return String(props || '');
-                  }).join('');
-                  const id = slugify(text || '');
-                  return (
-                    <h2 id={id} className="text-3xl font-semibold mt-12 mb-6 text-foreground border-b border-border pb-2 group">
-                      <span className="inline-flex items-center">
-                        {children}
-                        {id && (
-                          <a
-                            href={`#${id}`}
-                            onClick={(e) => { e.preventDefault(); scrollToId(id); }}
-                            className="ml-3 text-muted-foreground hover:text-foreground text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                            aria-label={`Link to ${id}`}
-                          >
-                            #
-                          </a>
-                        )}
-                      </span>
-                    </h2>
-                  );
-                },
-                h3: ({ children }) => {
-                  const text = React.Children.toArray(children).map((c) => {
-                    if (typeof c === 'string') return c;
-                    const props = (c as unknown as { props?: { children?: string } })?.props?.children;
-                    return String(props || '');
-                  }).join('');
-                  const id = slugify(text || '');
-                  return (
-                    <h3 id={id} className="text-2xl font-medium mt-8 mb-4 text-foreground group">
-                      <span className="inline-flex items-center">
-                        {children}
-                        {id && (
-                          <a
-                            href={`#${id}`}
-                            onClick={(e) => { e.preventDefault(); scrollToId(id); }}
-                            className="ml-3 text-muted-foreground hover:text-foreground text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                            aria-label={`Link to ${id}`}
-                          >
-                            #
-                          </a>
-                        )}
-                      </span>
-                    </h3>
-                  );
-                },
-                h4: ({ children }) => {
-                  const text = React.Children.toArray(children).map((c) => {
-                    if (typeof c === 'string') return c;
-                    const props = (c as unknown as { props?: { children?: string } })?.props?.children;
-                    return String(props || '');
-                  }).join('');
-                  const id = slugify(text || '');
-                  return (
-                    <h4 id={id} className="text-xl font-medium mt-6 mb-3 text-foreground group">
-                      <span className="inline-flex items-center">
-                        {children}
-                        {id && (
-                          <a
-                            href={`#${id}`}
-                            onClick={(e) => { e.preventDefault(); scrollToId(id); }}
-                            className="ml-3 text-muted-foreground hover:text-foreground text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                            aria-label={`Link to ${id}`}
-                          >
-                            #
-                          </a>
-                        )}
-                      </span>
-                    </h4>
-                  );
-                },
-                p: ({ children }) => (
-                  <p className="leading-8 mb-6 text-foreground/90">{children}</p>
-                ),
-                ul: ({ children }) => (
-                  <ul className="my-6 ml-6 list-disc space-y-2">{children}</ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="my-6 ml-6 list-decimal space-y-2">{children}</ol>
-                ),
-                li: ({ children }) => (
-                  <li className="leading-7 text-foreground/90">{children}</li>
-                ),
-                a: ({ children, href }) => (
-                  <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors" href={href}>{children}</a>
-                ),
-                hr: () => (
-                  <hr className="my-8 border-border" />
-                ),
-                strong: ({ children }) => (
-                  <strong className="font-semibold text-foreground">{children}</strong>
-                ),
-                em: ({ children }) => (
-                  <em className="italic text-foreground/80">{children}</em>
-                ),
-                blockquote: ({ children }) => (
-                  <blockquote className="mt-6 border-l-4 border-primary pl-6 italic text-foreground/80 bg-muted/30 py-4 rounded-r">{children}</blockquote>
-                ),
-                code: ({ children }) => (
-                  <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">{children}</code>
-                ),
-                pre: ({ children }) => (
-                  <pre className="mb-4 mt-6 overflow-x-auto rounded-lg border bg-muted p-4">{children}</pre>
-                ),
-              }}
-            >
-              {contentWithoutToc}
-            </ReactMarkdown>
-          </article>
+          <article
+            className="markdown-preview flex-1 max-w-none"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
 
-          {/* Table of Contents Sidebar */}
+          {/* Table of Contents sidebar */}
           <div className="hidden lg:block w-64 flex-shrink-0">
             <TableOfContents items={tocItems} />
           </div>
