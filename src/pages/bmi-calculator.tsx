@@ -1,9 +1,8 @@
 import React from "react";
 import { Helmet } from 'react-helmet-async';
-import { Sidebar, SidebarInset, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { Activity, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, Copy, ShareNetwork } from "phosphor-react";
+import { Activity, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, ShareNetwork } from "phosphor-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,8 +12,10 @@ import { cn } from "@/lib/utils";
 import { useSettings } from "@/contexts/settings-context";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from '@/hooks/use-toast';
+import { PageHeader } from "@/components/page-header";
 
 type UnitSystem = "metric" | "imperial";
 
@@ -23,7 +24,7 @@ function clamp(num: number, min: number, max: number) {
 }
 
 function classifyBMI(bmi: number) {
-  if (!isFinite(bmi) || bmi <= 0) return { label: "—", color: "", hint: "Enter height and weight", icon: null };
+  if (!isFinite(bmi) || bmi <= 0) return { label: "-", color: "", hint: "Enter height and weight", icon: null };
   if (bmi < 18.5) return { label: "Underweight", color: "text-blue-500", hint: "Below healthy range", icon: ArrowDown };
   if (bmi < 25) return { label: "Healthy", color: "text-green-500", hint: "Within healthy range", icon: Heart };
   if (bmi < 30) return { label: "Overweight", color: "text-amber-500", hint: "Above healthy range", icon: TrendUp };
@@ -122,12 +123,6 @@ export default function BmiCalculatorPage() {
     setHeightCm(''); setWeightKg(''); setHeightFt(''); setHeightIn(''); setWeightLb('');
   };
 
-  const copyBMI = async () => {
-    if (!Number.isFinite(rounded)) return;
-    const text = `BMI: ${rounded.toFixed(1)} (${cls.label})`;
-    try { await navigator.clipboard.writeText(text); } catch {}
-  };
-
   const shareBMI = async () => {
     if (!Number.isFinite(rounded)) return;
     const params = new URLSearchParams();
@@ -216,16 +211,9 @@ export default function BmiCalculatorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Activity className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">BMI Calculator</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Activity} title="BMI Calculator" />
 
-        <div className="flex flex-1 flex-col px-8 p-4 lg:p-8">
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             <div className="mb-8 hidden sm:block">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">BMI Calculator</h1>
@@ -234,7 +222,7 @@ export default function BmiCalculatorPage() {
 
             <div>
               <Card className="w-full shadow-sm">
-                <CardContent className="space-y-5 p-5 lg:p-7">
+                <CardContent className="space-y-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                     <div className="w-full sm:w-60">
                       <Label className="mb-1.5 block">Units</Label>
@@ -247,21 +235,27 @@ export default function BmiCalculatorPage() {
                       </Select>
                     </div>
                     <div className="flex flex-row w-full gap-2">
-                      <Button type="button" variant="outline" onClick={handleReset} disabled={!hasInputs} className="h-10 flex-1 sm:flex-initial sm:w-auto"><ArrowCounterClockwise className="h-4 w-4" /> <span className="hidden sm:inline">Reset</span></Button>
-                      <Button type="button" variant="outline" onClick={copyBMI} disabled={!Number.isFinite(rounded)} className="h-10 flex-1 sm:flex-initial sm:w-auto"><Copy className="h-4 w-4" /> <span className="hidden sm:inline">Copy BMI</span></Button>
-                      <Button type="button" variant="outline" onClick={shareBMI} disabled={!Number.isFinite(rounded)} className="h-10 flex-1 sm:flex-initial sm:w-auto"><ShareNetwork className="h-4 w-4" /> <span className="hidden sm:inline">Share</span></Button>
+                      <Button type="button" variant="outline" onClick={handleReset} disabled={!hasInputs} className="h-8 flex-1 sm:flex-initial sm:w-auto"><ArrowCounterClockwise className="h-4 w-4" /> <span className="hidden sm:inline">Reset</span></Button>
+                      <CopyButton
+                        value={() => `BMI: ${rounded.toFixed(1)} (${cls.label})`}
+                        label="Copy BMI"
+                        toastDescription="BMI result copied to clipboard."
+                        disabled={!Number.isFinite(rounded)}
+                        className="h-8 flex-1 sm:flex-initial"
+                      />
+                      <Button type="button" variant="outline" onClick={shareBMI} disabled={!Number.isFinite(rounded)} className="h-8 flex-1 sm:flex-initial sm:w-auto"><ShareNetwork className="h-4 w-4" /> <span className="hidden sm:inline">Share</span></Button>
                     </div>
                   </div>
 
                   {unitSystem === "metric" ? (
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <Label htmlFor="heightCm">Height (cm)</Label>
+                        <Label htmlFor="heightCm" className="mb-1.5 block">Height (cm)</Label>
                         <Input id="heightCm" inputMode="decimal" type="number" min={0} placeholder="e.g., 170" value={heightCm} onChange={(e) => setHeightCm(e.target.value)} />
                         {isFinite(heightMeters) && <p className="mt-1 text-[11px] text-muted-foreground">≈ {(heightMeters).toFixed(2)} m / {(heightInches).toFixed(1)} in</p>}
                       </div>
                       <div>
-                        <Label htmlFor="weightKg">Weight (kg)</Label>
+                        <Label htmlFor="weightKg" className="mb-1.5 block">Weight (kg)</Label>
                         <Input id="weightKg" inputMode="decimal" type="number" min={0} placeholder="e.g., 65" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} />
                         {isFinite(weightKgVal) && <p className="mt-1 text-[11px] text-muted-foreground">≈ {(weightLbVal).toFixed(1)} lb</p>}
                       </div>
@@ -269,15 +263,15 @@ export default function BmiCalculatorPage() {
                   ) : (
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div>
-                        <Label htmlFor="heightFt">Height (ft)</Label>
+                        <Label htmlFor="heightFt" className="mb-1.5 block">Height (ft)</Label>
                         <Input id="heightFt" inputMode="numeric" type="number" min={0} placeholder="e.g., 5" value={heightFt} onChange={(e) => setHeightFt(e.target.value)} />
                       </div>
                       <div>
-                        <Label htmlFor="heightIn">Height (in)</Label>
+                        <Label htmlFor="heightIn" className="mb-1.5 block">Height (in)</Label>
                         <Input id="heightIn" inputMode="numeric" type="number" min={0} placeholder="e.g., 7" value={heightIn} onChange={(e) => setHeightIn(e.target.value)} />
                       </div>
                       <div>
-                        <Label htmlFor="weightLb">Weight (lb)</Label>
+                        <Label htmlFor="weightLb" className="mb-1.5 block">Weight (lb)</Label>
                         <Input id="weightLb" inputMode="decimal" type="number" min={0} placeholder="e.g., 150" value={weightLb} onChange={(e) => setWeightLb(e.target.value)} />
                         {isFinite(weightLbVal) && <p className="mt-1 text-[11px] text-muted-foreground">≈ {(weightKgVal).toFixed(1)} kg</p>}
                       </div>
@@ -286,7 +280,7 @@ export default function BmiCalculatorPage() {
 
                   <div className="space-y-5">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums">{Number.isFinite(rounded) ? rounded.toFixed(1) : "—"}</div>
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums">{Number.isFinite(rounded) ? rounded.toFixed(1) : "-"}</div>
                       <Badge variant="secondary" className="text-xs md:text-sm flex items-center gap-1">
                         {cls.icon && React.createElement(cls.icon, { className: "h-3.5 w-3.5" })}
                         <span>{cls.label}</span>
@@ -348,7 +342,7 @@ export default function BmiCalculatorPage() {
                     {abnormal && (
                       <Alert className="mt-2 text-xs">
                         <AlertDescription className="flex items-start gap-2">
-                          <Sparkle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          <Sparkle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                           <span>
                             Those numbers look unusual for humans.
                             {abnormal === "so-tall" && " Measuring a skyscraper?"}
@@ -372,7 +366,7 @@ export default function BmiCalculatorPage() {
                           <p className="text-xs">1. Athletes and very muscular individuals may have elevated BMI despite low body fat.</p>
                           <p className="text-xs">2. BMI thresholds differ for children and teens; use age- and sex-specific percentiles.</p>
                           <p className="text-xs">3. Not a diagnostic tool; consult healthcare providers for personalized assessment.</p>
-                          <p className="text-xs">4. Pregnancy changes body composition—standard BMI categories may not apply.</p>
+                          <p className="text-xs">4. Pregnancy changes body composition; standard BMI categories may not apply.</p>
                         </AccordionContent>
                       </AccordionItem>
                     </Accordion>

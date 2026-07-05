@@ -3,6 +3,7 @@
 
 import { Moon, Sun, Monitor } from "phosphor-react";
 import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,14 +17,16 @@ export function ThemeToggleButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button 
-          className="minimal-button-ghost p-3 relative inline-flex items-center justify-center"
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="relative"
           aria-label="Toggle theme"
         >
-          <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Toggle theme</span>
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="minimal-card border p-2">
         <DropdownMenuItem 

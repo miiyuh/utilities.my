@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Calendar as CalendarIcon, Copy, ArrowCounterClockwise, Check } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Calendar as CalendarIcon, ArrowCounterClockwise } from 'phosphor-react';
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { format, differenceInYears, differenceInMonths, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, isValid, startOfDay, addYears, addMonths, addDays, addHours, addMinutes, addWeeks } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { useToast } from '@/hooks/use-toast';
+import { PageHeader } from "@/components/page-header";
+import { CopyButton } from "@/components/ui/copy-button";
 
 interface DateDiff {
   years: number;
@@ -64,7 +66,7 @@ function TimePicker({ date, onChange, is24Hour }: { date: Date; onChange: (date:
   };
 
   return (
-    <div className="flex h-[300px] divide-x border-l">
+    <div className="flex h-[300px] divide-x border-l border-border">
       <ScrollArea className="h-full w-16">
         <div className="flex flex-col p-2 gap-1">
           {hours.map((h) => (
@@ -122,7 +124,6 @@ function TimePicker({ date, onChange, is24Hour }: { date: Date; onChange: (date:
 }
 
 export default function DateDiffCalculatorPage() {
-  const { toast } = useToast();
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(() => {
     const tomorrow = new Date();
@@ -133,7 +134,6 @@ export default function DateDiffCalculatorPage() {
   const [includeTime, setIncludeTime] = useState(false);
   const [is24Hour, setIs24Hour] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [isEndOpen, setIsEndOpen] = useState(false);
@@ -142,12 +142,12 @@ export default function DateDiffCalculatorPage() {
     if (!date) return;
     const setter = isStart ? setStartDate : setEndDate;
     const current = isStart ? startDate : endDate;
-    
+
     const newDate = new Date(date);
     newDate.setHours(current.getHours(), current.getMinutes(), current.getSeconds());
-    
+
     setter(newDate);
-    
+
     if (!includeTime) {
       if (isStart) setIsStartOpen(false);
       else setIsEndOpen(false);
@@ -171,7 +171,7 @@ export default function DateDiffCalculatorPage() {
   const handleQuickSelect = (type: 'today' | 'tomorrow' | 'next-week' | 'next-month' | 'next-year', isStart: boolean) => {
     const now = new Date();
     let target = new Date();
-    
+
     switch (type) {
       case 'today':
         target = now;
@@ -189,7 +189,7 @@ export default function DateDiffCalculatorPage() {
         target = addYears(now, 1);
         break;
     }
-    
+
     if (isStart) {
       setStartDate(target);
       setIsStartOpen(false);
@@ -217,10 +217,10 @@ export default function DateDiffCalculatorPage() {
     }
 
     let tempStartDate = new Date(effectiveStart);
-    
+
     const years = differenceInYears(effectiveEnd, tempStartDate);
     tempStartDate = addYears(tempStartDate, years);
-    
+
     const months = differenceInMonths(effectiveEnd, tempStartDate);
     tempStartDate = addMonths(tempStartDate, months);
 
@@ -249,7 +249,7 @@ export default function DateDiffCalculatorPage() {
     });
     setError(null);
   }, [startDate, endDate, includeTime]);
-  
+
   useEffect(() => {
     calculateDiff();
   }, [calculateDiff]);
@@ -294,45 +294,33 @@ export default function DateDiffCalculatorPage() {
     return top.join(', ')
   }, [diffResult])
 
-  const handleCopy = () => {
-    if (!summary) return;
-    navigator.clipboard.writeText(summary);
-    setCopied(true);
-    toast({
-      title: "Copied to clipboard",
-      description: "The summary has been copied to your clipboard.",
-    });
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const timeFormat = is24Hour ? "HH:mm" : "hh:mm aa";
   const displayFormat = includeTime ? `d MMMM yyyy ${timeFormat}` : "d MMMM yyyy";
 
   return (
     <>
+      <Helmet>
+        <title>Date Difference Calculator | utilities.my</title>
+        <meta name="description" content="Calculate the difference between two dates and times down to years, months, days, hours, minutes, and seconds." />
+        <link rel="canonical" href="https://utilities.my/date-diff-calculator" />
+      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-  <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <CalendarIcon className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Date Difference Calculator</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
-        <div className="flex flex-1 flex-col px-8 lg:p-8">
+        <PageHeader icon={CalendarIcon} title="Date Difference Calculator" />
+
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 text-center md:text-left hidden sm:block">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">Date Difference Calculator</h1>
-              <p className="text-lg text-muted-foreground max-w-2xl">Calculate the difference between two dates with precision.</p>
+            <div className="mb-8 hidden sm:block">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Date Difference Calculator</h1>
+              <p className="text-lg text-muted-foreground max-w-3xl">Calculate the difference between two dates with precision.</p>
             </div>
-            
-            <div className="max-w-7xl mx-auto space-y-8">
-              <div className="space-y-6 bg-card p-6 rounded-sm border border-border shadow-sm">
-                <div className="flex items-center justify-between gap-6 flex-wrap border-b pb-4">
+
+            <Card className="w-full shadow-sm">
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between gap-6 flex-wrap border-b border-border pb-4">
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
                       <Switch id="include-time" checked={includeTime} onCheckedChange={setIncludeTime} />
@@ -345,41 +333,38 @@ export default function DateDiffCalculatorPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={handleReset} className="rounded-sm h-8">
-                       <ArrowCounterClockwise className="h-3.5 w-3.5 mr-2" />
-                      Reset
-                    </Button>
-                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={handleReset} className="h-8">
+                    <ArrowCounterClockwise className="h-3.5 w-3.5" />
+                    Reset
+                  </Button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
                       <Label htmlFor="startDateInput">Start Date {includeTime && "& Time"}</Label>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('today', true)}>Today</Button>
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('tomorrow', true)}>Tomorrow</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('today', true)}>Today</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('tomorrow', true)}>Tomorrow</Button>
                       </div>
                     </div>
                     <Popover open={isStartOpen} onOpenChange={setIsStartOpen}>
                       <PopoverTrigger asChild>
-                        <Button id="startDateInput" variant={"outline"} className={cn("w-full justify-start text-left font-normal h-10 text-sm rounded-sm", !startDate && "text-muted-foreground")}>
-                          <CalendarIcon className="mr-2 h-4 w-4" />
+                        <Button type="button" id="startDateInput" variant="outline" className={cn("w-full justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                          <CalendarIcon className="h-4 w-4" />
                           {startDate ? format(startDate, displayFormat) : <span>Pick a date</span>}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 rounded-sm" align="start">
+                      <PopoverContent className="w-auto p-0" align="start">
                         <div className="flex flex-col md:flex-row">
-                          <Calendar 
-                              mode="single" 
-                              selected={startDate} 
-                              onSelect={(d) => handleDateChange(d, true)} 
-                              initialFocus 
+                          <Calendar
+                              mode="single"
+                              selected={startDate}
+                              onSelect={(d) => handleDateChange(d, true)}
                               required
-                              captionLayout="dropdown-buttons"
-                              fromYear={CURRENT_YEAR - 100}
-                              toYear={CURRENT_YEAR + 50}
-                              className="rounded-sm"
+                              captionLayout="dropdown"
+                              startMonth={new Date(CURRENT_YEAR - 100, 0)}
+                              endMonth={new Date(CURRENT_YEAR + 50, 11)}
                           />
                           {includeTime && (
                             <TimePicker date={startDate} onChange={(d) => handleTimeChange(d, true)} is24Hour={is24Hour} />
@@ -389,34 +374,32 @@ export default function DateDiffCalculatorPage() {
                     </Popover>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
                       <Label htmlFor="endDateInput">End Date {includeTime && "& Time"}</Label>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('next-week', false)}>+1W</Button>
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('next-month', false)}>+1M</Button>
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('next-year', false)}>+1Y</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('next-week', false)}>+1W</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('next-month', false)}>+1M</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('next-year', false)}>+1Y</Button>
                       </div>
                     </div>
-                     <Popover open={isEndOpen} onOpenChange={setIsEndOpen}>
+                    <Popover open={isEndOpen} onOpenChange={setIsEndOpen}>
                       <PopoverTrigger asChild>
-                        <Button id="endDateInput" variant={"outline"} className={cn("w-full justify-start text-left font-normal h-10 text-sm rounded-sm", !endDate && "text-muted-foreground")}>
-                          <CalendarIcon className="mr-2 h-4 w-4" />
+                        <Button type="button" id="endDateInput" variant="outline" className={cn("w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
+                          <CalendarIcon className="h-4 w-4" />
                           {endDate ? format(endDate, displayFormat) : <span>Pick a date</span>}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 rounded-sm" align="start">
+                      <PopoverContent className="w-auto p-0" align="start">
                         <div className="flex flex-col md:flex-row">
-                          <Calendar 
-                              mode="single" 
-                              selected={endDate} 
-                              onSelect={(d) => handleDateChange(d, false)} 
-                              initialFocus 
+                          <Calendar
+                              mode="single"
+                              selected={endDate}
+                              onSelect={(d) => handleDateChange(d, false)}
                               required
-                              captionLayout="dropdown-buttons"
-                              fromYear={CURRENT_YEAR - 100}
-                              toYear={CURRENT_YEAR + 50}
-                              className="rounded-sm"
+                              captionLayout="dropdown"
+                              startMonth={new Date(CURRENT_YEAR - 100, 0)}
+                              endMonth={new Date(CURRENT_YEAR + 50, 11)}
                           />
                           {includeTime && (
                             <TimePicker date={endDate} onChange={(d) => handleTimeChange(d, false)} is24Hour={is24Hour} />
@@ -428,28 +411,32 @@ export default function DateDiffCalculatorPage() {
                 </div>
 
                 {error && (
-                  <div role="alert" className="rounded-sm border border-destructive/30 bg-destructive/10 text-destructive text-sm px-4 py-2 flex items-start gap-2">
+                  <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive text-sm px-4 py-2 flex items-start gap-2">
                     <span className="font-medium">Error:</span>
                     <span>{error}</span>
                   </div>
                 )}
 
-                <div className="flex flex-col md:flex-row md:items-stretch gap-4">
-                  {diffResult && (
-                    <div className="flex-1 h-12 rounded-sm border border-border/60 bg-background/40 px-4 flex items-center justify-between text-sm text-muted-foreground">
-                      <div className="flex items-center overflow-hidden">
-                        <span className="font-medium text-foreground mr-1 shrink-0">Summary:</span> 
-                        <span className="truncate">{summary}</span>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
-                        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                      </Button>
+                {diffResult && (
+                  <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-border bg-muted/40 text-sm text-muted-foreground animate-in fade-in-0 duration-quick ease-smooth-out">
+                    <div className="flex items-center overflow-hidden">
+                      <span className="font-medium text-foreground mr-1 shrink-0">Summary:</span>
+                      <span className="truncate">{summary}</span>
                     </div>
-                  )}
-                </div>
+                    <CopyButton
+                      value={summary}
+                      label=""
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      toastTitle="Copied to clipboard"
+                      toastDescription="The summary has been copied to your clipboard."
+                    />
+                  </div>
+                )}
 
                 {diffResult && (
-                  <div className="space-y-6 pt-6 border-t">
+                  <div className="space-y-6 pt-6 border-t border-border">
                     <h3 className="text-lg font-semibold">Result</h3>
                     {breakdownRows.length === 0 && totalRows.length === 0 ? (
                       <p className="text-sm text-muted-foreground">No difference - both date & time values are identical.</p>
@@ -460,7 +447,7 @@ export default function DateDiffCalculatorPage() {
                           {breakdownRows.map((r) => (
                             <div
                               key={r.label}
-                              className="flex items-baseline gap-3 px-3 py-2 rounded-sm transition-colors hover:bg-muted/40 border border-transparent hover:border-border/50"
+                              className="flex items-baseline gap-3 px-3 py-2 rounded-xl transition-colors duration-quick hover:bg-muted/40 border border-transparent hover:border-border/50"
                             >
                               <span className="text-5xl font-serif text-primary tabular-nums">
                                 {r.value.toLocaleString()}
@@ -475,7 +462,7 @@ export default function DateDiffCalculatorPage() {
                           {totalRows.map((r) => (
                             <div
                               key={r.label}
-                              className="flex items-baseline gap-3 px-3 py-2 rounded-sm transition-colors hover:bg-muted/40 border border-transparent hover:border-border/50"
+                              className="flex items-baseline gap-3 px-3 py-2 rounded-xl transition-colors duration-quick hover:bg-muted/40 border border-transparent hover:border-border/50"
                             >
                               <span className="text-5xl font-serif text-primary tabular-nums">
                                 {r.value.toLocaleString()}
@@ -488,12 +475,11 @@ export default function DateDiffCalculatorPage() {
                     )}
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </SidebarInset>
     </>
   );
 }
-

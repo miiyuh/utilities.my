@@ -22,6 +22,8 @@ export interface ComboboxProps {
   resetOnSelect?: boolean
   contentClassName?: string
   className?: string
+  /** Extra classes applied to the input itself (e.g. to override its default h-11 height). */
+  inputClassName?: string
   disabled?: boolean
 }
 
@@ -43,6 +45,7 @@ export function Combobox({
   resetOnSelect = false,
   contentClassName,
   className,
+  inputClassName,
   disabled = false,
 }: ComboboxProps) {
   const id = React.useId()
@@ -96,13 +99,14 @@ export function Combobox({
             "hover:border-primary/60",
             "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
             "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted",
-            "transition-all duration-200 shadow-sm",
-            "pr-10"
+            "transition-all duration-quick shadow-sm",
+            "pr-10",
+            inputClassName
           )}
         />
         <div className={cn(
           "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-muted-foreground/60",
-          "transition-colors duration-200"
+          "transition-colors duration-quick"
         )}>
           <CaretDown className="size-4" />
         </div>
@@ -118,7 +122,7 @@ export function Combobox({
             className={cn(
               "z-[10000] w-[var(--anchor-width)] max-h-[min(var(--available-height),20rem)] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl outline-none overflow-hidden",
               "origin-[var(--transform-origin)]",
-              "transition-[transform,opacity] duration-200 ease-out",
+              "transition-[transform,opacity] duration-fast ease-out",
               "data-[starting-style]:opacity-0 data-[starting-style]:scale-95",
               "data-[ending-style]:opacity-0 data-[ending-style]:scale-95",
               "data-[side=bottom]:data-[starting-style]:-translate-y-2",
@@ -126,7 +130,7 @@ export function Combobox({
               contentClassName
             )}
           >
-            <BaseCombobox.Empty className="px-4 pt-3 text-sm text-muted-foreground text-center">
+            <BaseCombobox.Empty className="empty:hidden px-4 pt-3 text-sm text-muted-foreground text-center">
               No results found.
             </BaseCombobox.Empty>
             <BaseCombobox.List className="overflow-y-auto overscroll-contain p-1.5 max-h-[min(var(--available-height),20rem)]">

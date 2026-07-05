@@ -1,9 +1,8 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
-import { ThemeToggleButton } from "@/components/theme-toggle-button"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,6 +34,7 @@ import {
   Archive
 } from 'phosphor-react'
 
+import { PageHeader } from "@/components/page-header";
 import {
   type OutputFormat,
   type BatchFileItem,
@@ -704,22 +704,13 @@ export default function ImageConverterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-primary" />
-              <h1 className="text-lg sm:text-xl font-semibold font-headline truncate">Image Converter</h1>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={ImageIcon} title="Image Converter" />
 
-        <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* Big heading */}
             <div className="mb-6 sm:mb-8 hidden sm:block">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">Image Converter & Resizer</h1>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">Image Converter & Resizer</h1>
               <p className="text-base sm:text-lg text-muted-foreground">Convert images between formats, resize, and download the result.</p>
             </div>
 
@@ -755,11 +746,11 @@ export default function ImageConverterPage() {
               </div>
             </div>
             
-            <div className={`${batchMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8' : 'space-y-6 sm:space-y-8'}`}>
+            <div className={`${batchMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : 'space-y-8'}`}>
               {/* Left Column / Single: Upload Area & File List */}
               <div>
                 <Card className="minimal-card">
-                <CardContent className="p-4 sm:p-6">
+                <CardContent>
                   <div
                     ref={dropRef}
                     role="button"
@@ -772,7 +763,7 @@ export default function ImageConverterPage() {
                       }
                     }}
                     className={`
-                      relative border-2 border-dashed rounded-lg p-4 sm:p-6 flex items-center justify-center text-center transition-all duration-200 cursor-pointer
+                      relative border-2 border-dashed rounded-lg p-4 sm:p-6 flex items-center justify-center text-center transition-all duration-quick cursor-pointer
                         ${isDragOver 
                         ? 'border-primary bg-primary/5 scale-[1.01]' 
                         : 'border-muted-foreground/25'
@@ -794,7 +785,7 @@ export default function ImageConverterPage() {
                     {/* Single Mode Upload Content */}
                     {!batchMode && !imgSrc && (
                       <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
                           isDragOver ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
                         }`}>
                           <Upload className="h-6 w-6" />
@@ -811,7 +802,7 @@ export default function ImageConverterPage() {
                     {/* Batch Mode Upload Content */}
                     {batchMode && batchFiles.length === 0 && (
                       <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
                           isDragOver ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
                         }`}>
                           <Stack className="h-6 w-6" />
@@ -978,7 +969,7 @@ export default function ImageConverterPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-10"
+                            className="h-8"
                             onClick={(e) => {
                               e.stopPropagation()
                               const inp = document.getElementById('file-input') as HTMLInputElement | null
@@ -993,7 +984,7 @@ export default function ImageConverterPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-10"
+                            className="h-8"
                             onClick={(e) => {
                               e.stopPropagation()
                               clear()
@@ -1052,7 +1043,7 @@ export default function ImageConverterPage() {
               </div>
 
               {/* Right Column / Single: Settings & Preview */}
-              <div className={batchMode ? '' : 'space-y-6 sm:space-y-8'}>
+              <div className={batchMode ? '' : 'space-y-8'}>
               <Card className="minimal-card">
                 <CardHeader className="pb-3 sm:pb-4">
                   <CardTitle className="font-headline text-lg sm:text-xl md:text-2xl tracking-tight flex items-center gap-2">
@@ -1281,7 +1272,7 @@ export default function ImageConverterPage() {
                               {generatingPreview ? (
                                 <div className="text-center space-y-3 sm:space-y-4">
                                   <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                                    <Spinner className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
+                                    <Spinner className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground animate-spin" />
                                   </div>
                                   <div className="text-sm font-medium text-muted-foreground">Generating preview...</div>
                                   <div className="text-xs text-muted-foreground/70">This may take a moment on mobile</div>
@@ -1299,7 +1290,7 @@ export default function ImageConverterPage() {
                               ) : (
                                 <div className="text-center space-y-3 sm:space-y-4">
                                   <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                                    <Spinner className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
+                                    <Spinner className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground animate-spin" />
                                   </div>
                                   <div className="text-sm font-medium text-muted-foreground">Loading preview...</div>
                                 </div>
@@ -1325,8 +1316,7 @@ export default function ImageConverterPage() {
                           <Button
                             onClick={convert}
                             disabled={!imgSrc || !imageLoaded || processing}
-                            size="lg"
-                            className="sm:flex-1 w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                            className="sm:flex-1 w-full h-11 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                           >
                             {processing ? (
                               <>
@@ -1353,7 +1343,7 @@ export default function ImageConverterPage() {
 
                         <div className="flex gap-2 sm:flex-col sm:items-end">
                           {downloadUrl && downloadBlobState && (
-                            <Button variant="outline" onClick={handleDownload} size="lg" className="w-full sm:w-44 h-12 sm:h-14">
+                            <Button variant="outline" onClick={handleDownload} className="w-full sm:w-44 h-11">
                               <Download className="h-4 w-4 mr-2" />
                               Download
                             </Button>
@@ -1363,10 +1353,9 @@ export default function ImageConverterPage() {
                             variant="outline"
                             onClick={clear}
                             disabled={processing}
-                            size="lg"
-                            className="w-full sm:w-44 h-12 sm:h-14"
+                            className="w-full sm:w-44 h-11"
                           >
-                            <ArrowCounterClockwise className="h-5 w-5 mr-2" />
+                            <ArrowCounterClockwise className="h-4 w-4 mr-2" />
                             Reset
                           </Button>
                         </div>
@@ -1385,17 +1374,16 @@ export default function ImageConverterPage() {
                                 <Button
                                   onClick={processBatch}
                                   disabled={batchFiles.length === 0}
-                                  size="lg"
-                                  className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                                  className="flex-1 h-11 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                                 >
                                   {batchZipBlob ? (
                                     <>
-                                      <Play className="h-5 w-5 mr-2" />
+                                      <Play className="h-4 w-4 mr-2" />
                                       Process Again
                                     </>
                                   ) : (
                                     <>
-                                      <Play className="h-5 w-5 mr-2" />
+                                      <Play className="h-4 w-4 mr-2" />
                                       Convert {batchFiles.length} File{batchFiles.length !== 1 ? 's' : ''}
                                     </>
                                   )}
@@ -1404,11 +1392,10 @@ export default function ImageConverterPage() {
                                   <Button
                                     variant="outline"
                                     onClick={handleBatchDownload}
-                                    size="lg"
-                                    className="h-12 sm:h-14 px-3 sm:px-6"
+                                    className="h-11 px-3 sm:px-6"
                                     title="Download the ZIP file"
                                   >
-                                    <Archive className="h-5 w-5" />
+                                    <Archive className="h-4 w-4" />
                                     <span className="hidden sm:inline ml-2">Download ZIP</span>
                                   </Button>
                                 )}
@@ -1417,10 +1404,9 @@ export default function ImageConverterPage() {
                               <Button
                                 onClick={cancelBatch}
                                 variant="destructive"
-                                size="lg"
-                                className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold"
+                                className="flex-1 h-11 text-base font-semibold"
                               >
-                                <X className="h-5 w-5 mr-2" />
+                                <X className="h-4 w-4 mr-2" />
                                 Cancel Processing
                               </Button>
                             )}
@@ -1431,10 +1417,9 @@ export default function ImageConverterPage() {
                             variant="outline"
                             onClick={clearBatch}
                             disabled={batchProcessing}
-                            size="lg"
-                            className="h-12 sm:h-14 px-3 sm:px-6"
+                            className="h-11 px-3 sm:px-6"
                           >
-                            <Trash className="h-5 w-5" />
+                            <Trash className="h-4 w-4" />
                             <span className="hidden sm:inline ml-2">Clear</span>
                           </Button>
                         </div>
@@ -1443,7 +1428,7 @@ export default function ImageConverterPage() {
 
                     {/* Status Messages - Single Mode */}
                     {!batchMode && message && !message.includes('Downloaded') && (
-                      <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-medium">
                         <div className="w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-400 flex items-center justify-center flex-shrink-0">
                           <Spinner className="h-3 w-3 text-white animate-spin" />
                         </div>
@@ -1452,7 +1437,7 @@ export default function ImageConverterPage() {
                     )}
                     
                     {!batchMode && error && (
-                      <div className="p-3 sm:p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="p-3 sm:p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-medium">
                         <Warning className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                         <div className="text-sm text-destructive leading-snug font-medium">{error}</div>
                       </div>

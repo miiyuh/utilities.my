@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Person, ArrowsLeftRight, Info, User, Users } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from "@/components/page-header";
 
 type Gender = 'men' | 'women' | 'kids';
 type Region = 'us' | 'uk' | 'eu' | 'cm';
@@ -99,48 +100,46 @@ export default function FootSizeConverterPage() {
 
   return (
     <>
+      <Helmet>
+        <title>Foot Size Converter | utilities.my</title>
+        <meta name="description" content="Convert shoe sizes between US, UK, EU, and CM measurements for men, women, and kids. Includes a full size reference chart." />
+        <link rel="canonical" href="https://utilities.my/foot-size-converter" />
+      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Person className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Shoe Size Converter</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Person} title="Foot Size Converter" />
 
-        <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
             <div className="mb-8 hidden sm:block">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
                 Shoe Size Converter & Reference
               </h1>
-              <p className="text-lg text-muted-foreground">
-                Convert shoe sizes between US, UK, EU, and CM measurements. Perfect for online shopping!
+              <p className="text-lg text-muted-foreground max-w-3xl">
+                Convert shoe sizes between US, UK, EU, and CM measurements. Perfect for online shopping.
               </p>
             </div>
 
             <Tabs defaultValue="converter" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-auto">
-                <TabsTrigger value="converter" className="text-sm sm:text-base py-3">
-                  <ArrowsLeftRight className="h-4 w-4 mr-2" />
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="converter" className="flex items-center gap-2">
+                  <ArrowsLeftRight className="h-4 w-4" />
                   Size Converter
                 </TabsTrigger>
-                <TabsTrigger value="reference" className="text-sm sm:text-base py-3">
-                  <Info className="h-4 w-4 mr-2" />
+                <TabsTrigger value="reference" className="flex items-center gap-2">
+                  <Info className="h-4 w-4" />
                   Size Reference Chart
                 </TabsTrigger>
               </TabsList>
 
               {/* Converter Tab */}
-              <TabsContent value="converter" className="space-y-6">
+              <TabsContent value="converter" className="mt-4 space-y-8">
                 {/* Gender Selection */}
-                <Card>
+                <Card className="w-full shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Users className="h-5 w-5" />
@@ -155,12 +154,10 @@ export default function FootSizeConverterPage() {
                           setGender('men');
                           setSelectedSize('');
                         }}
-                        className="h-16"
+                        className="h-10"
                       >
-                        <div className="text-center">
-                          <User className="h-5 w-5 mx-auto mb-1" />
-                          <div className="text-xs sm:text-sm">Men</div>
-                        </div>
+                        <User className="h-4 w-4" />
+                        Men
                       </Button>
                       <Button
                         variant={gender === 'women' ? 'default' : 'outline'}
@@ -168,12 +165,10 @@ export default function FootSizeConverterPage() {
                           setGender('women');
                           setSelectedSize('');
                         }}
-                        className="h-16"
+                        className="h-10"
                       >
-                        <div className="text-center">
-                          <User className="h-5 w-5 mx-auto mb-1" />
-                          <div className="text-xs sm:text-sm">Women</div>
-                        </div>
+                        <User className="h-4 w-4" />
+                        Women
                       </Button>
                       <Button
                         variant={gender === 'kids' ? 'default' : 'outline'}
@@ -181,19 +176,17 @@ export default function FootSizeConverterPage() {
                           setGender('kids');
                           setSelectedSize('');
                         }}
-                        className="h-16"
+                        className="h-10"
                       >
-                        <div className="text-center">
-                          <User className="h-5 w-5 mx-auto mb-1" />
-                          <div className="text-xs sm:text-sm">Kids</div>
-                        </div>
+                        <User className="h-4 w-4" />
+                        Kids
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Size Input */}
-                <Card>
+                <Card className="w-full shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Person className="h-5 w-5" />
@@ -202,10 +195,10 @@ export default function FootSizeConverterPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="region">Region/System</Label>
+                      <div>
+                        <Label htmlFor="region" className="mb-1.5 block">Region/System</Label>
                         <Select value={selectedRegion} onValueChange={(value) => setSelectedRegion(value as Region)}>
-                          <SelectTrigger className="h-12">
+                          <SelectTrigger className="w-full">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -216,42 +209,41 @@ export default function FootSizeConverterPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="size">Size</Label>
+                      <div>
+                        <Label htmlFor="size" className="mb-1.5 block">Size</Label>
                         <Input
                           id="size"
                           type="text"
                           placeholder={`Enter ${selectedRegion.toUpperCase()} size`}
                           value={selectedSize}
                           onChange={(e) => setSelectedSize(e.target.value)}
-                          className="h-12"
                         />
                       </div>
                     </div>
 
                     {conversions && (
-                      <div className="mt-6 p-6 bg-primary/10 border border-primary/20 rounded-lg">
+                      <div className="mt-2 p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
                         <div className="text-center mb-4">
-                          <Badge variant="secondary" className="text-base px-4 py-2">
+                          <Badge variant="secondary" className="text-xs">
                             {gender.charAt(0).toUpperCase() + gender.slice(1)}&apos;s Size Conversions
                           </Badge>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="text-center p-4 bg-background rounded-lg">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="text-center p-3 bg-background rounded-xl border border-border/60">
                             <div className="text-xs text-muted-foreground mb-1">US</div>
-                            <div className="text-2xl font-bold text-primary">{conversions.us}</div>
+                            <div className="text-2xl font-bold text-primary tabular-nums">{conversions.us}</div>
                           </div>
-                          <div className="text-center p-4 bg-background rounded-lg">
+                          <div className="text-center p-3 bg-background rounded-xl border border-border/60">
                             <div className="text-xs text-muted-foreground mb-1">UK</div>
-                            <div className="text-2xl font-bold text-primary">{conversions.uk}</div>
+                            <div className="text-2xl font-bold text-primary tabular-nums">{conversions.uk}</div>
                           </div>
-                          <div className="text-center p-4 bg-background rounded-lg">
+                          <div className="text-center p-3 bg-background rounded-xl border border-border/60">
                             <div className="text-xs text-muted-foreground mb-1">EU</div>
-                            <div className="text-2xl font-bold text-primary">{conversions.eu}</div>
+                            <div className="text-2xl font-bold text-primary tabular-nums">{conversions.eu}</div>
                           </div>
-                          <div className="text-center p-4 bg-background rounded-lg">
+                          <div className="text-center p-3 bg-background rounded-xl border border-border/60">
                             <div className="text-xs text-muted-foreground mb-1">CM</div>
-                            <div className="text-2xl font-bold text-primary">{conversions.cm}</div>
+                            <div className="text-2xl font-bold text-primary tabular-nums">{conversions.cm}</div>
                           </div>
                         </div>
                       </div>
@@ -261,8 +253,8 @@ export default function FootSizeConverterPage() {
               </TabsContent>
 
               {/* Reference Chart Tab */}
-              <TabsContent value="reference" className="space-y-6">
-                <Card>
+              <TabsContent value="reference" className="mt-4 space-y-8">
+                <Card className="w-full shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Info className="h-5 w-5" />
@@ -296,20 +288,19 @@ export default function FootSizeConverterPage() {
                     </div>
 
                     {/* Search */}
-                    <div className="space-y-2">
-                      <Label htmlFor="search">Search Sizes</Label>
+                    <div>
+                      <Label htmlFor="search" className="mb-1.5 block">Search Sizes</Label>
                       <Input
                         id="search"
                         type="text"
                         placeholder="Search any size..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="h-10"
                       />
                     </div>
 
                     {/* Table */}
-                    <div className="rounded-lg border overflow-hidden">
+                    <div className="rounded-2xl border border-border overflow-hidden">
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
@@ -353,7 +344,7 @@ export default function FootSizeConverterPage() {
                 </Card>
 
                 {/* Sizing Tips */}
-                <Card>
+                <Card className="w-full shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Info className="h-5 w-5" />

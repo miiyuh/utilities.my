@@ -16,9 +16,9 @@ import {
   Wind,
   Path,
 } from 'phosphor-react'
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
-import { ThemeToggleButton } from "@/components/theme-toggle-button"
+import { PageHeader } from "@/components/page-header";
 
 export default function About() {
   return (
@@ -33,15 +33,8 @@ export default function About() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Info className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">About utilities.my</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
-        <div className="relative flex flex-1 flex-col p-4 lg:p-8">
+        <PageHeader icon={Info} title="About utilities.my" />
+        <div className="relative flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-6xl mx-auto space-y-10">
             {/* Hero */}
             <section className="relative overflow-hidden rounded-md border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
@@ -60,17 +53,17 @@ export default function About() {
                 <div className="flex-1">
                   <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">A handy toolbox for everyday tasks</h2>
                   <p className="text-muted-foreground text-base md:text-lg">
-                    One clean, fast app with focused utilities: convert, analyze, generate, and more — without tab chaos.
+                    One clean, fast app with focused utilities: convert, analyse, generate, and more, without tab chaos.
                   </p>
                   <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1">
-                      <Sparkle className="h-3.5 w-3.5 text-primary" /> Polished UX
+                      <Sparkle className="h-3.5 w-3.5 text-muted-foreground" /> Polished UX
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1">
-                      <Cube className="h-3.5 w-3.5 text-primary" /> Modular tools
+                      <Cube className="h-3.5 w-3.5 text-muted-foreground" /> Modular tools
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1">
-                      <Lightning className="h-3.5 w-3.5 text-primary" /> Fast & accessible
+                      <Lightning className="h-3.5 w-3.5 text-muted-foreground" /> Fast & accessible
                     </span>
                   </div>
                 </div>
@@ -85,12 +78,12 @@ export default function About() {
                   { icon: Wrench, title: 'Useful by default', desc: 'Practical tools like unit, time, text, and QR utilities.' },
                   { icon: HardDrive, title: 'Local-first', desc: 'Settings and inputs persist where it helps, no account needed.' },
                   { icon: Code, title: 'Open source', desc: 'MIT-licensed. Explore, modify, and contribute freely.' },
-                  { icon: Keyboard, title: 'Keyboard-friendly', desc: 'Snappy interactions and predictable focus behavior.' },
+                  { icon: Keyboard, title: 'Keyboard-friendly', desc: 'Snappy interactions and predictable focus behaviour.' },
                   { icon: Prohibit, title: 'No clutter', desc: 'Just the essentials. No ads. No noise.' },
                 ].map((f) => (
                   <div key={f.title}>
                     <div className="flex items-center gap-2 text-sm font-semibold mb-1">
-                      <f.icon className="h-4 w-4 text-primary" />
+                      <f.icon className="h-4 w-4 text-muted-foreground" />
                       {f.title}
                     </div>
                     <p className="text-sm text-muted-foreground">{f.desc}</p>
@@ -104,27 +97,27 @@ export default function About() {
               <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                   <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                    <Target className="h-5 w-5 text-primary" />
+                    <Target className="h-5 w-5 text-muted-foreground" />
                     Why it exists
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Built to reduce context switching. Instead of bouncing across sites for common tasks, utilities.my
-                    keeps them in one place with a consistent interface and reliable behavior.
+                    keeps them in one place with a consistent interface and reliable behaviour.
                   </p>
                   <div className="mt-4 inline-flex items-center gap-2 text-xs text-muted-foreground">
-                    <Heart className="h-3.5 w-3.5 text-primary" /> Crafted with care by miiyuh.
+                    <Heart className="h-3.5 w-3.5 text-muted-foreground" /> Crafted with care by miiyuh.
                   </div>
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                    <Wrench className="h-5 w-5 text-primary" />
+                    <Wrench className="h-5 w-5 text-muted-foreground" />
                     Built with
                   </h3>
                   <ul className="text-sm text-muted-foreground space-y-2">
-                    <li className="flex items-center gap-2"><Code className="h-4 w-4 text-primary" /> Vite, React, TypeScript</li>
-                    <li className="flex items-center gap-2"><Wind className="h-4 w-4 text-primary" /> Tailwind CSS</li>
-                    <li className="flex items-center gap-2"><Cube className="h-4 w-4 text-primary" /> Radix UI, shadcn/ui</li>
-                    <li className="flex items-center gap-2"><Path className="h-4 w-4 text-primary" /> Phosphor icons</li>
+                    <li className="flex items-center gap-2"><Code className="h-4 w-4 text-muted-foreground" /> Vite, React, TypeScript</li>
+                    <li className="flex items-center gap-2"><Wind className="h-4 w-4 text-muted-foreground" /> Tailwind CSS</li>
+                    <li className="flex items-center gap-2"><Cube className="h-4 w-4 text-muted-foreground" /> Radix UI, shadcn/ui</li>
+                    <li className="flex items-center gap-2"><Path className="h-4 w-4 text-muted-foreground" /> Phosphor icons</li>
                   </ul>
                 </div>
               </div>
@@ -135,7 +128,7 @@ export default function About() {
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-xl font-semibold flex items-center gap-2">
-                    <GithubLogo className="h-5 w-5 text-primary" />
+                    <GithubLogo className="h-5 w-5 text-muted-foreground" />
                     Open source on GitHub
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1">

@@ -2,15 +2,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Trash, TextAa, ArrowsLeftRight, Upload, Download } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Trash, TextAa, ArrowsLeftRight, Upload, Download } from 'phosphor-react';
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageHeader } from "@/components/page-header";
 
 type Mode = 'uppercase' | 'lowercase' | 'title' | 'sentence' | 'toggle' | 'camel' | 'pascal' | 'snake' | 'kebab' | 'constant';
 
@@ -85,10 +86,6 @@ export default function TextCaseConverterPage() {
 
   // actions
   const handleConvertNow = () => setOutputText(convert(inputText, mode));
-  const handleCopy = async () => {
-    if (!outputText) { toast({ title: 'Nothing to copy', description: 'Output is empty.', variant: 'destructive' }); return; }
-    await navigator.clipboard.writeText(outputText); toast({ title: 'Copied to clipboard' });
-  };
   const handleClear = () => { setInputText(''); setOutputText(''); };
   const handleSwap = () => { setInputText(outputText); setOutputText(inputText); };
   const handleImport = async (file: File) => { const text = await file.text(); setInputText(text.replace(/\r\n?/g,'\n')); };
@@ -109,25 +106,16 @@ export default function TextCaseConverterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex items-center gap-2">
-              <TextAa className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold font-headline">Text Case Converter</h1>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </header>
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <PageHeader icon={TextAa} title="Text Case Converter" />
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
             <div className="mb-8 hidden sm:block">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Case Converter</h1>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Case Converter</h1>
               <p className="text-lg text-muted-foreground">Convert text between letter cases with smart options.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Input */}
               <Card className="flex flex-col overflow-hidden">
                 <CardHeader>
@@ -185,7 +173,7 @@ export default function TextCaseConverterPage() {
                   )}
                   <Textarea id="outputText" placeholder="Converted text will appear here..." value={outputText} readOnly className="resize-none bg-muted/50 min-h-[240px]" />
                   <div className="flex justify-end">
-                    <Button onClick={handleCopy} title="Copy output text" disabled={!outputText}><Copy className="mr-2 h-4 w-4" /> Copy Output</Button>
+                    <CopyButton value={() => outputText} label="Copy Output" title="Copy output text" disabled={!outputText} />
                   </div>
                 </CardContent>
               </Card>

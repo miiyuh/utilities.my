@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
 import { SidebarProvider } from '@/components/ui/sidebar'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { SettingsProvider } from '@/contexts/settings-context'
 import { Analytics } from "@vercel/analytics/react"
 import App from './App'
@@ -23,6 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <BrowserRouter>
           <div id="main-content" className="relative z-20">
             <SettingsProvider>
+              <TooltipProvider>
               <SidebarProvider>
                 <App />
                 <Toaster 
@@ -32,15 +34,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     duration: 4000,
                     className: 'font-sans',
                     style: {
-                      background: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      color: 'hsl(var(--foreground))',
+                      background: 'var(--card)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--foreground)',
                     },
                   }}
                   theme="system"
                 />
                 <Analytics />
               </SidebarProvider>
+              </TooltipProvider>
             </SettingsProvider>
           </div>
         </BrowserRouter>

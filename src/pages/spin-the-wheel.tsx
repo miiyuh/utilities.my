@@ -2,16 +2,17 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowCounterClockwise, Trash, Plus, Disc, Shuffle, X, SortAscending, Upload, Download, ShareNetwork, Copy } from 'phosphor-react';
-import { Sidebar, SidebarTrigger, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { ArrowCounterClockwise, Trash, Plus, Disc, Shuffle, X, SortAscending, Upload, Download, ShareNetwork } from 'phosphor-react';
+import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { SpinWheelCanvas } from '@/components/spin-wheel-canvas';
 import { Checkbox } from '@/components/ui/checkbox';
+import { PageHeader } from "@/components/page-header";
 const DEFAULT_ITEMS = [
   "Sushi", "Ramen", "Tempura", "Katsudon", "Takoyaki", "Okonomiyaki", // Japanese
   "Nasi Lemak", "Char Kuey Teow", "Roti Canai", "Satay", "Laksa", "Hainanese Chicken Rice" // Malaysian
@@ -178,11 +179,6 @@ export default function SpinTheWheelPage() {
     await navigator.clipboard.writeText(url);
     toast({ title: 'Share link copied', description: 'Anyone with the link will see your list preloaded.' });
   };
-  const handleCopyWinners = async () => {
-    if (!winners.length) { toast({ title: 'No winners yet' }); return; }
-    await navigator.clipboard.writeText(winners.join('\n'));
-    toast({ title: 'Copied winners' });
-  };
 
   return (
     <>
@@ -191,20 +187,13 @@ export default function SpinTheWheelPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 md:px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="lg:hidden" />
-            <Disc className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">Spin the Wheel</h1>
-          </div>
-          <ThemeToggleButton />
-        </header>
+        <PageHeader icon={Disc} title="Spin the Wheel" />
         
-        <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
+        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
+          <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
             <div className="mb-8 hidden sm:block">
-              <h1 className="text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
                 Spin the Wheel
               </h1>
               <p className="text-lg text-muted-foreground">
@@ -213,7 +202,7 @@ export default function SpinTheWheelPage() {
             </div>
 
             {/* Main Content */}
-            <div className="grid gap-6 lg:gap-8 lg:grid-cols-2">
+            <div className="grid gap-8 lg:grid-cols-2">
               {/* Wheel Section */}
               <Card>
                 <CardHeader>
@@ -359,9 +348,7 @@ export default function SpinTheWheelPage() {
                   <CardTitle className="flex items-center justify-between">
                     <span>Winner History ({winners.length})</span>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={handleCopyWinners}>
-                        <Copy className="w-4 h-4 mr-2"/> Copy
-                      </Button>
+                      <CopyButton value={() => winners.join('\n')} label="Copy" size="sm" toastTitle="Copied winners" toastDescription="Winner list copied to clipboard." />
                       <Button variant="outline" size="sm" onClick={handleExportWinners}>
                         <Download className="w-4 h-4 mr-2"/> Export CSV
                       </Button>
