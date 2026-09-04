@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -100,11 +99,6 @@ export default function FootSizeConverterPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Foot Size Converter | utilities.my</title>
-        <meta name="description" content="Convert shoe sizes between US, UK, EU, and CM measurements for men, women, and kids. Includes a full size reference chart." />
-        <link rel="canonical" href="https://utilities.my/foot-size-converter" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

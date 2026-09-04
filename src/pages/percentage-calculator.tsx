@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,11 +62,6 @@ export default function PercentageCalculatorPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Percentage Calculator | utilities.my</title>
-        <meta name="description" content="Calculate percentages, percentage change, and percentage increase or decrease with plain-language results." />
-        <link rel="canonical" href="https://utilities.my/percentage-calculator" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

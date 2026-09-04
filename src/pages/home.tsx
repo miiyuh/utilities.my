@@ -1,4 +1,3 @@
-import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import {
   Sidebar,
@@ -44,11 +43,6 @@ const heroStagger = "animate-in fade-in-0 slide-in-from-bottom-2 duration-slow e
 export default function Home() {
   return (
     <>
-      <Helmet>
-        <title>utilities.my - free online tools</title>
-        <meta name="description" content="A fast, privacy-friendly collection of free online tools by miiyuh. No signup required." />
-        <link rel="canonical" href="https://utilities.my" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

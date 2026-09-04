@@ -687,7 +687,7 @@ export default function ImageConverterPage() {
     
     // Debounce preview generation to prevent flashing
     previewTimeoutRef.current = setTimeout(() => {
-      generatePreview()
+      void generatePreview()
     }, 500) // Increased debounce to 500ms for smoother experience
 
     return () => {
@@ -751,74 +751,79 @@ export default function ImageConverterPage() {
               <div>
                 <Card className="minimal-card">
                 <CardContent>
+                  {/*
+                    Drop target only. This used to be role="button", but in three
+                    of its four states it contains real buttons and a scrollable
+                    list, and interactive content nested inside a button is invalid
+                    and traps keyboard navigation. The click-to-upload affordance
+                    now lives on a real <button> in the two empty states; the
+                    non-empty states already have "Change" and "Add More".
+                  */}
                   <div
                     ref={dropRef}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        const inp = document.getElementById('file-input') as HTMLInputElement | null
-                        inp?.click()
-                      }
-                    }}
                     className={`
-                      relative border-2 border-dashed rounded-lg p-4 sm:p-6 flex items-center justify-center text-center transition-all duration-quick cursor-pointer
-                        ${isDragOver 
-                        ? 'border-primary bg-primary/5 scale-[1.01]' 
+                      relative border-2 border-dashed rounded-lg p-4 sm:p-6 flex items-center justify-center text-center transition-all duration-quick
+                        ${isDragOver
+                        ? 'border-primary bg-primary/5 scale-[1.01]'
                         : 'border-muted-foreground/25'
                       }
                       ${!(batchMode && batchFiles.length > 0) && 'hover:border-primary/50 hover:bg-accent/50'}
                       min-h-[100px] sm:min-h-[100px]
-                      focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
                     `}
-                    aria-label={batchMode ? "Drop images here or click to upload (max 20)" : "Drop image here or click to upload"}
-                    onClick={() => {
-                      const inp = document.getElementById('file-input') as HTMLInputElement | null
-                      inp?.click()
-                      // Remove focus outline after click
-                      if (dropRef.current) {
-                        dropRef.current.blur()
-                      }
-                    }}
                   >
                     {/* Single Mode Upload Content */}
                     {!batchMode && !imgSrc && (
-                      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
+                      <button
+                        type="button"
+                        aria-label="Drop image here or click to upload"
+                        onClick={() => {
+                          const inp = document.getElementById('file-input') as HTMLInputElement | null
+                          inp?.click()
+                        }}
+                        className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full cursor-pointer rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      >
+                        <span className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
                           isDragOver ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
                         }`}>
                           <Upload className="h-6 w-6" />
-                        </div>
-                        <div className="text-center sm:text-left flex-1">
-                          <div className="font-medium text-foreground mb-1">
+                        </span>
+                        <span className="block text-center sm:text-left flex-1">
+                          <span className="block font-medium text-foreground mb-1">
                             {isDragOver ? 'Drop your image here' : 'Drag & drop an image here'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">or click to choose file • PNG, JPG, WebP, GIF, BMP • Max 50MB</div>
-                        </div>
-                      </div>
+                          </span>
+                          <span className="block text-sm text-muted-foreground">or click to choose file • PNG, JPG, WebP, GIF, BMP • Max 50MB</span>
+                        </span>
+                      </button>
                     )}
                     
                     {/* Batch Mode Upload Content */}
                     {batchMode && batchFiles.length === 0 && (
-                      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
+                      <button
+                        type="button"
+                        aria-label="Drop images here or click to upload, maximum 20"
+                        onClick={() => {
+                          const inp = document.getElementById('file-input') as HTMLInputElement | null
+                          inp?.click()
+                        }}
+                        className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full cursor-pointer rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      >
+                        <span className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
                           isDragOver ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
                         }`}>
                           <Stack className="h-6 w-6" />
-                        </div>
-                        <div className="text-center sm:text-left flex-1">
-                          <div className="font-medium text-foreground mb-1">
+                        </span>
+                        <span className="block text-center sm:text-left flex-1">
+                          <span className="block font-medium text-foreground mb-1">
                             {isDragOver ? 'Drop your images here' : 'Drag & drop images here (max 20)'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">or click to choose files • PNG, JPG, WebP, GIF, BMP • Max 50MB each</div>
-                        </div>
-                      </div>
+                          </span>
+                          <span className="block text-sm text-muted-foreground">or click to choose files • PNG, JPG, WebP, GIF, BMP • Max 50MB each</span>
+                        </span>
+                      </button>
                     )}
                     
                     {/* Batch Mode: Files Added */}
                     {batchMode && batchFiles.length > 0 && (
-                      <div className="w-full text-left" onClick={(e) => e.stopPropagation()}>
+                      <div className="w-full text-left">
                         <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b">
                           <Badge variant="secondary" className="text-sm">
                             <Stack className="h-3.5 w-3.5 mr-1" />
@@ -906,7 +911,7 @@ export default function ImageConverterPage() {
                                     className="h-7 w-7 p-0"
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      reprocessFile(item.id)
+                                      void reprocessFile(item.id)
                                     }}
                                     title="Retry"
                                   >
@@ -938,7 +943,6 @@ export default function ImageConverterPage() {
                     {!batchMode && imgSrc && (
                       <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                         <div className="relative flex-shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imgSrc}
                             alt="preview"
@@ -1006,7 +1010,6 @@ export default function ImageConverterPage() {
                     />
                     {/* Hidden image for loading original dimensions (single mode only) */}
                     {!batchMode && imgSrc && (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={imgSrc}
                         alt=""
@@ -1279,7 +1282,6 @@ export default function ImageConverterPage() {
                                 </div>
                               ) : previewUrl ? (
                                 <>
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={previewUrl}
                                     alt="Live Preview"

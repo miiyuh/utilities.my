@@ -1,4 +1,3 @@
-import { Helmet } from 'react-helmet-async'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
@@ -31,11 +30,6 @@ export default function SettingsPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Settings | utilities.my</title>
-        <meta name="description" content="Configure your preferences for utilities.my tools." />
-        <link rel="canonical" href="https://utilities.my/settings" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

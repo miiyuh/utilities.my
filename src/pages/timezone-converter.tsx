@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -53,6 +52,7 @@ function cellTone(hour: number, isNow: boolean, isSelected: boolean): string {
 }
 
 export default function TimezoneConverterPage() {
+  const fieldId = React.useId();
   const localZone = React.useMemo(() => dayjs.tz.guess(), []);
 
   const [zones, setZones] = React.useState<string[]>(() => {
@@ -199,11 +199,6 @@ export default function TimezoneConverterPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Timezone Converter | utilities.my</title>
-        <meta name="description" content="Compare a full day across timezones on one aligned timeline. Find overlapping working hours at a glance, worldtimebuddy-style." />
-        <link rel="canonical" href="https://utilities.my/timezone-converter" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />
@@ -235,10 +230,12 @@ export default function TimezoneConverterPage() {
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-2 text-sm mr-2">
-                  <Switch checked={use24h} onCheckedChange={setUse24h} />
-                  <Label className="cursor-pointer select-none">24-hour</Label>
-                </label>
+                <div className="flex items-center gap-2 text-sm mr-2">
+                  <Switch id={`${fieldId}-24h`} checked={use24h} onCheckedChange={setUse24h} />
+                  <Label htmlFor={`${fieldId}-24h`} className="cursor-pointer select-none">
+                    24-hour
+                  </Label>
+                </div>
                 <Button variant="outline" size="default" className="h-8" onClick={() => changeDay(dayOffset - 1)}>
                   <ArrowLeft className="h-4 w-4" /> Prev
                 </Button>

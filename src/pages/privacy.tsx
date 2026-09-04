@@ -1,4 +1,3 @@
-import { Helmet } from 'react-helmet-async';
 import { ShieldCheck } from 'phosphor-react';
 import { MarkdownPage } from '@/components/markdown/markdown-page';
 
@@ -123,11 +122,6 @@ If you have questions about this Privacy Policy, please contact us through our w
 export default function PrivacyPage() {
   return (
     <>
-      <Helmet>
-        <title>Privacy Policy | utilities.my</title>
-        <meta name="description" content="Privacy Policy for utilities.my - Learn how we protect your data and privacy." />
-        <link rel="canonical" href="https://utilities.my/privacy" />
-      </Helmet>
       <MarkdownPage
         title="Privacy Policy"
         icon={ShieldCheck}

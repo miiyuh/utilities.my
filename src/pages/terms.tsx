@@ -1,4 +1,3 @@
-import { Helmet } from 'react-helmet-async';
 import { BookOpen } from 'phosphor-react';
 import { MarkdownPage } from '@/components/markdown/markdown-page';
 
@@ -105,11 +104,6 @@ If you have questions about these Terms, please contact us through our website.
 export default function TermsPage() {
   return (
     <>
-      <Helmet>
-        <title>Terms of Service | utilities.my</title>
-        <meta name="description" content="Terms of Service for utilities.my - Read our terms and conditions for using our utility tools." />
-        <link rel="canonical" href="https://utilities.my/terms" />
-      </Helmet>
       <MarkdownPage
         title="Terms of Service"
         icon={BookOpen}

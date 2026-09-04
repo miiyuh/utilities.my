@@ -26,7 +26,7 @@ export function SpinWheelCanvas({ items, onSpin, disabled = false }: SpinWheelCa
   const [confetti, setConfetti] = useState<ConfettiLauncher | null>(null);
 
   useEffect(() => {
-    import('canvas-confetti').then((mod) => {
+    void import('canvas-confetti').then((mod) => {
       setConfetti(() => mod.default || mod)
     })
   }, [])

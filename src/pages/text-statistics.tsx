@@ -36,7 +36,9 @@ const STOPWORDS = new Set([
 ]);
 
 export default function TextStatisticsPage() {
-  const [inputText, setInputText] = useState('');
+  // Restore the saved draft synchronously; loading it from a mount effect meant
+  // the textarea rendered empty and then repopulated.
+  const [inputText, setInputText] = useState(() => localStorage.getItem('textstats.input') ?? '');
   const [stats, setStats] = useState<FullStats | null>(null);
   const [selStats, setSelStats] = useState<FullStats | null>(null);
   const [selection, setSelection] = useState<{start:number; end:number}>({start:0,end:0});
@@ -98,11 +100,6 @@ export default function TextStatisticsPage() {
     return { characters, charactersNoSpaces, words, uniqueWords, sentences, paragraphs, lines, avgWordLength, longestWord, longestSentenceWords, readingTimeMinutes, speakingTimeMinutes, estimatedPages, topWords, charFreq };
   }, [caseSensitive, ignoreStopwords, countNumbers]);
 
-  // load from localStorage on mount
-  useEffect(()=>{
-    const saved = localStorage.getItem('textstats.input');
-    if (saved) setInputText(saved);
-  }, []);
   // persist input
   useEffect(()=>{ localStorage.setItem('textstats.input', inputText); }, [inputText]);
 
@@ -189,7 +186,7 @@ export default function TextStatisticsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) handleImportFile(f); e.currentTarget.value=''; }} />
+                    <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) void handleImportFile(f); e.currentTarget.value=''; }} />
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="h-4 w-4 mr-1"/> Import</Button>
                     <Button variant="outline" size="sm" onClick={handleExportJson} disabled={!stats}><Upload className="h-4 w-4 mr-1"/> Export JSON</Button>
                     <CopyButton value={buildSummary} label="Copy summary" toastDescription="Summary copied." size="sm" disabled={!stats} />

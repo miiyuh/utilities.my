@@ -267,7 +267,7 @@ const markdownExamples = [
   },
   {
     title: "Code (Inline & Fenced)",
-    content: "Inline \`code\` has \`back-ticks around\` it.\n\n\`\`\`javascript\n// Code block\nvar s = \"JavaScript syntax highlighting\";\nalert(s);\n\`\`\`",
+    content: "Inline `code` has `back-ticks around` it.\n\n```javascript\n// Code block\nvar s = \"JavaScript syntax highlighting\";\nalert(s);\n```",
   },
   {
     title: "Blockquotes & Horizontal Rules",
@@ -589,6 +589,10 @@ export default function MarkdownPreviewerPage() {
                     onDoubleClick={resetToCenter}
                     tabIndex={0}
                     className="hidden md:block w-1 cursor-col-resize hover:bg-primary/50 bg-border/60 transition-colors"
+                    // A focusable separator carrying aria-valuenow is the
+                    // ARIA splitter pattern; <hr> is a thematic break and
+                    // can take neither focus nor a value.
+                    // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
                     role="separator"
                     aria-orientation="vertical"
                     aria-label="Resize panels (double-click to center)"
@@ -606,6 +610,10 @@ export default function MarkdownPreviewerPage() {
                     onDoubleClick={resetToCenter}
                     tabIndex={0}
                     className="md:hidden h-2 cursor-row-resize hover:bg-primary/50 bg-border/60 transition-colors"
+                    // A focusable separator carrying aria-valuenow is the
+                    // ARIA splitter pattern; <hr> is a thematic break and
+                    // can take neither focus nor a value.
+                    // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
                     role="separator"
                     aria-orientation="horizontal"
                     aria-label="Resize panels vertically (double-click to center)"

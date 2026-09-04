@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -40,13 +40,33 @@ const SYMBOL_GAP = DOT_DURATION;
 const LETTER_GAP = DOT_DURATION * 3;
 const WORD_GAP = DOT_DURATION * 7;
 
+// Convert text to Morse code
+function textToMorse(text: string): string {
+  return text
+    .toUpperCase()
+    .split('')
+    .map(char => MORSE_CODE_MAP[char] || char)
+    .join(' ');
+}
+
+// Convert Morse code to text
+function morseToText(morse: string): string {
+  return morse
+    .split('  ') // Split by words (double space)
+    .map(word =>
+      word
+        .split(' ') // Split by letters
+        .map(letter => REVERSE_MORSE_CODE_MAP[letter] || letter)
+        .join('')
+    )
+    .join(' ');
+}
+
 export default function MorseCodeGeneratorPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-morse');
   const [inputText, setInputText] = useState('');
   const [inputMorse, setInputMorse] = useState('');
-  const [outputMorse, setOutputMorse] = useState('');
-  const [outputText, setOutputText] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
@@ -68,60 +88,18 @@ export default function MorseCodeGeneratorPage() {
   const morseSequenceRef = useRef<string>('');
   const hapticEngineRef = useRef<InstanceType<typeof WebHaptics> | null>(null);
 
-  // Convert text to Morse code
-  const textToMorse = (text: string): string => {
-    return text
-      .toUpperCase()
-      .split('')
-      .map(char => MORSE_CODE_MAP[char] || char)
-      .join(' ');
-  };
-
-  // Convert Morse code to text
-  const morseToText = (morse: string): string => {
-    return morse
-      .split('  ') // Split by words (double space)
-      .map(word => 
-        word
-          .split(' ') // Split by letters
-          .map(letter => REVERSE_MORSE_CODE_MAP[letter] || letter)
-          .join('')
-      )
-      .join(' ');
-  };
-
-  // Update outputs when inputs change
-  useEffect(() => {
-    if (activeTab === 'text-to-morse') {
-      if (inputText) {
-        setOutputMorse(textToMorse(inputText));
-      } else {
-        setOutputMorse('');
-      }
-    } else {
-      if (inputMorse) {
-        setOutputText(morseToText(inputMorse));
-      } else {
-        setOutputText('');
-      }
-    }
-  }, [inputText, inputMorse, activeTab]);
-
-  // Initialize WebHaptics and cleanup on unmount
-  useEffect(() => {
-    // Initialize haptic engine if supported
-    if (WebHaptics.isSupported) {
-      hapticEngineRef.current = new WebHaptics();
-    }
-
-    return () => {
-      stopPlayback();
-      // Cleanup haptic engine
-      if (hapticEngineRef.current) {
-        hapticEngineRef.current.destroy();
-      }
-    };
-  }, []);
+  // Both outputs are a pure function of the input and the active tab, so they
+  // are computed during render. They used to be state written from an effect,
+  // which meant every keystroke rendered once with the stale output and again
+  // with the new one.
+  const outputMorse = useMemo(
+    () => (activeTab === 'text-to-morse' && inputText ? textToMorse(inputText) : ''),
+    [activeTab, inputText]
+  );
+  const outputText = useMemo(
+    () => (activeTab === 'text-to-morse' || !inputMorse ? '' : morseToText(inputMorse)),
+    [activeTab, inputMorse]
+  );
 
   // Play audio beep
   const playBeep = (duration: number) => {
@@ -376,13 +354,28 @@ export default function MorseCodeGeneratorPage() {
   const handleClear = () => {
     if (activeTab === 'text-to-morse') {
       setInputText('');
-      setOutputMorse('');
     } else {
       setInputMorse('');
-      setOutputText('');
     }
     stopPlayback();
   };
+
+  // Initialize WebHaptics and cleanup on unmount. Declared after stopPlayback
+  // so the cleanup does not close over it while it is still being initialised.
+  useEffect(() => {
+    // Initialize haptic engine if supported
+    if (WebHaptics.isSupported) {
+      hapticEngineRef.current = new WebHaptics();
+    }
+
+    return () => {
+      stopPlayback();
+      // Cleanup haptic engine
+      if (hapticEngineRef.current) {
+        hapticEngineRef.current.destroy();
+      }
+    };
+  }, []);
 
   // Import text from file
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {

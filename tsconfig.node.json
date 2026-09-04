@@ -1,11 +1,18 @@
 {
+  /* Build-time code: the Vite config and the post-build SEO step. Runs under
+     Node/Bun, so it gets node types and no DOM. src/lib/seo.ts is pulled in
+     because scripts/build-seo.ts imports it. */
   "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
+    "target": "ES2022",
+    "lib": ["ES2023"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "strict": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "types": ["node"]
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts", "scripts/**/*.ts", "src/lib/seo.ts"]
 }

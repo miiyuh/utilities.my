@@ -14,12 +14,6 @@ interface MarkdownPageProps {
 }
 
 export function MarkdownPage({ icon: Icon, title, content }: MarkdownPageProps) {
-  const [lastUpdated, setLastUpdated] = React.useState('');
-
-  React.useEffect(() => {
-    setLastUpdated(new Date().toLocaleDateString());
-  }, []);
-
   return (
     <>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -28,7 +22,7 @@ export function MarkdownPage({ icon: Icon, title, content }: MarkdownPageProps) 
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Icon} title={title} />
-        <MarkdownView content={content} lastUpdated={lastUpdated} />
+        <MarkdownView content={content} />
       </SidebarInset>
     </>
   );

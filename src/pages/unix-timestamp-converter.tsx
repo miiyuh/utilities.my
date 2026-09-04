@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -108,11 +107,6 @@ export default function UnixTimestampConverterPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Unix Timestamp Converter | utilities.my</title>
-        <meta name="description" content="Convert Unix timestamps to human-readable dates and back, with seconds/milliseconds support and quick presets." />
-        <link rel="canonical" href="https://utilities.my/unix-timestamp-converter" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

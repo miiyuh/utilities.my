@@ -55,7 +55,7 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 ### Frontend
 - **React 19** - Latest React with hooks and modern features
-- **TypeScript** - Full type safety and IntelliSense
+- **TypeScript 7** - Full type safety, on the native Go compiler
 - **Vite** - Ultra-fast build tool and dev server
 - **Tailwind CSS** - Utility-first CSS framework
 - **Radix UI** - Accessible component primitives
@@ -92,7 +92,7 @@ utilities.my is a productivity-focused web application that consolidates essenti
 ## 🚀 Installation & Development
 
 ### Prerequisites
-- **Node.js 18+** (Latest LTS recommended)
+- **Node.js 20.19+ or 22.12+** (required by Vite 8)
 - **bun 1.1+** (or npm/yarn)
 - **Git** for version control
 
@@ -122,10 +122,10 @@ utilities.my is a productivity-focused web application that consolidates essenti
 | Command | Description |
 |---------|-------------|
 | `bun run dev` | Start development server with hot reload on `http://localhost:5173` |
-| `bun run build` | Build optimized production bundle with TypeScript checking |
+| `bun run build` | Typecheck, build the production bundle, then prerender per-route HTML, the sitemap and OpenGraph cards |
 | `bun run preview` | Preview production build locally |
-| `bun run lint` | Run ESLint for code quality with strict warnings |
-| `bun run typecheck` | Check TypeScript types without emitting files |
+| `bun run lint` | Run oxlint, including type-aware rules via tsgolint |
+| `bun run typecheck` | Check types for both the app and the build scripts |
 
 ## 🎨 Design Philosophy
 
@@ -136,6 +136,7 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 ### Code Quality
 - **TypeScript** - Full type safety throughout the codebase
+- **oxlint** - Fast linting with type-aware rules, a11y checks and React rules
 - **Component-Based** - Modular, reusable components
 - **Consistent Styling** - Tailwind CSS with custom design system
 
@@ -168,10 +169,17 @@ Contributions are welcome! Whether you're fixing bugs, improving documentation, 
 
 1. Create a new file in `src/pages/[utility-name].tsx`
 2. Add the utility to `src/lib/tools.ts` with icon and description
-3. Follow existing component patterns and styling
-4. Ensure responsive design for mobile, tablet, and desktop
-5. Test with both dark and light themes
-6. Test keyboard navigation and accessibility
+3. Add a `<Route>` for it in `src/App.tsx`
+4. **Add an entry to `src/lib/seo.ts`** with its title, description and `h1`
+5. Follow existing component patterns and styling
+6. Ensure responsive design for mobile, tablet, and desktop
+7. Test with both dark and light themes
+8. Test keyboard navigation and accessibility
+
+> Step 4 is required, not optional. There is no SPA fallback rewrite any more —
+> each route is served as its own prerendered HTML file, so a route missing from
+> `src/lib/seo.ts` returns a real 404 in production. The build fails if a tool in
+> `tools.ts` has no matching entry, so this is caught before deploy.
 
 #### Code Standards
 

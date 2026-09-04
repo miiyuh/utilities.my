@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -72,13 +72,43 @@ function rgbToCmyk(r: number, g: number, b: number): { c: number; m: number; y: 
 const MAGNIFIER_SIZE = 120; // base size (desktop)
 const DEFAULT_MAGNIFIER_ZOOM = 4;
 
+function loadColourHistory(): string[] {
+  try {
+    const saved = localStorage.getItem('colorPickerHistory');
+    if (saved) {
+      const parsed: unknown = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((c: unknown): c is string => typeof c === 'string' && /^#[0-9A-F]{6}$/i.test(c))
+          .slice(0, 10);
+      }
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+  return [];
+}
+
 export default function ColourPickerPage() {
   const { toast } = useToast();
-  const [hexColour, setHexColour] = useState('#1a1a1a'); 
-  const [rgbColour, setRgbColour] = useState<{ r: number; g: number; b: number } | null>(null);
-  const [hslColour, setHslColour] = useState<{ h: number; s: number; l: number } | null>(null);
-  const [cmykColour, setCmykColour] = useState<{ c: number; m: number; y: number; k: number } | null>(null);
-  
+  const [hexColour, setHexColour] = useState('#1a1a1a');
+  // The hex input holds partial values while the user types ("#1a"), so the
+  // previews and conversions follow the last fully valid colour rather than
+  // flickering. That value used to live in a ref that render read directly,
+  // which meant the previews only repainted when unrelated state happened to
+  // change in the same tick; it is state now, and the conversions derive from
+  // it during render instead of being pushed in from an effect.
+  const [lastValidHex, setLastValidHex] = useState('#1a1a1a');
+  const rgbColour = useMemo(() => hexToRgb(lastValidHex), [lastValidHex]);
+  const hslColour = useMemo(
+    () => (rgbColour ? rgbToHsl(rgbColour.r, rgbColour.g, rgbColour.b) : null),
+    [rgbColour]
+  );
+  const cmykColour = useMemo(
+    () => (rgbColour ? rgbToCmyk(rgbColour.r, rgbColour.g, rgbColour.b) : null),
+    [rgbColour]
+  );
+
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   // HSV state for custom colour picker (Hue 0-360, Saturation 0-100, Value 0-100)
   const [hsv, setHsv] = useState<{h: number; s: number; v: number}>({ h: 0, s: 0, v: 10 });
@@ -95,14 +125,22 @@ export default function ColourPickerPage() {
   const [mouseOnCanvasPosition, setMouseOnCanvasPosition] = useState({ x: 0, y: 0 });
   const magnifierCanvasRef = useRef<HTMLCanvasElement>(null);
   // Color history (persisted to localStorage, max 10 colors)
-  const [colorHistory, setColorHistory] = useState<string[]>([]);
+  // Restored synchronously; loading it from a mount effect meant the history
+  // strip rendered empty and then filled in.
+  const [colorHistory, setColorHistory] = useState<string[]>(loadColourHistory);
   const [imagePalette, setImagePalette] = useState<string[]>([]);
   // Advanced interaction state
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const scaleRef = useRef(scale);
   const panRef = useRef(pan);
+  // The ref is load-bearing for the handlers that run outside React's render
+  // cycle (wheel zoom, keyboard sampling, the clampPan call inside rAF) and
+  // must read the size synchronously. Render uses the state mirror, so the
+  // pixel-grid overlay repaints when the image changes rather than relying on
+  // some other setState in the same tick.
   const imageSizeRef = useRef<{w:number;h:number}>({ w:0, h:0 });
+  const [imageSize, setImageSize] = useState({ w: 0, h: 0 });
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [samplingMode, setSamplingMode] = useState<'point'|'average'>('point');
   const [averageSize, setAverageSize] = useState(3);
@@ -133,21 +171,6 @@ export default function ColourPickerPage() {
   }
   // Always listen for paste events (no explicit activation button necessary)
 
-  // Load color history from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('colorPickerHistory');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setColorHistory(parsed.filter((c: unknown) => typeof c === 'string' && /^#[0-9A-F]{6}$/i.test(c)).slice(0, 10));
-        }
-      }
-    } catch {
-      // Ignore localStorage errors
-    }
-  }, []);
-
   // Save color history to localStorage when it changes
   useEffect(() => {
     try {
@@ -166,31 +189,19 @@ export default function ColourPickerPage() {
     });
   }, []);
 
-  // Track last fully valid 6-digit HEX to keep previews stable during partial typing
-  const lastValidHexRef = useRef<string>(hexColour);
-  useEffect(() => {
-    let validHex = '';
-    if (/^#[0-9A-F]{6}$/i.test(hexColour)) {
-      validHex = hexColour;
-    } else if (/^#[0-9A-F]{3}$/i.test(hexColour)) {
-      validHex = '#' + hexColour[1] + hexColour[1] + hexColour[2] + hexColour[2] + hexColour[3] + hexColour[3];
+  // The current input normalised to a full 6-digit hex, or '' while it is still
+  // partial. Shorthand (#abc) expands to #aabbcc.
+  const validHex = useMemo(() => {
+    if (/^#[0-9A-F]{6}$/i.test(hexColour)) return hexColour;
+    if (/^#[0-9A-F]{3}$/i.test(hexColour)) {
+      return '#' + hexColour[1] + hexColour[1] + hexColour[2] + hexColour[2] + hexColour[3] + hexColour[3];
     }
-
-    if (validHex) {
-      const rgb = hexToRgb(validHex);
-      setRgbColour(rgb);
-      if (rgb) {
-        setHslColour(rgbToHsl(rgb.r, rgb.g, rgb.b));
-        setCmykColour(rgbToCmyk(rgb.r, rgb.g, rgb.b));
-      } else {
-        setHslColour(null);
-        setCmykColour(null);
-      }
-      lastValidHexRef.current = validHex;
-    } else if (hexColour === '' || /^#[0-9A-F]{0,5}$/i.test(hexColour)) {
-      // Partial input: don't recompute, keep previous valid conversions
-    }
+    return '';
   }, [hexColour]);
+
+  useEffect(() => {
+    if (validHex) setLastValidHex(validHex);
+  }, [validHex]);
 
   const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let raw = e.target.value.toUpperCase();
@@ -239,12 +250,15 @@ export default function ColourPickerPage() {
       internalHexUpdateRef.current = false;
       return;
     }
-    const rgb = hexToRgb(hexColour);
+    // validHex, not hexColour: hexToRgb only matches six digits, so shorthand
+    // like #abc used to leave the HSV area and hue strip stuck on the previous
+    // colour even though the preview had already expanded it.
+    const rgb = hexToRgb(validHex);
     if (rgb) {
       const hsvNew = rgbToHsv(rgb.r, rgb.g, rgb.b);
       setHsv(hsvNew);
     }
-  }, [hexColour]);
+  }, [validHex]);
 
   const updateHexFromHsv = useCallback((next: {h: number; s: number; v: number}) => {
     const { r, g, b } = hsvToRgb(next.h, next.s, next.v);
@@ -281,7 +295,9 @@ export default function ColourPickerPage() {
     const recommended = whiteRatio>blackRatio ? '#FFFFFF' : '#000000';
     setContrast({ ratio, recommended, passesAA: ratio>=4.5, passesAAA: ratio>=7 });
   }, []);
-  useEffect(()=>{ if(/^#[0-9A-F]{6}$/i.test(hexColour)) computeContrast(hexColour); },[hexColour, computeContrast]);
+  // Same normalisation: the old six-digit guard skipped shorthand entirely, so
+  // the contrast ratio and AA/AAA badges went stale on #abc input.
+  useEffect(()=>{ if(validHex) computeContrast(validHex); },[validHex, computeContrast]);
 
   const copyToClipboard = useCallback(async (text: string, label: string) => {
     if (!text) return;
@@ -579,19 +595,19 @@ export default function ColourPickerPage() {
     if (file) processImageFile(file);
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(true);
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
@@ -617,6 +633,7 @@ export default function ColourPickerPage() {
           
           canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
           imageSizeRef.current = { w: width, h: height };
+          setImageSize({ w: width, h: height });
           setScale(1); scaleRef.current = 1;
           // Center the image within container using clampPan
           requestAnimationFrame(()=>{
@@ -747,6 +764,15 @@ export default function ColourPickerPage() {
                           className="relative aspect-square w-full rounded-md overflow-hidden cursor-crosshair border border-border shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/40"
                           style={{ background: `hsl(${hsv.h} 100% 50%)` }}
                           tabIndex={0}
+                          // A 2D area is not an <input type="range">; the slider role
+                          // is what exposes the live saturation and value readout.
+                          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
+                          role="slider"
+                          aria-label="Saturation and value"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={hsv.s}
+                          aria-valuetext={`Saturation ${hsv.s}%, value ${hsv.v}%`}
                           onMouseDown={(e)=>{
                             const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                             const move=(ev:MouseEvent)=>{ const x=Math.min(Math.max(0,ev.clientX-rect.left),rect.width); const y=Math.min(Math.max(0,ev.clientY-rect.top),rect.height); const s=Math.round((x/rect.width)*100); const v=Math.round(100-(y/rect.height)*100); const next={h:hsv.h,s,v}; setHsv(next); updateHexFromHsv(next); };
@@ -760,7 +786,20 @@ export default function ColourPickerPage() {
                           <div className="absolute w-4 h-4 border-2 border-white shadow pointer-events-none bg-white/70" style={{left:`calc(${hsv.s}% - 8px)`,top:`calc(${100-hsv.v}% - 8px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
                         </div>
                         {/* Hue slider */}
-                        <div className="mt-2 relative h-3 w-full overflow-hidden cursor-pointer border border-border" onMouseDown={(e)=>{ const rect=(e.currentTarget as HTMLDivElement).getBoundingClientRect(); const move=(ev:MouseEvent)=>{ const x=Math.min(Math.max(0,ev.clientX-rect.left),rect.width); const h=Math.round((x/rect.width)*360); const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); }; const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);}; window.addEventListener('mousemove',move); window.addEventListener('mouseup',up); move(e.nativeEvent as unknown as MouseEvent); }}>
+                        <div
+                          className="mt-2 relative h-3 w-full overflow-hidden cursor-pointer border border-border focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          tabIndex={0}
+                          // Custom gradient strip with its own thumb, not a native
+                          // range input.
+                          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
+                          role="slider"
+                          aria-label="Hue"
+                          aria-valuemin={0}
+                          aria-valuemax={360}
+                          aria-valuenow={hsv.h}
+                          aria-valuetext={`Hue ${hsv.h} degrees`}
+                          onKeyDown={(e)=>{ const step=e.shiftKey?10:1; let h=hsv.h; let changed=false; if(e.key==='ArrowRight'||e.key==='ArrowUp'){h=Math.min(360,h+step);changed=true;} if(e.key==='ArrowLeft'||e.key==='ArrowDown'){h=Math.max(0,h-step);changed=true;} if(e.key==='Home'){h=0;changed=true;} if(e.key==='End'){h=360;changed=true;} if(changed){ const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); e.preventDefault(); } }}
+                          onMouseDown={(e)=>{ const rect=(e.currentTarget as HTMLDivElement).getBoundingClientRect(); const move=(ev:MouseEvent)=>{ const x=Math.min(Math.max(0,ev.clientX-rect.left),rect.width); const h=Math.round((x/rect.width)*360); const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); }; const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);}; window.addEventListener('mousemove',move); window.addEventListener('mouseup',up); move(e.nativeEvent as unknown as MouseEvent); }}>
                           <div className="absolute inset-0" style={{background:'linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)'}} />
                           <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-white shadow bg-white/70" style={{left:`calc(${(hsv.h/360)*100}% - 6px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
                         </div>
@@ -853,9 +892,9 @@ export default function ColourPickerPage() {
                         </button>
                         {/* Colour preview */}
                         <div className="relative min-h-12 sm:min-h-14 border border-border rounded-sm overflow-hidden">
-                          <div className="absolute inset-0" style={{background:lastValidHexRef.current}} aria-label={`Colour preview ${lastValidHexRef.current}`}></div>
+                          <div className="absolute inset-0" style={{background:lastValidHex}} aria-label={`Colour preview ${lastValidHex}`}></div>
                           <div className="absolute inset-0 flex items-end justify-center p-1 text-[12px] text-white font-mono font-semibold drop-shadow">
-                            <span>{lastValidHexRef.current}</span>
+                            <span>{lastValidHex}</span>
                           </div>
                         </div>
                       </div>
@@ -865,16 +904,16 @@ export default function ColourPickerPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <Input id="hex-value-input" value={hexColour} onChange={handleHexChange} className="font-mono text-center text-sm tracking-wider flex-1 min-w-24 sm:min-w-32" placeholder="#000000" maxLength={7} />
                     <CopyButton
-                      value={() => lastValidHexRef.current}
+                      value={() => lastValidHex}
                       label=""
                       size="sm"
-                      disabled={!/^#[0-9A-F]{6}$/i.test(lastValidHexRef.current)}
+                      disabled={!/^#[0-9A-F]{6}$/i.test(lastValidHex)}
                       aria-label="Copy HEX"
                       title="Copy HEX"
                       toastTitle="HEX Copied!"
-                      toastDescription={`${lastValidHexRef.current} copied to clipboard.`}
+                      toastDescription={`${lastValidHex} copied to clipboard.`}
                     />
-                    <Button variant="outline" size="sm" disabled={previousHex===lastValidHexRef.current} onClick={()=>{ const cur=lastValidHexRef.current; setHexColour(previousHex); setPreviousHex(cur); }} aria-label="Swap with previous colour" title="Swap colours">↺</Button>
+                    <Button variant="outline" size="sm" disabled={previousHex===lastValidHex} onClick={()=>{ const cur=lastValidHex; setHexColour(previousHex); setPreviousHex(cur); }} aria-label="Swap with previous colour" title="Swap colours">↺</Button>
                   </div>
                   <hr className="border-border/60" />
                   {/* Accessibility + Preview (integrated styling) */}
@@ -906,17 +945,17 @@ export default function ColourPickerPage() {
                     </div>
                     <div className="space-y-3">
                       <div className="text-xs leading-relaxed space-y-2">
-                        <p className="flex items-center justify-between"><span>Current:</span> <span className="font-mono">{lastValidHexRef.current}</span></p>
+                        <p className="flex items-center justify-between"><span>Current:</span> <span className="font-mono">{lastValidHex}</span></p>
                         <p className="flex items-center justify-between"><span>Text:</span> <span style={{color:contrast.recommended}} className="font-mono font-semibold">{contrast.recommended}</span></p>
                       </div>
                       <div className="rounded-md border border-border overflow-hidden grid grid-cols-2 text-xs font-mono">
-                        <div style={{background:lastValidHexRef.current,color:contrast.recommended}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
+                        <div style={{background:lastValidHex,color:contrast.recommended}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
                           <span className="text-sm">Lorem Ipsum</span>
                           <span className="text-[10px] opacity-70">{contrast.recommended}</span>
                         </div>
-                        <div style={{background:contrast.recommended,color:lastValidHexRef.current}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
+                        <div style={{background:contrast.recommended,color:lastValidHex}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
                           <span className="text-sm">Lorem Ipsum</span>
-                          <span className="text-[10px] opacity-70">{lastValidHexRef.current}</span>
+                          <span className="text-[10px] opacity-70">{lastValidHex}</span>
                         </div>
                       </div>
                     </div>
@@ -1008,8 +1047,14 @@ export default function ColourPickerPage() {
                         ref={canvasContainerRef}
                         className="relative rounded-lg border-2 border-border max-w-full shadow-lg hover:shadow-xl transition-shadow duration-quick overflow-hidden outline-none overscroll-contain bg-neutral-950/40 dark:bg-neutral-900/40 select-none"
                         style={{ width: '100%', height: 250, touchAction: 'none', backgroundImage: 'linear-gradient(45deg,#444 25%,transparent 25%),linear-gradient(-45deg,#444 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#444 75%),linear-gradient(-45deg,transparent 75%,#444 75%)', backgroundSize: '20px 20px', backgroundPosition: '0 0,0 10px,10px -10px,-10px 0' }}
+                        // A zoomable pixel-sampling surface has no native element
+                        // and no standard interactive role. It is focusable, has an
+                        // aria-label, and has a real keydown listener that moves the
+                        // sampling crosshair (see the effect on canvasContainerRef).
+                        // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex
                         tabIndex={0}
                         // wheel handled by custom listener (non-passive) for zoom-to-cursor
+                        // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
                         onPointerDown={handlePointerDown}
                         onMouseMove={(e)=> handleMouseMoveOnCanvas(e as React.MouseEvent<HTMLDivElement>)}
                         onMouseEnter={() => handleMouseEnterCanvas()}
@@ -1040,8 +1085,8 @@ export default function ColourPickerPage() {
                           <div className="pointer-events-none absolute" style={{
                             left: pan.x,
                             top: pan.y,
-                            width: imageSizeRef.current.w * scale,
-                            height: imageSizeRef.current.h * scale,
+                            width: imageSize.w * scale,
+                            height: imageSize.h * scale,
                             backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 1px, transparent 1px)` ,
                             backgroundSize: `${scale}px ${scale}px, ${scale}px ${scale}px`,
                             mixBlendMode: 'overlay'
@@ -1084,25 +1129,26 @@ export default function ColourPickerPage() {
                       )}
                     </div>
                   ) : (
-                    <div 
+                    <button
+                      type="button"
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
                       onClick={() => fileInputRef.current?.click()}
-                      className={`flex items-center justify-center h-40 md:h-48 border-2 border-dashed rounded-lg text-center px-4 cursor-pointer transition-all duration-quick ${
+                      className={`flex w-full items-center justify-center h-40 md:h-48 border-2 border-dashed rounded-lg text-center px-4 cursor-pointer transition-all duration-quick focus:outline-none focus:ring-2 focus:ring-primary/40 ${
                         isDragOver 
                           ? 'border-primary bg-primary/10 shadow-md' 
                           : 'border-muted-foreground/25 hover:border-muted-foreground/40'
                       }`}
                     >
-                      <div className="text-center text-muted-foreground">
+                      <span className="block text-center text-muted-foreground">
                         <Upload className={`h-12 w-12 mx-auto mb-3 transition-opacity ${
                           isDragOver ? 'opacity-100 text-primary' : 'opacity-40'
                         }`} />
-                        <p className="text-sm font-medium">Upload an image to extract colours</p>
-                        <p className="text-xs mt-1 opacity-75">Drag and drop or click to browse</p>
-                      </div>
-                    </div>
+                        <span className="block text-sm font-medium">Upload an image to extract colours</span>
+                        <span className="block text-xs mt-1 opacity-75">Drag and drop or click to browse</span>
+                      </span>
+                    </button>
                   )}
                   
                   {/* Image Palette */}
@@ -1135,7 +1181,7 @@ export default function ColourPickerPage() {
                         {imagePalette.map((colour, index) => (
                           <button
                             key={index}
-                            onClick={() => { setHexColour(colour); copyToClipboard(colour, 'HEX'); }}
+                            onClick={() => { setHexColour(colour); void copyToClipboard(colour, 'HEX'); }}
                             className="relative w-full h-7 md:h-8 rounded-sm border border-border/70 hover:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary group transition-colors touch-manipulation"
                             style={{backgroundColor: colour}}
                             aria-label={`Use palette colour ${colour}`}
@@ -1187,7 +1233,7 @@ export default function ColourPickerPage() {
                         {colorHistory.map((c, i) => (
                           <button
                             key={`history-${c}-${i}`}
-                            onClick={() => { setHexColour(c); copyToClipboard(c, 'HEX'); }}
+                            onClick={() => { setHexColour(c); void copyToClipboard(c, 'HEX'); }}
                             className="relative w-9 h-9 md:w-10 md:h-10 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-primary group touch-manipulation"
                             style={{ background: c }}
                             aria-label={`Recent colour ${c}. Click to use and copy.`}

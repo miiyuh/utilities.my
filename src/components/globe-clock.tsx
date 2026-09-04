@@ -69,6 +69,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
   const [width, setWidth] = React.useState(720);
 
   const home = zones[0] ? CITY_ZONES.find((c) => c.timezone === zones[0]) : undefined;
+  const instructionsId = React.useId();
   const [rotation, setRotation] = React.useState<EulerRotation>(() =>
     home ? [-home.lon, -home.lat / 2, 0] : [0, -15, 0]
   );
@@ -234,6 +235,37 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
     hoverPauseRef.current = false;
   };
 
+  // --- keyboard rotation -----------------------------------------------------
+  // Dragging is the only way to turn the globe with a pointer, so arrow keys
+  // mirror it: left/right change longitude, up/down change latitude with the
+  // same ±90° clamp, and Shift takes bigger steps. Escape releases a pinned
+  // city, which is what clicking the ocean does.
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      clearPinned();
+      return;
+    }
+    if (view !== 'globe') return;
+    const step = e.shiftKey ? 15 : 5;
+    switch (e.key) {
+      case 'ArrowLeft':
+        setRotation(([l, p, g]) => [l - step, p, g]);
+        break;
+      case 'ArrowRight':
+        setRotation(([l, p, g]) => [l + step, p, g]);
+        break;
+      case 'ArrowUp':
+        setRotation(([l, p, g]) => [l, Math.min(90, p + step), g]);
+        break;
+      case 'ArrowDown':
+        setRotation(([l, p, g]) => [l, Math.max(-90, p - step), g]);
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+  };
+
   const zoneTime = (p: TzProps): string => {
     if (p.tz_name1st) {
       try {
@@ -260,15 +292,34 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
       onPointerEnter={() => { hoverPauseRef.current = true; }}
       onPointerLeave={() => { if (!pinned) { hoverPauseRef.current = false; setTooltip(null); } }}
     >
+      {/*
+        Not role="img": this is a focusable widget with its own key handling, and
+        an img is a non-interactive leaf. There is no ARIA role for a draggable
+        map, so "application" is the documented escape hatch, and
+        aria-describedby carries the key bindings. oxlint does not count
+        "application" among its interactive roles, hence the two annotations
+        below. The side panel lists every city and time, so nothing here is the
+        only route to the data.
+      */}
+      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <svg
         ref={svgRef}
         width={width}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
-        role="img"
+        role="application"
+        // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
         aria-label="Interactive world clock map"
-        className={cn('block', view === 'globe' && (dragging ? 'cursor-grabbing' : 'cursor-grab'))}
+        aria-describedby={`${instructionsId}-globe`}
+        className={cn(
+          'block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
+          view === 'globe' && (dragging ? 'cursor-grabbing' : 'cursor-grab'),
+        )}
         onClick={clearPinned}
+        onKeyDown={onKeyDown}
+        onFocus={() => { hoverPauseRef.current = true; }}
+        onBlur={() => { if (!pinned) { hoverPauseRef.current = false; } }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -364,6 +415,11 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
           );
         })}
       </svg>
+
+      <p id={`${instructionsId}-globe`} className="sr-only">
+        Arrow keys turn the globe, hold Shift for larger steps. Escape releases a
+        pinned city. Every city and its current time is also listed beside the map.
+      </p>
 
       {/* Loading / error states for the timezone layer */}
       {mode === 'timezones' && tzLoading && (

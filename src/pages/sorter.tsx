@@ -176,7 +176,7 @@ export default function SorterPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key.toLowerCase() === 'enter') { e.preventDefault(); handleSort(); }
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') { e.preventDefault(); navigator.clipboard.writeText(outputText); toast({ title: 'Copied to clipboard!' }); }
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') { e.preventDefault(); void navigator.clipboard.writeText(outputText); toast({ title: 'Copied to clipboard!' }); }
       if (e.ctrlKey && e.key.toLowerCase() === 'b') { e.preventDefault(); const i=inputText; const o=outputText; setInputText(o); setOutputText(i); }
       if (e.ctrlKey && e.key.toLowerCase() === 'l') { e.preventDefault(); handleClear(); }
     };
@@ -229,7 +229,7 @@ export default function SorterPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex flex-wrap items-center gap-3">
-                    <input ref={fileInputRef} type="file" accept=".txt,.csv,.tsv,text/plain" className="hidden" onChange={(e)=>{ const f=e.currentTarget.files?.[0]; if (f) handleUpload(f); e.currentTarget.value=''; }} />
+                    <input ref={fileInputRef} type="file" accept=".txt,.csv,.tsv,text/plain" className="hidden" onChange={(e)=>{ const f=e.currentTarget.files?.[0]; if (f) void handleUpload(f); e.currentTarget.value=''; }} />
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Upload className="h-4 w-4 mr-1"/> Upload file</Button>
                     <Button variant="outline" size="sm" onClick={handleClear}><Trash className="h-4 w-4 mr-1"/> Clear</Button>
                     <div className="text-sm text-muted-foreground ml-auto">Lines: <span className="font-medium">{stats.inCount}</span></div>
