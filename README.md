@@ -169,10 +169,17 @@ Contributions are welcome! Whether you're fixing bugs, improving documentation, 
 
 1. Create a new file in `src/pages/[utility-name].tsx`
 2. Add the utility to `src/lib/tools.ts` with icon and description
-3. Follow existing component patterns and styling
-4. Ensure responsive design for mobile, tablet, and desktop
-5. Test with both dark and light themes
-6. Test keyboard navigation and accessibility
+3. Add a `<Route>` for it in `src/App.tsx`
+4. **Add an entry to `src/lib/seo.ts`** with its title, description and `h1`
+5. Follow existing component patterns and styling
+6. Ensure responsive design for mobile, tablet, and desktop
+7. Test with both dark and light themes
+8. Test keyboard navigation and accessibility
+
+> Step 4 is required, not optional. There is no SPA fallback rewrite any more —
+> each route is served as its own prerendered HTML file, so a route missing from
+> `src/lib/seo.ts` returns a real 404 in production. The build fails if a tool in
+> `tools.ts` has no matching entry, so this is caught before deploy.
 
 #### Code Standards
 
