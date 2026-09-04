@@ -579,19 +579,19 @@ export default function ColourPickerPage() {
     if (file) processImageFile(file);
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(true);
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
@@ -747,6 +747,15 @@ export default function ColourPickerPage() {
                           className="relative aspect-square w-full rounded-md overflow-hidden cursor-crosshair border border-border shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/40"
                           style={{ background: `hsl(${hsv.h} 100% 50%)` }}
                           tabIndex={0}
+                          // A 2D area is not an <input type="range">; the slider role
+                          // is what exposes the live saturation and value readout.
+                          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
+                          role="slider"
+                          aria-label="Saturation and value"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={hsv.s}
+                          aria-valuetext={`Saturation ${hsv.s}%, value ${hsv.v}%`}
                           onMouseDown={(e)=>{
                             const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                             const move=(ev:MouseEvent)=>{ const x=Math.min(Math.max(0,ev.clientX-rect.left),rect.width); const y=Math.min(Math.max(0,ev.clientY-rect.top),rect.height); const s=Math.round((x/rect.width)*100); const v=Math.round(100-(y/rect.height)*100); const next={h:hsv.h,s,v}; setHsv(next); updateHexFromHsv(next); };
@@ -760,7 +769,20 @@ export default function ColourPickerPage() {
                           <div className="absolute w-4 h-4 border-2 border-white shadow pointer-events-none bg-white/70" style={{left:`calc(${hsv.s}% - 8px)`,top:`calc(${100-hsv.v}% - 8px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
                         </div>
                         {/* Hue slider */}
-                        <div className="mt-2 relative h-3 w-full overflow-hidden cursor-pointer border border-border" onMouseDown={(e)=>{ const rect=(e.currentTarget as HTMLDivElement).getBoundingClientRect(); const move=(ev:MouseEvent)=>{ const x=Math.min(Math.max(0,ev.clientX-rect.left),rect.width); const h=Math.round((x/rect.width)*360); const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); }; const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);}; window.addEventListener('mousemove',move); window.addEventListener('mouseup',up); move(e.nativeEvent as unknown as MouseEvent); }}>
+                        <div
+                          className="mt-2 relative h-3 w-full overflow-hidden cursor-pointer border border-border focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          tabIndex={0}
+                          // Custom gradient strip with its own thumb, not a native
+                          // range input.
+                          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
+                          role="slider"
+                          aria-label="Hue"
+                          aria-valuemin={0}
+                          aria-valuemax={360}
+                          aria-valuenow={hsv.h}
+                          aria-valuetext={`Hue ${hsv.h} degrees`}
+                          onKeyDown={(e)=>{ const step=e.shiftKey?10:1; let h=hsv.h; let changed=false; if(e.key==='ArrowRight'||e.key==='ArrowUp'){h=Math.min(360,h+step);changed=true;} if(e.key==='ArrowLeft'||e.key==='ArrowDown'){h=Math.max(0,h-step);changed=true;} if(e.key==='Home'){h=0;changed=true;} if(e.key==='End'){h=360;changed=true;} if(changed){ const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); e.preventDefault(); } }}
+                          onMouseDown={(e)=>{ const rect=(e.currentTarget as HTMLDivElement).getBoundingClientRect(); const move=(ev:MouseEvent)=>{ const x=Math.min(Math.max(0,ev.clientX-rect.left),rect.width); const h=Math.round((x/rect.width)*360); const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); }; const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);}; window.addEventListener('mousemove',move); window.addEventListener('mouseup',up); move(e.nativeEvent as unknown as MouseEvent); }}>
                           <div className="absolute inset-0" style={{background:'linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)'}} />
                           <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-white shadow bg-white/70" style={{left:`calc(${(hsv.h/360)*100}% - 6px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
                         </div>
@@ -1008,8 +1030,14 @@ export default function ColourPickerPage() {
                         ref={canvasContainerRef}
                         className="relative rounded-lg border-2 border-border max-w-full shadow-lg hover:shadow-xl transition-shadow duration-quick overflow-hidden outline-none overscroll-contain bg-neutral-950/40 dark:bg-neutral-900/40 select-none"
                         style={{ width: '100%', height: 250, touchAction: 'none', backgroundImage: 'linear-gradient(45deg,#444 25%,transparent 25%),linear-gradient(-45deg,#444 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#444 75%),linear-gradient(-45deg,transparent 75%,#444 75%)', backgroundSize: '20px 20px', backgroundPosition: '0 0,0 10px,10px -10px,-10px 0' }}
+                        // A zoomable pixel-sampling surface has no native element
+                        // and no standard interactive role. It is focusable, has an
+                        // aria-label, and has a real keydown listener that moves the
+                        // sampling crosshair (see the effect on canvasContainerRef).
+                        // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex
                         tabIndex={0}
                         // wheel handled by custom listener (non-passive) for zoom-to-cursor
+                        // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
                         onPointerDown={handlePointerDown}
                         onMouseMove={(e)=> handleMouseMoveOnCanvas(e as React.MouseEvent<HTMLDivElement>)}
                         onMouseEnter={() => handleMouseEnterCanvas()}
@@ -1084,25 +1112,26 @@ export default function ColourPickerPage() {
                       )}
                     </div>
                   ) : (
-                    <div 
+                    <button
+                      type="button"
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
                       onClick={() => fileInputRef.current?.click()}
-                      className={`flex items-center justify-center h-40 md:h-48 border-2 border-dashed rounded-lg text-center px-4 cursor-pointer transition-all duration-quick ${
+                      className={`flex w-full items-center justify-center h-40 md:h-48 border-2 border-dashed rounded-lg text-center px-4 cursor-pointer transition-all duration-quick focus:outline-none focus:ring-2 focus:ring-primary/40 ${
                         isDragOver 
                           ? 'border-primary bg-primary/10 shadow-md' 
                           : 'border-muted-foreground/25 hover:border-muted-foreground/40'
                       }`}
                     >
-                      <div className="text-center text-muted-foreground">
+                      <span className="block text-center text-muted-foreground">
                         <Upload className={`h-12 w-12 mx-auto mb-3 transition-opacity ${
                           isDragOver ? 'opacity-100 text-primary' : 'opacity-40'
                         }`} />
-                        <p className="text-sm font-medium">Upload an image to extract colours</p>
-                        <p className="text-xs mt-1 opacity-75">Drag and drop or click to browse</p>
-                      </div>
-                    </div>
+                        <span className="block text-sm font-medium">Upload an image to extract colours</span>
+                        <span className="block text-xs mt-1 opacity-75">Drag and drop or click to browse</span>
+                      </span>
+                    </button>
                   )}
                   
                   {/* Image Palette */}
