@@ -250,12 +250,15 @@ export default function ColourPickerPage() {
       internalHexUpdateRef.current = false;
       return;
     }
-    const rgb = hexToRgb(hexColour);
+    // validHex, not hexColour: hexToRgb only matches six digits, so shorthand
+    // like #abc used to leave the HSV area and hue strip stuck on the previous
+    // colour even though the preview had already expanded it.
+    const rgb = hexToRgb(validHex);
     if (rgb) {
       const hsvNew = rgbToHsv(rgb.r, rgb.g, rgb.b);
       setHsv(hsvNew);
     }
-  }, [hexColour]);
+  }, [validHex]);
 
   const updateHexFromHsv = useCallback((next: {h: number; s: number; v: number}) => {
     const { r, g, b } = hsvToRgb(next.h, next.s, next.v);
@@ -292,7 +295,9 @@ export default function ColourPickerPage() {
     const recommended = whiteRatio>blackRatio ? '#FFFFFF' : '#000000';
     setContrast({ ratio, recommended, passesAA: ratio>=4.5, passesAAA: ratio>=7 });
   }, []);
-  useEffect(()=>{ if(/^#[0-9A-F]{6}$/i.test(hexColour)) computeContrast(hexColour); },[hexColour, computeContrast]);
+  // Same normalisation: the old six-digit guard skipped shorthand entirely, so
+  // the contrast ratio and AA/AAA badges went stale on #abc input.
+  useEffect(()=>{ if(validHex) computeContrast(validHex); },[validHex, computeContrast]);
 
   const copyToClipboard = useCallback(async (text: string, label: string) => {
     if (!text) return;

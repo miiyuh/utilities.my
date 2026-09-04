@@ -274,6 +274,45 @@ export function ColorPicker({
             <canvas
               ref={handleCanvasRef}
               aria-labelledby={`${fieldId}-sv`}
+              // A 2D area is not an <input type="range">, but the slider role is
+              // what exposes the live saturation/value readout to assistive tech.
+              // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
+              role="slider"
+              tabIndex={0}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(sat)}
+              aria-valuetext={`Saturation ${Math.round(sat)}%, value ${Math.round(val)}%`}
+              onKeyDown={(e) => {
+                const step = e.shiftKey ? 10 : 1;
+                let nextSat = sat;
+                let nextVal = val;
+                switch (e.key) {
+                  case 'ArrowRight':
+                    nextSat = Math.min(100, sat + step);
+                    break;
+                  case 'ArrowLeft':
+                    nextSat = Math.max(0, sat - step);
+                    break;
+                  case 'ArrowUp':
+                    nextVal = Math.min(100, val + step);
+                    break;
+                  case 'ArrowDown':
+                    nextVal = Math.max(0, val - step);
+                    break;
+                  case 'Home':
+                    nextSat = 0;
+                    break;
+                  case 'End':
+                    nextSat = 100;
+                    break;
+                  default:
+                    return;
+                }
+                e.preventDefault();
+                setSat(nextSat);
+                setVal(nextVal);
+              }}
               width={240}
               height={140}
               onClick={handleCanvasInteraction}
@@ -289,7 +328,7 @@ export function ColorPicker({
                 window.addEventListener('mousemove', onMove);
                 window.addEventListener('mouseup', onUp);
               }}
-              className="w-full cursor-crosshair rounded border border-border"
+              className="w-full cursor-crosshair rounded border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               style={{ aspectRatio: '240 / 140' }}
             />
           </div>

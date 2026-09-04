@@ -57,23 +57,28 @@ function readInitialFields(): InitialFields {
   }
 
   const params = new URLSearchParams(window.location.search);
+
+  // shareBMI always sets `u`, so a valid unit parameter means this is a shared
+  // link. That makes the URL authoritative: measurements the sharer left out
+  // stay empty rather than being filled from the recipient's own draft, which
+  // would otherwise show one person's height against another's weight.
+  const unitParam = params.get("u");
+  const sharedUnit: UnitSystem | null =
+    unitParam === "metric" || unitParam === "imperial" ? unitParam : null;
+
   const pick = (param: string, key: keyof InitialFields) => {
     const fromUrl = params.get(param);
     if (fromUrl) return fromUrl;
+    if (sharedUnit) return "";
     // The draft is whatever was in storage, so only take scalars; anything
     // else would stringify to "[object Object]" and land in the input.
     const stored = saved[key];
     return typeof stored === "string" || typeof stored === "number" ? String(stored) : "";
   };
 
-  const unitParam = params.get("u");
   const storedUnit = saved.unitSystem;
   const unitSystem: UnitSystem | null =
-    unitParam === "metric" || unitParam === "imperial"
-      ? unitParam
-      : storedUnit === "metric" || storedUnit === "imperial"
-        ? storedUnit
-        : null;
+    sharedUnit ?? (storedUnit === "metric" || storedUnit === "imperial" ? storedUnit : null);
 
   return {
     unitSystem,

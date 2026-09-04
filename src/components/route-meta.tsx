@@ -33,7 +33,11 @@ export function RouteMeta() {
 
     upsertMeta('name', 'description', route.description)
     upsertMeta('name', 'robots', robotsContent(route))
-    if (!route.noindex) upsertLink('canonical', url)
+    // Noindex routes get no canonical. Removing rather than skipping matters on
+    // client-side navigation: leaving the previous route's tag in place would
+    // point /settings at whatever page the user came from.
+    if (route.noindex) removeLink('canonical')
+    else upsertLink('canonical', url)
 
     upsertMeta('property', 'og:type', 'website')
     upsertMeta('property', 'og:locale', 'en_US')
@@ -77,6 +81,10 @@ function upsertLink(rel: string, href: string) {
     document.head.appendChild(element)
   }
   element.setAttribute('href', href)
+}
+
+function removeLink(rel: string) {
+  document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`)?.remove()
 }
 
 function upsertJsonLd(payload: Record<string, unknown>) {

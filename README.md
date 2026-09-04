@@ -92,7 +92,7 @@ utilities.my is a productivity-focused web application that consolidates essenti
 ## 🚀 Installation & Development
 
 ### Prerequisites
-- **Node.js 18+** (Latest LTS recommended)
+- **Node.js 20.19+ or 22.12+** (required by Vite 8)
 - **bun 1.1+** (or npm/yarn)
 - **Git** for version control
 
