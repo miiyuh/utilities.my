@@ -107,22 +107,6 @@ export default function MorseCodeGeneratorPage() {
     }
   }, [inputText, inputMorse, activeTab]);
 
-  // Initialize WebHaptics and cleanup on unmount
-  useEffect(() => {
-    // Initialize haptic engine if supported
-    if (WebHaptics.isSupported) {
-      hapticEngineRef.current = new WebHaptics();
-    }
-
-    return () => {
-      stopPlayback();
-      // Cleanup haptic engine
-      if (hapticEngineRef.current) {
-        hapticEngineRef.current.destroy();
-      }
-    };
-  }, []);
-
   // Play audio beep
   const playBeep = (duration: number) => {
     if (!audioContextRef.current) {
@@ -383,6 +367,23 @@ export default function MorseCodeGeneratorPage() {
     }
     stopPlayback();
   };
+
+  // Initialize WebHaptics and cleanup on unmount. Declared after stopPlayback
+  // so the cleanup does not close over it while it is still being initialised.
+  useEffect(() => {
+    // Initialize haptic engine if supported
+    if (WebHaptics.isSupported) {
+      hapticEngineRef.current = new WebHaptics();
+    }
+
+    return () => {
+      stopPlayback();
+      // Cleanup haptic engine
+      if (hapticEngineRef.current) {
+        hapticEngineRef.current.destroy();
+      }
+    };
+  }, []);
 
   // Import text from file
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {

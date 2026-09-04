@@ -943,7 +943,6 @@ export default function ImageConverterPage() {
                     {!batchMode && imgSrc && (
                       <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                         <div className="relative flex-shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imgSrc}
                             alt="preview"
@@ -1011,7 +1010,6 @@ export default function ImageConverterPage() {
                     />
                     {/* Hidden image for loading original dimensions (single mode only) */}
                     {!batchMode && imgSrc && (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={imgSrc}
                         alt=""
@@ -1284,7 +1282,6 @@ export default function ImageConverterPage() {
                                 </div>
                               ) : previewUrl ? (
                                 <>
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={previewUrl}
                                     alt="Live Preview"

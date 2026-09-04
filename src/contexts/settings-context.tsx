@@ -31,35 +31,36 @@ const defaultSettings: ToolSettings = {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<ToolSettings>(defaultSettings);
-  const [isLoaded, setIsLoaded] = useState(false);
+const STORAGE_KEY = 'utilities-tool-settings';
 
-  // Load settings from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedSettings = localStorage.getItem('utilities-tool-settings');
-      if (savedSettings) {
-        const parsedSettings = JSON.parse(savedSettings);
-        setSettings({ ...defaultSettings, ...parsedSettings });
-      }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    } finally {
-      setIsLoaded(true);
+/**
+ * Read once, synchronously, as the initial state. Loading from an effect meant
+ * the provider rendered null on the first pass — the whole app was blank for a
+ * frame — and then re-rendered with the stored values.
+ */
+function loadSettings(): ToolSettings {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return { ...defaultSettings, ...(JSON.parse(saved) as Partial<ToolSettings>) };
     }
-  }, []);
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+  }
+  return defaultSettings;
+}
+
+export function SettingsProvider({ children }: { children: React.ReactNode }) {
+  const [settings, setSettings] = useState<ToolSettings>(loadSettings);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem('utilities-tool-settings', JSON.stringify(settings));
-      } catch (error) {
-        console.error('Failed to save settings:', error);
-      }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error('Failed to save settings:', error);
     }
-  }, [settings, isLoaded]);
+  }, [settings]);
 
   const updateSetting = <K extends keyof ToolSettings>(key: K, value: ToolSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -68,10 +69,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const resetSettings = () => {
     setSettings(defaultSettings);
   };
-
-  if (!isLoaded) {
-    return null; // or a loading spinner
-  }
 
   return (
     <SettingsContext.Provider value={{ settings, updateSetting, resetSettings }}>

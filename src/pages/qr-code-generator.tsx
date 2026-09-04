@@ -319,11 +319,9 @@ export default function QrCodeGeneratorPage() {
       return;
     }
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((window as any).ClipboardItem && navigator.clipboard?.write) {
         const blob: Blob | null = await new Promise(res => canvas.toBlob(b => res(b), 'image/png'));
         if (blob) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const item = new (window as any).ClipboardItem({ 'image/png': blob });
           await navigator.clipboard.write([item]);
           toast({ title: 'Copied!', description: 'QR PNG copied to clipboard.' });
@@ -791,7 +789,6 @@ export default function QrCodeGeneratorPage() {
                         {logoSrc && (
                             <div className="space-y-3 pt-3">
                                 <div className="flex justify-center">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={logoSrc} alt="Logo preview" className="max-h-20 border rounded-md p-1 bg-white" />
                                 </div>
                                 <div className="space-y-2">

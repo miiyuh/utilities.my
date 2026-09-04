@@ -35,7 +35,6 @@ export default function About() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
               <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
                 <div className="shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/assets/img/utilities-my_text.svg"
                     alt="utilities.my"

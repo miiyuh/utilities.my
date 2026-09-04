@@ -50,7 +50,6 @@ export function SidebarContent() {
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/assets/img/utilities-my_text.svg"
           alt="utilities.my"
@@ -60,7 +59,6 @@ export function SidebarContent() {
         />
         {/* compact fallback shown only when collapsed */}
         <div className="hidden group-data-[collapsible=icon]:inline-flex items-center justify-center rounded-md h-8 w-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/apple-touch-icon.png"
             alt="utilities.my"
