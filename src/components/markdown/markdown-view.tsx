@@ -6,7 +6,6 @@ import DOMPurify from 'dompurify';
 
 interface MarkdownViewProps {
   content: string;
-  lastUpdated?: string;
 }
 
 interface TocItem {

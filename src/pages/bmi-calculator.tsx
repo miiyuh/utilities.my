@@ -30,35 +30,75 @@ function classifyBMI(bmi: number) {
   return { label: "Obesity", color: "text-red-500", hint: "Significantly above healthy range", icon: Warning };
 }
 
+const STORAGE_KEY = "utilities.bmi-calculator";
+
+interface InitialFields {
+  unitSystem: UnitSystem | null;
+  heightCm: string;
+  weightKg: string;
+  heightFt: string;
+  heightIn: string;
+  weightLb: string;
+}
+
+/**
+ * The saved draft and any shared-link query parameters, read once as the
+ * initial state. These used to arrive from two mount effects, which meant the
+ * form rendered empty first and then repopulated. Query parameters win so a
+ * shared link opens showing what was shared.
+ */
+function readInitialFields(): InitialFields {
+  let saved: Record<string, unknown> = {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) saved = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    // A malformed draft just means we start empty.
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const pick = (param: string, key: keyof InitialFields) => {
+    const fromUrl = params.get(param);
+    if (fromUrl) return fromUrl;
+    const stored = saved[key];
+    return stored == null ? "" : String(stored);
+  };
+
+  const unitParam = params.get("u");
+  const storedUnit = saved.unitSystem;
+  const unitSystem: UnitSystem | null =
+    unitParam === "metric" || unitParam === "imperial"
+      ? unitParam
+      : storedUnit === "metric" || storedUnit === "imperial"
+        ? storedUnit
+        : null;
+
+  return {
+    unitSystem,
+    heightCm: pick("h", "heightCm"),
+    weightKg: pick("w", "weightKg"),
+    heightFt: pick("ft", "heightFt"),
+    heightIn: pick("in", "heightIn"),
+    weightLb: pick("lb", "weightLb"),
+  };
+}
+
 export default function BmiCalculatorPage() {
   const { settings } = useSettings();
-  const initialUnit: UnitSystem = settings?.defaultUnits === "imperial" ? "imperial" : "metric";
+  const [initial] = React.useState(readInitialFields);
+  const initialUnit: UnitSystem =
+    initial.unitSystem ?? (settings?.defaultUnits === "imperial" ? "imperial" : "metric");
 
   const [unitSystem, setUnitSystem] = React.useState<UnitSystem>(initialUnit);
-  const [heightCm, setHeightCm] = React.useState<string>("");
-  const [weightKg, setWeightKg] = React.useState<string>("");
-  const [heightFt, setHeightFt] = React.useState<string>("");
-  const [heightIn, setHeightIn] = React.useState<string>("");
-  const [weightLb, setWeightLb] = React.useState<string>("");
-
-  React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem("utilities.bmi-calculator");
-      if (raw) {
-        const s = JSON.parse(raw);
-        if (s.unitSystem) setUnitSystem(s.unitSystem);
-        if (s.heightCm != null) setHeightCm(String(s.heightCm));
-        if (s.weightKg != null) setWeightKg(String(s.weightKg));
-        if (s.heightFt != null) setHeightFt(String(s.heightFt));
-        if (s.heightIn != null) setHeightIn(String(s.heightIn));
-        if (s.weightLb != null) setWeightLb(String(s.weightLb));
-      }
-    } catch {}
-  }, []);
+  const [heightCm, setHeightCm] = React.useState<string>(initial.heightCm);
+  const [weightKg, setWeightKg] = React.useState<string>(initial.weightKg);
+  const [heightFt, setHeightFt] = React.useState<string>(initial.heightFt);
+  const [heightIn, setHeightIn] = React.useState<string>(initial.heightIn);
+  const [weightLb, setWeightLb] = React.useState<string>(initial.weightLb);
 
   React.useEffect(() => {
     const data = { unitSystem, heightCm, weightKg, heightFt, heightIn, weightLb };
-    try { localStorage.setItem("utilities.bmi-calculator", JSON.stringify(data)); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
   }, [unitSystem, heightCm, weightKg, heightFt, heightIn, weightLb]);
 
   const bmi = React.useMemo(() => {
@@ -149,16 +189,7 @@ export default function BmiCalculatorPage() {
     }
   };
 
-  React.useEffect(()=>{
-    if (typeof window==='undefined') return;
-    const sp = new URLSearchParams(window.location.search);
-    const u = sp.get('u'); if (u==='metric' || u==='imperial') setUnitSystem(u);
-    if (sp.get('h')) setHeightCm(sp.get('h') || '');
-    if (sp.get('w')) setWeightKg(sp.get('w') || '');
-    if (sp.get('ft')) setHeightFt(sp.get('ft') || '');
-    if (sp.get('in')) setHeightIn(sp.get('in') || '');
-    if (sp.get('lb')) setWeightLb(sp.get('lb') || '');
-  }, []);
+  // Shared-link query parameters are read in readInitialFields above.
 
   const pct = Number.isFinite(display) ? clamp((display / 40) * 100, 0, 100) : 0;
 
