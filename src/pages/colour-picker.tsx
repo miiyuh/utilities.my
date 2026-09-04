@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -74,11 +74,24 @@ const DEFAULT_MAGNIFIER_ZOOM = 4;
 
 export default function ColourPickerPage() {
   const { toast } = useToast();
-  const [hexColour, setHexColour] = useState('#1a1a1a'); 
-  const [rgbColour, setRgbColour] = useState<{ r: number; g: number; b: number } | null>(null);
-  const [hslColour, setHslColour] = useState<{ h: number; s: number; l: number } | null>(null);
-  const [cmykColour, setCmykColour] = useState<{ c: number; m: number; y: number; k: number } | null>(null);
-  
+  const [hexColour, setHexColour] = useState('#1a1a1a');
+  // The hex input holds partial values while the user types ("#1a"), so the
+  // previews and conversions follow the last fully valid colour rather than
+  // flickering. That value used to live in a ref that render read directly,
+  // which meant the previews only repainted when unrelated state happened to
+  // change in the same tick; it is state now, and the conversions derive from
+  // it during render instead of being pushed in from an effect.
+  const [lastValidHex, setLastValidHex] = useState('#1a1a1a');
+  const rgbColour = useMemo(() => hexToRgb(lastValidHex), [lastValidHex]);
+  const hslColour = useMemo(
+    () => (rgbColour ? rgbToHsl(rgbColour.r, rgbColour.g, rgbColour.b) : null),
+    [rgbColour]
+  );
+  const cmykColour = useMemo(
+    () => (rgbColour ? rgbToCmyk(rgbColour.r, rgbColour.g, rgbColour.b) : null),
+    [rgbColour]
+  );
+
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   // HSV state for custom colour picker (Hue 0-360, Saturation 0-100, Value 0-100)
   const [hsv, setHsv] = useState<{h: number; s: number; v: number}>({ h: 0, s: 0, v: 10 });
@@ -102,7 +115,13 @@ export default function ColourPickerPage() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const scaleRef = useRef(scale);
   const panRef = useRef(pan);
+  // The ref is load-bearing for the handlers that run outside React's render
+  // cycle (wheel zoom, keyboard sampling, the clampPan call inside rAF) and
+  // must read the size synchronously. Render uses the state mirror, so the
+  // pixel-grid overlay repaints when the image changes rather than relying on
+  // some other setState in the same tick.
   const imageSizeRef = useRef<{w:number;h:number}>({ w:0, h:0 });
+  const [imageSize, setImageSize] = useState({ w: 0, h: 0 });
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [samplingMode, setSamplingMode] = useState<'point'|'average'>('point');
   const [averageSize, setAverageSize] = useState(3);
@@ -166,31 +185,19 @@ export default function ColourPickerPage() {
     });
   }, []);
 
-  // Track last fully valid 6-digit HEX to keep previews stable during partial typing
-  const lastValidHexRef = useRef<string>(hexColour);
-  useEffect(() => {
-    let validHex = '';
-    if (/^#[0-9A-F]{6}$/i.test(hexColour)) {
-      validHex = hexColour;
-    } else if (/^#[0-9A-F]{3}$/i.test(hexColour)) {
-      validHex = '#' + hexColour[1] + hexColour[1] + hexColour[2] + hexColour[2] + hexColour[3] + hexColour[3];
+  // The current input normalised to a full 6-digit hex, or '' while it is still
+  // partial. Shorthand (#abc) expands to #aabbcc.
+  const validHex = useMemo(() => {
+    if (/^#[0-9A-F]{6}$/i.test(hexColour)) return hexColour;
+    if (/^#[0-9A-F]{3}$/i.test(hexColour)) {
+      return '#' + hexColour[1] + hexColour[1] + hexColour[2] + hexColour[2] + hexColour[3] + hexColour[3];
     }
-
-    if (validHex) {
-      const rgb = hexToRgb(validHex);
-      setRgbColour(rgb);
-      if (rgb) {
-        setHslColour(rgbToHsl(rgb.r, rgb.g, rgb.b));
-        setCmykColour(rgbToCmyk(rgb.r, rgb.g, rgb.b));
-      } else {
-        setHslColour(null);
-        setCmykColour(null);
-      }
-      lastValidHexRef.current = validHex;
-    } else if (hexColour === '' || /^#[0-9A-F]{0,5}$/i.test(hexColour)) {
-      // Partial input: don't recompute, keep previous valid conversions
-    }
+    return '';
   }, [hexColour]);
+
+  useEffect(() => {
+    if (validHex) setLastValidHex(validHex);
+  }, [validHex]);
 
   const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let raw = e.target.value.toUpperCase();
@@ -617,6 +624,7 @@ export default function ColourPickerPage() {
           
           canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
           imageSizeRef.current = { w: width, h: height };
+          setImageSize({ w: width, h: height });
           setScale(1); scaleRef.current = 1;
           // Center the image within container using clampPan
           requestAnimationFrame(()=>{
@@ -875,9 +883,9 @@ export default function ColourPickerPage() {
                         </button>
                         {/* Colour preview */}
                         <div className="relative min-h-12 sm:min-h-14 border border-border rounded-sm overflow-hidden">
-                          <div className="absolute inset-0" style={{background:lastValidHexRef.current}} aria-label={`Colour preview ${lastValidHexRef.current}`}></div>
+                          <div className="absolute inset-0" style={{background:lastValidHex}} aria-label={`Colour preview ${lastValidHex}`}></div>
                           <div className="absolute inset-0 flex items-end justify-center p-1 text-[12px] text-white font-mono font-semibold drop-shadow">
-                            <span>{lastValidHexRef.current}</span>
+                            <span>{lastValidHex}</span>
                           </div>
                         </div>
                       </div>
@@ -887,16 +895,16 @@ export default function ColourPickerPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <Input id="hex-value-input" value={hexColour} onChange={handleHexChange} className="font-mono text-center text-sm tracking-wider flex-1 min-w-24 sm:min-w-32" placeholder="#000000" maxLength={7} />
                     <CopyButton
-                      value={() => lastValidHexRef.current}
+                      value={() => lastValidHex}
                       label=""
                       size="sm"
-                      disabled={!/^#[0-9A-F]{6}$/i.test(lastValidHexRef.current)}
+                      disabled={!/^#[0-9A-F]{6}$/i.test(lastValidHex)}
                       aria-label="Copy HEX"
                       title="Copy HEX"
                       toastTitle="HEX Copied!"
-                      toastDescription={`${lastValidHexRef.current} copied to clipboard.`}
+                      toastDescription={`${lastValidHex} copied to clipboard.`}
                     />
-                    <Button variant="outline" size="sm" disabled={previousHex===lastValidHexRef.current} onClick={()=>{ const cur=lastValidHexRef.current; setHexColour(previousHex); setPreviousHex(cur); }} aria-label="Swap with previous colour" title="Swap colours">↺</Button>
+                    <Button variant="outline" size="sm" disabled={previousHex===lastValidHex} onClick={()=>{ const cur=lastValidHex; setHexColour(previousHex); setPreviousHex(cur); }} aria-label="Swap with previous colour" title="Swap colours">↺</Button>
                   </div>
                   <hr className="border-border/60" />
                   {/* Accessibility + Preview (integrated styling) */}
@@ -928,17 +936,17 @@ export default function ColourPickerPage() {
                     </div>
                     <div className="space-y-3">
                       <div className="text-xs leading-relaxed space-y-2">
-                        <p className="flex items-center justify-between"><span>Current:</span> <span className="font-mono">{lastValidHexRef.current}</span></p>
+                        <p className="flex items-center justify-between"><span>Current:</span> <span className="font-mono">{lastValidHex}</span></p>
                         <p className="flex items-center justify-between"><span>Text:</span> <span style={{color:contrast.recommended}} className="font-mono font-semibold">{contrast.recommended}</span></p>
                       </div>
                       <div className="rounded-md border border-border overflow-hidden grid grid-cols-2 text-xs font-mono">
-                        <div style={{background:lastValidHexRef.current,color:contrast.recommended}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
+                        <div style={{background:lastValidHex,color:contrast.recommended}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
                           <span className="text-sm">Lorem Ipsum</span>
                           <span className="text-[10px] opacity-70">{contrast.recommended}</span>
                         </div>
-                        <div style={{background:contrast.recommended,color:lastValidHexRef.current}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
+                        <div style={{background:contrast.recommended,color:lastValidHex}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
                           <span className="text-sm">Lorem Ipsum</span>
-                          <span className="text-[10px] opacity-70">{lastValidHexRef.current}</span>
+                          <span className="text-[10px] opacity-70">{lastValidHex}</span>
                         </div>
                       </div>
                     </div>
@@ -1068,8 +1076,8 @@ export default function ColourPickerPage() {
                           <div className="pointer-events-none absolute" style={{
                             left: pan.x,
                             top: pan.y,
-                            width: imageSizeRef.current.w * scale,
-                            height: imageSizeRef.current.h * scale,
+                            width: imageSize.w * scale,
+                            height: imageSize.h * scale,
                             backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 1px, transparent 1px)` ,
                             backgroundSize: `${scale}px ${scale}px, ${scale}px ${scale}px`,
                             mixBlendMode: 'overlay'
