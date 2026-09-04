@@ -72,6 +72,23 @@ function rgbToCmyk(r: number, g: number, b: number): { c: number; m: number; y: 
 const MAGNIFIER_SIZE = 120; // base size (desktop)
 const DEFAULT_MAGNIFIER_ZOOM = 4;
 
+function loadColourHistory(): string[] {
+  try {
+    const saved = localStorage.getItem('colorPickerHistory');
+    if (saved) {
+      const parsed: unknown = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((c: unknown): c is string => typeof c === 'string' && /^#[0-9A-F]{6}$/i.test(c))
+          .slice(0, 10);
+      }
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+  return [];
+}
+
 export default function ColourPickerPage() {
   const { toast } = useToast();
   const [hexColour, setHexColour] = useState('#1a1a1a');
@@ -108,7 +125,9 @@ export default function ColourPickerPage() {
   const [mouseOnCanvasPosition, setMouseOnCanvasPosition] = useState({ x: 0, y: 0 });
   const magnifierCanvasRef = useRef<HTMLCanvasElement>(null);
   // Color history (persisted to localStorage, max 10 colors)
-  const [colorHistory, setColorHistory] = useState<string[]>([]);
+  // Restored synchronously; loading it from a mount effect meant the history
+  // strip rendered empty and then filled in.
+  const [colorHistory, setColorHistory] = useState<string[]>(loadColourHistory);
   const [imagePalette, setImagePalette] = useState<string[]>([]);
   // Advanced interaction state
   const [scale, setScale] = useState(1);
@@ -151,21 +170,6 @@ export default function ColourPickerPage() {
     return { x, y };
   }
   // Always listen for paste events (no explicit activation button necessary)
-
-  // Load color history from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('colorPickerHistory');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setColorHistory(parsed.filter((c: unknown) => typeof c === 'string' && /^#[0-9A-F]{6}$/i.test(c)).slice(0, 10));
-        }
-      }
-    } catch {
-      // Ignore localStorage errors
-    }
-  }, []);
 
   // Save color history to localStorage when it changes
   useEffect(() => {
