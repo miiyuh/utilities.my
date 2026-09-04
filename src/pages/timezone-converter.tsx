@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -199,11 +198,6 @@ export default function TimezoneConverterPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Timezone Converter | utilities.my</title>
-        <meta name="description" content="Compare a full day across timezones on one aligned timeline. Find overlapping working hours at a glance, worldtimebuddy-style." />
-        <link rel="canonical" href="https://utilities.my/timezone-converter" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

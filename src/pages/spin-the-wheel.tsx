@@ -249,7 +249,7 @@ export default function SpinTheWheelPage() {
                       className="hidden" 
                       onChange={(e)=>{
                         const f=e.currentTarget.files?.[0]; 
-                        if (f) handleImport(f); 
+                        if (f) void handleImport(f); 
                         e.currentTarget.value='';
                       }} 
                     />

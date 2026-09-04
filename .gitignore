@@ -87,3 +87,8 @@ firestore-debug.log
 .turbo/
 .next/
 .claude/
+# tsc output for the build-time config (see tsconfig.node.json)
+vite.config.js
+vite.config.d.ts
+scripts/**/*.js
+scripts/**/*.d.ts

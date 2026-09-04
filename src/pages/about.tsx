@@ -1,4 +1,3 @@
-import { Helmet } from 'react-helmet-async'
 import {
   Info,
   GithubLogo,
@@ -23,11 +22,6 @@ import { PageHeader } from "@/components/page-header";
 export default function About() {
   return (
     <>
-      <Helmet>
-        <title>About | utilities.my</title>
-        <meta name="description" content="About utilities.my - A fast, privacy-friendly collection of free online tools by miiyuh." />
-        <link rel="canonical" href="https://utilities.my/about" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

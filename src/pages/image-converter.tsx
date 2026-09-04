@@ -687,7 +687,7 @@ export default function ImageConverterPage() {
     
     // Debounce preview generation to prevent flashing
     previewTimeoutRef.current = setTimeout(() => {
-      generatePreview()
+      void generatePreview()
     }, 500) // Increased debounce to 500ms for smoother experience
 
     return () => {
@@ -906,7 +906,7 @@ export default function ImageConverterPage() {
                                     className="h-7 w-7 p-0"
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      reprocessFile(item.id)
+                                      void reprocessFile(item.id)
                                     }}
                                     title="Retry"
                                   >

@@ -1135,7 +1135,7 @@ export default function ColourPickerPage() {
                         {imagePalette.map((colour, index) => (
                           <button
                             key={index}
-                            onClick={() => { setHexColour(colour); copyToClipboard(colour, 'HEX'); }}
+                            onClick={() => { setHexColour(colour); void copyToClipboard(colour, 'HEX'); }}
                             className="relative w-full h-7 md:h-8 rounded-sm border border-border/70 hover:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary group transition-colors touch-manipulation"
                             style={{backgroundColor: colour}}
                             aria-label={`Use palette colour ${colour}`}
@@ -1187,7 +1187,7 @@ export default function ColourPickerPage() {
                         {colorHistory.map((c, i) => (
                           <button
                             key={`history-${c}-${i}`}
-                            onClick={() => { setHexColour(c); copyToClipboard(c, 'HEX'); }}
+                            onClick={() => { setHexColour(c); void copyToClipboard(c, 'HEX'); }}
                             className="relative w-9 h-9 md:w-10 md:h-10 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-primary group touch-manipulation"
                             style={{ background: c }}
                             aria-label={`Recent colour ${c}. Click to use and copy.`}

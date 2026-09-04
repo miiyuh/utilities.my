@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -201,11 +200,6 @@ export default function UnitConverterPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Unit Converter | utilities.my</title>
-        <meta name="description" content="Convert between length, weight, temperature, volume, area, speed, time, storage, and internet speed units. Free online unit converter." />
-        <link rel="canonical" href="https://utilities.my/unit-converter" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

@@ -189,7 +189,7 @@ export default function TextStatisticsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) handleImportFile(f); e.currentTarget.value=''; }} />
+                    <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) void handleImportFile(f); e.currentTarget.value=''; }} />
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="h-4 w-4 mr-1"/> Import</Button>
                     <Button variant="outline" size="sm" onClick={handleExportJson} disabled={!stats}><Upload className="h-4 w-4 mr-1"/> Export JSON</Button>
                     <CopyButton value={buildSummary} label="Copy summary" toastDescription="Summary copied." size="sm" disabled={!stats} />

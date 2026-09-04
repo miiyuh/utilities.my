@@ -1,7 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import { HelmetProvider } from 'react-helmet-async'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
 import { SidebarProvider } from '@/components/ui/sidebar'
@@ -13,41 +12,39 @@ import './globals.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <HelmetProvider>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        enableSystem
-        disableTransitionOnChange
-        storageKey="utilities.my-theme"
-      >
-        <BrowserRouter>
-          <div id="main-content" className="relative z-20">
-            <SettingsProvider>
-              <TooltipProvider>
-              <SidebarProvider>
-                <App />
-                <Toaster 
-                  position="bottom-right"
-                  closeButton
-                  toastOptions={{
-                    duration: 4000,
-                    className: 'font-sans',
-                    style: {
-                      background: 'var(--card)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--foreground)',
-                    },
-                  }}
-                  theme="system"
-                />
-                <Analytics />
-              </SidebarProvider>
-              </TooltipProvider>
-            </SettingsProvider>
-          </div>
-        </BrowserRouter>
-      </ThemeProvider>
-    </HelmetProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+      disableTransitionOnChange
+      storageKey="utilities.my-theme"
+    >
+      <BrowserRouter>
+        <div id="main-content" className="relative z-20">
+          <SettingsProvider>
+            <TooltipProvider>
+            <SidebarProvider>
+              <App />
+              <Toaster 
+                position="bottom-right"
+                closeButton
+                toastOptions={{
+                  duration: 4000,
+                  className: 'font-sans',
+                  style: {
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--foreground)',
+                  },
+                }}
+                theme="system"
+              />
+              <Analytics />
+            </SidebarProvider>
+            </TooltipProvider>
+          </SettingsProvider>
+        </div>
+      </BrowserRouter>
+    </ThemeProvider>
   </React.StrictMode>
 )

@@ -23,6 +23,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // Hashed bundles live under /_static so they can be cached immutably without
+    // colliding with the hand-authored files in public/assets/.
+    assetsDir: '_static',
     sourcemap: true,
     rollupOptions: {
       output: {

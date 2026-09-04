@@ -267,7 +267,7 @@ const markdownExamples = [
   },
   {
     title: "Code (Inline & Fenced)",
-    content: "Inline \`code\` has \`back-ticks around\` it.\n\n\`\`\`javascript\n// Code block\nvar s = \"JavaScript syntax highlighting\";\nalert(s);\n\`\`\`",
+    content: "Inline `code` has `back-ticks around` it.\n\n```javascript\n// Code block\nvar s = \"JavaScript syntax highlighting\";\nalert(s);\n```",
   },
   {
     title: "Blockquotes & Horizontal Rules",

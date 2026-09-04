@@ -1,5 +1,4 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Helmet } from 'react-helmet-async'
 import { House, MagnifyingGlass, ArrowLeft } from 'phosphor-react'
 import { Button } from '@/components/ui/button'
 import { tools } from '@/lib/tools'
@@ -14,10 +13,6 @@ export default function NotFound() {
 
   return (
     <>
-      <Helmet>
-        <title>404 - Page Not Found | utilities.my</title>
-        <meta name="description" content="The page you&apos;re looking for doesn&apos;t exist." />
-      </Helmet>
       <div className="min-h-screen w-full flex items-center justify-center p-4">
         <div className="max-w-2xl w-full flex flex-col items-center text-center space-y-8">
           {/* 404 Header */}

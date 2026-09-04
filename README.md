@@ -55,7 +55,7 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 ### Frontend
 - **React 19** - Latest React with hooks and modern features
-- **TypeScript** - Full type safety and IntelliSense
+- **TypeScript 7** - Full type safety, on the native Go compiler
 - **Vite** - Ultra-fast build tool and dev server
 - **Tailwind CSS** - Utility-first CSS framework
 - **Radix UI** - Accessible component primitives
@@ -122,10 +122,10 @@ utilities.my is a productivity-focused web application that consolidates essenti
 | Command | Description |
 |---------|-------------|
 | `bun run dev` | Start development server with hot reload on `http://localhost:5173` |
-| `bun run build` | Build optimized production bundle with TypeScript checking |
+| `bun run build` | Typecheck, build the production bundle, then prerender per-route HTML, the sitemap and OpenGraph cards |
 | `bun run preview` | Preview production build locally |
-| `bun run lint` | Run ESLint for code quality with strict warnings |
-| `bun run typecheck` | Check TypeScript types without emitting files |
+| `bun run lint` | Run oxlint, including type-aware rules via tsgolint |
+| `bun run typecheck` | Check types for both the app and the build scripts |
 
 ## 🎨 Design Philosophy
 
@@ -136,6 +136,7 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 ### Code Quality
 - **TypeScript** - Full type safety throughout the codebase
+- **oxlint** - Fast linting with type-aware rules, a11y checks and React rules
 - **Component-Based** - Modular, reusable components
 - **Consistent Styling** - Tailwind CSS with custom design system
 

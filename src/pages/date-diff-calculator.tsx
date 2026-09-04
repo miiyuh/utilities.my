@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -299,11 +298,6 @@ export default function DateDiffCalculatorPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Date Difference Calculator | utilities.my</title>
-        <meta name="description" content="Calculate the difference between two dates and times down to years, months, days, hours, minutes, and seconds." />
-        <link rel="canonical" href="https://utilities.my/date-diff-calculator" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

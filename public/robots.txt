@@ -1,0 +1,5 @@
+# https://utilities.my
+User-agent: *
+Allow: /
+
+Sitemap: https://utilities.my/sitemap.xml

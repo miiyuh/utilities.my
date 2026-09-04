@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -183,11 +182,6 @@ export default function WorldClockPage() {
 
   return (
     <>
-      <Helmet>
-        <title>World Clock | utilities.my</title>
-        <meta name="description" content="An interactive globe world clock, spin the earth, flip to a Mercator map, and see live times and timezone regions." />
-        <link rel="canonical" href="https://utilities.my/world-clock" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

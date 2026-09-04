@@ -1,5 +1,4 @@
 import React from "react";
-import { Helmet } from 'react-helmet-async';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { Activity, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, ShareNetwork } from "phosphor-react";
@@ -201,11 +200,6 @@ export default function BmiCalculatorPage() {
 
   return (
     <>
-      <Helmet>
-        <title>BMI Calculator | utilities.my</title>
-        <meta name="description" content="Calculate your BMI with metric or imperial units. Get health category and personalized recommendations. Free online BMI calculator." />
-        <link rel="canonical" href="https://utilities.my/bmi-calculator" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />

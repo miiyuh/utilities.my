@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
+import { RouteMeta } from './components/route-meta'
+
 // Home stays eager so the landing page renders without a second request.
 import Home from './pages/home'
 
@@ -39,33 +41,36 @@ function RouteFallback() {
 
 export default function App() {
   return (
-    <Suspense fallback={<RouteFallback />}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/text-case" element={<TextCase />} />
-        <Route path="/colour-picker" element={<ColorPicker />} />
-        <Route path="/color-picker" element={<Navigate to="/colour-picker" replace />} />
-        <Route path="/unit-converter" element={<UnitConverter />} />
-        <Route path="/bmi-calculator" element={<BmiCalculator />} />
-        <Route path="/image-converter" element={<ImageConverter />} />
-        <Route path="/markdown-previewer" element={<MarkdownPreviewer />} />
-        <Route path="/qr-code-generator" element={<QrCodeGenerator />} />
-        <Route path="/unix-timestamp-converter" element={<UnixTimestampConverter />} />
-        <Route path="/timezone-converter" element={<TimezoneConverter />} />
-        <Route path="/world-clock" element={<WorldClock />} />
-        <Route path="/date-diff-calculator" element={<DateDiffCalculator />} />
-        <Route path="/text-statistics" element={<TextStatistics />} />
-        <Route path="/sorter" element={<Sorter />} />
-        <Route path="/spin-the-wheel" element={<SpinTheWheel />} />
-        <Route path="/morse-code-generator" element={<MorseCodeGenerator />} />
-        <Route path="/percentage-calculator" element={<PercentageCalculator />} />
-        <Route path="/foot-size-converter" element={<FootSizeConverter />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <>
+      <RouteMeta />
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/text-case" element={<TextCase />} />
+          <Route path="/colour-picker" element={<ColorPicker />} />
+          <Route path="/color-picker" element={<Navigate to="/colour-picker" replace />} />
+          <Route path="/unit-converter" element={<UnitConverter />} />
+          <Route path="/bmi-calculator" element={<BmiCalculator />} />
+          <Route path="/image-converter" element={<ImageConverter />} />
+          <Route path="/markdown-previewer" element={<MarkdownPreviewer />} />
+          <Route path="/qr-code-generator" element={<QrCodeGenerator />} />
+          <Route path="/unix-timestamp-converter" element={<UnixTimestampConverter />} />
+          <Route path="/timezone-converter" element={<TimezoneConverter />} />
+          <Route path="/world-clock" element={<WorldClock />} />
+          <Route path="/date-diff-calculator" element={<DateDiffCalculator />} />
+          <Route path="/text-statistics" element={<TextStatistics />} />
+          <Route path="/sorter" element={<Sorter />} />
+          <Route path="/spin-the-wheel" element={<SpinTheWheel />} />
+          <Route path="/morse-code-generator" element={<MorseCodeGenerator />} />
+          <Route path="/percentage-calculator" element={<PercentageCalculator />} />
+          <Route path="/foot-size-converter" element={<FootSizeConverter />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </>
   )
 }

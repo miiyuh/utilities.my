@@ -7,60 +7,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7ece6" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141415" />
-    <meta name="description" content="A fast, privacy-friendly collection of free online tools by miiyuh. No signup required." />
-    <meta name="keywords" content="free online tools, utilities, qr code generator, BMI calculator, colour picker, markdown preview, unit converter, timezone converter, world clock" />
     <meta name="author" content="miiyuh" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://utilities.my" />
     <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:site_name" content="utilities.my" />
-    <meta property="og:title" content="utilities.my - free online tools" />
-    <meta property="og:description" content="A fast, privacy-friendly collection of free online tools. No signup required." />
-    <meta property="og:image" content="https://utilities.my/og-image.png" />
-    <meta property="og:url" content="https://utilities.my" />
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:creator" content="@miiyuh" />
-    <meta name="twitter:site" content="@miiyuh" />
-    <meta name="twitter:title" content="utilities.my - free online tools" />
-    <meta name="twitter:description" content="A fast, privacy-friendly collection of free online tools. No signup required." />
-    <meta name="twitter:image" content="https://utilities.my/og-image.png" />
-    
+
+    <!-- Speed up the Google Fonts request kicked off by the @import in globals.css. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
     <!-- Apple Web App -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="utilities.my" />
-    
-    <title>utilities.my - free online tools</title>
-    
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "utilities.my",
-        "url": "https://utilities.my",
-        "description": "A fast, privacy-friendly collection of free online tools.",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://utilities.my/?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        }
-      }
-    </script>
+
+    <!--
+      Everything between the SEO markers is replaced per route by
+      scripts/build-seo.ts at build time. The values below are the homepage's,
+      and are what the dev server serves for every route.
+    -->
+    <!-- SEO:START -->
+    <title>Free online tools — no signup, no tracking | utilities.my</title>
+    <meta name="description" content="A fast collection of free online tools: unit and timezone converters, QR codes, BMI and percentage calculators, a colour picker and more. Runs in your browser." />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <link rel="canonical" href="https://utilities.my" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="utilities.my" />
+    <meta property="og:title" content="Free online tools — no signup, no tracking | utilities.my" />
+    <meta property="og:description" content="A fast collection of free online tools: unit and timezone converters, QR codes, BMI and percentage calculators, a colour picker and more. Runs in your browser." />
+    <meta property="og:url" content="https://utilities.my" />
+    <meta property="og:image" content="https://utilities.my/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="utilities.my — free online tools" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@miiyuh" />
+    <meta name="twitter:creator" content="@miiyuh" />
+    <meta name="twitter:title" content="Free online tools — no signup, no tracking | utilities.my" />
+    <meta name="twitter:description" content="A fast collection of free online tools: unit and timezone converters, QR codes, BMI and percentage calculators, a colour picker and more. Runs in your browser." />
+    <meta name="twitter:image" content="https://utilities.my/og-image.png" />
+    <!-- SEO:END -->
 
     <script src="https://rybbit.miiyuh.com/api/script.js" data-site-id="1c0b722590e6" defer></script>
   </head>
   <body style="--font-inter: 'Inter', 'Noto Color Emoji', sans-serif; --font-mono: 'Source Code Pro', monospace; --font-serif: 'Noto Serif', serif;">
-    <div id="root"></div>
+    <!-- ROOT:START --><div id="root"></div><!-- ROOT:END -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

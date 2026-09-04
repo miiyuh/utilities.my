@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { Trash, TextAa, ArrowsLeftRight, Upload, Download } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
@@ -18,7 +16,6 @@ type Mode = 'uppercase' | 'lowercase' | 'title' | 'sentence' | 'toggle' | 'camel
 const SMALL_WORDS = new Set(['a','an','and','the','or','but','as','at','by','for','in','of','on','to','via','vs','vs.','per','nor','so','yet']);
 
 export default function TextCaseConverterPage() {
-  const { toast } = useToast();
   const [inputText, setInputText] = useState('');
   const [outputText, setOutputText] = useState('');
   const [mode, setMode] = useState<Mode>('title');
@@ -96,11 +93,6 @@ export default function TextCaseConverterPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Text Case Converter | utilities.my</title>
-        <meta name="description" content="Convert text between uppercase, lowercase, title case, sentence case, camelCase, PascalCase, snake_case, and kebab-case. Free online text case converter." />
-        <link rel="canonical" href="https://utilities.my/text-case" />
-      </Helmet>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />
@@ -123,7 +115,7 @@ export default function TextCaseConverterPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) handleImport(f); e.currentTarget.value=''; }} />
+                    <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) void handleImport(f); e.currentTarget.value=''; }} />
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="h-4 w-4 mr-1"/> Import</Button>
                     <Button variant="outline" size="sm" onClick={handleExport} disabled={!outputText}><Upload className="h-4 w-4 mr-1"/> Export</Button>
                     <Button variant="outline" size="sm" onClick={handleSwap} disabled={!outputText}><ArrowsLeftRight className="h-4 w-4 mr-1"/> Swap</Button>
