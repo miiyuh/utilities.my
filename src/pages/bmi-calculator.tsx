@@ -60,8 +60,10 @@ function readInitialFields(): InitialFields {
   const pick = (param: string, key: keyof InitialFields) => {
     const fromUrl = params.get(param);
     if (fromUrl) return fromUrl;
+    // The draft is whatever was in storage, so only take scalars; anything
+    // else would stringify to "[object Object]" and land in the input.
     const stored = saved[key];
-    return stored == null ? "" : String(stored);
+    return typeof stored === "string" || typeof stored === "number" ? String(stored) : "";
   };
 
   const unitParam = params.get("u");
