@@ -1,6 +1,6 @@
 import Color from 'color';
 import { Eye } from 'phosphor-react';
-import { useCallback, useEffect, useRef, useState, type HTMLAttributes } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type HTMLAttributes } from 'react';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
@@ -142,6 +142,7 @@ export function ColorPicker({
   className,
   ...props
 }: ColorPickerProps) {
+  const fieldId = useId();
   const [open, setOpen] = useState(false);
   const [hue, setHue] = useState(0);
   const [sat, setSat] = useState(100);
@@ -267,9 +268,12 @@ export function ColorPicker({
         <div className="space-y-4">
           {/* SV Canvas */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Color</label>
+            <span id={`${fieldId}-sv`} className="mb-2 block text-sm font-medium">
+              Color
+            </span>
             <canvas
               ref={handleCanvasRef}
+              aria-labelledby={`${fieldId}-sv`}
               width={240}
               height={140}
               onClick={handleCanvasInteraction}
@@ -292,8 +296,9 @@ export function ColorPicker({
 
           {/* Hue Slider */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Hue</label>
+            <span className="mb-2 block text-sm font-medium">Hue</span>
             <Slider
+              aria-label="Hue"
               value={[hue]}
               onValueChange={([v]) => setHue(v)}
               max={360}
@@ -316,10 +321,11 @@ export function ColorPicker({
           {/* Alpha Slider */}
           {showAlpha && (
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <span className="mb-2 block text-sm font-medium">
                 Opacity ({alpha}%)
-              </label>
+              </span>
               <Slider
+                aria-label="Opacity"
                 value={[alpha]}
                 onValueChange={([v]) => setAlpha(v)}
                 max={100}

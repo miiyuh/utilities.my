@@ -52,6 +52,7 @@ function cellTone(hour: number, isNow: boolean, isSelected: boolean): string {
 }
 
 export default function TimezoneConverterPage() {
+  const fieldId = React.useId();
   const localZone = React.useMemo(() => dayjs.tz.guess(), []);
 
   const [zones, setZones] = React.useState<string[]>(() => {
@@ -229,10 +230,12 @@ export default function TimezoneConverterPage() {
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-2 text-sm mr-2">
-                  <Switch checked={use24h} onCheckedChange={setUse24h} />
-                  <Label className="cursor-pointer select-none">24-hour</Label>
-                </label>
+                <div className="flex items-center gap-2 text-sm mr-2">
+                  <Switch id={`${fieldId}-24h`} checked={use24h} onCheckedChange={setUse24h} />
+                  <Label htmlFor={`${fieldId}-24h`} className="cursor-pointer select-none">
+                    24-hour
+                  </Label>
+                </div>
                 <Button variant="outline" size="default" className="h-8" onClick={() => changeDay(dayOffset - 1)}>
                   <ArrowLeft className="h-4 w-4" /> Prev
                 </Button>

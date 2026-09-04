@@ -102,6 +102,7 @@ function PinnedCityRow({ tz, isHome, isDay, flag, timeLabel, dateLabel, onRemove
 }
 
 export default function WorldClockPage() {
+  const fieldId = React.useId();
   const localZone = React.useMemo(() => dayjs.tz.guess(), []);
   const [now, setNow] = React.useState(() => dayjs());
   const [search, setSearch] = React.useState('');
@@ -234,12 +235,18 @@ export default function WorldClockPage() {
                 </div>
               </div>
               <div className="flex items-center gap-5">
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch checked={use24h} onCheckedChange={setUse24h} /> 24-hour
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch checked={showSeconds} onCheckedChange={setShowSeconds} /> Seconds
-                </label>
+                <div className="flex items-center gap-2 text-sm">
+                  <Switch id={`${fieldId}-24h`} checked={use24h} onCheckedChange={setUse24h} />
+                  <Label htmlFor={`${fieldId}-24h`} className="cursor-pointer select-none">
+                    24-hour
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Switch id={`${fieldId}-seconds`} checked={showSeconds} onCheckedChange={setShowSeconds} />
+                  <Label htmlFor={`${fieldId}-seconds`} className="cursor-pointer select-none">
+                    Seconds
+                  </Label>
+                </div>
               </div>
             </div>
 
