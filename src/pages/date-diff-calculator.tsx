@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -129,10 +129,8 @@ export default function DateDiffCalculatorPage() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow;
   });
-  const [diffResult, setDiffResult] = useState<DateDiff | null>(null);
   const [includeTime, setIncludeTime] = useState(false);
   const [is24Hour, setIs24Hour] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [isEndOpen, setIsEndOpen] = useState(false);
@@ -164,7 +162,6 @@ export default function DateDiffCalculatorPage() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     setStartDate(now);
     setEndDate(tomorrow);
-    setError(null);
   };
 
   const handleQuickSelect = (type: 'today' | 'tomorrow' | 'next-week' | 'next-month' | 'next-year', isStart: boolean) => {
@@ -198,11 +195,13 @@ export default function DateDiffCalculatorPage() {
     }
   };
 
-  const calculateDiff = useCallback(() => {
+  // The difference and any validation message are a pure function of the two
+  // dates and the include-time toggle, so they are computed during render.
+  // They used to be two pieces of state written by a useCallback that an effect
+  // invoked on every change, which meant every date edit rendered twice.
+  const { diffResult, error } = useMemo<{ diffResult: DateDiff | null; error: string | null }>(() => {
     if (!isValid(startDate) || !isValid(endDate)) {
-      setDiffResult(null);
-      setError('Invalid dates. Please ensure both dates are valid.');
-      return;
+      return { diffResult: null, error: 'Invalid dates. Please ensure both dates are valid.' };
     }
 
     // Effective dates (strip time if not included)
@@ -210,9 +209,7 @@ export default function DateDiffCalculatorPage() {
     const effectiveEnd = includeTime ? endDate : startOfDay(endDate);
 
     if (effectiveEnd < effectiveStart) {
-      setDiffResult(null);
-      setError('Invalid range. End date must be after start date.');
-      return;
+      return { diffResult: null, error: 'Invalid range. End date must be after start date.' };
     }
 
     let tempStartDate = new Date(effectiveStart);
@@ -234,24 +231,22 @@ export default function DateDiffCalculatorPage() {
 
     const seconds = differenceInSeconds(effectiveEnd, tempStartDate);
 
-    setDiffResult({
-      years,
-      months,
-      days,
-      hours,
-      minutes,
-      seconds,
-      totalDays: differenceInDays(effectiveEnd, effectiveStart),
-      totalHours: differenceInHours(effectiveEnd, effectiveStart),
-      totalMinutes: differenceInMinutes(effectiveEnd, effectiveStart),
-      totalSeconds: differenceInSeconds(effectiveEnd, effectiveStart),
-    });
-    setError(null);
+    return {
+      diffResult: {
+        years,
+        months,
+        days,
+        hours,
+        minutes,
+        seconds,
+        totalDays: differenceInDays(effectiveEnd, effectiveStart),
+        totalHours: differenceInHours(effectiveEnd, effectiveStart),
+        totalMinutes: differenceInMinutes(effectiveEnd, effectiveStart),
+        totalSeconds: differenceInSeconds(effectiveEnd, effectiveStart),
+      },
+      error: null,
+    };
   }, [startDate, endDate, includeTime]);
-
-  useEffect(() => {
-    calculateDiff();
-  }, [calculateDiff]);
 
   // Split results into breakdown and totals
   const breakdownRows = useMemo(() => {
