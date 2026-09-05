@@ -1,3 +1,9 @@
+## [3.0.1](https://github.com/miiyuh/utilities.my/compare/v3.0.0...v3.0.1) (2026-09-05)
+
+### Bug Fixes
+
+* hide prerendered SEO content from view to stop FOUC flash ([f95fe58](https://github.com/miiyuh/utilities.my/commit/f95fe58fa0d5913a78b02787d84452bfb1e08f7a)), closes [#root](https://github.com/miiyuh/utilities.my/issues/root)
+
 ## [3.0.0](https://github.com/miiyuh/utilities.my/compare/v2.0.0...v3.0.0) (2026-09-04)
 
 ### ⚠ BREAKING CHANGES
