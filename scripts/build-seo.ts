@@ -107,7 +107,7 @@ function bodyFor(route: RouteSeo) {
 
   return [
     '<!-- ROOT:START --><div id="root">',
-    '      <div id="prerendered-content">',
+    '      <div id="prerendered-content" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">',
     `        <h1>${escapeHtml(route.h1)}</h1>`,
     `        <p>${escapeHtml(route.description)}</p>`,
     '        <nav aria-label="All tools">',
