@@ -1,3 +1,13 @@
+## [4.0.0](https://github.com/miiyuh/utilities.my/compare/v3.2.0...v4.0.0) (2026-09-22)
+
+### ⚠ BREAKING CHANGES
+
+* make the tiled watermark the only marking on Palang IC (#23)
+
+### Features
+
+* make the tiled watermark the only marking on Palang IC ([#23](https://github.com/miiyuh/utilities.my/issues/23)) ([3ef9733](https://github.com/miiyuh/utilities.my/commit/3ef97335ed3c8fb7c743eff78b1602195d35e365))
+
 ## [3.2.0](https://github.com/miiyuh/utilities.my/compare/v3.1.0...v3.2.0) (2026-09-22)
 
 ### Features
