@@ -303,13 +303,22 @@ export default function PalangIc() {
     [options],
   )
   const isGenericLayout = options.layout === 'generic'
-  const autoAngle = options.band.placement === 'fields' && keyZones(options.layout, 'front').length >= 2
-  const frontTheta = resolveBandGeometry('front', CARD_W_PX, CARD_H_PX, options).theta
+  // Which sides the angle setting actually applies to: 'fields' derives the
+  // angle only where a side has two key zones (the classic back has none, so
+  // it still uses the manual angle). Judge on the uploaded sides, or the
+  // front when nothing is uploaded yet.
+  const relevantSides: SideKey[] = (['front', 'back'] as SideKey[]).filter((k) => sides[k])
+  const anglePerSide = (relevantSides.length ? relevantSides : (['front'] as SideKey[])).map((k) => {
+    const auto = options.band.placement === 'fields' && keyZones(options.layout, k).length >= 2
+    const deg = Math.round((resolveBandGeometry(k, CARD_W_PX, CARD_H_PX, options).theta * 180) / Math.PI)
+    return { key: k, auto, deg }
+  })
+  const autoAngle = options.band.placement !== 'corner' && anglePerSide.every((a) => a.auto)
   const angleDisplay =
     options.band.placement === 'corner'
       ? '−45° (fixed)'
-      : autoAngle
-        ? `Auto (${Math.round((frontTheta * 180) / Math.PI)}° front)`
+      : anglePerSide.some((a) => a.auto)
+        ? anglePerSide.map((a) => `${a.auto ? 'Auto ' : ''}${a.deg}° ${SIDE_LABEL[a.key].toLowerCase()}`).join(' · ')
         : `${options.band.angle}°`
   const placementHint = PLACEMENTS.find((p) => p.id === options.band.placement)?.hint ?? ''
   const missedKey = (['front', 'back'] as SideKey[])
