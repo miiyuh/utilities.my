@@ -1,3 +1,9 @@
+## [3.2.0](https://github.com/miiyuh/utilities.my/compare/v3.1.0...v3.2.0) (2026-09-22)
+
+### Features
+
+* layout-aware marking for the 2026 MyKad ([#22](https://github.com/miiyuh/utilities.my/issues/22)) ([4b6c5c0](https://github.com/miiyuh/utilities.my/commit/4b6c5c043290df138887329ca40804fd6312c7c4))
+
 ## [3.1.0](https://github.com/miiyuh/utilities.my/compare/v3.0.1...v3.1.0) (2026-09-22)
 
 ### Features
