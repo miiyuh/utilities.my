@@ -191,6 +191,15 @@ export const routes: RouteSeo[] = [
     priority: 0.8,
   },
   {
+    path: '/palang-ic',
+    title: 'Palang IC — Watermark MyKad Copies Safely | utilities.my',
+    h1: 'Palang IC',
+    description:
+      'Palang your MyKad copy as JPN advises: diagonal lines with the purpose written between them, front and back, exported as an A4 PDF. Free and fully in-browser.',
+    kind: 'tool',
+    priority: 0.8,
+  },
+  {
     path: '/about',
     title: 'About | utilities.my',
     h1: 'About',

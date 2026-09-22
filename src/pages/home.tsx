@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/page-header";
 // Most-used tools first (exact names from tools.ts); anything missing sorts to the end.
 const TOOL_ORDER = [
   'QR Code Generator',
+  'Palang IC',
   'World Clock',
   'Timezone Converter',
   'Unit Converter',
@@ -63,11 +64,11 @@ export default function Home() {
                   <span className="font-serif italic font-normal text-primary">done right.</span>
                 </h1>
                 <p className={`text-lg text-muted-foreground max-w-xl ${heroStagger} [animation-delay:calc(var(--duration-stagger)*2)]`}>
-                  Eighteen fast, free utilities that run entirely in your browser.
+                  Nineteen fast, free utilities that run entirely in your browser.
                   No accounts, no ads, nothing ever leaves your device.
                 </p>
                 <p className={`text-sm text-muted-foreground/80 ${heroStagger} [animation-delay:calc(var(--duration-stagger)*4)]`}>
-                  18 tools · Free forever · No accounts · Runs in your browser
+                  19 tools · Free forever · No accounts · Runs in your browser
                 </p>
               </div>
             </div>
