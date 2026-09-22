@@ -219,11 +219,16 @@ export default function PalangIc() {
   const handleFront = useCallback((f: File) => void handleFile('front', f), [handleFile])
   const handleBack = useCallback((f: File) => void handleFile('back', f), [handleFile])
 
-  const removeSide = (key: SideKey) =>
+  const removeSide = (key: SideKey) => {
+    // Invalidate any decode still in flight for this side so a replacement
+    // that finishes after Remove cannot bring the image back.
+    loadSeq.current[key]++
+    setLoadingSide((l) => (l === key ? null : l))
     setSides((s) => {
       releaseSide(s[key])
       return { ...s, [key]: null }
     })
+  }
 
   const openEditor = (key: SideKey) => {
     const side = sides[key]
