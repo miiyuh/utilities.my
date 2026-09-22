@@ -195,7 +195,7 @@ export const routes: RouteSeo[] = [
     title: 'Palang IC — Watermark MyKad Copies Safely | utilities.my',
     h1: 'Palang IC',
     description:
-      'Palang your MyKad copy as JPN advises: diagonal lines with the purpose written between them, front and back, exported as an A4 PDF. Free and fully in-browser.',
+      'Stamp the purpose across your MyKad copy so it cannot be reused for anything else. Front and back, exported as an A4 PDF. Free, and it stays in your browser.',
     kind: 'tool',
     priority: 0.8,
   },

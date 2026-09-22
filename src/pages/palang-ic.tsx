@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   IdentificationCard,
   FilePdf,
@@ -6,9 +6,6 @@ import {
   LockSimple,
   ArrowCounterClockwise,
   ArrowSquareOut,
-  Check,
-  X,
-  Warning,
 } from 'phosphor-react'
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar'
 import { SidebarContent } from '@/components/sidebar-content'
@@ -18,12 +15,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
@@ -37,39 +32,27 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { downloadBlob, isIOSOrSafari, validateImageFile } from '@/lib/image-utils'
 import {
-  CARD_H_PX,
-  CARD_W_PX,
-  DEFAULT_BAND,
   DEFAULT_COLOR,
   DEFAULT_TILED,
-  LAYOUTS,
-  LAYOUT_IDS,
   MKN_GUIDANCE_URL,
-  PLACEMENTS,
   PRESETS,
   buildPalangPdf,
   canvasToPngBlob,
-  computeCoverage,
   defaultCrop,
   ensureFonts,
-  keyZones,
   loadCardSource,
   loadPersisted,
   releaseSide,
   renderWatermarkedCard,
-  resolveBandGeometry,
   resolveLines,
   savePersisted,
-  type BandPlacement,
   type CardSide,
   type CropRect,
-  type LayoutId,
   type PresetId,
   type Rotation,
   type SideKey,
   type Sides,
   type WatermarkOptions,
-  type ZoneCoverage,
 } from '@/lib/palang-ic'
 import { SideUpload } from '@/components/palang-ic/side-upload'
 import { CropEditor } from '@/components/palang-ic/crop-editor'
@@ -142,31 +125,6 @@ function SliderRow({
   )
 }
 
-function CoverageChips({ zones, tiled }: { zones: ZoneCoverage[]; tiled: boolean }) {
-  if (zones.length === 0) return null
-  return (
-    <div className="flex flex-wrap gap-1.5" aria-label="Field coverage">
-      {tiled && (
-        <Badge variant="secondary" className="gap-1">
-          <Check className="h-3 w-3" />
-          Tiled: whole card
-        </Badge>
-      )}
-      {zones.map((z) => (
-        <Badge
-          key={z.id}
-          variant={z.covered ? 'secondary' : z.key ? 'destructive' : 'outline'}
-          className="gap-1"
-          title={z.covered ? `Crossed by the ${z.by === 'shield' ? 'QR shield' : 'lines'}` : 'Not crossed by the lines'}
-        >
-          {z.covered ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-          {z.label}
-        </Badge>
-      ))}
-    </div>
-  )
-}
-
 export default function PalangIc() {
   const { toast } = useToast()
   const [sides, setSides] = useState<Sides>({ front: null, back: null })
@@ -175,7 +133,6 @@ export default function PalangIc() {
   const [loadingSide, setLoadingSide] = useState<SideKey | null>(null)
   const [exporting, setExporting] = useState<'pdf' | SideKey | null>(null)
   const [fontsReady, setFontsReady] = useState(false)
-  const [showZones, setShowZones] = useState(false)
   // Free-typed hex; only valid values are pushed into options.
   const [colorText, setColorText] = useState(() => options.color)
   const sidesRef = useRef(sides)
@@ -210,7 +167,6 @@ export default function PalangIc() {
   )
 
   const patch = useCallback((p: Partial<WatermarkOptions>) => setOptions((o) => ({ ...o, ...p })), [])
-  const patchBand = (p: Partial<WatermarkOptions['band']>) => setOptions((o) => ({ ...o, band: { ...o.band, ...p } }))
   const patchTiled = (p: Partial<WatermarkOptions['tiled']>) => setOptions((o) => ({ ...o, tiled: { ...o.tiled, ...p } }))
 
   const handleFile = useCallback(
@@ -286,52 +242,22 @@ export default function PalangIc() {
   const lines = resolveLines(options)
   const hasPurpose = options.purpose.trim().length > 0
   const hasSide = Boolean(sides.front || sides.back)
-  // Never let an unmarked copy out: at least one layer on and text to draw.
-  const hasMarking = (options.band.enabled || options.tiled.enabled) && lines.length > 0
-  const canExport = hasPurpose && hasSide && hasMarking && exporting === null
+  // Never let an unmarked copy out: there has to be text to stamp.
+  const canExport = hasPurpose && hasSide && lines.length > 0 && exporting === null
   const exportBlocker = !hasSide
     ? 'Add the front or back of the card first.'
     : !hasPurpose
       ? 'Type the purpose (tujuan) first.'
-      : !hasMarking
-        ? 'Turn on the band or the tiled watermark, and make sure there is text to stamp.'
+      : lines.length === 0
+        ? 'The template produced no text to stamp.'
         : null
-
-  // Memoised: the preview's debounce restarts whenever the guides prop changes identity.
-  const coverage = useMemo(
-    () => ({ front: computeCoverage('front', options), back: computeCoverage('back', options) }),
-    [options],
-  )
-  const isGenericLayout = options.layout === 'generic'
-  // Which sides the angle setting actually applies to: 'fields' derives the
-  // angle only where a side has two key zones (the classic back has none, so
-  // it still uses the manual angle). Judge on the uploaded sides, or the
-  // front when nothing is uploaded yet.
-  const relevantSides: SideKey[] = (['front', 'back'] as SideKey[]).filter((k) => sides[k])
-  const anglePerSide = (relevantSides.length ? relevantSides : (['front'] as SideKey[])).map((k) => {
-    const auto = options.band.placement === 'fields' && keyZones(options.layout, k).length >= 2
-    const deg = Math.round((resolveBandGeometry(k, CARD_W_PX, CARD_H_PX, options).theta * 180) / Math.PI)
-    return { key: k, auto, deg }
-  })
-  const autoAngle = options.band.placement !== 'corner' && anglePerSide.every((a) => a.auto)
-  const angleDisplay =
-    options.band.placement === 'corner'
-      ? '−45° (fixed)'
-      : anglePerSide.some((a) => a.auto)
-        ? anglePerSide.map((a) => `${a.auto ? 'Auto ' : ''}${a.deg}° ${SIDE_LABEL[a.key].toLowerCase()}`).join(' · ')
-        : `${options.band.angle}°`
-  const placementHint = PLACEMENTS.find((p) => p.id === options.band.placement)?.hint ?? ''
-  const missedKey = (['front', 'back'] as SideKey[])
-    .filter((k) => sides[k])
-    .flatMap((k) => coverage[k].filter((z) => z.key && !z.covered).map((z) => `${z.label} (${SIDE_LABEL[k].toLowerCase()})`))
-  const showCoverageWarning = missedKey.length > 0 && !options.tiled.enabled && !isGenericLayout
 
   const exportPdf = async () => {
     if (!canExport) return
     setExporting('pdf')
     try {
-      const front = sides.front ? renderWatermarkedCard(sides.front, options, 'front') : undefined
-      const back = sides.back ? renderWatermarkedCard(sides.back, options, 'back') : undefined
+      const front = sides.front ? renderWatermarkedCard(sides.front, options) : undefined
+      const back = sides.back ? renderWatermarkedCard(sides.back, options) : undefined
       const blob = await buildPalangPdf({ front, back }, lines.join(' | '))
       downloadBlob(blob, `palang-ic-${options.date}.pdf`, isIOSOrSafari())
       toast({
@@ -355,7 +281,7 @@ export default function PalangIc() {
     if (!side || !canExport) return
     setExporting(key)
     try {
-      const blob = await canvasToPngBlob(renderWatermarkedCard(side, options, key))
+      const blob = await canvasToPngBlob(renderWatermarkedCard(side, options))
       downloadBlob(blob, `palang-ic-${key}-${options.date}.png`, isIOSOrSafari())
       toast({ title: `${SIDE_LABEL[key]} PNG downloaded`, variant: 'success' })
     } catch (error) {
@@ -380,7 +306,7 @@ export default function PalangIc() {
 
   const resetStyle = () => {
     setColorText(DEFAULT_COLOR)
-    patch({ band: DEFAULT_BAND, tiled: DEFAULT_TILED, color: DEFAULT_COLOR, qrShield: true })
+    patch({ tiled: DEFAULT_TILED, color: DEFAULT_COLOR })
   }
 
   const editingSide = editing ? sides[editing.key] : null
@@ -405,8 +331,8 @@ export default function PalangIc() {
                 Palang IC
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground">
-                Watermark a MyKad copy so it can only be used for one purpose. Front and back, exported as an A4 PDF
-                at real card size — nothing leaves your device.
+                Stamp the purpose across a MyKad copy so it can only be used for that one thing. Front and back,
+                exported as an A4 PDF at real card size — nothing leaves your device.
               </p>
             </div>
 
@@ -442,24 +368,6 @@ export default function PalangIc() {
                       A phone photo is fine — you will crop it to the card edges next. Back is optional; add it if the
                       form asks for both sides.
                     </p>
-                    <div className="space-y-2 border-t border-border pt-4">
-                      <Label htmlFor="layout">Card layout</Label>
-                      <Select value={options.layout} onValueChange={(v) => patch({ layout: v as LayoutId })}>
-                        <SelectTrigger id="layout" className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {LAYOUT_IDS.map((id) => (
-                            <SelectItem key={id} value={id}>
-                              {LAYOUTS[id].label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Tells the tool where the photo, IC number and QR code sit so the lines can be aimed at them.
-                      </p>
-                    </div>
                   </CardContent>
                 </Card>
 
@@ -557,7 +465,7 @@ export default function PalangIc() {
                 <Card className="minimal-card">
                   <CardHeader className="pb-3 md:pb-4">
                     <div className="flex items-center justify-between gap-2">
-                      <StepTitle n={3}>Style</StepTitle>
+                      <StepTitle n={3}>Watermark style</StepTitle>
                       <Button type="button" variant="ghost" size="xs" onClick={resetStyle}>
                         <ArrowCounterClockwise className="h-3.5 w-3.5" />
                         Reset
@@ -566,92 +474,18 @@ export default function PalangIc() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <section className="space-y-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <Label htmlFor="band-enabled" className="text-sm font-medium">
-                            Two-line band
-                          </Label>
-                          <p className="text-xs text-muted-foreground">The marking JPN recommends: two lines with the purpose between them.</p>
-                        </div>
-                        <Switch
-                          id="band-enabled"
-                          checked={options.band.enabled}
-                          onCheckedChange={(enabled) => patchBand({ enabled })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="placement" className={!options.band.enabled ? 'text-muted-foreground' : undefined}>
-                          Placement
-                        </Label>
-                        <Select
-                          value={options.band.placement}
-                          onValueChange={(v) => patchBand({ placement: v as BandPlacement })}
-                          disabled={!options.band.enabled}
-                        >
-                          <SelectTrigger id="placement" className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PLACEMENTS.map((p) => (
-                              <SelectItem key={p.id} value={p.id} disabled={p.id === 'fields' && isGenericLayout}>
-                                {p.label}
-                                {p.id === 'fields' && isGenericLayout ? ' (needs a MyKad layout)' : ''}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">
-                          {options.band.placement === 'fields' && isGenericLayout
-                            ? 'No field map for a generic card, so the band runs straight through the centre.'
-                            : placementHint}
-                        </p>
-                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        The purpose is repeated across the whole card, over the photo, name and IC number, at an
+                        opacity that varies tile to tile — so it cannot be cropped off or lifted out with a
+                        colour-select tool.
+                      </p>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <SliderRow id="band-angle" label="Angle" value={options.band.angle} display={angleDisplay} min={-60} max={60} step={1} disabled={!options.band.enabled || options.band.placement === 'corner' || autoAngle} onChange={(angle) => patchBand({ angle })} />
-                        <SliderRow id="band-opacity" label="Opacity" value={options.band.opacity} display={`${Math.round(options.band.opacity * 100)}%`} min={0.3} max={1} step={0.05} disabled={!options.band.enabled} onChange={(opacity) => patchBand({ opacity })} />
-                        <SliderRow id="band-gap" label="Gap between lines" value={options.band.gap} display={`${Math.round(options.band.gap * 100)}%`} min={0.12} max={0.4} step={0.01} disabled={!options.band.enabled} onChange={(gap) => patchBand({ gap })} />
-                        <SliderRow id="band-line" label="Line thickness" value={options.band.lineWidth} display={`${options.band.lineWidth}px`} min={2} max={12} step={1} disabled={!options.band.enabled} onChange={(lineWidth) => patchBand({ lineWidth })} />
-                        <SliderRow id="band-font" label="Text size" value={options.band.fontSize} display={`${options.band.fontSize}px`} min={24} max={72} step={1} disabled={!options.band.enabled} onChange={(fontSize) => patchBand({ fontSize })} />
+                        <SliderRow id="tiled-opacity" label="Opacity" value={options.tiled.opacity} display={`${Math.round(options.tiled.opacity * 100)}%`} min={0.05} max={0.5} step={0.01} onChange={(opacity) => patchTiled({ opacity })} />
+                        <SliderRow id="tiled-angle" label="Angle" value={options.tiled.angle} display={`${options.tiled.angle}°`} min={-60} max={60} step={1} onChange={(angle) => patchTiled({ angle })} />
+                        <SliderRow id="tiled-font" label="Text size" value={options.tiled.fontSize} display={`${options.tiled.fontSize}px`} min={16} max={48} step={1} onChange={(fontSize) => patchTiled({ fontSize })} />
+                        <SliderRow id="tiled-spacing" label="Row spacing" value={options.tiled.spacing} display={`${options.tiled.spacing.toFixed(1)}×`} min={1.5} max={4} step={0.1} onChange={(spacing) => patchTiled({ spacing })} />
                       </div>
                     </section>
-
-                    <section className="space-y-4 border-t border-border pt-6">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <Label htmlFor="tiled-enabled" className="text-sm font-medium">
-                            Tiled watermark
-                          </Label>
-                          <p className="text-xs text-muted-foreground">Faint repeat across the whole card, over the photo and IC number, so it cannot be cropped out.</p>
-                        </div>
-                        <Switch
-                          id="tiled-enabled"
-                          checked={options.tiled.enabled}
-                          onCheckedChange={(enabled) => patchTiled({ enabled })}
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <SliderRow id="tiled-opacity" label="Opacity" value={options.tiled.opacity} display={`${Math.round(options.tiled.opacity * 100)}%`} min={0.05} max={0.5} step={0.01} disabled={!options.tiled.enabled} onChange={(opacity) => patchTiled({ opacity })} />
-                        <SliderRow id="tiled-angle" label="Angle" value={options.tiled.angle} display={`${options.tiled.angle}°`} min={-60} max={60} step={1} disabled={!options.tiled.enabled} onChange={(angle) => patchTiled({ angle })} />
-                        <SliderRow id="tiled-font" label="Text size" value={options.tiled.fontSize} display={`${options.tiled.fontSize}px`} min={16} max={48} step={1} disabled={!options.tiled.enabled} onChange={(fontSize) => patchTiled({ fontSize })} />
-                        <SliderRow id="tiled-spacing" label="Row spacing" value={options.tiled.spacing} display={`${options.tiled.spacing.toFixed(1)}×`} min={1.5} max={4} step={0.1} disabled={!options.tiled.enabled} onChange={(spacing) => patchTiled({ spacing })} />
-                      </div>
-                    </section>
-
-                    {options.layout === 'mykad-2026' && (
-                      <section className="space-y-4 border-t border-border pt-6">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <Label htmlFor="qr-shield" className="text-sm font-medium">
-                              Block the QR code (back)
-                            </Label>
-                            <p className="text-xs text-muted-foreground">
-                              Cross-hatch over the QR so enforcement readers cannot decode it from a copy. Banks and agencies never need it.
-                            </p>
-                          </div>
-                          <Switch id="qr-shield" checked={options.qrShield} onCheckedChange={(qrShield) => patch({ qrShield })} />
-                        </div>
-                      </section>
-                    )}
 
                     <section className="space-y-2 border-t border-border pt-6">
                       <Label htmlFor="color">Colour</Label>
@@ -697,39 +531,17 @@ export default function PalangIc() {
                     <StepTitle n={4}>Preview &amp; download</StepTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {!isGenericLayout && (
-                      <div className="flex items-center justify-between gap-3">
-                        <Label htmlFor="show-zones" className="text-sm">
-                          Show field zones
-                        </Label>
-                        <Switch id="show-zones" checked={showZones} onCheckedChange={setShowZones} />
-                      </div>
-                    )}
                     <div className={`grid grid-cols-1 gap-4 ${previewKeys.length > 1 ? 'sm:grid-cols-2' : ''}`}>
                       {previewKeys.map((key) => (
-                        <div key={key} className="space-y-2">
-                          <CardPreview
-                            label={SIDE_LABEL[key]}
-                            sideKey={key}
-                            side={sides[key]}
-                            options={options}
-                            fontsReady={fontsReady}
-                            guides={showZones ? coverage[key] : undefined}
-                          />
-                          {sides[key] && <CoverageChips zones={coverage[key]} tiled={options.tiled.enabled} />}
-                        </div>
+                        <CardPreview
+                          key={key}
+                          label={SIDE_LABEL[key]}
+                          side={sides[key]}
+                          options={options}
+                          fontsReady={fontsReady}
+                        />
                       ))}
                     </div>
-
-                    {showCoverageWarning && (
-                      <Alert variant="destructive">
-                        <Warning className="h-4 w-4" />
-                        <AlertTitle>The lines miss some identity fields</AlertTitle>
-                        <AlertDescription>
-                          Not crossed: {missedKey.join(', ')}. Turn on the tiled watermark or change the placement.
-                        </AlertDescription>
-                      </Alert>
-                    )}
 
                     <Alert>
                       <LockSimple className="h-4 w-4" />
@@ -777,15 +589,11 @@ export default function PalangIc() {
                         lines across every copy and writing what it is for between them.
                       </p>
                       <p>
-                        The two-line band does exactly that — aimed through the photo and IC number by default, or across
-                        the top-left corner like the JPN graphic if you prefer. The tiled layer goes further: it repeats
-                        the purpose across the whole face, over the photo, name and IC number, at an opacity that varies
-                        from tile to tile, so it cannot be cropped away or removed with a colour-select tool.
-                      </p>
-                      <p>
-                        The MyKad issued from 17 September 2026 carries a QR code on the back that only JPN enforcement
-                        devices can read. A bank or landlord never needs it, so the tool cross-hatches it by default to
-                        stop a copy being replayed.
+                        This tool goes further than two lines in a corner. It repeats the purpose across the whole
+                        card — over the photo, the name and the IC number — at an opacity that varies from tile to
+                        tile. A corner marking can be cropped off and a solid line can be painted out, but a mark
+                        spread over the identity fields themselves cannot be removed without destroying what the
+                        fraudster came for.
                       </p>
                       <p>
                         This tool follows the published guidance but is not affiliated with JPN or MKN.{' '}
