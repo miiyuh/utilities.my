@@ -1,3 +1,9 @@
+## [3.1.0](https://github.com/miiyuh/utilities.my/compare/v3.0.1...v3.1.0) (2026-09-22)
+
+### Features
+
+* add Palang IC tool for watermarking MyKad copies ([#21](https://github.com/miiyuh/utilities.my/issues/21)) ([2a7417f](https://github.com/miiyuh/utilities.my/commit/2a7417f953d09ff93c261b7af11bf117af74fb5b))
+
 ## [3.0.1](https://github.com/miiyuh/utilities.my/compare/v3.0.0...v3.0.1) (2026-09-05)
 
 ### Bug Fixes
