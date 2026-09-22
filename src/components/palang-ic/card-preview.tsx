@@ -1,23 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { IdentificationCard } from 'phosphor-react'
-import {
-  ID1_RATIO,
-  drawZoneGuides,
-  renderWatermarkedCard,
-  type CardSide,
-  type SideKey,
-  type WatermarkOptions,
-  type ZoneCoverage,
-} from '@/lib/palang-ic'
+import { ID1_RATIO, renderWatermarkedCard, type CardSide, type WatermarkOptions } from '@/lib/palang-ic'
 
 interface CardPreviewProps {
   label: 'Front' | 'Back'
-  sideKey: SideKey
   side: CardSide | null
   options: WatermarkOptions
   fontsReady: boolean
-  /** Zone outlines to draw over the preview only. Memoise in the parent: a new array restarts the debounce. */
-  guides?: ZoneCoverage[]
 }
 
 const DEBOUNCE_MS = 150
@@ -28,7 +17,7 @@ const DEBOUNCE_MS = 150
  * drags stay smooth. Export never reuses this canvas; it re-renders so the
  * output can never lag behind the debounce.
  */
-export function CardPreview({ label, sideKey, side, options, fontsReady, guides }: CardPreviewProps) {
+export function CardPreview({ label, side, options, fontsReady }: CardPreviewProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const timerRef = useRef<number | null>(null)
@@ -59,10 +48,9 @@ export function CardPreview({ label, sideKey, side, options, fontsReady, guides 
         const ctx = canvas.getContext('2d')
         if (!ctx) return
         try {
-          const full = renderWatermarkedCard(side, options, sideKey)
+          const full = renderWatermarkedCard(side, options)
           ctx.imageSmoothingQuality = 'high'
           ctx.drawImage(full, 0, 0, canvas.width, canvas.height)
-          if (guides?.length) drawZoneGuides(ctx, canvas.width, canvas.height, guides, dpr)
         } catch (error) {
           console.error('Preview render failed:', error)
         }
@@ -72,7 +60,7 @@ export function CardPreview({ label, sideKey, side, options, fontsReady, guides 
       if (timerRef.current) window.clearTimeout(timerRef.current)
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current)
     }
-  }, [side, sideKey, options, cssW, fontsReady, guides])
+  }, [side, options, cssW, fontsReady])
 
   return (
     <div className="space-y-1.5">

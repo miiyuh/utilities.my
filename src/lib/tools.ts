@@ -31,5 +31,5 @@ export const tools: Tool[] = [
   { name: "Morse Code Generator", path: "/morse-code-generator", icon: Lightning, description: "Convert text to Morse code and vice versa with audio, visual, and vibration playback." },
   { name: "Percentage Calculator", path: "/percentage-calculator", icon: Percent, description: "Calculate percentages, percentage changes, and percentage increases/decreases." },
   { name: "Foot Size Converter", path: "/foot-size-converter", icon: Ruler, description: "Convert shoe sizes between US, UK, EU, and CM measurements." },
-  { name: "Palang IC", path: "/palang-ic", icon: IdentificationCard, description: "Watermark a MyKad copy with the official diagonal lines and purpose text so it can't be reused. Exports an A4 PDF." },
+  { name: "Palang IC", path: "/palang-ic", icon: IdentificationCard, description: "Stamp the purpose across a MyKad copy so it can't be reused. Exports an A4 PDF." },
 ];

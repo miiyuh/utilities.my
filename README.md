@@ -42,7 +42,7 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 ### 🎲 Image & Fun Tools
 - **Image Converter** - Convert images between different formats (PNG, JPG, WebP) with resizing
-- **Palang IC** - Watermark MyKad copies with the JPN-recommended diagonal lines and purpose text, exported as A4 PDF or PNG, entirely in the browser
+- **Palang IC** - Stamp the purpose across a MyKad copy so it cannot be reused, exported as A4 PDF or PNG, entirely in the browser
 - **Spin the Wheel** - Customizable decision-making wheel with animations
 - **Morse Code Generator** - Convert text to Morse code and vice versa with audio and visual playback
 
