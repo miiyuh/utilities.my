@@ -79,14 +79,84 @@ export const PRESETS: Preset[] = [
   { id: 'custom', label: 'Custom…', lines: [] },
 ]
 
+// ---------------------------------------------------------------------------
+// Card layouts — where the identity fields sit on a well-cropped card, in
+// normalised 0–1 coordinates. Estimates from reference photos; this table is
+// the single place to tune them (use "Show field zones" against a real crop).
+// ---------------------------------------------------------------------------
+
+export type LayoutId = 'mykad-2026' | 'mykad-classic' | 'generic'
+export type ZoneId = 'photo' | 'icNumber' | 'name' | 'address' | 'qr' | 'ghost'
+
+export interface Zone {
+  id: ZoneId
+  label: string
+  rect: CropRect
+  /** Key zones are what a fraudster needs; the band is aimed through them. */
+  key: boolean
+}
+
+export interface CardLayout {
+  id: LayoutId
+  label: string
+  front: Zone[]
+  back: Zone[]
+}
+
+export const LAYOUTS: Record<LayoutId, CardLayout> = {
+  'mykad-2026': {
+    id: 'mykad-2026',
+    label: 'MyKad — new design (from 17 Sept 2026)',
+    front: [
+      { id: 'photo', label: 'Photo', rect: { x: 0.05, y: 0.22, w: 0.28, h: 0.68 }, key: true },
+      { id: 'icNumber', label: 'IC number', rect: { x: 0.36, y: 0.24, w: 0.34, h: 0.1 }, key: true },
+      { id: 'name', label: 'Name', rect: { x: 0.36, y: 0.4, w: 0.44, h: 0.08 }, key: false },
+      { id: 'address', label: 'Address', rect: { x: 0.36, y: 0.55, w: 0.49, h: 0.25 }, key: false },
+      { id: 'ghost', label: 'Ghost photo', rect: { x: 0.66, y: 0.55, w: 0.12, h: 0.2 }, key: false },
+    ],
+    back: [
+      { id: 'qr', label: 'QR code', rect: { x: 0.7, y: 0.06, w: 0.23, h: 0.36 }, key: true },
+      { id: 'icNumber', label: 'IC number', rect: { x: 0.28, y: 0.68, w: 0.47, h: 0.12 }, key: true },
+      { id: 'ghost', label: 'Ghost photo', rect: { x: 0.07, y: 0.63, w: 0.13, h: 0.25 }, key: false },
+    ],
+  },
+  'mykad-classic': {
+    id: 'mykad-classic',
+    label: 'MyKad — classic',
+    front: [
+      { id: 'photo', label: 'Photo', rect: { x: 0.7, y: 0.15, w: 0.25, h: 0.6 }, key: true },
+      { id: 'icNumber', label: 'IC number', rect: { x: 0.05, y: 0.2, w: 0.4, h: 0.1 }, key: true },
+      { id: 'name', label: 'Name', rect: { x: 0.05, y: 0.32, w: 0.55, h: 0.08 }, key: false },
+      { id: 'address', label: 'Address', rect: { x: 0.05, y: 0.45, w: 0.55, h: 0.25 }, key: false },
+      { id: 'ghost', label: 'Ghost photo', rect: { x: 0.05, y: 0.72, w: 0.13, h: 0.2 }, key: false },
+    ],
+    // Signature and Touch 'n Go only; nothing to aim at, so 'fields' falls
+    // back to 'across' on this side.
+    back: [],
+  },
+  generic: { id: 'generic', label: 'Other card / generic', front: [], back: [] },
+}
+export const LAYOUT_IDS: LayoutId[] = ['mykad-2026', 'mykad-classic', 'generic']
+
+export type BandPlacement = 'fields' | 'corner' | 'across'
+export const PLACEMENTS: Array<{ id: BandPlacement; label: string; hint: string }> = [
+  { id: 'fields', label: 'Through the identity fields', hint: 'Angle is set automatically so the lines cross the photo and IC number (or the QR code and IC number on the back).' },
+  { id: 'corner', label: 'Top-left corner (JPN style)', hint: 'Two short lines across the top-left corner, like the JPN graphic. Best with short text — try the "Malay — short" template or widen the gap.' },
+  { id: 'across', label: 'Straight through the centre', hint: 'One long band through the middle of the card at the angle you choose.' },
+]
+const PLACEMENT_IDS: BandPlacement[] = ['fields', 'corner', 'across']
+
 export interface BandOptions {
   enabled: boolean
-  /** Degrees. Negative = rising to the right, like the JPN sample. */
+  placement: BandPlacement
+  /** Degrees. Negative = rising to the right, like the JPN sample. Ignored for 'corner' and auto 'fields'. */
   angle: number
   lineWidth: number
   /** Distance between the two lines as a fraction of card height. */
   gap: number
   fontSize: number
+  /** 0.3–1. Below 1 the IC digits stay readable under the line. */
+  opacity: number
 }
 
 export interface TiledOptions {
@@ -108,6 +178,9 @@ export interface WatermarkOptions {
   date: string
   /** Hex colour for lines and text. */
   color: string
+  layout: LayoutId
+  /** Cross-hatch the QR code on the back of a 2026 MyKad so it cannot be decoded from a copy. */
+  qrShield: boolean
   band: BandOptions
   tiled: TiledOptions
 }
@@ -118,7 +191,15 @@ export function todayIso(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-export const DEFAULT_BAND: BandOptions = { enabled: true, angle: -30, lineWidth: 6, gap: 0.22, fontSize: 44 }
+export const DEFAULT_BAND: BandOptions = {
+  enabled: true,
+  placement: 'fields',
+  angle: -30,
+  lineWidth: 6,
+  gap: 0.22,
+  fontSize: 44,
+  opacity: 0.75,
+}
 export const DEFAULT_TILED: TiledOptions = { enabled: true, opacity: 0.18, angle: -30, fontSize: 28, spacing: 2.2 }
 export const DEFAULT_COLOR = '#111111'
 
@@ -129,6 +210,8 @@ export const DEFAULT_OPTIONS: WatermarkOptions = {
   recipient: '',
   date: todayIso(),
   color: DEFAULT_COLOR,
+  layout: 'mykad-2026',
+  qrShield: true,
   band: DEFAULT_BAND,
   tiled: DEFAULT_TILED,
 }
@@ -142,6 +225,7 @@ export const DEFAULT_OPTIONS: WatermarkOptions = {
 export const STORAGE_KEY = 'utilities-palang-ic'
 
 type PersistedOptions = Omit<WatermarkOptions, 'date'>
+/** Bump `v` only when a key is renamed or changes meaning; new keys are additive and filled from defaults. */
 interface PersistedEnvelope { v: 1; options: Partial<PersistedOptions> }
 
 export function loadPersisted(): WatermarkOptions {
@@ -150,13 +234,20 @@ export function loadPersisted(): WatermarkOptions {
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<PersistedEnvelope>
       const o = parsed.v === 1 && parsed.options ? parsed.options : {}
-      return {
+      const merged: WatermarkOptions = {
         ...DEFAULT_OPTIONS,
         ...o,
         date: todayIso(),
         band: { ...DEFAULT_BAND, ...o.band },
         tiled: { ...DEFAULT_TILED, ...o.tiled },
       }
+      // Enum strings index tables below; never let a hand-edited or future
+      // value through.
+      if (!LAYOUT_IDS.includes(merged.layout)) merged.layout = DEFAULT_OPTIONS.layout
+      if (!PLACEMENT_IDS.includes(merged.band.placement)) merged.band.placement = DEFAULT_BAND.placement
+      merged.band.opacity = clamp(Number(merged.band.opacity) || DEFAULT_BAND.opacity, 0.3, 1)
+      merged.qrShield = Boolean(merged.qrShield)
+      return merged
     }
   } catch (error) {
     console.error('Failed to load Palang IC settings:', error)
@@ -379,21 +470,106 @@ export function ensureFonts(): Promise<void> {
   return fontsPromise
 }
 
+// ---------------------------------------------------------------------------
+// Band geometry. drawBand and computeCoverage both consume the object from
+// resolveBandGeometry so the preview, the chips and the export can never
+// disagree about where the lines are.
+//
+// Conventions: canvas y-down, ctx.rotate(θ) is clockwise on screen. Local
+// frame: u along the band (cos θ, sin θ), v across it (−sin θ, cos θ); a
+// local point (u, v) sits at C + u·d + v·n.
+// ---------------------------------------------------------------------------
+
+export interface BandGeometry {
+  /** Band centre in card px. */
+  cx: number
+  cy: number
+  /** Radians, canvas convention. */
+  theta: number
+  /** Half the distance between the two lines, px. */
+  halfGap: number
+  corner: boolean
+  /** Corner only: the centre line is x + y = kMid. */
+  kMid: number
+}
+
+const CORNER_INSET = 0.14
+const CORNER_MAX_K = 0.95
+/** The corner chord is short, so the same gap setting gets a wider strip there to keep the text printable. */
+const CORNER_GAP_SCALE = 1.5
+const SQRT2 = Math.SQRT2
+
+export function keyZones(layout: LayoutId, sideKey: SideKey): Zone[] {
+  return LAYOUTS[layout][sideKey].filter((z) => z.key)
+}
+
+export function resolveBandGeometry(
+  sideKey: SideKey,
+  OW: number,
+  OH: number,
+  options: WatermarkOptions,
+): BandGeometry {
+  const { band } = options
+  const across = (): BandGeometry => ({
+    cx: OW / 2,
+    cy: OH / 2,
+    theta: (band.angle * Math.PI) / 180,
+    halfGap: (band.gap * OH) / 2,
+    corner: false,
+    kMid: 0,
+  })
+
+  if (band.placement === 'corner') {
+    const kIn = CORNER_INSET * OH
+    const kOut = Math.min(kIn + band.gap * CORNER_GAP_SCALE * OH * SQRT2, CORNER_MAX_K * OH)
+    const kMid = (kIn + kOut) / 2
+    // Lines x + y = k1 and x + y = k2 are |k2 − k1| / √2 apart.
+    return { cx: kMid / 2, cy: kMid / 2, theta: -Math.PI / 4, halfGap: (kOut - kIn) / (2 * SQRT2), corner: true, kMid }
+  }
+
+  if (band.placement === 'fields') {
+    const zones = keyZones(options.layout, sideKey)
+    if (zones.length === 0) return across()
+    const centres = zones.map((z) => ({ x: (z.rect.x + z.rect.w / 2) * OW, y: (z.rect.y + z.rect.h / 2) * OH }))
+    if (zones.length === 1) return { ...across(), cx: centres[0].x, cy: centres[0].y }
+    // Unweighted midpoint of the first two key zones (area-weighting would
+    // drag the line into the big photo and off the small IC number), aimed
+    // along the line joining them so both are crossed whatever the card.
+    const [a, b] = centres
+    let dx = b.x - a.x
+    let dy = b.y - a.y
+    if (dx < 0) {
+      dx = -dx
+      dy = -dy
+    }
+    return {
+      cx: (a.x + b.x) / 2,
+      cy: (a.y + b.y) / 2,
+      theta: Math.atan2(dy, dx),
+      halfGap: (band.gap * OH) / 2,
+      corner: false,
+      kMid: 0,
+    }
+  }
+
+  return across()
+}
+
 /**
- * Length of the line through the origin with direction (cos θ, sin θ),
- * clipped to the rectangle [-w/2, w/2] × [-h/2, h/2]. Liang–Barsky.
+ * t-interval for which P(t) = (px, py) + t·(cos θ, sin θ) lies inside the
+ * rectangle [−w/2, w/2] × [−h/2, h/2]; (px, py) relative to the card centre.
+ * Liang–Barsky: each [p, q] pair is one edge constraint p·t <= q.
  */
-function chordLength(w: number, h: number, theta: number): number {
+function chordInterval(w: number, h: number, px: number, py: number, theta: number): [number, number] {
   const dx = Math.cos(theta)
   const dy = Math.sin(theta)
   let tMin = -Infinity
   let tMax = Infinity
-  // Each [p, q] pair is one edge constraint p·t <= q for the point t·(dx, dy).
   const edges: Array<[number, number]> = [
-    [-dx, w / 2], // x >= -w/2
-    [dx, w / 2], // x <= w/2
-    [-dy, h / 2], // y >= -h/2
-    [dy, h / 2], // y <= h/2
+    [-dx, w / 2 + px], // x >= -w/2
+    [dx, w / 2 - px], // x <= w/2
+    [-dy, h / 2 + py], // y >= -h/2
+    [dy, h / 2 - py], // y <= h/2
   ]
   for (const [p, q] of edges) {
     if (Math.abs(p) < 1e-9) continue
@@ -401,7 +577,26 @@ function chordLength(w: number, h: number, theta: number): number {
     if (p < 0) tMin = Math.max(tMin, t)
     else tMax = Math.min(tMax, t)
   }
-  return Math.max(0, tMax - tMin)
+  return tMin > tMax ? [0, 0] : [tMin, tMax]
+}
+
+/** Greedy word wrap of `lines` into rows whose usable width may differ per row. */
+function wrapRows(ctx: CanvasRenderingContext2D, lines: string[], widthForRow: (row: number) => number): string[] {
+  const rows: string[] = []
+  for (const line of lines) {
+    let current = ''
+    for (const word of line.split(/\s+/).filter(Boolean)) {
+      const candidate = current ? `${current} ${word}` : word
+      if (ctx.measureText(candidate).width <= widthForRow(rows.length) || !current) {
+        current = candidate
+      } else {
+        rows.push(current)
+        current = word
+      }
+    }
+    if (current) rows.push(current)
+  }
+  return rows
 }
 
 function drawBand(
@@ -411,51 +606,251 @@ function drawBand(
   lines: string[],
   band: BandOptions,
   color: string,
+  g: BandGeometry,
 ): void {
   if (lines.length === 0) return
-  const theta = (band.angle * Math.PI) / 180
-  const L = OW * Math.abs(Math.cos(theta)) + OH * Math.abs(Math.sin(theta))
-  const gap = band.gap * OH
+  const { theta, halfGap } = g
+  const L = Math.hypot(OW, OH)
 
   ctx.save()
-  ctx.translate(OW / 2, OH / 2)
+  ctx.globalAlpha = band.opacity
+  ctx.translate(g.cx, g.cy)
   ctx.rotate(theta)
 
+  // Corner lines are finite (they end on the card's left and top edges); the
+  // long band is simply clipped by the canvas.
+  const halfLen = (v: number) => (g.corner ? g.kMid / SQRT2 + v : L)
   ctx.strokeStyle = color
   ctx.lineWidth = band.lineWidth
   ctx.lineCap = 'butt'
-  for (const s of [-1, 1]) {
+  for (const v of [-halfGap, halfGap]) {
     ctx.beginPath()
-    ctx.moveTo(-L / 2, (s * gap) / 2)
-    ctx.lineTo(L / 2, (s * gap) / 2)
+    ctx.moveTo(-halfLen(v), v)
+    ctx.lineTo(halfLen(v), v)
     ctx.stroke()
   }
 
-  // Fit the text: width against the chord of the card along the centre
-  // line, height against the space between the lines.
-  const usableW = chordLength(OW, OH, theta) * 0.88
-  const usableH = gap - band.lineWidth * 2 - 8
-  let fs = band.fontSize
-  const lineHeight = () => fs * 1.15
-  for (;;) {
-    ctx.font = `700 ${fs}px ${CANVAS_FONT}`
-    const widest = Math.max(...lines.map((l) => ctx.measureText(l).width))
-    if ((widest <= usableW && lines.length * lineHeight() <= usableH) || fs <= 14) break
-    fs -= 2
-  }
-
+  const pad = band.lineWidth + 4
+  const usableH = 2 * halfGap - 2 * pad
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.lineJoin = 'round'
-  ctx.lineWidth = Math.max(2, fs * 0.16)
   ctx.strokeStyle = 'rgba(255,255,255,0.9)'
   ctx.fillStyle = color
-  const y0 = -((lines.length - 1) * lineHeight()) / 2
-  lines.forEach((line, i) => {
-    const y = y0 + i * lineHeight()
-    ctx.strokeText(line, 0, y)
-    ctx.fillText(line, 0, y)
+
+  const paint = (text: string, u: number, v: number, fs: number) => {
+    ctx.lineWidth = Math.max(2, fs * 0.16)
+    ctx.strokeText(text, u, v)
+    ctx.fillText(text, u, v)
+  }
+
+  if (g.corner) {
+    // Rows nearer the outer line are longer, so wrap row by row.
+    let fs = band.fontSize
+    let rows: string[] = []
+    for (;;) {
+      ctx.font = `700 ${fs}px ${CANVAS_FONT}`
+      const lh = fs * 1.15
+      rows = wrapRows(ctx, lines, (r) => 2 * halfLen(-halfGap + pad + r * lh) * 0.9)
+      if (rows.length * lh <= usableH || fs <= 14) break
+      fs -= 2
+    }
+    const lh = fs * 1.15
+    rows.forEach((row, r) => paint(row, 0, -halfGap + pad + r * lh + lh / 2, fs))
+  } else {
+    // Fit against the chords at the top, middle and bottom of the text block
+    // so an offset band never runs its text off a card corner.
+    const px = g.cx - OW / 2
+    const py = g.cy - OH / 2
+    let fs = band.fontSize
+    let u0 = 0
+    for (;;) {
+      ctx.font = `700 ${fs}px ${CANVAS_FONT}`
+      const lh = fs * 1.15
+      const a = (lines.length * lh) / 2
+      let tMin = -Infinity
+      let tMax = Infinity
+      for (const v of [-a, 0, a]) {
+        const [lo, hi] = chordInterval(OW, OH, px - v * Math.sin(theta), py + v * Math.cos(theta), theta)
+        tMin = Math.max(tMin, lo)
+        tMax = Math.min(tMax, hi)
+      }
+      const usableW = Math.max(0, tMax - tMin) * 0.88
+      u0 = (tMin + tMax) / 2
+      const widest = Math.max(...lines.map((l) => ctx.measureText(l).width))
+      if ((widest <= usableW && lines.length * lh <= usableH) || fs <= 14) break
+      fs -= 2
+    }
+    const lh = fs * 1.15
+    const y0 = -((lines.length - 1) * lh) / 2
+    lines.forEach((line, i) => paint(line, u0, y0 + i * lh, fs))
+  }
+  ctx.restore()
+}
+
+// ---------------------------------------------------------------------------
+// QR shield. The 2026 MyKad's QR is readable only by JPN enforcement devices;
+// a recipient never needs it, but a clean copy could be replayed. Why this
+// pattern defeats decoding:
+//  - Two hatch directions at 45 % duty paint 1 − (1 − 0.45)² ≈ 70 % of the
+//    area, so ≥ 70 % of 8-module codewords are damaged versus the ≤ 30 %
+//    Reed–Solomon level H can correct — and the damage is spread over every
+//    RS block, the worst case, rather than one blob.
+//  - Solid squares on the four corners are larger than a 7-module finder
+//    plus separator at any plausible version, so a decoder never locates the
+//    symbol; both copies of the format information sit beside the finders
+//    and go with them.
+//  - Colour stripes flip light modules dark; the white halo of "SALINAN"
+//    flips dark modules light, so no threshold recovers either polarity.
+// ---------------------------------------------------------------------------
+
+export function qrShieldRect(OW: number, OH: number, zone: CropRect): { x: number; y: number; w: number; h: number } {
+  const pad = 0.02 * OW
+  const x = Math.max(0, zone.x * OW - pad)
+  const y = Math.max(0, zone.y * OH - pad)
+  const r = Math.min(OW, (zone.x + zone.w) * OW + pad)
+  const b = Math.min(OH, (zone.y + zone.h) * OH + pad)
+  return { x, y, w: r - x, h: b - y }
+}
+
+function drawQrShield(ctx: CanvasRenderingContext2D, OW: number, OH: number, zone: CropRect, color: string): void {
+  const r = qrShieldRect(OW, OH, zone)
+  const D = Math.hypot(r.w, r.h)
+  const pitch = 0.035 * OW
+  const stripe = 0.45 * pitch
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(r.x, r.y, r.w, r.h)
+  ctx.clip()
+  ctx.fillStyle = color
+  ctx.globalAlpha = 0.9
+  for (const phi of [Math.PI / 4, -Math.PI / 4]) {
+    ctx.save()
+    ctx.translate(r.x + r.w / 2, r.y + r.h / 2)
+    ctx.rotate(phi)
+    for (let k = -D; k <= D; k += pitch) ctx.fillRect(k - stripe / 2, -D, stripe, 2 * D)
+    ctx.restore()
+  }
+  ctx.globalAlpha = 0.95
+  const sq = 0.16 * Math.min(r.w, r.h)
+  for (const [x, y] of [
+    [r.x, r.y],
+    [r.x + r.w - sq, r.y],
+    [r.x, r.y + r.h - sq],
+    [r.x + r.w - sq, r.y + r.h - sq],
+  ]) {
+    ctx.fillRect(x, y, sq, sq)
+  }
+
+  ctx.globalAlpha = 1
+  let fs = Math.round(r.h * 0.22)
+  ctx.font = `700 ${fs}px ${CANVAS_FONT}`
+  while (ctx.measureText('SALINAN').width > r.w * 0.8 && fs > 10) {
+    fs -= 1
+    ctx.font = `700 ${fs}px ${CANVAS_FONT}`
+  }
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.lineJoin = 'round'
+  ctx.lineWidth = Math.max(2, fs * 0.18)
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+  ctx.strokeText('SALINAN', r.x + r.w / 2, r.y + r.h / 2)
+  ctx.fillStyle = color
+  ctx.fillText('SALINAN', r.x + r.w / 2, r.y + r.h / 2)
+  ctx.restore()
+}
+
+export function shieldApplies(options: WatermarkOptions, sideKey: SideKey): CropRect | null {
+  if (!options.qrShield || options.layout !== 'mykad-2026' || sideKey !== 'back') return null
+  return LAYOUTS['mykad-2026'].back.find((z) => z.id === 'qr')?.rect ?? null
+}
+
+// ---------------------------------------------------------------------------
+// Coverage — which zones the marking actually crosses. A zone is covered by
+// the band when the strip of half-width (halfGap + lineWidth/2) around the
+// band's centre line overlaps the zone by at least one stroke width. The
+// strip is infinite along u and every zone lies inside the card, so the
+// band's normal is the only separating axis and the test is exact for all
+// three placements.
+// ---------------------------------------------------------------------------
+
+export interface ZoneCoverage {
+  id: ZoneId
+  label: string
+  key: boolean
+  rect: CropRect
+  covered: boolean
+  by: 'band' | 'shield' | null
+}
+
+export function computeCoverage(sideKey: SideKey, options: WatermarkOptions): ZoneCoverage[] {
+  const zones = LAYOUTS[options.layout][sideKey]
+  if (zones.length === 0) return []
+  const OW = CARD_W_PX
+  const OH = CARD_H_PX
+  const g = resolveBandGeometry(sideKey, OW, OH, options)
+  const bandActive = options.band.enabled && resolveLines(options).length > 0
+  const H = g.halfGap + options.band.lineWidth / 2
+  const nx = -Math.sin(g.theta)
+  const ny = Math.cos(g.theta)
+  const shieldZone = shieldApplies(options, sideKey)
+
+  return zones.map((zone) => {
+    const { x, y, w, h } = zone.rect
+    const corners = [
+      [x * OW, y * OH],
+      [(x + w) * OW, y * OH],
+      [x * OW, (y + h) * OH],
+      [(x + w) * OW, (y + h) * OH],
+    ]
+    const s = corners.map(([X, Y]) => (X - g.cx) * nx + (Y - g.cy) * ny)
+    const overlap = Math.min(Math.max(...s), H) - Math.max(Math.min(...s), -H)
+    const byBand = bandActive && overlap >= options.band.lineWidth
+    const byShield = zone.id === 'qr' && shieldZone !== null
+    return {
+      id: zone.id,
+      label: zone.label,
+      key: zone.key,
+      rect: zone.rect,
+      covered: byBand || byShield,
+      by: byBand ? 'band' : byShield ? 'shield' : null,
+    }
   })
+}
+
+/**
+ * Dashed zone outlines for the preview. Only CardPreview calls this, on its
+ * own display canvas, so the guides can never end up in an export.
+ */
+export function drawZoneGuides(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  zones: ZoneCoverage[],
+  dpr: number,
+): void {
+  ctx.save()
+  ctx.setLineDash([6 * dpr, 4 * dpr])
+  ctx.lineWidth = 1.5 * dpr
+  ctx.font = `600 ${10 * dpr}px ${CANVAS_FONT}`
+  ctx.textBaseline = 'top'
+  ctx.textAlign = 'left'
+  for (const z of zones) {
+    const colour = z.key ? (z.covered ? '#16a34a' : '#dc2626') : 'rgba(120,120,120,0.9)'
+    const x = z.rect.x * w
+    const y = z.rect.y * h
+    const rw = z.rect.w * w
+    const rh = z.rect.h * h
+    ctx.strokeStyle = colour
+    ctx.strokeRect(x, y, rw, rh)
+    const label = `${z.label}${z.key ? (z.covered ? ' ✓' : ' ✗') : ''}`
+    const tw = ctx.measureText(label).width + 6 * dpr
+    ctx.fillStyle = colour
+    ctx.fillRect(x, y, tw, 13 * dpr)
+    ctx.fillStyle = '#fff'
+    ctx.fillText(label, x + 3 * dpr, y + 1.5 * dpr)
+  }
   ctx.restore()
 }
 
@@ -526,12 +921,13 @@ function drawTiled(
 }
 
 /**
- * Render one side: cropped card, then the tiled layer, then the band on top
- * so the official marking is always the crispest layer.
+ * Render one side: cropped card, then the tiled layer, then the QR shield,
+ * then the band on top so the official marking is always the crispest layer.
  */
 export function renderWatermarkedCard(
   side: CardSide,
   options: WatermarkOptions,
+  sideKey: SideKey,
   target: { w: number; h: number } = { w: CARD_W_PX, h: CARD_H_PX },
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
@@ -545,7 +941,11 @@ export function renderWatermarkedCard(
   drawCropped(ctx, side, target.w, target.h)
   const lines = resolveLines(options)
   if (options.tiled.enabled) drawTiled(ctx, target.w, target.h, tiledText(lines), options.tiled, options.color)
-  if (options.band.enabled) drawBand(ctx, target.w, target.h, lines, options.band, options.color)
+  const shieldZone = shieldApplies(options, sideKey)
+  if (shieldZone) drawQrShield(ctx, target.w, target.h, shieldZone, options.color)
+  if (options.band.enabled) {
+    drawBand(ctx, target.w, target.h, lines, options.band, options.color, resolveBandGeometry(sideKey, target.w, target.h, options))
+  }
   return canvas
 }
 
