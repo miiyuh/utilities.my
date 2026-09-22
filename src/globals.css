@@ -555,3 +555,16 @@
   transform: translateY(1px);
   -webkit-font-smoothing: antialiased;
 }
+
+/* react-remove-scroll (used by every Radix Select, Dialog and Popover) locks
+   the page by setting overflow: hidden and a scrollbar-width margin on <body>.
+   Because <html> owns the scrollbar here (overflow-y: scroll + stable gutter),
+   that turns <body> into its own scroll container — every sticky header
+   re-anchors to the document top and vanishes — and the margin shifts the
+   whole page sideways. Neither is needed: the gutter never changes, and the
+   library still blocks wheel and touch scrolling through its event handlers.
+   Unlayered and more specific than the injected rule so it wins the cascade. */
+html body[data-scroll-locked] {
+  overflow: visible !important;
+  margin-right: 0 !important;
+}
