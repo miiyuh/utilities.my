@@ -123,16 +123,18 @@ export const LAYOUTS: Record<LayoutId, CardLayout> = {
   'mykad-classic': {
     id: 'mykad-classic',
     label: 'MyKad — classic',
+    // Measured from an annotated reference card, normalised against the
+    // trimmed card edges (the back scan carried ~1% extra width, corrected).
     front: [
-      { id: 'photo', label: 'Photo', rect: { x: 0.7, y: 0.15, w: 0.25, h: 0.6 }, key: true },
-      { id: 'icNumber', label: 'IC number', rect: { x: 0.05, y: 0.2, w: 0.4, h: 0.1 }, key: true },
-      { id: 'name', label: 'Name', rect: { x: 0.05, y: 0.32, w: 0.55, h: 0.08 }, key: false },
-      { id: 'address', label: 'Address', rect: { x: 0.05, y: 0.45, w: 0.55, h: 0.25 }, key: false },
-      { id: 'ghost', label: 'Ghost photo', rect: { x: 0.05, y: 0.72, w: 0.13, h: 0.2 }, key: false },
+      { id: 'icNumber', label: 'IC number', rect: { x: 0.034, y: 0.225, w: 0.313, h: 0.06 }, key: true },
+      { id: 'photo', label: 'Photo', rect: { x: 0.667, y: 0.222, w: 0.301, h: 0.616 }, key: true },
+      { id: 'ghost', label: 'Ghost photo', rect: { x: 0.478, y: 0.222, w: 0.166, h: 0.345 }, key: false },
+      { id: 'name', label: 'Name', rect: { x: 0.039, y: 0.647, w: 0.608, h: 0.096 }, key: false },
+      { id: 'address', label: 'Address', rect: { x: 0.04, y: 0.765, w: 0.607, h: 0.19 }, key: false },
     ],
-    // Signature and Touch 'n Go only; nothing to aim at, so 'fields' falls
-    // back to 'across' on this side.
-    back: [],
+    // Signature, Touch 'n Go and the serial are not sensitive; the repeated
+    // IC number under the signature is.
+    back: [{ id: 'icNumber', label: 'IC number', rect: { x: 0.328, y: 0.693, w: 0.384, h: 0.054 }, key: true }],
   },
   generic: { id: 'generic', label: 'Other card / generic', front: [], back: [] },
 }
