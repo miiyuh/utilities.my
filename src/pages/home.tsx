@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/page-header";
 // Most-used tools first (exact names from tools.ts); anything missing sorts to the end.
 const TOOL_ORDER = [
   'QR Code Generator',
+  'Palang IC',
   'World Clock',
   'Timezone Converter',
   'Unit Converter',

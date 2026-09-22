@@ -36,6 +36,9 @@ export default defineConfig({
           if (id.includes('node_modules/clsx') || id.includes('node_modules/class-variance-authority')) {
             return 'vendor-ui'
           }
+          if (id.includes('node_modules/pdf-lib') || id.includes('node_modules/@pdf-lib')) {
+            return 'vendor-pdf'
+          }
           if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')) {
             return 'vendor-map'
           }

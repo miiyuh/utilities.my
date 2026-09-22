@@ -25,6 +25,7 @@ const SpinTheWheel = lazy(() => import('./pages/spin-the-wheel'))
 const MorseCodeGenerator = lazy(() => import('./pages/morse-code-generator'))
 const PercentageCalculator = lazy(() => import('./pages/percentage-calculator'))
 const FootSizeConverter = lazy(() => import('./pages/footsize-converter'))
+const PalangIc = lazy(() => import('./pages/palang-ic'))
 const About = lazy(() => import('./pages/about'))
 const Privacy = lazy(() => import('./pages/privacy'))
 const Terms = lazy(() => import('./pages/terms'))
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="/morse-code-generator" element={<MorseCodeGenerator />} />
           <Route path="/percentage-calculator" element={<PercentageCalculator />} />
           <Route path="/foot-size-converter" element={<FootSizeConverter />} />
+          <Route path="/palang-ic" element={<PalangIc />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
