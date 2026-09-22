@@ -138,6 +138,9 @@ export default function PalangIc() {
   // Free-typed hex; only valid values are pushed into options.
   const [colorText, setColorText] = useState(() => options.color)
   const sidesRef = useRef(sides)
+  // Monotonic per-side request ids so a slow, older decode can never
+  // overwrite a newer upload.
+  const loadSeq = useRef<Record<SideKey, number>>({ front: 0, back: 0 })
   useEffect(() => {
     sidesRef.current = sides
   }, [sides])
@@ -176,9 +179,14 @@ export default function PalangIc() {
         toast({ title: 'Could not use that file', description: check.error, variant: 'destructive' })
         return
       }
+      const seq = ++loadSeq.current[key]
       setLoadingSide(key)
       try {
         const loaded = await loadCardSource(file)
+        if (seq !== loadSeq.current[key]) {
+          if ('close' in loaded.source) loaded.source.close()
+          return
+        }
         const side: CardSide = {
           file,
           objectUrl: URL.createObjectURL(file),
@@ -195,13 +203,14 @@ export default function PalangIc() {
         // A phone photo almost always needs cropping, so go straight there.
         setEditing({ key, rotation: side.rotation, crop: side.crop })
       } catch (error) {
+        if (seq !== loadSeq.current[key]) return
         toast({
           title: 'Could not read that image',
           description: error instanceof Error ? error.message : 'Unsupported image format. Please use JPG or PNG.',
           variant: 'destructive',
         })
       } finally {
-        setLoadingSide(null)
+        if (seq === loadSeq.current[key]) setLoadingSide(null)
       }
     },
     [toast],
@@ -231,12 +240,16 @@ export default function PalangIc() {
   const lines = resolveLines(options)
   const hasPurpose = options.purpose.trim().length > 0
   const hasSide = Boolean(sides.front || sides.back)
-  const canExport = hasPurpose && hasSide && exporting === null
+  // Never let an unmarked copy out: at least one layer on and text to draw.
+  const hasMarking = (options.band.enabled || options.tiled.enabled) && lines.length > 0
+  const canExport = hasPurpose && hasSide && hasMarking && exporting === null
   const exportBlocker = !hasSide
     ? 'Add the front or back of the card first.'
     : !hasPurpose
       ? 'Type the purpose (tujuan) first.'
-      : null
+      : !hasMarking
+        ? 'Turn on the band or the tiled watermark, and make sure there is text to stamp.'
+        : null
 
   const exportPdf = async () => {
     if (!canExport) return
