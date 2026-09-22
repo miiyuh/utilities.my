@@ -81,8 +81,15 @@ export const PRESETS: Preset[] = [
 
 // ---------------------------------------------------------------------------
 // Card layouts — where the identity fields sit on a well-cropped card, in
-// normalised 0–1 coordinates. Estimates from reference photos; this table is
-// the single place to tune them (use "Show field zones" against a real crop).
+// normalised 0–1 coordinates. This table is the single place to tune them
+// (use "Show field zones" against a real crop).
+//
+// Convention: every rect is on a 0.01 grid, rounded OUTWARD from the measured
+// edges so a zone always fully contains its field, and shared edges are
+// aligned to one value (on the classic card: left column 0.03, text column
+// right edge 0.65, top row 0.22). Cards are printed to a template, so the
+// fields really are on a grid; a hundredth of a card is ~10px at 300dpi,
+// well inside the slack a marking needs anyway.
 // ---------------------------------------------------------------------------
 
 export type LayoutId = 'mykad-2026' | 'mykad-classic' | 'generic'
@@ -126,15 +133,15 @@ export const LAYOUTS: Record<LayoutId, CardLayout> = {
     // Measured from an annotated reference card, normalised against the
     // trimmed card edges (the back scan carried ~1% extra width, corrected).
     front: [
-      { id: 'icNumber', label: 'IC number', rect: { x: 0.034, y: 0.225, w: 0.313, h: 0.06 }, key: true },
-      { id: 'photo', label: 'Photo', rect: { x: 0.667, y: 0.222, w: 0.301, h: 0.616 }, key: true },
-      { id: 'ghost', label: 'Ghost photo', rect: { x: 0.478, y: 0.222, w: 0.166, h: 0.345 }, key: false },
-      { id: 'name', label: 'Name', rect: { x: 0.039, y: 0.647, w: 0.608, h: 0.096 }, key: false },
-      { id: 'address', label: 'Address', rect: { x: 0.04, y: 0.765, w: 0.607, h: 0.19 }, key: false },
+      { id: 'icNumber', label: 'IC number', rect: { x: 0.03, y: 0.22, w: 0.32, h: 0.07 }, key: true },
+      { id: 'photo', label: 'Photo', rect: { x: 0.66, y: 0.22, w: 0.31, h: 0.62 }, key: true },
+      { id: 'ghost', label: 'Ghost photo', rect: { x: 0.47, y: 0.22, w: 0.18, h: 0.35 }, key: false },
+      { id: 'name', label: 'Name', rect: { x: 0.03, y: 0.64, w: 0.62, h: 0.11 }, key: false },
+      { id: 'address', label: 'Address', rect: { x: 0.03, y: 0.76, w: 0.62, h: 0.2 }, key: false },
     ],
     // Signature, Touch 'n Go and the serial are not sensitive; the repeated
     // IC number under the signature is.
-    back: [{ id: 'icNumber', label: 'IC number', rect: { x: 0.328, y: 0.693, w: 0.384, h: 0.054 }, key: true }],
+    back: [{ id: 'icNumber', label: 'IC number', rect: { x: 0.32, y: 0.69, w: 0.4, h: 0.06 }, key: true }],
   },
   generic: { id: 'generic', label: 'Other card / generic', front: [], back: [] },
 }
