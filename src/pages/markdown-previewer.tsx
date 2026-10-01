@@ -217,13 +217,17 @@ export default function MarkdownPreviewerPage() {
 
   const openFile = async (file: File) => setMarkdownText((await file.text()).replace(/\r\n?/g, '\n'));
 
-  /** Copies the preview as rich text, so it pastes formatted into email, Docs or Word. */
+  /** The current Markdown as safe HTML, rendered on demand (the preview itself updates after a short delay). */
+  const renderNow = () => DOMPurify.sanitize(marked.parse(markdownText) as string);
+
+  /** Copies the document as rich text, so it pastes formatted into email, Docs or Word. */
   const copyFormatted = async () => {
-    const plain = new DOMParser().parseFromString(htmlOutput, 'text/html').body.innerText;
+    const html = renderNow();
+    const plain = new DOMParser().parseFromString(html, 'text/html').body.innerText;
     try {
       await navigator.clipboard.write([
         new ClipboardItem({
-          'text/html': new Blob([htmlOutput], { type: 'text/html' }),
+          'text/html': new Blob([html], { type: 'text/html' }),
           'text/plain': new Blob([plain], { type: 'text/plain' }),
         }),
       ]);
@@ -420,7 +424,7 @@ export default function MarkdownPreviewerPage() {
                   <TextAa className="h-4 w-4" /> Copy formatted
                 </Button>
                 <CopyButton value={() => markdownText} size="sm" label="Copy Markdown" toastTitle="Copied" toastDescription="Your Markdown is on the clipboard." disabled={!markdownText} />
-                <CopyButton value={() => htmlOutput} size="sm" label="Copy HTML" icon={<CodeIconFallback />} toastTitle="Copied" toastDescription="The HTML is on the clipboard." disabled={!markdownText} />
+                <CopyButton value={renderNow} size="sm" label="Copy HTML" icon={<CodeIconFallback />} toastTitle="Copied" toastDescription="The HTML is on the clipboard." disabled={!markdownText} />
                 <Button variant="outline" size="sm" onClick={handleDownload} disabled={!markdownText}>
                   <DownloadSimple className="h-4 w-4" /> Download .md
                 </Button>

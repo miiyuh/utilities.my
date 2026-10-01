@@ -52,7 +52,8 @@ export interface LengthMatch {
 export function matchLength(category: Category, cm: number): LengthMatch | null {
   if (!Number.isFinite(cm) || cm <= 0) return null
   const rows = SIZES[category]
-  const index = rows.findIndex((r) => r.cm >= cm - 0.05)
+  // Tiny epsilon only for floating-point noise; a row shorter than the foot is never chosen.
+  const index = rows.findIndex((r) => r.cm >= cm - 1e-9)
   if (index < 0) return { row: rows[rows.length - 1], index: rows.length - 1, between: false, beyond: true }
-  return { row: rows[index], index, between: Math.abs(rows[index].cm - cm) > 0.05, beyond: false }
+  return { row: rows[index], index, between: Math.abs(rows[index].cm - cm) > 1e-9, beyond: false }
 }

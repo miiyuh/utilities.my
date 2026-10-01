@@ -76,6 +76,9 @@ export default function SorterPage() {
   const [delimiter, setDelimiter] = useState('');
   const [separator, setSeparator] = useState(',');
   const fileRef = useRef<HTMLInputElement>(null);
+  // True while the person is typing; the first keystroke after an action saves an undo step,
+  // so Undo brings back their edits' starting point instead of discarding them.
+  const [typing, setTyping] = useState(false);
 
   const lines = useMemo(() => splitLines(text), [text]);
   const stats = useMemo(() => listStats(lines, caseSensitive), [lines, caseSensitive]);
@@ -87,12 +90,21 @@ export default function SorterPage() {
     const r = fn(lines);
     const next = r.lines.join('\n');
     if (next !== text) setHistory((h) => [...h.slice(-49), text]);
+    setTyping(false);
     setText(next);
     setMessage(r.message);
   };
 
+  /** Typing: the first keystroke after an action or Undo saves an undo step. */
+  const edit = (next: string) => {
+    if (!typing && text !== '') setHistory((h) => [...h.slice(-49), text]);
+    setTyping(true);
+    setText(next);
+  };
+
   const undo = () => {
     if (!history.length) return;
+    setTyping(false);
     setText(history[history.length - 1]);
     setHistory((h) => h.slice(0, -1));
     setMessage('Undid the last change.');
@@ -180,7 +192,7 @@ export default function SorterPage() {
                   <Textarea
                     id="sorter-input"
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={(e) => edit(e.target.value)}
                     placeholder={'One item per line, e.g.\nKuala Lumpur\nPenang\nJohor Bahru'}
                     spellCheck={false}
                     className="min-h-[360px] resize-y font-code text-base sm:text-sm"

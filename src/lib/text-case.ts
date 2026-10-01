@@ -45,7 +45,7 @@ const SMALL_WORDS = new Set([
 ])
 
 const LETTER = /\p{L}/u
-const WORD_CHARS = /[^\p{L}\p{N}]+/u
+const WORD_CHARS = /[^\p{L}\p{M}\p{N}]+/u
 
 /** A word written with a capital after its first letter: IC, KL, USA, iPhone, MyKad. */
 function hasInnerCapital(word: string): boolean {
@@ -79,6 +79,7 @@ function tidy(text: string, opts: CaseOptions): string {
 /** Splits a line into words for identifier cases: "parseHTTPResponse v2" → parse, HTTP, Response, v2. */
 function identifierWords(line: string): string[] {
   return line
+    .normalize('NFC') // join a letter and its separate accent mark into one character
     .replace(/['’]/g, '') // "I'm" → "Im", not "I m"
     .replace(/(\p{Ll}|\p{N})(\p{Lu})/gu, '$1 $2')
     .replace(/(\p{Lu})(\p{Lu}\p{Ll})/gu, '$1 $2')

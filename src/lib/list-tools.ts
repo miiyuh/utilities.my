@@ -58,9 +58,10 @@ export function sortLines(lines: string[], o: SortOptions): Result {
       case 'column': {
         const x = cell(a)
         const y = cell(b)
+        // Amounts with labels ("RM 2", "RM 10") compare by their numbers when both cells have one.
         const nx = firstNumber(x)
         const ny = firstNumber(y)
-        if (nx != null && ny != null && /^[^\p{L}]*$/u.test(x + y)) return (nx - ny) * dir
+        if (nx != null && ny != null && nx !== ny) return (nx - ny) * dir
         return collator.compare(x, y) * dir
       }
       default:
@@ -110,16 +111,16 @@ export function reverseLines(lines: string[]): Result {
   return { lines: [...lines].reverse(), message: `Reversed the order of ${plural(lines.length, 'line')}.` }
 }
 
-/** "a, b; c" on any line becomes one item per line. */
+/** "a, b, c" on any line becomes one item per line. Empty fields are kept; Remove empty lines clears them. */
 export function splitItems(lines: string[], separator: string): Result {
   const sep = separator || ','
-  const out = lines.flatMap((l) => l.split(sep)).map((s) => s.trim()).filter(Boolean)
+  const out = lines.flatMap((l) => l.split(sep)).map((s) => s.trim())
   return { lines: out, message: `Split into ${plural(out.length, 'line')}.` }
 }
 
 /** All lines on one line, joined with the separator. */
 export function joinItems(lines: string[], separator: string): Result {
-  const items = lines.map((l) => l.trim()).filter(Boolean)
+  const items = lines.map((l) => l.trim())
   const sep = separator === ',' ? ', ' : separator === ';' ? '; ' : separator
   return { lines: [items.join(sep)], message: `Joined ${plural(items.length, 'item')} into one line.` }
 }
