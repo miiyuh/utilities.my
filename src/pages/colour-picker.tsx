@@ -1178,7 +1178,7 @@ export default function ColourPickerPage() {
                         {/* HUD */}
                         <div className="absolute left-2 top-2 px-2 py-1 rounded bg-black/60 backdrop-blur text-[11px] font-mono text-white flex items-center gap-3 pointer-events-none">
                           {lastSamplePos && <span>{lastSamplePos.x},{lastSamplePos.y}</span>}
-                          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm border border-white/30" style={{background: magnifiedColour}}></span>{magnifiedColour}</span>
+                          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full border border-white/30" style={{background: magnifiedColour}}></span>{magnifiedColour}</span>
                           <span>{(scale*100).toFixed(0)}%</span>
                         </div>
                         {scale >= 8 && (
@@ -1283,13 +1283,13 @@ export default function ColourPickerPage() {
                         {imagePalette.map((colour, index) => (
                           <Hint label={`Click to use ${colour}`} key={index}>
                             <button
+                            type="button"
                             onClick={() => { setHexColour(colour); void copyToClipboard(colour, 'HEX'); }}
-                            className="relative w-full h-7 md:h-8 rounded-sm border border-border/70 hover:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary group transition-colors touch-manipulation"
+                            className="aspect-square w-full max-w-10 justify-self-center rounded-full border border-border/70 hover:border-primary/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors duration-quick touch-manipulation"
                             style={{backgroundColor: colour}}
                             aria-label={`Use palette colour ${colour}`}
-                          >
-                            <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 bg-black/80 text-white px-1 py-0.5 rounded text-[9px] font-mono opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">{colour}</div>
-                          </button>
+                          />
+
                           </Hint>
                         ))}
                       </div>
@@ -1305,14 +1305,15 @@ export default function ColourPickerPage() {
                       <div className="flex flex-wrap gap-2">
                         {lockedSamples.map((c,i)=>(
                           <button
+                            type="button"
                             key={`${c}-${i}`}
                             onClick={()=> copyToClipboard(c,'HEX')}
                             onContextMenu={(e)=>{ e.preventDefault(); setLockedSamples(ls => ls.filter((_,idx)=> idx!==i)); }}
-                            className="relative w-9 h-9 md:w-10 md:h-10 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-primary group touch-manipulation"
+                            className="relative w-9 h-9 md:w-10 md:h-10 rounded-full border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-primary group touch-manipulation"
                             style={{ background: c }}
                             aria-label={`Locked sample ${c}. Click to copy. Right-click to remove.`}
                           >
-                            <span className="absolute inset-0 rounded-md bg-black/0 group-hover:bg-black/10 transition-colors" />
+                            <span className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/10 transition-colors duration-quick" />
                             <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 text-[10px] font-mono bg-black/80 text-white px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">{c}</span>
                           </button>
                         ))}
@@ -1332,13 +1333,14 @@ export default function ColourPickerPage() {
                       <div className="flex flex-wrap gap-2">
                         {colorHistory.map((c, i) => (
                           <button
+                            type="button"
                             key={`history-${c}-${i}`}
                             onClick={() => { setHexColour(c); void copyToClipboard(c, 'HEX'); }}
-                            className="relative w-9 h-9 md:w-10 md:h-10 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-primary group touch-manipulation"
+                            className="relative w-9 h-9 md:w-10 md:h-10 rounded-full border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-primary group touch-manipulation"
                             style={{ background: c }}
                             aria-label={`Recent colour ${c}. Click to use and copy.`}
                           >
-                            <span className="absolute inset-0 rounded-md bg-black/0 group-hover:bg-black/10 transition-colors" />
+                            <span className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/10 transition-colors duration-quick" />
                             <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 text-[10px] font-mono bg-black/80 text-white px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">{c}</span>
                           </button>
                         ))}

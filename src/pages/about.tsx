@@ -25,6 +25,7 @@ import { METHODOLOGY } from '@/lib/methodology'
 import { MethodologyBody } from '@/components/tool-methodology'
 import { tools } from '@/lib/tools'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MOD_KEY } from '@/components/command-palette'
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
@@ -33,6 +34,9 @@ import { PageHeader } from "@/components/page-header";
 const slug = (path: string) => path.replace(/^\//, '')
 
 /** Who makes this: a hovercard on the maintainer's name, with links out. */
+/** miiyuh.com's own optimiser: a 128px AVIF/WebP (about 2.5 KB) of /assets/img/personal-profile-pic.png. */
+const MAINTAINER_PHOTO = 'https://miiyuh.com/_next/image?url=%2Fassets%2Fimg%2Fpersonal-profile-pic.png&w=128&q=100'
+
 function MaintainerCard() {
   return (
     <HoverCard>
@@ -46,9 +50,11 @@ function MaintainerCard() {
       </HoverCardTrigger>
       <HoverCardContent align="start" className="space-y-3">
         <div className="flex items-center gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary font-heading text-base font-semibold text-primary-foreground" aria-hidden>
-            MA
-          </span>
+          {/* Served by miiyuh.com, so a new picture there shows up here too. The initials show while it loads or if it can't. */}
+          <Avatar className="size-11 shrink-0">
+            <AvatarImage src={MAINTAINER_PHOTO} alt="Muhamad Azri" width={44} height={44} loading="lazy" />
+            <AvatarFallback className="bg-primary font-heading text-base font-semibold text-primary-foreground">MA</AvatarFallback>
+          </Avatar>
           <div className="min-w-0">
             <p className="font-heading font-semibold leading-tight">Muhamad Azri</p>
             <p className="text-xs text-muted-foreground">miiyuh · Malaysia</p>

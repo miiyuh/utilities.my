@@ -91,12 +91,15 @@ export function renderFavicon(size: number, source: FaviconSource, style: Favico
   }
 
   ctx.save()
-  shapePath(ctx, size, style.shape)
+  // With a background, the shape is filled and the content clipped to it. With
+  // none, nothing is drawn behind the content and nothing is cut off, so a
+  // transparent PNG comes out exactly as it is.
   if (bg) {
+    shapePath(ctx, size, style.shape)
     ctx.fillStyle = bg
     ctx.fill()
+    ctx.clip()
   }
-  ctx.clip()
   const pad = Math.round(size * style.padding)
   drawContent(ctx, source, pad, size - pad * 2)
   ctx.restore()
@@ -132,6 +135,22 @@ export async function buildIco(pngs: { size: number; blob: Blob }[]): Promise<Bl
 
 function escapeXml(s: string) {
   return s.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c] ?? c)
+}
+
+/** True when the image has any see-through pixels (checked on a small copy). */
+export function hasTransparency(image: CanvasImageSource, width: number, height: number): boolean {
+  const size = 64
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })
+  if (!ctx) return false
+  const scale = Math.min(size / width, size / height)
+  const w = Math.max(1, Math.round(width * scale))
+  const h = Math.max(1, Math.round(height * scale))
+  ctx.drawImage(image, 0, 0, w, h)
+  const { data } = ctx.getImageData(0, 0, w, h)
+  for (let i = 3; i < data.length; i += 4) if (data[i] < 250) return true
+  return false
 }
 
 /** An SVG favicon is possible for text and emoji sources that aren't empty. */
