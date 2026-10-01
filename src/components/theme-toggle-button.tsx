@@ -4,6 +4,7 @@
 import { Moon, Sun } from "phosphor-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
  * Flips between light and dark. Until the user clicks, next-themes follows the
@@ -12,6 +13,8 @@ import { Button } from "@/components/ui/button";
 export function ThemeToggleButton() {
   const { resolvedTheme, setTheme } = useTheme();
   const next = resolvedTheme === "dark" ? "light" : "dark";
+  // On phones a tap would pop the tooltip over the switch it just flipped.
+  const isMobile = useIsMobile();
 
   return (
     <Button
@@ -19,7 +22,7 @@ export function ThemeToggleButton() {
       size="icon-sm"
       className="relative size-8"
       aria-label={`Switch to ${next} theme`}
-      title={`Switch to ${next} theme`}
+      title={isMobile ? undefined : `Switch to ${next} theme`}
       onClick={() => setTheme(next)}
     >
       <Sun aria-hidden className="size-4 scale-100 opacity-100 blur-none transition-[scale,opacity,filter] duration-fast ease-[cubic-bezier(0.2,0,0,1)] dark:scale-25 dark:opacity-0 dark:blur-[4px]" />

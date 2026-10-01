@@ -8,12 +8,8 @@ import { cn } from "@/lib/utils"
 function ScrollArea({
   className,
   children,
-  hideScrollbar = false,
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
-  /** Still scrolls (wheel, touch, keyboard); just no visible bar. */
-  hideScrollbar?: boolean
-}) {
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
@@ -26,7 +22,7 @@ function ScrollArea({
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      {!hideScrollbar && <ScrollBar />}
+      <ScrollBar />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
   )

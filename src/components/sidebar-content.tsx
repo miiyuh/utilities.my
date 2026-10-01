@@ -10,7 +10,6 @@ import {
   SidebarMenuButton,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { ArrowLeft, Info } from "phosphor-react"
 import { tools as originalTools } from "@/lib/tools"
 import { cn } from "@/lib/utils"
@@ -66,9 +65,9 @@ export function SidebarContent() {
           className="hidden h-7 w-7 object-contain group-data-[collapsible=icon]:block"
         />
       </SidebarHeader>
-      <SidebarScrollableContent className="flex-1 p-3 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
-        <ScrollArea className="h-full w-full" hideScrollbar>
-          <nav aria-label="Tools">
+      <SidebarScrollableContent className="flex-1 overscroll-contain p-3 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
+        {/* SidebarContent is the native scroll container; its scrollbar is hidden but it still scrolls. */}
+        <nav aria-label="Tools">
           <SidebarMenu className="space-y-1.5 group-data-[collapsible=icon]:items-center">
             {sortedTools.map((tool) => (
               <SidebarMenuItem key={tool.path}>
@@ -93,8 +92,7 @@ export function SidebarContent() {
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
-          </nav>
-        </ScrollArea>
+        </nav>
       </SidebarScrollableContent>
       {/* Combined bottom section */}
       <nav aria-label="Site" className="p-3 pt-3 border-t border-sidebar-border group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
