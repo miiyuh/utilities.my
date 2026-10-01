@@ -241,7 +241,7 @@ export default function FaviconGeneratorPage() {
               </p>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start">
               <div className="space-y-6">
                 <Card className="minimal-card">
                   <CardHeader className="pb-3">
