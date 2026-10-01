@@ -285,19 +285,22 @@ export default function FaviconGeneratorPage() {
                             </Select>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-4">
-                          <fieldset className="flex gap-1.5">
-                            <legend className="sr-only">Weight</legend>
-                            {[
-                              [400, 'Regular'],
-                              [600, 'Semibold'],
-                              [700, 'Bold'],
-                            ].map(([w, label]) => (
-                              <Chip key={w} active={weight === w} onClick={() => setWeight(Number(w))}>{label}</Chip>
-                            ))}
-                          </fieldset>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Colour</span>
+                        <div className="flex flex-wrap gap-x-8 gap-y-4">
+                          <div className="space-y-2">
+                            <span className="block text-sm font-medium" aria-hidden>Weight</span>
+                            <fieldset className="flex flex-wrap gap-1.5">
+                              <legend className="sr-only">Weight</legend>
+                              {[
+                                [400, 'Regular'],
+                                [600, 'Semibold'],
+                                [700, 'Bold'],
+                              ].map(([w, label]) => (
+                                <Chip key={w} active={weight === w} onClick={() => setWeight(Number(w))}>{label}</Chip>
+                              ))}
+                            </fieldset>
+                          </div>
+                          <div className="space-y-2">
+                            <span className="block text-sm font-medium">Text colour</span>
                             <ColorPicker value={textColor} onChange={setTextColor} className="h-8 w-8" />
                           </div>
                         </div>
@@ -353,7 +356,7 @@ export default function FaviconGeneratorPage() {
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="space-y-2">
-                      <span className="text-sm font-medium">Background</span>
+                      <span className="block text-sm font-medium">Background</span>
                       <div className="flex flex-wrap items-center gap-3">
                         <fieldset className="flex flex-wrap gap-1.5">
                           <legend className="sr-only">Background</legend>
@@ -371,7 +374,7 @@ export default function FaviconGeneratorPage() {
                     </div>
                     {!transparent && (
                       <div className="space-y-2">
-                        <span className="text-sm font-medium">Shape</span>
+                        <span className="block text-sm font-medium">Shape</span>
                         <fieldset className="flex flex-wrap gap-1.5">
                           <legend className="sr-only">Shape</legend>
                           {(['square', 'rounded', 'circle'] as FaviconShape[]).map((s) => (
@@ -382,8 +385,8 @@ export default function FaviconGeneratorPage() {
                     )}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Padding</span>
-                        <span className="font-mono tabular-nums">{Math.round(padding * 100)}%</span>
+                        <span className="font-medium">Padding</span>
+                        <span className="font-mono tabular-nums text-muted-foreground">{Math.round(padding * 100)}%</span>
                       </div>
                       <Slider value={[Math.round(padding * 100)]} min={0} max={35} step={1} onValueChange={(v) => setPadding(v[0] / 100)} aria-label="Padding" />
                     </div>
@@ -422,15 +425,15 @@ export default function FaviconGeneratorPage() {
                             </p>
                           </div>
                         )}
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                          {kind === 'text' && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Text colour</span>
-                              <ColorPicker value={darkTextColor} onChange={setDarkTextColor} className="h-8 w-8" />
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Background</span>
+                        {kind === 'text' && (
+                          <div className="space-y-2">
+                            <span className="block text-sm font-medium">Text colour</span>
+                            <ColorPicker value={darkTextColor} onChange={setDarkTextColor} className="h-8 w-8" />
+                          </div>
+                        )}
+                        <div className="space-y-2">
+                          <span className="block text-sm font-medium">Background</span>
+                          <div className="flex flex-wrap items-center gap-3">
                             <fieldset className="flex flex-wrap gap-1.5">
                               <legend className="sr-only">Dark mode background</legend>
                               <Chip active={!darkTransparent} onClick={() => setDarkTransparent(false)}>Colour</Chip>
