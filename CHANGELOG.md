@@ -1,3 +1,21 @@
+## [5.0.0](https://github.com/miiyuh/utilities.my/compare/v4.0.0...v5.0.0) (2026-10-01)
+
+### ⚠ BREAKING CHANGES
+
+* the "System" theme option is gone (light or dark only,
+the first visit follows the OS). Stored date-format settings migrate to the
+new presets, and the default time format is now 24-hour. HEIC input and
+Morse vibration are no longer supported.
+
+
+Also: resolve the @ alias with import.meta.url so the native Vite config loader works.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+### Features
+
+* the v5 overhaul: Pandan & Kopi theme, new tools, site-wide formats and accessibility ([#24](https://github.com/miiyuh/utilities.my/issues/24)) ([55459c5](https://github.com/miiyuh/utilities.my/commit/55459c5041fbc761db2c66dacc4a2089e4ff7253))
+
 ## [4.0.0](https://github.com/miiyuh/utilities.my/compare/v3.2.0...v4.0.0) (2026-09-22)
 
 ### ⚠ BREAKING CHANGES
