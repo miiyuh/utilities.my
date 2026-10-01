@@ -1,3 +1,4 @@
+import { Flag } from '@/components/flag';
 import React from 'react';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
@@ -5,7 +6,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import {
   geoOrthographic,
-  geoMercator,
+  geoEqualEarth,
   geoPath,
   geoCircle,
   geoGraticule10,
@@ -48,6 +49,8 @@ interface TooltipState {
   x: number;
   y: number;
   lines: string[];
+  /** Flag emoji for the first line, rendered as an image. */
+  flag?: string;
 }
 
 const landFeatures = feature(
@@ -100,7 +103,8 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
     return () => ro.disconnect();
   }, []);
 
-  const height = view === 'globe' ? Math.min(width, 560) : Math.min(Math.round(width * 0.55), 520);
+  // Equal Earth's full outline is about 2.05 times wider than it is tall.
+  const height = view === 'globe' ? Math.min(width, 560) : Math.round(width / 2.05);
 
   // --- projection ------------------------------------------------------------
   const projection = React.useMemo<GeoProjection>(() => {
@@ -114,14 +118,16 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
         // frame to the next, so silhouette edges flicker in and out.
         .clipAngle(89.999);
     }
-    return geoMercator()
-      .scale(width / (2 * Math.PI))
-      .translate([width / 2, height / 2])
-      // Bounds the projection's otherwise-unbounded vertical extent - without
-      // this, polygons that reach toward the poles (Antarctica, high-latitude
-      // timezone wedges) project to enormous or infinite y and can smear
-      // across the whole map instead of clipping neatly at the frame edge.
-      .clipExtent([[0, 0], [width, height]]);
+    // Equal Earth (Šavrič, Patterson & Jenny, 2018): an equal-area
+    // pseudocylindrical projection, so timezone bands and continents keep
+    // their true relative sizes, unlike Mercator's polar blow-up.
+    return geoEqualEarth().fitExtent(
+      [
+        [2, 2],
+        [width - 2, height - 2],
+      ],
+      { type: 'Sphere' }
+    );
   }, [view, width, height, rotation]);
 
   const path = React.useMemo(() => geoPath(projection), [projection]);
@@ -137,7 +143,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
       const night = geoCircle().center(antipode(sun)).radius(90)();
       return path(night);
     }
-    // Mercator (and any other cylindrical projection) can't render that same
+    // The flat map (and any other cylindrical projection) can't render that same
     // spherical circle: once it wraps near a pole the projected path folds
     // over itself into the diagonal streaks/blobs this used to show. Instead
     // walk the actual terminator curve, which is a well-behaved simple ring.
@@ -211,20 +217,20 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
     return geoDistance([lon, lat], [-rotation[0], -rotation[1]]) < Math.PI / 2 - 0.05;
   };
 
-  const showTooltip = (e: { clientX: number; clientY: number }, lines: string[]) => {
+  const showTooltip = (e: { clientX: number; clientY: number }, lines: string[], flag?: string) => {
     const rect = containerRef.current!.getBoundingClientRect();
-    setTooltip({ x: e.clientX - rect.left, y: e.clientY - rect.top, lines });
+    setTooltip({ x: e.clientX - rect.left, y: e.clientY - rect.top, lines, flag });
   };
 
   /** Tap-to-pin handler shared by city markers and timezone regions: shows
    *  the tooltip like hover would, but keeps it (and the paused rotation)
    *  open until the user taps the background or another target. */
-  const pinTooltip = (e: React.MouseEvent, zone: number | null, lines: string[]) => {
+  const pinTooltip = (e: React.MouseEvent, zone: number | null, lines: string[], flag?: string) => {
     e.stopPropagation();
     hoverPauseRef.current = true;
     setPinned(true);
     setHoverZone(zone);
-    showTooltip(e, lines);
+    showTooltip(e, lines, flag);
   };
 
   const clearPinned = () => {
@@ -379,10 +385,10 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 onToggleCity(c.timezone);
-                pinTooltip(e, null, [`${c.flag} ${c.city}, ${c.country}`, `${local.format(timeFmt)} · GMT${local.format('Z').replace(':00', '')}`]);
+                pinTooltip(e, null, [`${c.city}, ${c.country}`, `${local.format(timeFmt)} · GMT${local.format('Z').replace(':00', '')}`], c.flag);
               }}
               onPointerMove={(e) =>
-                showTooltip(e, [`${c.flag} ${c.city}, ${c.country}`, `${local.format(timeFmt)} · GMT${local.format('Z').replace(':00', '')}`])
+                showTooltip(e, [`${c.city}, ${c.country}`, `${local.format(timeFmt)} · GMT${local.format('Z').replace(':00', '')}`], c.flag)
               }
               onPointerLeave={() => { if (!pinned) setTooltip(null); }}
             >
@@ -440,7 +446,8 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
           style={{ left: tooltip.x + 12, top: tooltip.y + 12 }}
         >
           {tooltip.lines.map((l, i) => (
-            <div key={i} className={i === 0 ? 'font-medium' : 'text-muted-foreground tabular-nums'}>
+            <div key={i} className={i === 0 ? 'flex items-center gap-1.5 font-medium' : 'text-muted-foreground tabular-nums'}>
+              {i === 0 && tooltip.flag && <Flag emoji={tooltip.flag} />}
               {l}
             </div>
           ))}

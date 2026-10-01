@@ -1,3 +1,4 @@
+import { ClearButton } from '@/components/ui/clear-button';
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Gear, Upload, Trash, QrCode as QrCodeIcon, QrCode, DownloadSimple, ArrowClockwise, Info } from 'phosphor-react';
+import { Download, Gear, Upload, QrCode as QrCodeIcon, QrCode, DownloadSimple, ArrowClockwise, Info } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -18,6 +19,7 @@ import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PageHeader } from "@/components/page-header";
 
+import { ToolMethodology } from '@/components/tool-methodology';
 type PayloadType = "url" | "text" | "email" | "sms" | "tel" | "wifi";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type WifiEncryption = "WPA" | "WEP" | "nopass";
@@ -594,13 +596,13 @@ export default function QrCodeGeneratorPage() {
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* Big heading */}
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">QR Code Generator</h1>
               <p className="text-lg text-muted-foreground">Generate QR codes from text or URLs.</p>
             </div>
             
             <div className="space-y-8">
-              <div className="grid lg:grid-cols-3 gap-8 h-full">
+              <div className="grid lg:grid-cols-3 gap-8 lg:items-start">
               {/* Left Panel: Inputs & Customization */}
               <div className="lg:col-span-2 space-y-8">
                 <Card className="minimal-card">
@@ -808,9 +810,7 @@ export default function QrCodeGeneratorPage() {
                                       <div className="text-xs text-muted-foreground">Max 20% recommended to ensure QR remains scannable on devices like iPhone camera.</div>
                                     </div>
                                 </div>
-                                <Button variant="outline" onClick={clearLogo} className="w-full text-destructive hover:text-destructive">
-                                    <Trash className="mr-2 h-4 w-4" /> Clear Logo
-                                </Button>
+                                <ClearButton onClear={clearLogo} hasContent label="Clear Logo" size="default" className="w-full" confirmTitle="Remove the logo?" confirmDescription="The logo will be removed from the QR code." />
                             </div>
                         )}
                     </div>
@@ -819,7 +819,7 @@ export default function QrCodeGeneratorPage() {
               </div>
 
               {/* Right Panel: Preview & Download */}
-              <div className="lg:col-span-1 space-y-8">
+              <div className="lg:col-span-1 space-y-8 lg:sticky lg:top-20">
                 <Card className="h-fit minimal-card">
                   <CardHeader className="pb-3 md:pb-4">
                     <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Preview</CardTitle>
@@ -900,6 +900,7 @@ export default function QrCodeGeneratorPage() {
             <QRCodeSVG {...svgQrPropsDownload} ref={qrSvgDownloadRef} />
           </div>
         )}
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

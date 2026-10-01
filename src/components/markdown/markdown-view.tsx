@@ -159,7 +159,7 @@ export function MarkdownView({ content }: MarkdownViewProps) {
   return (
     <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
       <div className="w-full max-w-7xl mx-auto">
-        <div className="flex gap-8">
+        <div className="flex gap-12 xl:gap-16">
           {/* Main content */}
           <article
             className="markdown-preview flex-1 max-w-none"

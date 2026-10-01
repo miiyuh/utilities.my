@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
@@ -6,11 +7,15 @@ import { ArrowCounterClockwise, Gear } from 'phosphor-react'
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
 import { ThemeToggleButton } from "@/components/theme-toggle-button"
-import { useSettings, UnitSystem, DateFormat, NumberFormat, Currency } from '@/contexts/settings-context'
+import { useSettings, UnitSystem, DateFormat, NumberFormat, Currency, TimeFormat } from '@/contexts/settings-context'
 import { PageHeader } from "@/components/page-header";
+import { format } from 'date-fns'
+import { DATE_PRESETS, fnsPatterns, type DatePreset } from '@/lib/format'
 
 export default function SettingsPage() {
   const { settings, updateSetting, resetSettings } = useSettings()
+  // Captured once so the example times in the menus stay stable while you browse them.
+  const [now] = useState(() => new Date())
 
   // Get available timezones
   const timeZones = (Intl as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf?.('timeZone') ?? []
@@ -92,13 +97,35 @@ export default function SettingsPage() {
                         <SelectValue placeholder="Select date format" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="MM/DD/YYYY">MM/DD/YYYY (US)</SelectItem>
-                        <SelectItem value="DD/MM/YYYY">DD/MM/YYYY (EU)</SelectItem>
-                        <SelectItem value="ISO">YYYY-MM-DD (ISO)</SelectItem>
+                        {(Object.keys(DATE_PRESETS) as DatePreset[]).map((preset) => {
+                          const p = fnsPatterns(preset, settings.timeFormat)
+                          return (
+                            <SelectItem key={preset} value={preset}>
+                              {DATE_PRESETS[preset].label}: {format(now, p.long)} · {format(now, p.numeric)}
+                            </SelectItem>
+                          )
+                        })}
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-muted-foreground">
                       Date format used in date-related tools and displays.
+                    </p>
+                  </div>
+
+                  {/* Time Format */}
+                  <div className="space-y-2">
+                    <Label htmlFor="timeFormat">Time Format</Label>
+                    <Select value={settings.timeFormat} onValueChange={(value: TimeFormat) => updateSetting('timeFormat', value)}>
+                      <SelectTrigger id="timeFormat">
+                        <SelectValue placeholder="Select time format" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="12h">12-hour ({format(now, 'h:mm a')})</SelectItem>
+                        <SelectItem value="24h">24-hour ({format(now, 'HH:mm')})</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      Default clock for time-related tools. Each tool can still switch for the session.
                     </p>
                   </div>
 
@@ -113,7 +140,7 @@ export default function SettingsPage() {
                         <div className="font-medium text-sm p-2 text-muted-foreground">Common Timezones</div>
                         {commonTimeZones.map((tz) => (
                           <SelectItem key={tz} value={tz}>
-                            {tz} ({new Date().toLocaleTimeString('en-US', { timeZone: tz, timeZoneName: 'short' }).split(' ')[1]})
+                            {tz} ({now.toLocaleTimeString('en-US', { timeZone: tz, timeZoneName: 'short' }).split(' ')[1]})
                           </SelectItem>
                         ))}
                         <div className="font-medium text-sm p-2 text-muted-foreground border-t mt-2">All Timezones</div>

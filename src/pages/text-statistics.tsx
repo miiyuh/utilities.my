@@ -1,3 +1,4 @@
+import { ClearButton } from '@/components/ui/clear-button';
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from "@/components/page-header";
 
+import { ToolMethodology } from '@/components/tool-methodology';
 type WordCount = { word: string; count: number };
 interface FullStats {
   characters: number;
@@ -173,7 +175,7 @@ export default function TextStatisticsPage() {
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Statistics</h1>
               <p className="text-lg text-muted-foreground">Analyse text for counts, reading time, and distributions with live options.</p>
             </div>
@@ -190,7 +192,7 @@ export default function TextStatisticsPage() {
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="h-4 w-4 mr-1"/> Import</Button>
                     <Button variant="outline" size="sm" onClick={handleExportJson} disabled={!stats}><Upload className="h-4 w-4 mr-1"/> Export JSON</Button>
                     <CopyButton value={buildSummary} label="Copy summary" toastDescription="Summary copied." size="sm" disabled={!stats} />
-                    <Button variant="outline" size="sm" onClick={handleClear} className="ml-auto">Clear</Button>
+                    <ClearButton onClear={handleClear} hasContent={Boolean(inputText)} className="ml-auto" confirmTitle="Clear the text?" confirmDescription="This removes the text you are analysing. It can't be undone." />
                   </div>
                   <Textarea
                     id="textInput"
@@ -304,6 +306,7 @@ export default function TextStatisticsPage() {
             </div>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

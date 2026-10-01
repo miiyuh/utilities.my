@@ -3,102 +3,67 @@ import { MarkdownPage } from '@/components/markdown/markdown-page';
 
 const TERMS_CONTENT = `# Terms of Service
 
-*Last Updated: 2025-08-06*
+*Last Updated: 2026-10-01*
 
-These Terms of Service ("Terms") govern your use of utilities.my and all related services. By accessing or using our platform, you agree to be bound by these Terms.
+These terms apply to your use of utilities.my. By using the site, you agree to them. If you don't agree, please don't use the site.
 
-## 1. Acceptance of Terms
+## 1. The service
 
-### 1.1 Agreement
+utilities.my is a free collection of browser-based tools:
 
-By accessing utilities.my, you confirm that you:
+- **Text**: Text Case Converter, Text Statistics, Sorter, Markdown Previewer, Morse Code Generator
+- **Numbers and units**: Unit Converter, Percentage Calculator, BMI Calculator, Foot Size Converter
+- **Time and dates**: Unix Timestamp Converter, Date Difference Calculator, Timezone Converter, World Clock
+- **Images and colour**: Image Converter, Favicon Generator, Colour Picker, QR Code Generator
+- **Everyday**: Spin the Wheel, Palang IC
 
-- Are at least 13 years of age
-- Have the legal capacity to enter into this agreement
-- Agree to comply with all applicable laws and regulations
-- Accept these Terms in their entirety
+There are no accounts and no fees. Tools run in your browser, as described in the [Privacy Policy](/privacy). We may add, change or remove tools at any time.
 
-### 1.2 Binding Agreement
+## 2. Using the tools
 
-These Terms constitute a legally binding agreement between you and utilities.my. If you disagree with any part of these Terms, you must discontinue use of our services immediately.
+### 2.1 You're welcome to
 
-## 2. Description of Service
+Use the tools for personal, educational and commercial purposes, including for work and for files or content you create with them.
 
-### 2.1 What We Provide
+### 2.2 Please don't
 
-utilities.my offers a comprehensive suite of web-based utility tools including:
+- Use the site for anything illegal, or to process content you have no right to use
+- Use Palang IC, or any other tool, on documents that aren't yours or that you aren't authorised to handle
+- Attempt to disrupt, overload or break the site, or bypass its security
+- Scrape or mirror the site in a way that degrades it for others
 
-#### Text Tools
-- Text case conversion (uppercase, lowercase, title case, camelCase)
-- Text statistics and analysis (word count, character count, reading time)
-- Markdown preview and editing
-- Text sorting and organization
+## 3. Accuracy of results
 
-#### Media Tools
-- Image to ASCII art conversion
-- Colour picker and palette tools
-- File compression (ZIP creation)
-- Image format conversion
+We work to make every tool correct, and the [How the tools work](/about#methodology) section lists the formulas and sources each one uses. Even so:
 
-#### Productivity Tools
-- Date difference calculator
-- Unix timestamp converter
-- Timezone converter and world clock
-- Unit converter (length, weight, temperature, etc.)
+- **Results are for general information.** Check anything important against an authoritative source.
+- **Health tools are not medical advice.** The BMI Calculator is a screening measure, not a diagnosis. Talk to a healthcare professional about your health.
+- **Conversions and estimates can be approximate.** For example, shoe sizes vary between brands, CMYK values are not print-accurate, and reading times are averages.
+- **Random tools are for fun.** Spin the Wheel and shuffling aren't suitable for draws with real stakes.
 
-#### Fun Tools
-- QR code generator
-- Spin the wheel decision maker
-- Random list sorter
-- Password generator
+## 4. Your content
 
-### 2.2 Service Characteristics
+Anything you put into a tool remains yours. It is processed on your device, and we never receive it. You are responsible for the content you use with the tools and for keeping your own copies of anything important.
 
-Our platform is designed with the following principles:
+## 5. Open source
 
-- **Client-side processing**: Most tools work entirely in your browser
-- **No registration required**: Use tools without creating accounts
-- **Privacy-focused**: Minimal data collection and processing
-- **Free to use**: All tools are available at no cost
-- **Open source friendly**: Built with transparency in mind
+The site's source code is available on [GitHub](https://github.com/miiyuh/utilities.my) under the MIT License, which governs your use of the code itself. These terms govern your use of the hosted website.
 
-## 3. Acceptable Use Policy
+## 6. No warranty
 
-### 3.1 Permitted Uses
+The site is provided **"as is"** and **"as available"**, without warranties of any kind, express or implied. We don't guarantee that the site will always be available, uninterrupted or error-free.
 
-You may use utilities.my for:
+## 7. Limitation of liability
 
-- Personal projects and productivity enhancement
-- Educational purposes and learning
-- Professional work and development
-- Creative projects and experimentation
-- Research and analysis
-- Commercial projects (within legal bounds)
+To the fullest extent permitted by law, utilities.my and its maintainer are not liable for any indirect, incidental, special or consequential damages, or for any loss of data, profits or business, arising from your use of the site or reliance on its results.
 
-### 3.2 Prohibited Uses
+## 8. Changes to these terms
 
-You must **NOT** use our services for:
+We may update these terms from time to time. When we do, we'll change the date at the top. Continuing to use the site after an update means you accept the new terms.
 
-- Illegal activities or content processing
-- Harassment, hate speech, or harmful content creation
-- Attempting to break, hack, or exploit our systems
-- Distributing malware or malicious code
-- Violating intellectual property rights
-- Spamming or automated abuse
+## 9. Contact
 
-## 4. Disclaimers and Limitations
-
-### 4.1 Service Disclaimer
-
-utilities.my is provided **"AS IS"** and **"AS AVAILABLE"** without warranties of any kind.
-
-### 4.2 Limitation of Liability
-
-To the maximum extent permitted by law, utilities.my shall not be liable for any indirect, incidental, special, consequential, or punitive damages.
-
-## 5. Contact
-
-If you have questions about these Terms, please contact us through our website.
+Questions about these terms? Open an issue on [GitHub](https://github.com/miiyuh/utilities.my/issues) or get in touch through [miiyuh.com](https://miiyuh.com).
 `;
 
 export default function TermsPage() {

@@ -23,6 +23,7 @@ const TOOL_ORDER = [
   'Spin the Wheel',
   'Colour Picker',
   'Image Converter',
+  'Favicon Generator',
   'Markdown Previewer',
   'Morse Code Generator',
   'Sorter',
@@ -64,11 +65,11 @@ export default function Home() {
                   <span className="font-serif italic font-normal text-primary">done right.</span>
                 </h1>
                 <p className={`text-lg text-muted-foreground max-w-xl ${heroStagger} [animation-delay:calc(var(--duration-stagger)*2)]`}>
-                  Eighteen fast, free utilities that run entirely in your browser.
-                  No accounts, no ads, nothing ever leaves your device.
+                  Privacy matters more than ever, and it shouldn&apos;t cost you usability. Everything here
+                  runs in your browser and stays there. Go ahead, use it, and if it helps, share it with a friend!
                 </p>
                 <p className={`text-sm text-muted-foreground/80 ${heroStagger} [animation-delay:calc(var(--duration-stagger)*4)]`}>
-                  18 tools · Free forever · No accounts · Runs in your browser
+                  {sortedTools.length} tools · Free forever · No accounts · Runs in your browser
                 </p>
               </div>
             </div>
@@ -76,9 +77,9 @@ export default function Home() {
 
           {/* Tool grid */}
           <section className="max-w-6xl mx-auto px-4 lg:px-8 pb-16">
-            <p className="font-code text-xs uppercase tracking-widest text-muted-foreground mb-5">
+            <h2 className="font-code text-xs uppercase tracking-widest text-muted-foreground mb-5">
               All tools
-            </p>
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
               {sortedTools.map((tool, i) => (
                 <Link
@@ -96,7 +97,7 @@ export default function Home() {
                   <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors duration-quick">
                     {tool.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {tool.description}
                   </p>
                 </Link>

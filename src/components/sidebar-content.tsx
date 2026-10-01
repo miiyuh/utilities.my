@@ -57,19 +57,18 @@ export function SidebarContent() {
           height={24}
           className="object-contain transition-all duration-quick group-data-[collapsible=icon]:scale-90 group-data-[collapsible=icon]:hidden"
         />
-        {/* compact fallback shown only when collapsed */}
-        <div className="hidden group-data-[collapsible=icon]:inline-flex items-center justify-center rounded-md h-8 w-8">
-          <img
-            src="/apple-touch-icon.png"
-            alt="utilities.my"
-            width={32}
-            height={32}
-            className="h-8 w-8 rounded-lg object-contain"
-          />
-        </div>
+        {/* Compact mark shown only when collapsed: just the "u", no background tile. */}
+        <img
+          src="/assets/img/utilities-my_mark.svg"
+          alt="utilities.my"
+          width={28}
+          height={28}
+          className="hidden h-7 w-7 object-contain group-data-[collapsible=icon]:block"
+        />
       </SidebarHeader>
-      <SidebarScrollableContent className="flex-1 p-3 pt-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
-        <ScrollArea className="h-full w-full">
+      <SidebarScrollableContent className="flex-1 p-3 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
+        <ScrollArea className="h-full w-full" hideScrollbar>
+          <nav aria-label="Tools">
           <SidebarMenu className="space-y-1.5 group-data-[collapsible=icon]:items-center">
             {sortedTools.map((tool) => (
               <SidebarMenuItem key={tool.path}>
@@ -94,10 +93,11 @@ export function SidebarContent() {
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
+          </nav>
         </ScrollArea>
       </SidebarScrollableContent>
       {/* Combined bottom section */}
-      <div className="p-3 pt-3 border-t border-sidebar-border group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
+      <nav aria-label="Site" className="p-3 pt-3 border-t border-sidebar-border group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
         <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
           {/* Left: Small text links - render only when expanded */}
           {!isCollapsed && (
@@ -131,17 +131,17 @@ export function SidebarContent() {
                       ? "bg-primary text-primary-foreground hover:bg-primary/90"
                       : "text-muted-foreground hover:bg-sidebar-accent"
                   )}
-                  title="About"
                   onClick={handleLinkClick}
+                  aria-label="About"
                 >
-                  <Info className="h-4 w-4" />
+                  <Info className="h-4 w-4" aria-hidden />
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right" align="center" hidden={state !== 'collapsed' || isMobile}>About</TooltipContent>
+              <TooltipContent side="right" align="center" hidden={isMobile}>About</TooltipContent>
             </Tooltip>
           </div>
         </div>
-      </div>
+      </nav>
     </>
   )
 }

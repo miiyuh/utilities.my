@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from "@/components/page-header";
 
+import { ToolMethodology } from '@/components/tool-methodology';
+import { Hint } from '@/components/ui/tooltip';
 type Gender = 'men' | 'women' | 'kids';
 type Region = 'us' | 'uk' | 'eu' | 'cm';
 
@@ -109,7 +111,7 @@ export default function FootSizeConverterPage() {
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
                 Shoe Size Converter & Reference
               </h1>
@@ -307,10 +309,9 @@ export default function FootSizeConverterPage() {
                           </TableHeader>
                           <TableBody>
                             {filteredData.map((row, idx) => (
-                              <TableRow
-                                key={idx}
+                              <Hint label="Click to use this size" key={idx}>
+                                <TableRow
                                 className="cursor-pointer hover:bg-muted/50"
-                                title="Click to use this size"
                                 onClick={() => {
                                   setSelectedSize(row[selectedRegion]);
                                 }}
@@ -320,6 +321,7 @@ export default function FootSizeConverterPage() {
                                 <TableCell className="text-center">{row.eu}</TableCell>
                                 <TableCell className="text-center">{row.cm}</TableCell>
                               </TableRow>
+                              </Hint>
                             ))}
                           </TableBody>
                         </Table>
@@ -358,6 +360,7 @@ export default function FootSizeConverterPage() {
             </Tabs>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

@@ -12,7 +12,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/page-header";
+import { ToolMethodology } from '@/components/tool-methodology';
 import { CopyButton } from "@/components/ui/copy-button";
+import { useToolSettings } from "@/hooks/use-tool-settings";
+import { formatNumber } from "@/lib/format";
 
 interface DateDiff {
   years: number;
@@ -123,14 +126,15 @@ function TimePicker({ date, onChange, is24Hour }: { date: Date; onChange: (date:
 }
 
 export default function DateDiffCalculatorPage() {
-  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [startDate, setStartDate] = useState<Date>(() => new Date());
   const [endDate, setEndDate] = useState<Date>(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow;
   });
   const [includeTime, setIncludeTime] = useState(false);
-  const [is24Hour, setIs24Hour] = useState(false);
+  const { fns, is24h, numberFormat } = useToolSettings();
+  const [is24Hour, setIs24Hour] = useState(is24h);
 
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [isEndOpen, setIsEndOpen] = useState(false);
@@ -284,12 +288,12 @@ export default function DateDiffCalculatorPage() {
       ['second', diffResult.seconds] as [string, number],
     ].filter(([, v]) => v > 0)
     if (!ordered.length) return 'No difference (dates are the same).'
-    const top = ordered.slice(0, 3).map(([l, v]) => `${v.toLocaleString()} ${l}${v!==1?'s':''}`)
+    const top = ordered.slice(0, 3).map(([l, v]) => `${formatNumber(v, numberFormat, 0)} ${l}${v!==1?'s':''}`)
     return top.join(', ')
-  }, [diffResult])
+  }, [diffResult, numberFormat])
 
-  const timeFormat = is24Hour ? "HH:mm" : "hh:mm aa";
-  const displayFormat = includeTime ? `d MMMM yyyy ${timeFormat}` : "d MMMM yyyy";
+  const timeFormat = is24Hour ? "HH:mm" : "h:mm a";
+  const displayFormat = includeTime ? `${fns.long}, ${timeFormat}` : fns.long;
 
   return (
     <>
@@ -302,7 +306,7 @@ export default function DateDiffCalculatorPage() {
 
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Date Difference Calculator</h1>
               <p className="text-lg text-muted-foreground max-w-3xl">Calculate the difference between two dates with precision.</p>
             </div>
@@ -439,7 +443,7 @@ export default function DateDiffCalculatorPage() {
                               className="flex items-baseline gap-3 px-3 py-2 rounded-xl transition-colors duration-quick hover:bg-muted/40 border border-transparent hover:border-border/50"
                             >
                               <span className="text-5xl font-serif text-primary tabular-nums">
-                                {r.value.toLocaleString()}
+                                {formatNumber(r.value, numberFormat, 0)}
                               </span>
                               <span className="text-sm font-medium text-muted-foreground">{r.label}</span>
                             </div>
@@ -454,7 +458,7 @@ export default function DateDiffCalculatorPage() {
                               className="flex items-baseline gap-3 px-3 py-2 rounded-xl transition-colors duration-quick hover:bg-muted/40 border border-transparent hover:border-border/50"
                             >
                               <span className="text-5xl font-serif text-primary tabular-nums">
-                                {r.value.toLocaleString()}
+                                {formatNumber(r.value, numberFormat, 0)}
                               </span>
                               <span className="text-sm font-medium text-muted-foreground">{r.label}</span>
                             </div>
@@ -468,6 +472,7 @@ export default function DateDiffCalculatorPage() {
             </Card>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

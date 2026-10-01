@@ -1,3 +1,4 @@
+import { Flag } from '@/components/flag';
 import React from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -5,6 +6,7 @@ import timezone from 'dayjs/plugin/timezone';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
+import { ToolMethodology } from '@/components/tool-methodology';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Combobox } from '@/components/ui/combobox';
@@ -13,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GlobeClock, type GlobeView, type GlobeMode } from '@/components/globe-clock';
 import { cn } from '@/lib/utils';
+import { useToolSettings } from '@/hooks/use-tool-settings';
 import { CITY_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
 import { Clock, Sun, Moon, X, MagnifyingGlass, DotsSixVertical } from 'phosphor-react';
 import {
@@ -71,7 +74,7 @@ function PinnedCityRow({ tz, isHome, isDay, flag, timeLabel, dateLabel, onRemove
       >
         <DotsSixVertical className="h-4 w-4" />
       </button>
-      <span className="flag-emoji">{flag}</span>
+      <Flag emoji={flag} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="truncate text-sm font-medium">{zoneLabel(tz)}</span>
@@ -106,7 +109,8 @@ export default function WorldClockPage() {
   const localZone = React.useMemo(() => dayjs.tz.guess(), []);
   const [now, setNow] = React.useState(() => dayjs());
   const [search, setSearch] = React.useState('');
-  const [use24h, setUse24h] = React.useState(true);
+  const { dayjs: dj, is24h } = useToolSettings();
+  const [use24h, setUse24h] = React.useState(is24h);
   const [showSeconds, setShowSeconds] = React.useState(true);
   const [view, setView] = React.useState<GlobeView>('globe');
   const [mode, setMode] = React.useState<GlobeMode>('cities');
@@ -166,7 +170,8 @@ export default function WorldClockPage() {
     () =>
       CITY_ZONES.filter((c) => !zones.includes(c.timezone)).map((c) => ({
         value: c.timezone,
-        label: `${c.flag} ${c.city}`,
+        label: c.city,
+        leading: <Flag emoji={c.flag} />,
         description: `${c.country} · ${c.timezone}`,
       })),
     [zones]
@@ -192,7 +197,7 @@ export default function WorldClockPage() {
 
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="hidden sm:block">
+            <div className="max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 text-foreground border-b border-border pb-4">
                 World Clock
               </h1>
@@ -210,7 +215,7 @@ export default function WorldClockPage() {
                   <Tabs value={view} onValueChange={(v) => setView(v as GlobeView)}>
                     <TabsList>
                       <TabsTrigger value="globe">Globe</TabsTrigger>
-                      <TabsTrigger value="map">Mercator</TabsTrigger>
+                      <TabsTrigger value="map">Equal Earth</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
@@ -295,9 +300,9 @@ export default function WorldClockPage() {
                             tz={tz}
                             isHome={isHome}
                             isDay={isDay}
-                            flag={city?.flag ?? '🌐'}
+                            flag={city?.flag ?? ''}
                             timeLabel={t.format(timeFmt)}
-                            dateLabel={`${t.format('ddd, MMM D')} · GMT${t.format('Z').replace(':00', '')}`}
+                            dateLabel={`${t.format(dj.weekday)} · GMT${t.format('Z').replace(':00', '')}`}
                             onRemove={() => removeZone(tz)}
                           />
                         );
@@ -314,6 +319,7 @@ export default function WorldClockPage() {
             </div>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

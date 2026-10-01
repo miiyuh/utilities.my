@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import { Hint } from '@/components/ui/tooltip';
 
 export type ColorPickerProps = Omit<
   HTMLAttributes<HTMLDivElement>,
@@ -254,15 +255,16 @@ export function ColorPicker({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div
+        <Hint label={hexInput}>
+          <div
           className={cn(
             'h-10 w-10 rounded border border-border/70 shadow-sm cursor-pointer transition-colors hover:border-primary/70',
             className
           )}
           style={{ backgroundColor: currentColor }}
-          title={hexInput}
           {...(props as React.HTMLAttributes<HTMLDivElement>)}
         />
+        </Hint>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-4" align="start">
         <div className="space-y-4">

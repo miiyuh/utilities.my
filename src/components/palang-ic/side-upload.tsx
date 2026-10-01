@@ -3,6 +3,7 @@ import { UploadSimple, Crop, Trash, ArrowsClockwise } from 'phosphor-react'
 import { Button } from '@/components/ui/button'
 import { humanSize } from '@/lib/image-utils'
 import type { CardSide } from '@/lib/palang-ic'
+import { Hint } from '@/components/ui/tooltip'
 
 interface SideUploadProps {
   label: 'Front' | 'Back'
@@ -100,9 +101,11 @@ export function SideUpload({ label, hint, side, busy = false, onFile, onRemove, 
               />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground" title={side.file.name}>
+              <Hint label={side.file.name}>
+                <p className="truncate text-sm font-medium text-foreground">
                 {side.file.name}
               </p>
+              </Hint>
               <p className="text-xs text-muted-foreground">
                 {humanSize(side.file.size)} · {side.width}×{side.height}px
               </p>

@@ -1,10 +1,12 @@
+import { ClearButton } from '@/components/ui/clear-button';
 import React from "react";
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { Activity, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, ShareNetwork } from "phosphor-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
+import { useToolSettings } from "@/hooks/use-tool-settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -16,17 +18,29 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from "@/components/page-header";
 
+import { ToolMethodology } from '@/components/tool-methodology';
 type UnitSystem = "metric" | "imperial";
 
 function clamp(num: number, min: number, max: number) {
   return Math.min(max, Math.max(min, num));
 }
 
-function classifyBMI(bmi: number) {
+type BmiStandard = "who" | "asian";
+
+// Category lower bounds. WHO international cut-offs, and the lower action
+// points from the WHO expert consultation for Asian populations (Lancet 2004),
+// which Malaysia's Clinical Practice Guidelines on obesity adopt.
+const BMI_STANDARDS: Record<BmiStandard, { label: string; short: string; underweight: number; overweight: number; obese: number }> = {
+  who: { label: "WHO (international)", short: "WHO", underweight: 18.5, overweight: 25, obese: 30 },
+  asian: { label: "Asian (WHO 2004 / Malaysia CPG)", short: "Asian", underweight: 18.5, overweight: 23, obese: 27.5 },
+};
+
+function classifyBMI(bmi: number, standard: BmiStandard) {
+  const t = BMI_STANDARDS[standard];
   if (!isFinite(bmi) || bmi <= 0) return { label: "-", color: "", hint: "Enter height and weight", icon: null };
-  if (bmi < 18.5) return { label: "Underweight", color: "text-blue-500", hint: "Below healthy range", icon: ArrowDown };
-  if (bmi < 25) return { label: "Healthy", color: "text-green-500", hint: "Within healthy range", icon: Heart };
-  if (bmi < 30) return { label: "Overweight", color: "text-amber-500", hint: "Above healthy range", icon: TrendUp };
+  if (bmi < t.underweight) return { label: "Underweight", color: "text-blue-500", hint: "Below healthy range", icon: ArrowDown };
+  if (bmi < t.overweight) return { label: "Healthy", color: "text-green-500", hint: "Within healthy range", icon: Heart };
+  if (bmi < t.obese) return { label: "Overweight", color: "text-amber-500", hint: "Above healthy range", icon: TrendUp };
   return { label: "Obesity", color: "text-red-500", hint: "Significantly above healthy range", icon: Warning };
 }
 
@@ -34,6 +48,7 @@ const STORAGE_KEY = "utilities.bmi-calculator";
 
 interface InitialFields {
   unitSystem: UnitSystem | null;
+  standard: BmiStandard;
   heightCm: string;
   weightKg: string;
   heightFt: string;
@@ -80,8 +95,15 @@ function readInitialFields(): InitialFields {
   const unitSystem: UnitSystem | null =
     sharedUnit ?? (storedUnit === "metric" || storedUnit === "imperial" ? storedUnit : null);
 
+  const standardParam = params.get("s");
+  const standard: BmiStandard =
+    standardParam === "asian" || standardParam === "who"
+      ? standardParam
+      : saved.standard === "asian" ? "asian" : "who";
+
   return {
     unitSystem,
+    standard,
     heightCm: pick("h", "heightCm"),
     weightKg: pick("w", "weightKg"),
     heightFt: pick("ft", "heightFt"),
@@ -92,11 +114,14 @@ function readInitialFields(): InitialFields {
 
 export default function BmiCalculatorPage() {
   const { settings } = useSettings();
+  const { formatNumber } = useToolSettings();
   const [initial] = React.useState(readInitialFields);
   const initialUnit: UnitSystem =
     initial.unitSystem ?? (settings?.defaultUnits === "imperial" ? "imperial" : "metric");
 
   const [unitSystem, setUnitSystem] = React.useState<UnitSystem>(initialUnit);
+  const [standard, setStandard] = React.useState<BmiStandard>(initial.standard);
+  const t = BMI_STANDARDS[standard];
   const [heightCm, setHeightCm] = React.useState<string>(initial.heightCm);
   const [weightKg, setWeightKg] = React.useState<string>(initial.weightKg);
   const [heightFt, setHeightFt] = React.useState<string>(initial.heightFt);
@@ -104,9 +129,9 @@ export default function BmiCalculatorPage() {
   const [weightLb, setWeightLb] = React.useState<string>(initial.weightLb);
 
   React.useEffect(() => {
-    const data = { unitSystem, heightCm, weightKg, heightFt, heightIn, weightLb };
+    const data = { unitSystem, standard, heightCm, weightKg, heightFt, heightIn, weightLb };
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
-  }, [unitSystem, heightCm, weightKg, heightFt, heightIn, weightLb]);
+  }, [unitSystem, standard, heightCm, weightKg, heightFt, heightIn, weightLb]);
 
   const bmi = React.useMemo(() => {
     if (unitSystem === "metric") {
@@ -130,7 +155,7 @@ export default function BmiCalculatorPage() {
 
   const display = Number.isFinite(bmi) ? bmi : NaN;
   const rounded = Number.isFinite(display) ? Math.round(display * 10) / 10 : NaN;
-  const cls = classifyBMI(display);
+  const cls = classifyBMI(display, standard);
 
   const heightMeters = React.useMemo(()=>{
     if (unitSystem==='metric') { const hCm=parseFloat(heightCm); return hCm>0? hCm/100: NaN; }
@@ -144,11 +169,20 @@ export default function BmiCalculatorPage() {
   
   const heightInches = React.useMemo(()=> isFinite(heightMeters) ? heightMeters / 0.0254 : NaN, [heightMeters]);
   const weightLbVal = React.useMemo(()=> isFinite(weightKgVal) ? weightKgVal / 0.45359237 : NaN, [weightKgVal]);
-  const idealMin = isFinite(heightMeters) ? 18.5 * heightMeters * heightMeters : NaN;
-  const idealMax = isFinite(heightMeters) ? 24.9 * heightMeters * heightMeters : NaN;
-  const bmiPrime = isFinite(display) ? display / 25 : NaN;
+  const healthyMax = Math.round((t.overweight - 0.1) * 10) / 10;
+  const idealMin = isFinite(heightMeters) ? t.underweight * heightMeters * heightMeters : NaN;
+  const idealMax = isFinite(heightMeters) ? healthyMax * heightMeters * heightMeters : NaN;
+  // BMI Prime is BMI over the upper limit of the healthy range.
+  const bmiPrime = isFinite(display) ? display / t.overweight : NaN;
   const midpoint = isFinite(idealMin) && isFinite(idealMax) ? (idealMin+idealMax)/2 : NaN;
   const deltaFromMid = isFinite(weightKgVal) && isFinite(midpoint) ? weightKgVal - midpoint : NaN;
+
+  const bands = [
+    { label: "Underweight", from: 0, to: t.underweight, color: "bg-blue-500/70" },
+    { label: "Healthy", from: t.underweight, to: t.overweight, color: "bg-green-500/70" },
+    { label: "Overweight", from: t.overweight, to: t.obese, color: "bg-amber-500/70" },
+    { label: "Obesity", from: t.obese, to: 40, color: "bg-red-500/70" },
+  ];
 
   const warnings: string[] = [];
   if (isFinite(heightMeters)) {
@@ -175,8 +209,9 @@ export default function BmiCalculatorPage() {
     if (unitSystem==='metric') { if (heightCm) params.set('h', heightCm); if (weightKg) params.set('w', weightKg); }
     else { if (heightFt) params.set('ft', heightFt); if (heightIn) params.set('in', heightIn); if (weightLb) params.set('lb', weightLb); }
     params.set('u', unitSystem);
+    if (standard !== 'who') params.set('s', standard);
     const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    const text = `My BMI is ${rounded.toFixed(1)} (${cls.label}). ${url}`;
+    const text = `My BMI is ${formatNumber(rounded, 1, 1)} (${cls.label}, ${t.short} cut-offs). ${url}`;
 
     if (navigator.share) {
       try {
@@ -247,7 +282,7 @@ export default function BmiCalculatorPage() {
 
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">BMI Calculator</h1>
               <p className="text-lg text-muted-foreground max-w-3xl">Compute your Body Mass Index (BMI) using metric or imperial units.</p>
             </div>
@@ -255,7 +290,7 @@ export default function BmiCalculatorPage() {
             <div>
               <Card className="w-full shadow-sm">
                 <CardContent className="space-y-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
                     <div className="w-full sm:w-60">
                       <Label className="mb-1.5 block">Units</Label>
                       <Select value={unitSystem} onValueChange={(v: UnitSystem) => setUnitSystem(v)}>
@@ -266,10 +301,21 @@ export default function BmiCalculatorPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex flex-row w-full gap-2">
-                      <Button type="button" variant="outline" onClick={handleReset} disabled={!hasInputs} className="h-8 flex-1 sm:flex-initial sm:w-auto"><ArrowCounterClockwise className="h-4 w-4" /> <span className="hidden sm:inline">Reset</span></Button>
+                    <div className="w-full sm:w-72">
+                      <Label htmlFor="bmiStandard" className="mb-1.5 block">Cut-offs</Label>
+                      <Select value={standard} onValueChange={(v: BmiStandard) => setStandard(v)}>
+                        <SelectTrigger id="bmiStandard"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {(Object.keys(BMI_STANDARDS) as BmiStandard[]).map((k) => (
+                            <SelectItem key={k} value={k}>{BMI_STANDARDS[k].label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex flex-row w-full gap-2 sm:w-auto sm:flex-1 sm:min-w-72">
+                      <ClearButton onClear={handleReset} hasContent={hasInputs} label="Reset" icon={ArrowCounterClockwise} size="default" className="h-8 flex-1 sm:flex-initial sm:w-auto" confirmTitle="Reset your measurements?" confirmDescription="This clears the height and weight you entered." />
                       <CopyButton
-                        value={() => `BMI: ${rounded.toFixed(1)} (${cls.label})`}
+                        value={() => `BMI: ${formatNumber(rounded, 1, 1)} (${cls.label}, ${t.short} cut-offs)`}
                         label="Copy BMI"
                         toastDescription="BMI result copied to clipboard."
                         disabled={!Number.isFinite(rounded)}
@@ -283,36 +329,36 @@ export default function BmiCalculatorPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <Label htmlFor="heightCm" className="mb-1.5 block">Height (cm)</Label>
-                        <Input id="heightCm" inputMode="decimal" type="number" min={0} placeholder="e.g., 170" value={heightCm} onChange={(e) => setHeightCm(e.target.value)} />
-                        {isFinite(heightMeters) && <p className="mt-1 text-[11px] text-muted-foreground">≈ {(heightMeters).toFixed(2)} m / {(heightInches).toFixed(1)} in</p>}
+                        <NumberInput id="heightCm" placeholder="e.g., 170" value={heightCm} onValueChange={setHeightCm} />
+                        {isFinite(heightMeters) && <p className="mt-1 text-[11px] text-muted-foreground">≈ {formatNumber(heightMeters, 2, 2)} m / {formatNumber(heightInches, 1, 1)} in</p>}
                       </div>
                       <div>
                         <Label htmlFor="weightKg" className="mb-1.5 block">Weight (kg)</Label>
-                        <Input id="weightKg" inputMode="decimal" type="number" min={0} placeholder="e.g., 65" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} />
-                        {isFinite(weightKgVal) && <p className="mt-1 text-[11px] text-muted-foreground">≈ {(weightLbVal).toFixed(1)} lb</p>}
+                        <NumberInput id="weightKg" placeholder="e.g., 65" value={weightKg} onValueChange={setWeightKg} />
+                        {isFinite(weightKgVal) && <p className="mt-1 text-[11px] text-muted-foreground">≈ {formatNumber(weightLbVal, 1, 1)} lb</p>}
                       </div>
                     </div>
                   ) : (
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div>
                         <Label htmlFor="heightFt" className="mb-1.5 block">Height (ft)</Label>
-                        <Input id="heightFt" inputMode="numeric" type="number" min={0} placeholder="e.g., 5" value={heightFt} onChange={(e) => setHeightFt(e.target.value)} />
+                        <NumberInput id="heightFt" placeholder="e.g., 5" value={heightFt} onValueChange={setHeightFt} />
                       </div>
                       <div>
                         <Label htmlFor="heightIn" className="mb-1.5 block">Height (in)</Label>
-                        <Input id="heightIn" inputMode="numeric" type="number" min={0} placeholder="e.g., 7" value={heightIn} onChange={(e) => setHeightIn(e.target.value)} />
+                        <NumberInput id="heightIn" placeholder="e.g., 7" value={heightIn} onValueChange={setHeightIn} />
                       </div>
                       <div>
                         <Label htmlFor="weightLb" className="mb-1.5 block">Weight (lb)</Label>
-                        <Input id="weightLb" inputMode="decimal" type="number" min={0} placeholder="e.g., 150" value={weightLb} onChange={(e) => setWeightLb(e.target.value)} />
-                        {isFinite(weightLbVal) && <p className="mt-1 text-[11px] text-muted-foreground">≈ {(weightKgVal).toFixed(1)} kg</p>}
+                        <NumberInput id="weightLb" placeholder="e.g., 150" value={weightLb} onValueChange={setWeightLb} />
+                        {isFinite(weightLbVal) && <p className="mt-1 text-[11px] text-muted-foreground">≈ {formatNumber(weightKgVal, 1, 1)} kg</p>}
                       </div>
                     </div>
                   )}
 
                   <div className="space-y-5">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums">{Number.isFinite(rounded) ? rounded.toFixed(1) : "-"}</div>
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums">{Number.isFinite(rounded) ? formatNumber(rounded, 1, 1) : "-"}</div>
                       <Badge variant="secondary" className="text-xs md:text-sm flex items-center gap-1">
                         {cls.icon && React.createElement(cls.icon, { className: "h-3.5 w-3.5" })}
                         <span>{cls.label}</span>
@@ -322,38 +368,36 @@ export default function BmiCalculatorPage() {
 
                     {Number.isFinite(display) && isFinite(idealMin) && isFinite(idealMax) && (
                       <div className="text-xs text-muted-foreground flex flex-wrap gap-2">
-                        <span>Ideal range: {idealMin.toFixed(1)}–{idealMax.toFixed(1)} kg</span>
+                        <span>Ideal range: {formatNumber(idealMin, 1, 1)}–{formatNumber(idealMax, 1, 1)} kg</span>
                         {isFinite(deltaFromMid) && Math.abs(deltaFromMid) > 0.5 && (
-                          <span className="text-[11px]">Δ from midpoint: {deltaFromMid>0?'+':''}{deltaFromMid.toFixed(1)} kg</span>
+                          <span className="text-[11px]">Δ from midpoint: {deltaFromMid>0?'+':''}{formatNumber(deltaFromMid, 1, 1)} kg</span>
                         )}
-                        {isFinite(bmiPrime) && <span>BMI Prime: {bmiPrime.toFixed(2)}</span>}
+                        {isFinite(bmiPrime) && <span>BMI Prime: {formatNumber(bmiPrime, 2, 2)}</span>}
                       </div>
                     )}
 
                     <div className="space-y-1">
                       <div className="relative w-full">
                         <div className="relative h-3 sm:h-4 w-full overflow-hidden bg-muted/40">
-                          <div className="absolute inset-y-0 left-0 bg-blue-500/70" style={{ width: `${(18.5/40)*100}%` }} />
-                          <div className="absolute inset-y-0 bg-green-500/70" style={{ left: `${(18.5/40)*100}%`, width: `${((25-18.5)/40)*100}%` }} />
-                          <div className="absolute inset-y-0 bg-amber-500/70" style={{ left: `${(25/40)*100}%`, width: `${((30-25)/40)*100}%` }} />
-                          <div className="absolute inset-y-0 bg-red-500/70" style={{ left: `${(30/40)*100}%`, width: `${((40-30)/40)*100}%` }} />
+                          {bands.map((band) => (
+                            <div key={band.label} className={cn("absolute inset-y-0", band.color)} style={{ left: `${(band.from/40)*100}%`, width: `${((band.to-band.from)/40)*100}%` }} />
+                          ))}
                           <div className="pointer-events-none absolute inset-0 hidden sm:flex text-[12px] text-black/80 dark:text-white/80">
-                            <div className="flex items-center justify-center" style={{ width: `${(18.5/40)*100}%` }}>Underweight</div>
-                            <div className="flex items-center justify-center" style={{ width: `${((25-18.5)/40)*100}%` }}>Healthy</div>
-                            <div className="flex items-center justify-center" style={{ width: `${((30-25)/40)*100}%` }}>Overweight</div>
-                            <div className="flex items-center justify-center" style={{ width: `${((40-30)/40)*100}%` }}>Obesity</div>
+                            {bands.map((band) => (
+                              <div key={band.label} className="flex items-center justify-center" style={{ width: `${((band.to-band.from)/40)*100}%` }}>{band.label}</div>
+                            ))}
                           </div>
                         </div>
                         <div className="absolute top-[-4px] sm:top-[-5px] bottom-[-4px] sm:bottom-[-5px] w-0.5 bg-foreground/80" style={{ left: `calc(${pct}% - 1px)` }} aria-hidden />
                       </div>
                       <div className="relative h-4 text-[10px] text-muted-foreground">
-                        {[{ label: '0', value: 0 }, { label: '18.5', value: 18.5 }, { label: '25', value: 25 }, { label: '30', value: 30 }, { label: '40+', value: 40 }].map((t) => {
-                          const left = clamp((t.value / 40) * 100, 0, 100);
+                        {[0, t.underweight, t.overweight, t.obese, 40].map((value) => ({ value, label: value === 40 ? '40+' : formatNumber(value, 1) })).map((tick) => {
+                          const left = clamp((tick.value / 40) * 100, 0, 100);
                           const transform = left === 0 ? 'translateX(0%)' : left === 100 ? 'translateX(-100%)' : 'translateX(-50%)';
                           return (
-                            <React.Fragment key={t.label}>
+                            <React.Fragment key={tick.label}>
                               <span className="absolute -top-2 h-2 w-px bg-foreground/40" style={{ left: `${left}%`, transform: 'translateX(-50%)' }} aria-hidden />
-                              <span className="absolute top-0 select-none" style={{ left: `${left}%`, transform }}>{t.label}</span>
+                              <span className="absolute top-0 select-none" style={{ left: `${left}%`, transform }}>{tick.label}</span>
                             </React.Fragment>
                           );
                         })}
@@ -362,7 +406,7 @@ export default function BmiCalculatorPage() {
 
                     <p className="text-xs text-muted-foreground flex items-center gap-2">
                       <Info className="h-3.5 w-3.5" />
-                      Healthy BMI range: 18.5 – 24.9. BMI is a screening tool and does not directly measure body fat or health.
+                      Healthy BMI range ({t.short} cut-offs): {formatNumber(t.underweight, 1)} – {formatNumber(healthyMax, 1)}. BMI is a screening tool and does not directly measure body fat or health.
                     </p>
 
                     {warnings.length>0 && (
@@ -385,14 +429,7 @@ export default function BmiCalculatorPage() {
                     )}
 
                     <Accordion type="single" collapsible className="w-full mt-4 border rounded-md">
-                      <AccordionItem value="calc" className="border-none">
-                        <AccordionTrigger className="px-4">How BMI is calculated</AccordionTrigger>
-                        <AccordionContent className="px-4 pt-0">
-                          <p className="mb-2">BMI = weight (kg) / height (m)². Imperial formula uses 703 × weight(lb) / height(in)².</p>
-                          <p className="text-muted-foreground text-xs">It is a population-level screening indicator and does not account for muscle mass, bone density, overall body composition, ethnicity, or sex-specific differences.</p>
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="disc" className="border-t border-border">
+                      <AccordionItem value="disc" className="border-none">
                         <AccordionTrigger className="px-4">Disclaimers</AccordionTrigger>
                         <AccordionContent className="px-4 pt-0 space-y-2">
                           <p className="text-xs">1. Athletes and very muscular individuals may have elevated BMI despite low body fat.</p>
@@ -408,6 +445,7 @@ export default function BmiCalculatorPage() {
             </div>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

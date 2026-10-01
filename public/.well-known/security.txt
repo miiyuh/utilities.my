@@ -1,0 +1,8 @@
+# Security contact for utilities.my (RFC 9116).
+# Please report vulnerabilities privately; don't open public issues.
+
+Contact: https://github.com/miiyuh/utilities.my/security/advisories/new
+Expires: 2027-10-01T00:00:00.000Z
+Preferred-Languages: en, ms
+Canonical: https://utilities.my/.well-known/security.txt
+Policy: https://github.com/miiyuh/utilities.my/security/policy

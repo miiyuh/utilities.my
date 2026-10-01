@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { format, parseISO } from 'date-fns'
 import {
   IdentificationCard,
   FilePdf,
@@ -6,10 +7,15 @@ import {
   LockSimple,
   ArrowCounterClockwise,
   ArrowSquareOut,
+  Calendar as CalendarIcon,
 } from 'phosphor-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { useToolSettings } from '@/hooks/use-tool-settings'
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar'
 import { SidebarContent } from '@/components/sidebar-content'
 import { PageHeader } from '@/components/page-header'
+import { ToolMethodology } from '@/components/tool-methodology'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ColorPicker } from '@/components/ui/color-picker'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Hint, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   Dialog,
   DialogContent,
@@ -32,6 +38,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { downloadBlob, isIOSOrSafari, validateImageFile } from '@/lib/image-utils'
 import {
+  DATE_STYLES,
   DEFAULT_COLOR,
   DEFAULT_TILED,
   MKN_GUIDANCE_URL,
@@ -40,6 +47,7 @@ import {
   canvasToPngBlob,
   defaultCrop,
   ensureFonts,
+  formatDateDisplay,
   loadCardSource,
   loadPersisted,
   releaseSide,
@@ -48,6 +56,7 @@ import {
   savePersisted,
   type CardSide,
   type CropRect,
+  type DateStyle,
   type PresetId,
   type Rotation,
   type SideKey,
@@ -239,7 +248,16 @@ export default function PalangIc() {
     setEditing(null)
   }
 
-  const lines = resolveLines(options)
+  // `site` follows the Settings date preset; the renderer only knows concrete styles.
+  const { dateFormat, fns } = useToolSettings()
+  const renderOptions = useMemo<WatermarkOptions>(() => {
+    if (options.dateStyle !== 'site') return options
+    const resolved: DateStyle = dateFormat === 'us' ? 'numeric-us' : dateFormat === 'iso' ? 'iso' : 'numeric'
+    return { ...options, dateStyle: resolved }
+  }, [options, dateFormat])
+  const [dateOpen, setDateOpen] = useState(false)
+
+  const lines = resolveLines(renderOptions)
   const hasPurpose = options.purpose.trim().length > 0
   const hasSide = Boolean(sides.front || sides.back)
   // Never let an unmarked copy out: there has to be text to stamp.
@@ -256,8 +274,8 @@ export default function PalangIc() {
     if (!canExport) return
     setExporting('pdf')
     try {
-      const front = sides.front ? renderWatermarkedCard(sides.front, options) : undefined
-      const back = sides.back ? renderWatermarkedCard(sides.back, options) : undefined
+      const front = sides.front ? renderWatermarkedCard(sides.front, renderOptions) : undefined
+      const back = sides.back ? renderWatermarkedCard(sides.back, renderOptions) : undefined
       const blob = await buildPalangPdf({ front, back }, lines.join(' | '))
       downloadBlob(blob, `palang-ic-${options.date}.pdf`, isIOSOrSafari())
       toast({
@@ -281,7 +299,7 @@ export default function PalangIc() {
     if (!side || !canExport) return
     setExporting(key)
     try {
-      const blob = await canvasToPngBlob(renderWatermarkedCard(side, options))
+      const blob = await canvasToPngBlob(renderWatermarkedCard(side, renderOptions))
       downloadBlob(blob, `palang-ic-${key}-${options.date}.png`, isIOSOrSafari())
       toast({ title: `${SIDE_LABEL[key]} PNG downloaded`, variant: 'success' })
     } catch (error) {
@@ -326,13 +344,13 @@ export default function PalangIc() {
 
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto">
-            <div className="mb-6 sm:mb-8 hidden sm:block">
+            <div className="mb-6 sm:mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">
                 Palang IC
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground">
                 Stamp the purpose across a MyKad copy so it can only be used for that one thing. Front and back,
-                exported as an A4 PDF at real card size — nothing leaves your device.
+                exported as an A4 PDF at real card size. Nothing leaves your device.
               </p>
             </div>
 
@@ -365,7 +383,7 @@ export default function PalangIc() {
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      A phone photo is fine — you will crop it to the card edges next. Back is optional; add it if the
+                      A phone photo is fine; you will crop it to the card edges next. Back is optional; add it if the
                       form asks for both sides.
                     </p>
                   </CardContent>
@@ -417,15 +435,46 @@ export default function PalangIc() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="date">Date</Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={options.date}
-                        onChange={(e) => patch({ date: e.target.value })}
-                        className="w-full sm:max-w-[220px]"
-                      />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="date">Date</Label>
+                        <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                          <PopoverTrigger asChild>
+                            <Button id="date" variant="outline" className="w-full justify-start font-normal">
+                              <CalendarIcon className="h-4 w-4" />
+                              {format(parseISO(options.date), fns.numeric)}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={parseISO(options.date)}
+                              defaultMonth={parseISO(options.date)}
+                              onSelect={(d) => {
+                                if (!d) return
+                                patch({ date: format(d, 'yyyy-MM-dd') })
+                                setDateOpen(false)
+                              }}
+                              autoFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="dateStyle">Date style</Label>
+                        <Select value={options.dateStyle} onValueChange={(v) => patch({ dateStyle: v as DateStyle })}>
+                          <SelectTrigger id="dateStyle" className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DATE_STYLES.map((d) => (
+                              <SelectItem key={d.id} value={d.id}>
+                                {d.id === 'site' ? d.label : formatDateDisplay(options.date, d.id)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
                     {options.presetId === 'custom' && (
@@ -476,7 +525,7 @@ export default function PalangIc() {
                     <section className="space-y-4">
                       <p className="text-xs text-muted-foreground">
                         The purpose is repeated across the whole card, over the photo, name and IC number, at an
-                        opacity that varies tile to tile — so it cannot be cropped off or lifted out with a
+                        opacity that varies tile to tile, so it cannot be cropped off or lifted out with a
                         colour-select tool.
                       </p>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -505,17 +554,17 @@ export default function PalangIc() {
                         <ColorPicker value={options.color} onChange={setColor} />
                         <div className="ml-1 flex items-center gap-1.5">
                           {QUICK_COLORS.map((c) => (
-                            <button
-                              key={c.hex}
+                            <Hint label={c.name} key={c.hex}>
+                              <button
                               type="button"
                               aria-label={c.name}
-                              title={c.name}
                               onClick={() => setColor(c.hex)}
                               className={`h-7 w-7 rounded-full border-2 transition-transform duration-quick hover:scale-110 ${
                                 options.color.toLowerCase() === c.hex ? 'border-primary' : 'border-border'
                               }`}
                               style={{ backgroundColor: c.hex }}
                             />
+                            </Hint>
                           ))}
                         </div>
                       </div>
@@ -537,7 +586,7 @@ export default function PalangIc() {
                           key={key}
                           label={SIDE_LABEL[key]}
                           side={sides[key]}
-                          options={options}
+                          options={renderOptions}
                           fontsReady={fontsReady}
                         />
                       ))}
@@ -590,7 +639,7 @@ export default function PalangIc() {
                       </p>
                       <p>
                         This tool goes further than two lines in a corner. It repeats the purpose across the whole
-                        card — over the photo, the name and the IC number — at an opacity that varies from tile to
+                        card (over the photo, the name and the IC number) at an opacity that varies from tile to
                         tile. A corner marking can be cropped off and a solid line can be painted out, but a mark
                         spread over the identity fields themselves cannot be removed without destroying what the
                         fraudster came for.
@@ -618,7 +667,7 @@ export default function PalangIc() {
         <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
           <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Crop &amp; rotate — {editing ? SIDE_LABEL[editing.key] : ''}</DialogTitle>
+              <DialogTitle>Crop &amp; rotate: {editing ? SIDE_LABEL[editing.key] : ''}</DialogTitle>
               <DialogDescription>
                 Drag the corners to fit the card edges. The box is locked to the MyKad shape.
               </DialogDescription>
@@ -641,6 +690,7 @@ export default function PalangIc() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <ToolMethodology />
       </SidebarInset>
     </TooltipProvider>
   )

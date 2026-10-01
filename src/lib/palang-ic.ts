@@ -71,11 +71,11 @@ export interface Preset {
 }
 
 export const PRESETS: Preset[] = [
-  { id: 'ms-standard', label: 'Malay — standard', lines: ['UNTUK KEGUNAAN {PURPOSE} SAHAJA', '{DATE}'] },
-  { id: 'ms-recipient', label: 'Malay — with recipient', lines: ['UNTUK KEGUNAAN {PURPOSE} SAHAJA', 'SALINAN UNTUK {RECIPIENT} — {DATE}'] },
-  { id: 'ms-short', label: 'Malay — short', lines: ['SALINAN UNTUK {PURPOSE} SAHAJA — {DATE}'] },
-  { id: 'en-standard', label: 'English — standard', lines: ['FOR {PURPOSE} USE ONLY', '{DATE}'] },
-  { id: 'en-recipient', label: 'English — with recipient', lines: ['FOR {PURPOSE} USE ONLY', 'COPY FOR {RECIPIENT} — {DATE}'] },
+  { id: 'ms-standard', label: 'Malay, standard', lines: ['UNTUK KEGUNAAN {PURPOSE} SAHAJA', '{DATE}'] },
+  { id: 'ms-recipient', label: 'Malay, with recipient', lines: ['UNTUK KEGUNAAN {PURPOSE} SAHAJA', 'SALINAN UNTUK {RECIPIENT} · {DATE}'] },
+  { id: 'ms-short', label: 'Malay, short', lines: ['SALINAN UNTUK {PURPOSE} SAHAJA · {DATE}'] },
+  { id: 'en-standard', label: 'English, standard', lines: ['FOR {PURPOSE} USE ONLY', '{DATE}'] },
+  { id: 'en-recipient', label: 'English, with recipient', lines: ['FOR {PURPOSE} USE ONLY', 'COPY FOR {RECIPIENT} · {DATE}'] },
   { id: 'custom', label: 'Custom…', lines: [] },
 ]
 
@@ -87,14 +87,31 @@ export interface TiledOptions {
   spacing: number
 }
 
+/**
+ * How {DATE} is written on the watermark. `site` follows the Settings date
+ * preset and is resolved by the page (to `numeric`, `numeric-us` or `iso`)
+ * before rendering, since this module does not read app settings.
+ */
+export type DateStyle = 'site' | 'numeric' | 'numeric-us' | 'long-ms' | 'long-en' | 'iso'
+
+/** Choices offered in the UI; each is labelled with the selected date rendered in that style. */
+export const DATE_STYLES: { id: DateStyle; label: string }[] = [
+  { id: 'site', label: 'Site default' },
+  { id: 'numeric', label: 'DD/MM/YYYY' },
+  { id: 'long-ms', label: 'Malay' },
+  { id: 'long-en', label: 'English' },
+  { id: 'iso', label: 'ISO 8601' },
+]
+
 export interface WatermarkOptions {
   presetId: PresetId
   /** One line per row; only used when presetId === 'custom'. */
   customLines: string
   purpose: string
   recipient: string
-  /** ISO yyyy-mm-dd from <input type="date">. Rendered as DD/MM/YYYY. */
+  /** ISO yyyy-mm-dd. Rendered according to `dateStyle`. */
   date: string
+  dateStyle: DateStyle
   /** Hex colour for the watermark text. */
   color: string
   tiled: TiledOptions
@@ -115,12 +132,13 @@ export const DEFAULT_OPTIONS: WatermarkOptions = {
   purpose: '',
   recipient: '',
   date: todayIso(),
+  dateStyle: 'site',
   color: DEFAULT_COLOR,
   tiled: DEFAULT_TILED,
 }
 
 // ---------------------------------------------------------------------------
-// Persistence — text and style only. Never images, never the date (a stale
+// Persistence: text and style only. Never images, never the date (a stale
 // date silently stamped on a new copy is exactly the kind of mistake this
 // tool exists to prevent).
 // ---------------------------------------------------------------------------
@@ -148,6 +166,7 @@ export function loadPersisted(): WatermarkOptions {
         purpose: o.purpose ?? DEFAULT_OPTIONS.purpose,
         recipient: o.recipient ?? DEFAULT_OPTIONS.recipient,
         color: o.color ?? DEFAULT_OPTIONS.color,
+        dateStyle: DATE_STYLES.some((d) => d.id === o.dateStyle) ? o.dateStyle! : DEFAULT_OPTIONS.dateStyle,
         date: todayIso(),
         tiled: {
           opacity: clamp(Number(t.opacity) || DEFAULT_TILED.opacity, 0.05, 0.5),
@@ -180,19 +199,39 @@ export function savePersisted(options: WatermarkOptions): void {
 export interface TemplateVars {
   purpose: string
   recipient: string
-  /** Already formatted for display (DD/MM/YYYY). */
+  /** Already formatted for display (see `formatDateDisplay`). */
   date: string
 }
 
-export function formatDateDisplay(iso: string): string {
+const MONTHS_MS = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember']
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+export function formatDateDisplay(iso: string, style: DateStyle = 'numeric'): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso
+  if (!m) return iso
+  const [, y, mo, d] = m
+  switch (style) {
+    case 'iso':
+      return iso
+    case 'numeric-us':
+      return `${mo}/${d}/${y}`
+    case 'long-ms':
+      return `${Number(d)} ${MONTHS_MS[Number(mo) - 1]} ${y}`
+    case 'long-en':
+      return `${Number(d)} ${MONTHS_EN[Number(mo) - 1]} ${y}`
+    default:
+      return `${d}/${mo}/${y}`
+  }
 }
 
+// Saved custom templates from before the separator change still use an em-dash.
+const SEGMENT_SPLIT = / \u00b7 | \u2014 /
+
 /**
- * Expands {PURPOSE} {RECIPIENT} {DATE}. Segments separated by " — " that
- * end up empty are dropped, as are lines that end up empty, so a preset with
- * a recipient still renders cleanly when no recipient is given.
+ * Expands {PURPOSE} {RECIPIENT} {DATE}. Segments separated by " · " (or the
+ * em-dash that older saved templates used) that end up empty are dropped, as
+ * are lines that end up empty, so a preset with a recipient still renders
+ * cleanly when no recipient is given.
  */
 export function expandLines(lines: string[], vars: TemplateVars): string[] {
   const purpose = vars.purpose.trim() || '[TUJUAN]'
@@ -200,7 +239,7 @@ export function expandLines(lines: string[], vars: TemplateVars): string[] {
   const out: string[] = []
   for (const line of lines) {
     const segments = line
-      .split(' — ')
+      .split(SEGMENT_SPLIT)
       .map((seg) => {
         const hadRecipient = seg.includes('{RECIPIENT}')
         const expanded = seg
@@ -212,7 +251,7 @@ export function expandLines(lines: string[], vars: TemplateVars): string[] {
         return hadRecipient && !recipient ? '' : expanded
       })
       .filter((seg) => seg.length > 0)
-    const joined = segments.join(' — ')
+    const joined = segments.join(' · ')
     if (joined) out.push(joined)
   }
   return out
@@ -227,7 +266,7 @@ export function resolveLines(options: WatermarkOptions): string[] {
   return expandLines(templates, {
     purpose: options.purpose,
     recipient: options.recipient,
-    date: formatDateDisplay(options.date),
+    date: formatDateDisplay(options.date, options.dateStyle),
   })
 }
 
@@ -509,7 +548,7 @@ const CARD_GAP_PT = 12 * MM
  */
 function toWinAnsi(s: string): string {
   return s
-    .replace(/[—–·]/g, '-')
+    .replace(/[\u2014\u2013\u00b7]/g, '-')
     .replace(/[^ -~ -ÿ]/g, '')
 }
 
@@ -519,7 +558,7 @@ export async function buildPalangPdf(
 ): Promise<Blob> {
   const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib')
   const pdf = await PDFDocument.create()
-  pdf.setTitle('Palang IC — salinan MyKad')
+  pdf.setTitle('Palang IC: salinan MyKad')
   pdf.setProducer('utilities.my')
   pdf.setCreator('utilities.my/palang-ic')
 

@@ -1,3 +1,4 @@
+import { ClearButton } from '@/components/ui/clear-button';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -6,12 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { SortAscending, TextAa, X, Trash, Upload, Download, Shuffle, ArrowsLeftRight, Info } from 'phosphor-react';
+import { SortAscending, TextAa, X, Upload, Download, Shuffle, ArrowsLeftRight, Info } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 
+import { ToolMethodology } from '@/components/tool-methodology';
 export default function SorterPage() {
   const { toast } = useToast();
   const [inputText, setInputText] = useState('');
@@ -216,7 +218,7 @@ export default function SorterPage() {
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Sorter</h1>
               <p className="text-lg text-muted-foreground">Sort lines of text alphabetically, numerically, by length, or by any column.</p>
             </div>
@@ -231,7 +233,7 @@ export default function SorterPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <input ref={fileInputRef} type="file" accept=".txt,.csv,.tsv,text/plain" className="hidden" onChange={(e)=>{ const f=e.currentTarget.files?.[0]; if (f) void handleUpload(f); e.currentTarget.value=''; }} />
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Upload className="h-4 w-4 mr-1"/> Upload file</Button>
-                    <Button variant="outline" size="sm" onClick={handleClear}><Trash className="h-4 w-4 mr-1"/> Clear</Button>
+                    <ClearButton onClear={handleClear} hasContent={Boolean(inputText)} confirmTitle="Clear the list?" confirmDescription="This removes the lines you entered. It can't be undone." />
                     <div className="text-sm text-muted-foreground ml-auto">Lines: <span className="font-medium">{stats.inCount}</span></div>
                   </div>
                   <div className="space-y-2">
@@ -360,6 +362,7 @@ export default function SorterPage() {
             </div>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

@@ -44,9 +44,9 @@ const SEO_BLOCK = /<!-- SEO:START -->[\s\S]*?<!-- SEO:END -->/
 const ROOT_BLOCK = /<!-- ROOT:START -->[\s\S]*?<!-- ROOT:END -->/
 
 // Card palette, matching the dark theme in src/globals.css.
-const CARD_BG = '#141415'
-const CARD_FG = '#f7ece6'
-const CARD_ACCENT = '#caa07d'
+const CARD_BG = '#110f0d'
+const CARD_FG = '#faf4ec'
+const CARD_ACCENT = '#3eaf86'
 
 function escapeHtml(value: string) {
   return value
@@ -80,7 +80,7 @@ function headFor(route: RouteSeo) {
     `<meta property="og:image" content="${image}" />`,
     '<meta property="og:image:width" content="1200" />',
     '<meta property="og:image:height" content="630" />',
-    `<meta property="og:image:alt" content="${escapeHtml(`${route.h1} — ${SITE_NAME}`)}" />`,
+    `<meta property="og:image:alt" content="${escapeHtml(`${route.h1} | ${SITE_NAME}`)}" />`,
     '<meta name="twitter:card" content="summary_large_image" />',
     `<meta name="twitter:site" content="${TWITTER_HANDLE}" />`,
     `<meta name="twitter:creator" content="${TWITTER_HANDLE}" />`,
@@ -214,7 +214,7 @@ function renderCard(route: RouteSeo) {
 
 async function main() {
   if (!existsSync(DIST)) {
-    throw new Error('dist/ not found — run `vite build` before this script')
+    throw new Error('dist/ not found. Run `vite build` before this script')
   }
 
   // A tool added to src/lib/tools.ts but not to src/lib/seo.ts would silently

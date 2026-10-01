@@ -1,3 +1,4 @@
+import { Flag } from '@/components/flag';
 import React from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -5,6 +6,7 @@ import timezone from 'dayjs/plugin/timezone';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
+import { ToolMethodology } from '@/components/tool-methodology';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Combobox } from '@/components/ui/combobox';
@@ -14,16 +16,18 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { useToolSettings } from '@/hooks/use-tool-settings';
 import { CITY_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
 import { Globe, X, ArrowLeft, ArrowRight, ArrowClockwise, CaretUp, CaretDown, Calendar as CalendarIcon } from 'phosphor-react';
+import { Hint } from '@/components/ui/tooltip';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const STORAGE_KEY = 'utilities.timezone-converter.zones';
-/** Width of the zone-label column in px - must match the `w-40` class on labels. */
-const LABEL_W = 160;
+/** Width of the zone-label column in px - must match the `w-48` class on labels. */
+const LABEL_W = 192;
 
 interface HourRange {
   start: number;
@@ -71,7 +75,8 @@ export default function TimezoneConverterPage() {
   const [dayOffset, setDayOffset] = React.useState(0);
   const [range, setRange] = React.useState<HourRange | null>(null);
   const [dragging, setDragging] = React.useState(false);
-  const [use24h, setUse24h] = React.useState(true);
+  const { dayjs: dj, is24h } = useToolSettings();
+  const [use24h, setUse24h] = React.useState(is24h);
   const dragAnchor = React.useRef<number | null>(null);
   const gridRef = React.useRef<HTMLDivElement | null>(null);
   const [now, setNow] = React.useState(() => dayjs());
@@ -161,13 +166,23 @@ export default function TimezoneConverterPage() {
     changeDay(picked.diff(today, 'day'));
   };
 
+  /** "09:00 – 12:00", or "Thu 23:00 – Fri 02:00" when the range crosses midnight in that zone. */
+  const zoneRangeLabel = (tz: string) => {
+    if (!rangeStart || !rangeEnd) return '';
+    const s = rangeStart.tz(tz);
+    const e = rangeEnd.tz(tz);
+    return s.isSame(e, 'day')
+      ? `${s.format(rangeTimeFmt)} – ${e.format(rangeTimeFmt)}`
+      : `${s.format(`ddd ${rangeTimeFmt}`)} – ${e.format(`ddd ${rangeTimeFmt}`)}`;
+  };
+
   const buildRangeSummary = () => {
     if (!rangeStart || !rangeEnd) return '';
     return zones.map((tz) => {
       const s = rangeStart.tz(tz);
       const e = rangeEnd.tz(tz);
-      const endFmt = s.isSame(e, 'day') ? rangeTimeFmt : `ddd, MMM D · ${rangeTimeFmt}`;
-      return `${zoneLabel(tz)}: ${s.format(`ddd, MMM D · ${rangeTimeFmt}`)} – ${e.format(endFmt)} (${tz})`;
+      const endFmt = s.isSame(e, 'day') ? rangeTimeFmt : `${dj.weekday} · ${rangeTimeFmt}`;
+      return `${zoneLabel(tz)}: ${s.format(`${dj.weekday} · ${rangeTimeFmt}`)} – ${e.format(endFmt)} (${tz})`;
     }).join('\n');
   };
 
@@ -191,7 +206,8 @@ export default function TimezoneConverterPage() {
     () =>
       CITY_ZONES.filter((c) => !zones.includes(c.timezone)).map((c) => ({
         value: c.timezone,
-        label: `${c.flag} ${c.city}`,
+        label: c.city,
+        leading: <Flag emoji={c.flag} />,
         description: `${c.country} · ${c.timezone}`,
       })),
     [zones]
@@ -208,7 +224,7 @@ export default function TimezoneConverterPage() {
 
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-6">
-            <div className="hidden sm:block">
+            <div className="max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 text-foreground border-b border-border pb-4">
                 Timezone Converter
               </h1>
@@ -254,7 +270,7 @@ export default function TimezoneConverterPage() {
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="default" className="h-8">
                       <CalendarIcon className="h-4 w-4" />
-                      {base.format('MMM D, YYYY')}
+                      {base.format(dj.long)}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -266,61 +282,17 @@ export default function TimezoneConverterPage() {
                     />
                   </PopoverContent>
                 </Popover>
-                {range && (
-                  <Button variant="ghost" size="default" className="h-8" onClick={() => setRange(null)}>
-                    <ArrowClockwise className="h-4 w-4" /> Clear selection
-                  </Button>
-                )}
               </div>
             </div>
-
-            {/* Range summary - stays mounted through drags and clicks alike so it never flashes away. */}
-            {rangeStart && rangeEnd && range && (
-              <div className="rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-sm space-y-2 animate-in fade-in-0 duration-quick ease-smooth-out">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <span className="font-medium text-foreground">
-                      {rangeStart.tz(homeZone).format(`ddd, MMM D · ${rangeTimeFmt}`)} –{' '}
-                      {rangeEnd.tz(homeZone).format(rangeStart.tz(homeZone).isSame(rangeEnd.tz(homeZone), 'day') ? rangeTimeFmt : `ddd, MMM D · ${rangeTimeFmt}`)}
-                    </span>{' '}
-                    <span className="text-muted-foreground">
-                      in {zoneLabel(homeZone)} · {range.end - range.start + 1}h
-                    </span>
-                  </div>
-                  <CopyButton
-                    value={buildRangeSummary}
-                    label="Copy all zones"
-                    size="sm"
-                    toastDescription="Time range copied for all zones."
-                  />
-                </div>
-                <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 text-xs">
-                  {zones.map((tz) => {
-                    const s = rangeStart.tz(tz);
-                    const e = rangeEnd.tz(tz);
-                    const endFmt = s.isSame(e, 'day') ? rangeTimeFmt : `ddd · ${rangeTimeFmt}`;
-                    return (
-                      <div key={tz} className="flex items-center gap-1.5 tabular-nums">
-                        <span className="flag-emoji">{findCityZone(tz)?.flag ?? '🌐'}</span>
-                        <span className="text-muted-foreground truncate">{zoneLabel(tz)}</span>
-                        <span className="ml-auto font-medium text-foreground">
-                          {s.format(`ddd · ${rangeTimeFmt}`)} – {e.format(endFmt)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Grid */}
             <Card className="p-0 overflow-hidden">
               <div className="overflow-x-auto">
-                <div ref={gridRef} className="min-w-[760px] select-none">
+                <div ref={gridRef} className="min-w-[800px] select-none">
                   {/* Hour ruler */}
                   <div className="flex border-b border-border bg-muted/30">
-                    <div className="w-40 shrink-0 px-3 py-2 text-xs font-medium text-muted-foreground">
-                      {base.format('ddd, MMM D')}
+                    <div className="w-48 shrink-0 px-3 py-2 text-xs font-medium text-muted-foreground">
+                      {base.format(dj.weekday)}
                     </div>
                     {HOURS.map((h) => (
                       <div
@@ -345,19 +317,23 @@ export default function TimezoneConverterPage() {
                       <div key={tz} className="flex items-stretch group">
                         {/* Label */}
                         <div className={cn(
-                          "w-40 shrink-0 px-3 py-2 flex flex-col justify-center gap-0.5",
+                          "w-48 shrink-0 px-3 py-2 flex flex-col justify-center gap-0.5",
                           idx !== zones.length - 1 && "border-b border-border"
                         )}>
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="flag-emoji text-sm">{city?.flag ?? '🌐'}</span>
+                            <Flag emoji={city?.flag} />
                             <span className="text-sm font-medium truncate">{zoneLabel(tz)}</span>
                             {idx === 0 && (
                               <span className="text-[9px] uppercase tracking-wide text-primary font-semibold">Home</span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
-                            <span className="text-foreground font-medium">{local.format(timeFmt)}</span>
-                            <span>GMT{local.format('Z').replace(':00', '')}</span>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums min-w-0">
+                            {rangeStart && rangeEnd ? (
+                              <span className="text-primary font-medium truncate">{zoneRangeLabel(tz)}</span>
+                            ) : (
+                              <span className="text-foreground font-medium">{local.format(timeFmt)}</span>
+                            )}
+                            <span className="shrink-0">GMT{local.format('Z').replace(':00', '')}</span>
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button aria-label="Move up" onClick={() => moveZone(tz, -1)} className="text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={idx === 0}>
@@ -378,13 +354,12 @@ export default function TimezoneConverterPage() {
                           const isMidnight = localHour === 0;
                           const inRange = range != null && i >= range.start && i <= range.end;
                           return (
-                            <button
-                              key={i}
+                            <Hint label={inst.tz(tz).format(`${dj.weekday} · ${rangeTimeFmt}`)} key={i}>
+                              <button
                               onPointerDown={(e) => {
                                 e.preventDefault();
                                 startDrag(i);
                               }}
-                              title={inst.tz(tz).format(`ddd, MMM D · ${rangeTimeFmt}`)}
                               className={cn(
                                 'flex-1 min-h-[3rem] flex flex-col items-center justify-center border-l border-l-border/50 text-xs tabular-nums transition-colors touch-none cursor-pointer',
                                 idx !== zones.length - 1 && 'border-b border-b-border/50',
@@ -394,10 +369,11 @@ export default function TimezoneConverterPage() {
                               <span>{use24h ? localHour : ((localHour % 12) || 12)}</span>
                               {isMidnight && (
                                 <span className="text-[8px] text-muted-foreground leading-none mt-0.5">
-                                  {inst.tz(tz).format('M/D')}
+                                  {inst.tz(tz).format(dj.dayMonth)}
                                 </span>
                               )}
                             </button>
+                            </Hint>
                           );
                         })}
                       </div>
@@ -428,6 +404,38 @@ export default function TimezoneConverterPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Selection footer - always rendered so the table never moves. */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border bg-muted/30 px-4 py-2.5 min-h-12 text-sm">
+                {rangeStart && rangeEnd && range ? (
+                  <>
+                    <div className="min-w-0">
+                      <span className="font-medium text-foreground">
+                        {rangeStart.tz(homeZone).format(`${dj.weekday} · ${rangeTimeFmt}`)} –{' '}
+                        {rangeEnd.tz(homeZone).format(rangeStart.tz(homeZone).isSame(rangeEnd.tz(homeZone), 'day') ? rangeTimeFmt : `${dj.weekday} · ${rangeTimeFmt}`)}
+                      </span>{' '}
+                      <span className="text-muted-foreground">
+                        in {zoneLabel(homeZone)} · {range.end - range.start + 1}h
+                      </span>
+                    </div>
+                    <div className="ml-auto flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setRange(null)}>
+                        <ArrowClockwise className="h-4 w-4" /> Clear selection
+                      </Button>
+                      <CopyButton
+                        value={buildRangeSummary}
+                        label="Copy all zones"
+                        size="sm"
+                        toastDescription="Time range copied for all zones."
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">
+                    Click an hour, or drag across hours, to see that time in every zone.
+                  </span>
+                )}
+              </div>
             </Card>
 
             {/* Legend */}
@@ -440,6 +448,7 @@ export default function TimezoneConverterPage() {
             </div>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

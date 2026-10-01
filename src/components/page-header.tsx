@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { ThemeToggleButton } from '@/components/theme-toggle-button'
+import { SearchButton } from '@/components/command-palette'
 import { cn } from '@/lib/utils'
 
 interface PageHeaderProps {
@@ -33,10 +34,11 @@ export function PageHeader({ icon: Icon, title, children }: PageHeaderProps) {
           />
         )}
         <Icon className={cn('h-5 w-5 shrink-0 text-foreground', isHome && 'hidden sm:block')} />
-        <h1 className={cn('truncate text-xl font-semibold font-headline', isHome && 'hidden sm:block')}>{title}</h1>
+        <p className={cn('truncate text-xl font-semibold font-headline', isHome && 'hidden sm:block')}>{title}</p>
       </div>
       <div className="flex items-center gap-2">
         {children}
+        <SearchButton />
         <ThemeToggleButton />
       </div>
     </header>

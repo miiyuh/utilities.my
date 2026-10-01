@@ -1,8 +1,10 @@
+import { ClearButton } from '@/components/ui/clear-button';
+import { Hint } from '@/components/ui/tooltip';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Download, Eye, Article, Trash, Info, Columns } from 'phosphor-react';
+import { Download, Eye, Article, Info, Columns, ArrowCounterClockwise } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { marked, Renderer, Tokens } from 'marked';
@@ -11,14 +13,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { useToast } from '@/hooks/use-toast';
+import { useToolSettings } from '@/hooks/use-tool-settings';
 import { PageHeader } from "@/components/page-header";
 
+import { ToolMethodology } from '@/components/tool-methodology';
 // Fallback simple icons for actions not present in lucide-react selection
 const CodeIconFallback = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
-);
-const RefreshIconFallback = () => (
-  <svg viewBox="0 0 24 24" className="h-4 w-4" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10" /><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14" /></svg>
 );
 
 // Configure marked with footnotes + custom renderer (token-based API)
@@ -58,11 +59,13 @@ class AppRenderer extends Renderer {
 marked.use({ renderer: new AppRenderer(), gfm: true, breaks: true });
 
 interface EditorPaneProps { markdownText: string; setMarkdownText: (v: string)=>void; wrap: boolean; }
-const EditorPane: React.FC<EditorPaneProps> = ({ markdownText, setMarkdownText, wrap }) => (
+const EditorPane: React.FC<EditorPaneProps> = ({ markdownText, setMarkdownText, wrap }) => {
+  const { formatNumber } = useToolSettings();
+  return (
   <div className="flex flex-col h-full min-h-0 md:min-h-[400px]">
     <div className="flex items-center justify-between px-3 py-2 border-b bg-background/70">
       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Markdown</span>
-      <span className="text-[10px] text-muted-foreground">{markdownText.length.toLocaleString()} chars</span>
+      <span className="text-[10px] text-muted-foreground">{formatNumber(markdownText.length, 0)} chars</span>
     </div>
     <Textarea
       value={markdownText}
@@ -71,7 +74,8 @@ const EditorPane: React.FC<EditorPaneProps> = ({ markdownText, setMarkdownText, 
       placeholder="Type your Markdown here..."
     />
   </div>
-);
+  );
+};
 
 const PreviewPane: React.FC<{ htmlOutput: string }> = ({ htmlOutput }) => (
   <div className="flex flex-col h-full min-h-0 md:min-h-[400px]">
@@ -285,6 +289,7 @@ const markdownExamples = [
 
 
 export default function MarkdownPreviewerPage() {
+  const { formatNumber } = useToolSettings();
   const [markdownText, setMarkdownText] = useState(initialMarkdown);
   const [htmlOutput, setHtmlOutput] = useState('');
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('split');
@@ -509,7 +514,7 @@ export default function MarkdownPreviewerPage() {
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Markdown Previewer</h1>
               <p className="text-lg text-muted-foreground">Write Markdown and see a live preview.</p>
             </div>
@@ -545,14 +550,14 @@ export default function MarkdownPreviewerPage() {
                   toastDescription="Rendered HTML copied to clipboard."
                 />
                 <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={handleDownload} title="Download .md"><Download className="h-4 w-4"/></Button>
-                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={handleClearInput} title="Clear"><Trash className="h-4 w-4"/></Button>
-                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={handleResetDemo} title="Reset Demo Content"><RefreshIconFallback /></Button>
+                <ClearButton onClear={handleClearInput} hasContent={Boolean(markdownText)} iconOnly className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" confirmTitle="Clear the editor?" confirmDescription="This removes all the Markdown in the editor. It can't be undone." />
+                <ClearButton onClear={handleResetDemo} hasContent={markdownText !== initialMarkdown} label="Reset Demo Content" icon={ArrowCounterClockwise} iconOnly className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" confirmTitle="Replace with the demo?" confirmDescription="This replaces everything in the editor with the example Markdown." />
               </div>
               <div className="h-6 w-px bg-border shrink-0" />
               <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
-                <span>{wordCount.toLocaleString()} words</span>
-                <span>{lineCount} lines</span>
-                <span>{charCount.toLocaleString()} chars</span>
+                <span>{formatNumber(wordCount, 0)} words</span>
+                <span>{formatNumber(lineCount, 0)} lines</span>
+                <span>{formatNumber(charCount, 0)} chars</span>
               </div>
             </div>
 
@@ -582,7 +587,8 @@ export default function MarkdownPreviewerPage() {
                   </div>
 
                   {/* Drag handle: vertical on desktop only */}
-                  <div
+                  <Hint label="Drag to resize panels, double-click to reset to center">
+                    <div
                     onMouseDown={startDrag}
                     onTouchStart={startTouch}
                     onKeyDown={handleResizerKeyDown}
@@ -596,14 +602,15 @@ export default function MarkdownPreviewerPage() {
                     role="separator"
                     aria-orientation="vertical"
                     aria-label="Resize panels (double-click to center)"
-                    title="Drag to resize panels, double-click to reset to center"
                     aria-valuemin={5}
                     aria-valuemax={95}
                     aria-valuenow={Math.round(panelRatio*100)}
                   />
+                  </Hint>
 
                   {/* Mobile drag handle (horizontal / stacked panels) */}
-                  <div
+                  <Hint label="Drag to resize panels, double-click to reset to center">
+                    <div
                     onMouseDown={startDragVertical}
                     onTouchStart={startTouchVertical}
                     onKeyDown={handleResizerKeyDownVertical}
@@ -617,11 +624,11 @@ export default function MarkdownPreviewerPage() {
                     role="separator"
                     aria-orientation="horizontal"
                     aria-label="Resize panels vertically (double-click to center)"
-                    title="Drag to resize panels, double-click to reset to center"
                     aria-valuemin={5}
                     aria-valuemax={95}
                     aria-valuenow={Math.round(panelRatio*100)}
                   />
+                  </Hint>
 
                   <div className="flex-1 flex flex-col min-h-[80px] md:min-h-[300px] min-w-[150px] md:min-w-[200px] overflow-hidden">
                     <PreviewPane htmlOutput={htmlOutput} />
@@ -633,7 +640,7 @@ export default function MarkdownPreviewerPage() {
                   <button onClick={()=>setWrap(w=>!w)} className="px-2 py-0.5 rounded border text-muted-foreground hover:text-foreground hover:border-primary/60 transition-colors">
                     {wrap ? 'Disable Wrap' : 'Enable Wrap'}
                   </button>
-                  <span className="text-muted-foreground hidden sm:inline">{wordCount.toLocaleString()} words • {lineCount} lines • {charCount.toLocaleString()} chars</span>
+                  <span className="text-muted-foreground hidden sm:inline">{formatNumber(wordCount, 0)} words • {formatNumber(lineCount, 0)} lines • {formatNumber(charCount, 0)} chars</span>
                 </div>
                 <span className="text-muted-foreground">Debounced live preview</span>
               </div>
@@ -664,6 +671,7 @@ export default function MarkdownPreviewerPage() {
             </Card>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

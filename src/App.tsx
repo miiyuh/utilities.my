@@ -26,6 +26,7 @@ const MorseCodeGenerator = lazy(() => import('./pages/morse-code-generator'))
 const PercentageCalculator = lazy(() => import('./pages/percentage-calculator'))
 const FootSizeConverter = lazy(() => import('./pages/footsize-converter'))
 const PalangIc = lazy(() => import('./pages/palang-ic'))
+const FaviconGenerator = lazy(() => import('./pages/favicon-generator'))
 const About = lazy(() => import('./pages/about'))
 const Privacy = lazy(() => import('./pages/privacy'))
 const Terms = lazy(() => import('./pages/terms'))
@@ -44,6 +45,13 @@ export default function App() {
   return (
     <>
       <RouteMeta />
+      {/* First focusable element: jumps past the sidebar's tool list. */}
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-full focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:outline-none focus:ring-3 focus:ring-ring/50"
+      >
+        Skip to content
+      </a>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -66,6 +74,7 @@ export default function App() {
           <Route path="/percentage-calculator" element={<PercentageCalculator />} />
           <Route path="/foot-size-converter" element={<FootSizeConverter />} />
           <Route path="/palang-ic" element={<PalangIc />} />
+          <Route path="/favicon-generator" element={<FaviconGenerator />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
