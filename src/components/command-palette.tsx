@@ -478,7 +478,8 @@ export function SearchButton() {
         <span className="text-sm">Search</span>
         <kbd className="rounded-full border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">{MOD_KEY} K</kbd>
       </Button>
-      <Button variant="ghost" size="icon-sm" onClick={openPalette} className="sm:hidden" title="Search tools">
+      {/* Phones only: bordered like the theme switch beside it, and no tooltip, since a tap opens search straight away. */}
+      <Button variant="outline" size="icon-sm" onClick={openPalette} className="size-8 sm:hidden" aria-label="Search tools">
         <MagnifyingGlass className="h-4 w-4" />
       </Button>
     </>

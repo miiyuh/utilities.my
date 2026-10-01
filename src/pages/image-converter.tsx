@@ -57,7 +57,7 @@ import {
   type Edits,
   type OutputFormat,
 } from '@/lib/image-pipeline'
-import { canKeepMetadata, carryOverMetadata, readMetadata, type MetadataMode, type MetadataReport } from '@/lib/image-metadata'
+import { canKeepMetadata, carryOverMetadata, metadataOverhead, readMetadata, type MetadataMode, type MetadataReport } from '@/lib/image-metadata'
 import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
@@ -381,6 +381,30 @@ interface PreviewResult {
   before: Blob
   quality: number
   fits: boolean
+  /** The inputs it was made from; see `inputsKey`. */
+  key: string
+}
+
+/**
+ * Encodes with the chosen settings, then copies metadata across. With a size
+ * target, the metadata's bytes come out of the budget and `fits` is checked
+ * against the final file, so the size promised is the size downloaded.
+ */
+async function encodeOutput(
+  canvas: HTMLCanvasElement,
+  source: File,
+  settings: OutputSettings,
+  size: { width: number; height: number }
+): Promise<{ blob: Blob; quality: number; fits: boolean }> {
+  const target = Number(settings.targetKb) * 1024
+  if (FORMATS[settings.format].lossy && settings.useTarget && target > 0) {
+    const overhead = await metadataOverhead(source, settings.format, settings.metaMode)
+    const encoded = await encodeToTarget(canvas, settings.format, Math.max(1, target - overhead))
+    const blob = await carryOverMetadata(source, encoded.blob, settings.metaMode, size)
+    return { blob, quality: encoded.quality, fits: blob.size <= target }
+  }
+  const encoded = await encodeCanvas(canvas, settings.format, settings.quality)
+  return { blob: await carryOverMetadata(source, encoded, settings.metaMode, size), quality: settings.quality, fits: true }
 }
 
 function SingleConverter({
@@ -407,6 +431,8 @@ function SingleConverter({
   const [encoding, setEncoding] = React.useState(false)
   const [encodeError, setEncodeError] = React.useState<string | null>(null)
   const generation = React.useRef(0)
+  /** Latest load request; results from an earlier, slower load are ignored. */
+  const loadId = React.useRef(0)
   const replaceRef = React.useRef<HTMLInputElement>(null)
 
   const thumbUrl = useObjectUrl(file)
@@ -421,34 +447,41 @@ function SingleConverter({
       setError(problem)
       return
     }
+    const id = ++loadId.current
+    const current = () => id === loadId.current
     setError(null)
     setLoading(true)
+    setMeta(null)
     setMetaLoading(true)
     setPreview(null)
     setEdits(NO_EDITS)
     setPresetId('custom')
     void readMetadata(f).then((r) => {
+      if (!current()) return
       setMeta(r)
       setMetaLoading(false)
     })
     try {
       const img = await decodeImage(f)
+      if (!current()) return
       setFile(f)
       setImage(img)
       setWidth(img.width)
       setHeight(img.height)
     } catch (e) {
+      if (!current()) return
       setImage(null)
       setFile(null)
       setError(e instanceof Error ? e.message : 'This image could not be opened.')
     } finally {
-      setLoading(false)
+      if (current()) setLoading(false)
     }
   }
 
   usePasteImages((files) => void load(files[0]))
 
   const clear = () => {
+    loadId.current++
     setFile(null)
     setImage(null)
     setMeta(null)
@@ -508,6 +541,12 @@ function SingleConverter({
     if (lockAspect && eh) setWidth(Math.max(1, Math.round((h * ew) / eh)))
   }
 
+  // Everything the output depends on. A preview made from other inputs is
+  // stale, even during the debounce, so Download never hands over a file made
+  // with the previous settings.
+  const inputsKey = file ? JSON.stringify([file.name, file.size, file.lastModified, edits, width, height, settings]) : ''
+  const previewCurrent = preview != null && preview.key === inputsKey
+
   // Live preview, encoded with exactly the settings the download uses, so the
   // size shown is the size you get.
   React.useEffect(() => {
@@ -520,16 +559,13 @@ function SingleConverter({
           setEncodeError(null)
           try {
             const canvas = renderEdited(image, edits, width, height, settings.format === 'image/jpeg')
-            const target = Number(settings.targetKb) * 1024
-            const encoded =
-              FORMATS[settings.format].lossy && settings.useTarget && target > 0
-                ? await encodeToTarget(canvas, settings.format, target)
-                : { blob: await encodeCanvas(canvas, settings.format, settings.quality), quality: settings.quality, fits: true }
-            const blob = await carryOverMetadata(file, encoded.blob, settings.metaMode, { width, height })
+            const encoded = await encodeOutput(canvas, file, settings, { width, height })
+            // Same crop, rotation and size as the output, losslessly, so the slider
+            // compares compression alone, pixel for pixel.
             const [bw, bh] = fitLongEdge(width, height, 1400)
             const before = await encodeCanvas(renderEdited(image, edits, bw, bh), 'image/png', 1)
             if (id !== generation.current) return
-            setPreview({ blob, before, quality: encoded.quality, fits: encoded.fits })
+            setPreview({ blob: encoded.blob, before, quality: encoded.quality, fits: encoded.fits, key: inputsKey })
           } catch (e) {
             if (id === generation.current) setEncodeError(e instanceof Error ? e.message : 'Encoding failed.')
           } finally {
@@ -540,10 +576,10 @@ function SingleConverter({
       settings.format === 'image/avif' ? 700 : 300
     )
     return () => window.clearTimeout(timer)
-  }, [image, file, edits, width, height, settings])
+  }, [image, file, edits, width, height, settings, inputsKey])
 
   const download = () => {
-    if (!preview || !file) return
+    if (!preview || !file || !previewCurrent) return
     const name = outputFilename(file.name, settings.format)
     downloadBlob(preview.blob, name, isIOSOrSafari())
     toast({ title: 'Image saved', description: `${name} (${humanSize(preview.blob.size)})` })
@@ -555,8 +591,8 @@ function SingleConverter({
       ? 'Camera details, dates and location are removed from the converted file.'
       : keepPossible
         ? settings.metaMode === 'keep-all'
-          ? 'Everything is copied across, including location if the photo has it.'
-          : 'Camera details and dates are copied across; location is removed.'
+          ? 'Everything is copied across: camera details, dates, captions, credits and location if the photo has it.'
+          : 'Camera details and dates are copied across. Location is removed, and so are captions, credits and maker notes, which can also hold it.'
         : 'Metadata can only be carried over from a JPEG to a JPEG. Choose JPEG output to keep it; otherwise it is removed.'
 
   if (!file || !image) {
@@ -700,7 +736,7 @@ function SingleConverter({
         </CardHeader>
         <CardContent className="space-y-4">
           {beforeUrl && afterUrl ? (
-            <CompareSlider before={beforeUrl} after={afterUrl} className="aspect-[4/3] w-full" />
+            <CompareSlider before={beforeUrl} after={afterUrl} beforeLabel="Uncompressed" className="aspect-[4/3] w-full" />
           ) : (
             <div className="flex aspect-[4/3] w-full items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
               <Spinner className="mr-2 h-4 w-4 animate-spin" /> Preparing preview…
@@ -742,7 +778,7 @@ function SingleConverter({
             )}
             {encodeError && <p className="mt-2 text-xs text-destructive">{encodeError}</p>}
           </div>
-          <Button onClick={download} disabled={!preview || encoding} className="h-11 w-full text-base">
+          <Button onClick={download} disabled={!previewCurrent || encoding} className="h-11 w-full text-base">
             <Download className="h-5 w-5" /> Download {FORMATS[settings.format].label}
           </Button>
         </CardContent>
@@ -764,6 +800,10 @@ interface BatchItem {
   status: 'queued' | 'working' | 'done' | 'error'
   error?: string
   output?: Blob
+  /** The format `output` was encoded in. */
+  format?: OutputFormat
+  /** The settings and edits `output` was made with. */
+  key?: string
   hasLocation?: boolean
 }
 
@@ -796,8 +836,16 @@ function BatchConverter({
   setSettings: React.Dispatch<React.SetStateAction<OutputSettings>>
 }) {
   const { toast } = useToast()
-  const [items, setItems] = React.useState<BatchItem[]>([])
+  const [storedItems, setItems] = React.useState<BatchItem[]>([])
   const [longEdge, setLongEdge] = React.useState('0')
+  /** What a finished file depends on besides its own edits. */
+  const settingsKey = JSON.stringify([settings, longEdge])
+  const outputKey = (it: BatchItem) => JSON.stringify([settingsKey, it.edits])
+  // A file finished under other settings or edits counts as queued again, so the
+  // ZIP never holds a format or size the settings no longer say.
+  const items = storedItems.map((it) =>
+    it.status === 'done' && it.key !== outputKey(it) ? { ...it, status: 'queued' as const, output: undefined, key: undefined } : it
+  )
   const [running, setRunning] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
   const [editing, setEditing] = React.useState<{ id: string; image: DecodedImage } | null>(null)
@@ -833,7 +881,6 @@ function BatchConverter({
 
   const convertAll = async () => {
     setRunning(true)
-    const target = Number(settings.targetKb) * 1024
     for (const item of items) {
       patch(item.id, { status: 'working', error: undefined })
       try {
@@ -841,12 +888,8 @@ function BatchConverter({
         const [ew, eh] = editedSize(img.width, img.height, item.edits)
         const [w, h] = Number(longEdge) > 0 ? fitLongEdge(ew, eh, Number(longEdge)) : [ew, eh]
         const canvas = renderEdited(img, item.edits, w, h, settings.format === 'image/jpeg')
-        const encoded =
-          FORMATS[settings.format].lossy && settings.useTarget && target > 0
-            ? (await encodeToTarget(canvas, settings.format, target)).blob
-            : await encodeCanvas(canvas, settings.format, settings.quality)
-        const output = await carryOverMetadata(item.file, encoded, settings.metaMode, { width: w, height: h })
-        patch(item.id, { status: 'done', output })
+        const { blob: output } = await encodeOutput(canvas, item.file, settings, { width: w, height: h })
+        patch(item.id, { status: 'done', output, format: settings.format, key: outputKey(item) })
       } catch (e) {
         patch(item.id, { status: 'error', error: e instanceof Error ? e.message : 'Conversion failed.' })
       }
@@ -866,7 +909,8 @@ function BatchConverter({
     const zip = new JSZip()
     const used = new Map<string, number>()
     for (const it of done) {
-      let name = outputFilename(it.file.name, settings.format)
+      // Named from the format it was actually encoded in, not the current setting.
+      let name = outputFilename(it.file.name, it.format ?? settings.format)
       const n = used.get(name) ?? 0
       used.set(name, n + 1)
       if (n > 0) name = name.replace(/(\.[^.]+)$/, `-${n + 1}$1`)

@@ -24,7 +24,9 @@ export const FONT_CHOICES = [
   { id: 'system', label: 'System', css: 'system-ui, -apple-system, Segoe UI, sans-serif' },
 ]
 
-const EMOJI_FONT = "'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
+const SYSTEM_FONT = FONT_CHOICES.find((f) => f.id === 'system')!.css
+
+const EMOJI_FONT ="'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
 
 function shapePath(ctx: CanvasRenderingContext2D, size: number, shape: FaviconShape) {
   ctx.beginPath()
@@ -132,6 +134,23 @@ function escapeXml(s: string) {
   return s.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c] ?? c)
 }
 
+/** An SVG favicon is possible for text and emoji sources that aren't empty. */
+export function canBuildSvg(source: FaviconSource): boolean {
+  if (source.kind === 'text') return source.text.length > 0
+  if (source.kind === 'emoji') return source.emoji.length > 0
+  return false
+}
+
+/**
+ * Resolves once the font a source draws with is loaded. Canvas text silently
+ * falls back to another font until then, so every render that ends up in a
+ * preview or a download waits for this first.
+ */
+export async function fontReady(source: FaviconSource): Promise<void> {
+  if (source.kind === 'text') await document.fonts.load(`${source.weight} 64px ${source.font}`, source.text).catch(() => undefined)
+  if (source.kind === 'emoji') await document.fonts.load("64px 'Noto Color Emoji'", source.emoji).catch(() => undefined)
+}
+
 /** Colours that change in the dark variant of a text/emoji SVG. */
 export interface SvgDarkVariant {
   background: string | null
@@ -145,15 +164,24 @@ export interface SvgDarkVariant {
  * so one file follows the browser's theme.
  */
 export function buildSvg(source: FaviconSource, style: FaviconStyle, dark?: SvgDarkVariant): string | null {
-  if (source.kind === 'image') return null
-  const text = source.kind === 'text' ? source.text : source.emoji
-  if (!text) return null
+  if (!canBuildSvg(source)) return null
+  const text = source.kind === 'text' ? source.text : source.kind === 'emoji' ? source.emoji : ''
   const shape =
     style.shape === 'circle'
       ? '<circle class="bg" cx="50" cy="50" r="50"/>'
       : style.shape === 'rounded'
         ? '<rect class="bg" width="100" height="100" rx="22"/>'
         : '<rect class="bg" width="100" height="100"/>'
+  // A web font only renders where it is loaded, and a favicon SVG can't load
+  // one. So text in any font but the system one is drawn into the SVG as the
+  // same artwork the PNGs use, and it looks identical on every site.
+  if (source.kind === 'text' && source.font !== SYSTEM_FONT) {
+    const art = (s: FaviconSource, st: FaviconStyle) => renderFavicon(128, s, st).toDataURL('image/png')
+    const light = `<image class="l" width="100" height="100" href="${art(source, style)}"/>`
+    if (!dark) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${light}</svg>`
+    const darkArt = art({ ...source, color: dark.color ?? source.color }, { ...style, background: dark.background })
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><style>.d{display:none}@media (prefers-color-scheme:dark){.l{display:none}.d{display:inline}}</style>${light}<image class="d" width="100" height="100" href="${darkArt}"/></svg>`
+  }
   const fontSize = Math.round((1 - style.padding * 2) * (source.kind === 'emoji' ? 80 : text.length > 1 ? 62 : 80))
   const family = source.kind === 'text' ? source.font : EMOJI_FONT
   const weight = source.kind === 'text' ? ` font-weight="${source.weight}"` : ''

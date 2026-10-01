@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ArrowCounterClockwise, Play } from 'phosphor-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { randomInt } from '@/lib/random'
 
 type ConfettiLauncher = (options?: Record<string, unknown>) => unknown
 
@@ -17,15 +18,6 @@ const R = 480
 const LABEL_OUTER = R * 0.9
 const LABEL_INNER = R * 0.17
 const SPIN_MS = 4800
-
-/** Uniform random integer in [0, max) from the platform CSPRNG. */
-function randomInt(max: number): number {
-  const buf = new Uint32Array(1)
-  const limit = Math.floor(0x1_0000_0000 / max) * max
-  do crypto.getRandomValues(buf)
-  while (buf[0] >= limit) // reject the biased tail
-  return buf[0] % max
-}
 
 /**
  * Evenly spaced hues starting at pandan green, alternating lightness so
@@ -61,7 +53,8 @@ export function SpinWheel({ items, onSpin, disabled = false }: SpinWheelProps) {
   const [announcement, setAnnouncement] = React.useState('')
   // Kept separately: "remove winners" can drop the winner from items right away.
   const [lastWinner, setLastWinner] = React.useState<string | null>(null)
-  const pending = React.useRef<number | null>(null)
+  /** The spin in progress: the picked index and the list it indexes, as they were when it started. */
+  const pending = React.useRef<{ index: number; items: string[] } | null>(null)
   const confetti = React.useRef<ConfettiLauncher | null>(null)
   const wheelRef = React.useRef<HTMLDivElement>(null)
 
@@ -87,13 +80,15 @@ export function SpinWheel({ items, onSpin, disabled = false }: SpinWheelProps) {
   const maxChars = Math.max(3, Math.floor((LABEL_OUTER - LABEL_INNER) / (fontSize * 0.56)))
 
   const finish = React.useCallback(() => {
-    const idx = pending.current
-    if (idx == null) return
+    const spun = pending.current
+    if (!spun) return
     pending.current = null
+    // Read from the list the spin started with; the items may have been edited since.
+    const winner = spun.items[spun.index]
     setSpinning(false)
-    setWinnerMark({ index: idx, list: items.join('\n') })
-    setLastWinner(items[idx])
-    setAnnouncement(`The wheel picked ${items[idx]}.`)
+    setWinnerMark({ index: spun.index, list: spun.items.join('\n') })
+    setLastWinner(winner)
+    setAnnouncement(`The wheel picked ${winner}.`)
     const rect = wheelRef.current?.getBoundingClientRect()
     if (confetti.current && rect && !reducedMotion) {
       confetti.current({
@@ -102,8 +97,8 @@ export function SpinWheel({ items, onSpin, disabled = false }: SpinWheelProps) {
         origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 3) / window.innerHeight },
       })
     }
-    onSpin(items[idx])
-  }, [items, onSpin, reducedMotion])
+    onSpin(winner)
+  }, [onSpin, reducedMotion])
 
   const spin = () => {
     if (disabled || spinning || n < 2) return
@@ -113,7 +108,7 @@ export function SpinWheel({ items, onSpin, disabled = false }: SpinWheelProps) {
     const target = idx * slice + slice / 2 + offset
     const current = ((rotation % 360) + 360) % 360
     const delta = (((360 - target - current) % 360) + 360) % 360
-    pending.current = idx
+    pending.current = { index: idx, items: [...items] }
     setWinnerMark(null)
     setAnnouncement('Spinning…')
     setSpinning(true)

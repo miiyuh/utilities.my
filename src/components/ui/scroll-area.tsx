@@ -11,7 +11,10 @@ function ScrollArea({
   hideScrollbar = false,
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
-  /** Still scrolls (wheel, touch, keyboard); just no visible bar. */
+  /**
+   * Hides the bar but keeps it mounted: Radix only lets the viewport scroll on
+   * an axis that has a scrollbar, so leaving it out would stop scrolling.
+   */
   hideScrollbar?: boolean
 }) {
   return (
@@ -26,7 +29,7 @@ function ScrollArea({
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      {!hideScrollbar && <ScrollBar />}
+      <ScrollBar className={hideScrollbar ? "invisible" : undefined} />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
   )

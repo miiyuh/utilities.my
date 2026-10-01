@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
 import { RouteMeta } from './components/route-meta'
+import { RouteScroll } from './components/route-scroll'
 
 // Home stays eager so the landing page renders without a second request.
 import Home from './pages/home'
@@ -45,6 +46,7 @@ export default function App() {
   return (
     <>
       <RouteMeta />
+      <RouteScroll />
       {/* First focusable element: jumps past the sidebar's tool list. */}
       <a
         href="#main"

@@ -177,19 +177,22 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/spin-the-wheel',
     summary:
-      'Each spin lands on a uniformly random angle, so every slice wins in proportion to its size. Shuffle uses the unbiased Fisher–Yates algorithm.',
-    notes: ['Randomness comes from Math.random(). That is fine for everyday choices, but it is not cryptographically secure, so don\'t use it for draws with real stakes.'],
+      'The winner is picked first, with every option equally likely, and the wheel then spins to land on it. Shuffle uses the unbiased Fisher–Yates algorithm.',
+    notes: [
+      'Randomness comes from your browser\'s secure generator, crypto.getRandomValues(), with rejection sampling so no option is favoured. It is fair enough for real draws, but nothing is recorded, so for an official draw use a process others can witness or audit.',
+    ],
     sources: [
+      { label: 'MDN: Crypto.getRandomValues()', url: 'https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues' },
       { label: 'Fisher–Yates shuffle', url: 'https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle' },
-      { label: 'MDN: Math.random()', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random' },
     ],
   },
   {
     path: '/sorter',
     summary:
-      'Alphabetical sorting uses your browser\'s locale-aware comparison. Natural sort compares runs of digits as numbers, so "item 2" comes before "item 10". Shuffle uses Fisher–Yates.',
+      'Alphabetical sorting uses your browser\'s locale-aware comparison. Natural sort compares runs of digits as numbers, so "item 2" comes before "item 10". Shuffle uses Fisher–Yates with your browser\'s secure random generator.',
     sources: [
       { label: 'MDN: String.prototype.localeCompare()', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare' },
+      { label: 'MDN: Crypto.getRandomValues()', url: 'https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues' },
     ],
   },
   {
