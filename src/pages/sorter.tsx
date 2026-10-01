@@ -120,6 +120,7 @@ export default function SorterPage() {
   const importFile = async (file: File) => {
     const t = (await file.text()).replace(/\r\n?/g, '\n');
     setHistory((h) => (text ? [...h.slice(-49), text] : h));
+    setTyping(false);
     setText(t);
     setMessage(`Opened ${file.name}.`);
   };

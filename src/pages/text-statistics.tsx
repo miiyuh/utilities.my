@@ -48,7 +48,10 @@ export default function TextStatisticsPage() {
   const selStats = useMemo(() => (selected.trim() ? computeStats(selected, opts) : null), [selected, opts]);
 
   const trackSelection = (el: HTMLTextAreaElement) => setSelection([el.selectionStart ?? 0, el.selectionEnd ?? 0]);
-  const importFile = async (file: File) => setText((await file.text()).replace(/\r\n?/g, '\n'));
+  const importFile = async (file: File) => {
+    setText((await file.text()).replace(/\r\n?/g, '\n'));
+    setSelection([0, 0]);
+  };
 
   const summary = () =>
     [
@@ -112,7 +115,10 @@ export default function TextStatisticsPage() {
                     </Button>
                     <CopyButton value={summary} label="Copy summary" size="sm" toastTitle="Copied" toastDescription="The summary is on your clipboard." disabled={!text.trim()} />
                     <ClearButton
-                      onClear={() => setText('')}
+                      onClear={() => {
+                        setText('');
+                        setSelection([0, 0]);
+                      }}
                       hasContent={Boolean(text.trim())}
                       className="ml-auto"
                       confirmTitle="Clear your text?"

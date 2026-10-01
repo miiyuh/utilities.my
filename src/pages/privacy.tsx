@@ -43,6 +43,7 @@ Like any website, loading utilities.my means your browser contacts these service
 - **Vercel**, which hosts the site
 - **Google Fonts**, which serves the typefaces
 - **REST Countries flag CDN** (flags.restcountries.com), which serves country flag images in the World Clock and Timezone Converter
+- **miiyuh.com**, the maintainer's website, which serves the portrait on the About page
 
 Each of these handles that information under its own privacy policy.
 

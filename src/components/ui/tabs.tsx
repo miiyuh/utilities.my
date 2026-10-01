@@ -50,6 +50,7 @@ function TabsList({
   className,
   variant = "default",
   children,
+  ref,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List> &
   VariantProps<typeof tabsListVariants>) {
@@ -85,11 +86,15 @@ function TabsList({
 
   return (
     <TabsPrimitive.List
-      ref={listRef}
+      {...props}
+      ref={(el) => {
+        listRef.current = el
+        if (typeof ref === "function") ref(el)
+        else if (ref) ref.current = el
+      }}
       data-slot="tabs-list"
       data-variant={variant}
       className={cn(tabsListVariants({ variant }), "relative", className)}
-      {...props}
     >
       {box && (
         <span

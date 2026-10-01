@@ -63,7 +63,9 @@ function isShouting(text: string): boolean {
 
 function capitaliseFirstLetter(word: string): string {
   const i = word.search(LETTER)
-  return i < 0 ? word : word.slice(0, i) + word[i].toUpperCase() + word.slice(i + 1)
+  if (i < 0) return word
+  const ch = String.fromCodePoint(word.codePointAt(i)!)
+  return word.slice(0, i) + ch.toUpperCase() + word.slice(i + ch.length)
 }
 
 function tidy(text: string, opts: CaseOptions): string {

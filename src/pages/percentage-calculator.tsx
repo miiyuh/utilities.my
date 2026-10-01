@@ -183,7 +183,7 @@ export default function PercentageCalculatorPage() {
                       </div>
                     </div>
 
-                    {!Number.isFinite(whatPercentResult) && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">Enter both numbers to see the answer.</p>}
+                    {!Number.isFinite(whatPercentResult) && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">{parseFloat(isWhatPercent.whole) === 0 && isWhatPercent.part.trim() !== '' ? 'A percentage of 0 can’t be worked out. Use an “Out of” number other than 0.' : 'Enter both numbers to see the answer.'}</p>}
                     {Number.isFinite(whatPercentResult) && (
                       <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">
@@ -223,7 +223,7 @@ export default function PercentageCalculatorPage() {
                       </div>
                     </div>
 
-                    {!changeResult && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">Enter both numbers to see the answer.</p>}
+                    {!changeResult && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">{parseFloat(percentChange.original) === 0 && percentChange.newValue.trim() !== '' ? 'A change from 0 can’t be shown as a percentage. Use an original value other than 0.' : 'Enter both numbers to see the answer.'}</p>}
                     {changeResult && (
                       <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">

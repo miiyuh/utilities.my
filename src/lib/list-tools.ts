@@ -79,10 +79,13 @@ export function sortLines(lines: string[], o: SortOptions): Result {
   return { lines: sorted, message: `Sorted ${plural(lines.length, 'line')} ${how[o.by]}.` }
 }
 
+/** Lines that differ only in surrounding spaces (or case, unless case-sensitive) count as duplicates. */
+const dupKey = (l: string, caseSensitive: boolean) => (caseSensitive ? l.trim() : l.trim().toLocaleLowerCase())
+
 export function removeDuplicates(lines: string[], caseSensitive: boolean): Result {
   const seen = new Set<string>()
   const out = lines.filter((l) => {
-    const key = caseSensitive ? l : l.toLocaleLowerCase()
+    const key = dupKey(l, caseSensitive)
     if (seen.has(key)) return false
     seen.add(key)
     return true
@@ -133,6 +136,6 @@ export function numberLines(lines: string[]): Result {
 
 export function listStats(lines: string[], caseSensitive: boolean) {
   const nonEmpty = lines.filter((l) => l.trim() !== '')
-  const unique = new Set(nonEmpty.map((l) => (caseSensitive ? l.trim() : l.trim().toLocaleLowerCase()))).size
+  const unique = new Set(nonEmpty.map((l) => dupKey(l, caseSensitive))).size
   return { lines: lines.length, items: nonEmpty.length, unique, duplicates: nonEmpty.length - unique }
 }

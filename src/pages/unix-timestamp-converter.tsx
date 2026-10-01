@@ -31,7 +31,7 @@ function loadPattern(): string {
   }
 }
 
-/** 13+ digits is milliseconds (since late 2001), fewer is seconds. */
+/** 12+ digits is milliseconds: as seconds that would be past the year 5000, as milliseconds it's 1973 onwards. */
 const detectUnit = (digits: string): 's' | 'ms' => (digits.replace('-', '').length >= 12 ? 'ms' : 's');
 
 interface Parts {
@@ -85,6 +85,8 @@ export default function UnixTimestampConverterPage() {
 
   /** Sets the moment from anything other than the timestamp box, and rewrites the box to match. */
   const setMoment = (d: Date) => {
+    // A nudge past the last date JavaScript can hold gives an Invalid Date: stay put instead.
+    if (Number.isNaN(d.getTime())) return;
     setDate(d);
     setError(null);
     setDraft(unit === 'ms' ? String(d.getTime()) : String(Math.floor(d.getTime() / 1000)));
@@ -123,21 +125,26 @@ export default function UnixTimestampConverterPage() {
     setPickerOpen(false);
   };
   const onPickTime = (v: string) => {
-    const [h, min, s] = v.split(':').map((x) => Number(x) || 0);
-    setMoment(fromParts({ ...p, h, min, s: s ?? 0 }, zone));
+    if (!v) return;
+    const [h = 0, min = 0, s = 0] = v.split(':').map((x) => Number(x) || 0);
+    setMoment(fromParts({ ...p, h, min, s }, zone));
   };
+
+  // Shift by the offset so date-fns (which formats in local time) shows the UTC wall clock.
+  const utcWall = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+  const utcHuman = `${format(utcWall, `${fns.long}, HH:mm:ss`)} UTC`;
+  // The calendar row and your own format follow the zone the date was picked in.
+  const zoned = zone === 'utc' ? utcWall : date;
 
   let custom = '';
   let customError: string | null = null;
   try {
-    custom = pattern.trim() ? format(date, pattern) : '';
+    custom = pattern.trim() ? format(zoned, pattern) : '';
   } catch (e) {
     customError = e instanceof RangeError ? 'This pattern has a letter that isn’t a date code. Put plain words in single quotes.' : 'This pattern can’t be used.';
   }
 
   const seconds = Math.floor(date.getTime() / 1000);
-  // Shift by the offset so date-fns (which formats in local time) shows the UTC wall clock.
-  const utcHuman = `${format(new Date(date.getTime() + date.getTimezoneOffset() * 60000), `${fns.long}, HH:mm:ss`)} UTC`;
   const rows: { label: string; value: string; code?: boolean }[] = [
     { label: 'Your time', value: format(date, `${fns.long}, ${fns.time}`) },
     { label: 'UTC', value: utcHuman },
@@ -147,7 +154,7 @@ export default function UnixTimestampConverterPage() {
     { label: 'ISO 8601 (UTC)', value: date.toISOString().replace('.000Z', 'Z'), code: true },
     { label: 'ISO 8601 (your time)', value: format(date, "yyyy-MM-dd'T'HH:mm:ssxxx"), code: true },
     { label: 'HTTP and email (RFC 7231)', value: date.toUTCString(), code: true },
-    { label: 'Calendar', value: `${format(date, 'EEEE')} · ISO week ${getISOWeek(date)} · day ${getDayOfYear(date)} of ${isLeapYear(date) ? 366 : 365}` },
+    { label: 'Calendar', value: `${format(zoned, 'EEEE')} · ISO week ${getISOWeek(zoned)} · day ${getDayOfYear(zoned)} of ${isLeapYear(zoned) ? 366 : 365}` },
   ];
 
   const nudges: { label: string; run: () => void }[] = [

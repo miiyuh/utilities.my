@@ -76,7 +76,7 @@ export default function UnitConverterPage() {
   const fromValue = editing === 'from' ? raw : derived;
   const toValue = editing === 'to' ? raw : derived;
   // The amount in the From unit, for the "every unit" list.
-  const fromNumber = parseFloat(fromValue);
+  const fromNumber = valid ? (editing === 'from' ? value : convert(value, to, from)) : NaN;
 
   const sentence = valid && derived !== '' ? `${g(fromValue)} ${from.symbol} = ${g(toValue)} ${to.symbol}` : '';
 

@@ -134,8 +134,8 @@ export default function FaviconGeneratorPage() {
     return source
   }, [darkOn, source, darkTextColor, darkImage])
   const darkStyle = React.useMemo<FaviconStyle>(
-    () => ({ ...style, background: darkTransparent ? null : darkBg, padding: darkImageAsIs && darkImage ? 0 : style.padding }),
-    [style, darkTransparent, darkBg, darkImageAsIs, darkImage]
+    () => ({ ...style, background: darkTransparent ? null : darkBg, padding: source?.kind === 'image' && darkImageAsIs && darkImage ? 0 : style.padding }),
+    [style, darkTransparent, darkBg, darkImageAsIs, darkImage, source]
   )
 
   // Previews redraw whenever the design changes (after the chosen font is ready).

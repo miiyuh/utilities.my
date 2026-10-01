@@ -215,7 +215,12 @@ export default function MarkdownPreviewerPage() {
     toast({ title: 'Saved', description: 'Downloaded as document.md.' });
   };
 
-  const openFile = async (file: File) => setMarkdownText((await file.text()).replace(/\r\n?/g, '\n'));
+  const openFile = async (file: File) => {
+    const before = markdownText;
+    const t = (await file.text()).replace(/\r\n?/g, '\n');
+    // Keep anything typed or cleared while the file was being read.
+    setMarkdownText((current) => (current === before ? t : current));
+  };
 
   /** The current Markdown as safe HTML, rendered on demand (the preview itself updates after a short delay). */
   const renderNow = () => DOMPurify.sanitize(marked.parse(markdownText) as string);
@@ -223,7 +228,8 @@ export default function MarkdownPreviewerPage() {
   /** Copies the document as rich text, so it pastes formatted into email, Docs or Word. */
   const copyFormatted = async () => {
     const html = renderNow();
-    const plain = new DOMParser().parseFromString(html, 'text/html').body.innerText;
+    // Apps that only take plain text get the Markdown itself, line breaks included.
+    const plain = markdownText;
     try {
       await navigator.clipboard.write([
         new ClipboardItem({
