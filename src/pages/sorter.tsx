@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 
 import { ToolMethodology } from '@/components/tool-methodology';
+import { shuffleInPlace } from '@/lib/random';
 export default function SorterPage() {
   const { toast } = useToast();
   const [inputText, setInputText] = useState('');
@@ -150,11 +151,7 @@ export default function SorterPage() {
 
   const handleShuffle = () => {
     const { lines, inCount } = buildProcessedLines(inputText);
-    // Fisher–Yates
-    for (let i = lines.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [lines[i], lines[j]] = [lines[j], lines[i]];
-    }
+    shuffleInPlace(lines);
     setOutputText(lines.join('\n'));
     setStats({inCount, outCount: lines.length, uniqueCount: lines.length});
     toast({ title: 'Shuffled!', description: `Reordered ${lines.length} lines.` });

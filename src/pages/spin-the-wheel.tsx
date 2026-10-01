@@ -15,6 +15,7 @@ import { SpinWheel } from '@/components/spin-wheel';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from "@/components/page-header";
 import { ToolMethodology } from '@/components/tool-methodology';
+import { shuffleInPlace } from '@/lib/random';
 const DEFAULT_ITEMS = [
   "Sushi", "Ramen", "Tempura", "Katsudon", "Takoyaki", "Okonomiyaki", // Japanese
   "Nasi Lemak", "Char Kuey Teow", "Roti Canai", "Satay", "Laksa", "Hainanese Chicken Rice" // Malaysian
@@ -119,9 +120,7 @@ export default function SpinTheWheelPage() {
   };
 
   const handleShuffle = () => {
-    const arr = items.slice();
-    for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
-    setItemsInput(arr.join('\n'));
+    setItemsInput(shuffleInPlace(items.slice()).join('\n'));
   };
 
   const handleDedupe = () => {

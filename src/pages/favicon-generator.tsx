@@ -513,7 +513,7 @@ export default function FaviconGeneratorPage() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       The ZIP has favicon.ico (16, 32, 48 px), PNGs for browsers, an Apple touch icon, Android icons (including a maskable one),
-                      {darkSource ? ' dark-mode PNGs,' : ''}{svg ? ` a scalable favicon.svg${darkOn ? ' that follows the theme' : ''},` : ''} and site.webmanifest.
+                      {darkSource ? ' dark-mode PNGs,' : ''}{svg ? ` a favicon.svg${darkOn ? ' that follows the theme' : ''}${source?.kind === 'text' && fontId !== 'system' ? ' (your font is drawn into it, because favicons cannot load web fonts)' : ''},` : ''} and site.webmanifest.
                     </p>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">

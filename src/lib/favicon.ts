@@ -24,7 +24,9 @@ export const FONT_CHOICES = [
   { id: 'system', label: 'System', css: 'system-ui, -apple-system, Segoe UI, sans-serif' },
 ]
 
-const EMOJI_FONT = "'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
+const SYSTEM_FONT = FONT_CHOICES.find((f) => f.id === 'system')!.css
+
+const EMOJI_FONT ="'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
 
 function shapePath(ctx: CanvasRenderingContext2D, size: number, shape: FaviconShape) {
   ctx.beginPath()
@@ -154,6 +156,16 @@ export function buildSvg(source: FaviconSource, style: FaviconStyle, dark?: SvgD
       : style.shape === 'rounded'
         ? '<rect class="bg" width="100" height="100" rx="22"/>'
         : '<rect class="bg" width="100" height="100"/>'
+  // A web font only renders where it is loaded, and a favicon SVG can't load
+  // one. So text in any font but the system one is drawn into the SVG as the
+  // same artwork the PNGs use, and it looks identical on every site.
+  if (source.kind === 'text' && source.font !== SYSTEM_FONT) {
+    const art = (s: FaviconSource, st: FaviconStyle) => renderFavicon(128, s, st).toDataURL('image/png')
+    const light = `<image class="l" width="100" height="100" href="${art(source, style)}"/>`
+    if (!dark) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${light}</svg>`
+    const darkArt = art({ ...source, color: dark.color ?? source.color }, { ...style, background: dark.background })
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><style>.d{display:none}@media (prefers-color-scheme:dark){.l{display:none}.d{display:inline}}</style>${light}<image class="d" width="100" height="100" href="${darkArt}"/></svg>`
+  }
   const fontSize = Math.round((1 - style.padding * 2) * (source.kind === 'emoji' ? 80 : text.length > 1 ? 62 : 80))
   const family = source.kind === 'text' ? source.font : EMOJI_FONT
   const weight = source.kind === 'text' ? ` font-weight="${source.weight}"` : ''

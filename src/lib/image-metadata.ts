@@ -129,20 +129,36 @@ export async function readMetadata(file: Blob): Promise<MetadataReport | null> {
 
 const TYPE_SIZE: Record<number, number> = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 6: 1, 7: 1, 8: 2, 9: 4, 10: 8, 11: 4, 12: 8 }
 
-/** Finds the APP1 "Exif" segment of a JPEG: [start, end) including marker and length. */
-function findExifSegment(b: Uint8Array): [number, number] | null {
-  if (b[0] !== 0xff || b[1] !== 0xd8) return null
+type SegmentKind = 'exif' | 'xmp' | 'iptc'
+
+const ascii = (s: string) => new TextEncoder().encode(s)
+
+const SIGNATURES: { kind: SegmentKind; marker: number; prefix: Uint8Array }[] = [
+  { kind: 'exif', marker: 0xe1, prefix: ascii('Exif\0\0') },
+  { kind: 'xmp', marker: 0xe1, prefix: ascii('http://ns.adobe.com/xap/1.0/\0') },
+  { kind: 'xmp', marker: 0xe1, prefix: ascii('http://ns.adobe.com/xmp/extension/\0') },
+  { kind: 'iptc', marker: 0xed, prefix: ascii('Photoshop 3.0\0') },
+]
+
+/** Lists a JPEG's EXIF, XMP and IPTC segments, each with its marker and length bytes, in file order. */
+function findMetadataSegments(b: Uint8Array): { kind: SegmentKind; bytes: Uint8Array }[] {
+  const found: { kind: SegmentKind; bytes: Uint8Array }[] = []
+  if (b[0] !== 0xff || b[1] !== 0xd8) return found
   let i = 2
   while (i + 4 <= b.length && b[i] === 0xff) {
     const marker = b[i + 1]
     if (marker === 0xda || marker === 0xd9) break // start of scan / end of image
-    const len = (b[i + 2] << 8) | b[i + 3]
-    const isExif =
-      marker === 0xe1 && b[i + 4] === 0x45 && b[i + 5] === 0x78 && b[i + 6] === 0x69 && b[i + 7] === 0x66 && b[i + 8] === 0 && b[i + 9] === 0
-    if (isExif) return [i, i + 2 + len]
-    i += 2 + len
+    const end = i + 2 + ((b[i + 2] << 8) | b[i + 3])
+    const sig = SIGNATURES.find(
+      (s) => s.marker === marker && s.prefix.every((byte, k) => b[i + 4 + k] === byte)
+    )
+    // Only the first EXIF segment is valid; later ones are ignored by readers.
+    if (sig && !(sig.kind === 'exif' && found.some((f) => f.kind === 'exif'))) {
+      found.push({ kind: sig.kind, bytes: b.subarray(i, Math.min(end, b.length)) })
+    }
+    i = end
   }
-  return null
+  return found
 }
 
 /**
@@ -201,18 +217,31 @@ function patchExif(segment: Uint8Array, opts: { removeLocation: boolean; width: 
     setValue(exifIfd, 0xa003, opts.height)
   }
 
-  if (opts.removeLocation) {
-    for (let k = 0; k < u16(ifd0); k++) {
-      const e = ifd0 + 2 + k * 12
-      if (u16(e) !== 0x8825) continue
-      wipeIfd(u32(e + 8))
-      // Remove the GPS pointer entry: shift the rest up, shrink the count.
-      const n = u16(ifd0)
-      const tail = ifd0 + 2 + n * 12 // next-IFD offset follows the entries
+  /** Deletes a tag from an IFD: wipes its data, shifts later entries up and shrinks the count. */
+  const removeEntry = (ifd: number, tag: number, wipe: (entry: number) => void) => {
+    if (!inBounds(ifd, 2)) return
+    for (let k = 0; k < u16(ifd); k++) {
+      const e = ifd + 2 + k * 12
+      if (!inBounds(e, 12) || u16(e) !== tag) continue
+      wipe(e)
+      const n = u16(ifd)
+      const tail = ifd + 2 + n * 12 // next-IFD offset follows the entries
       seg.copyWithin(T + e, T + e + 12, T + tail + 4)
       zero(tail - 12 + 4, 12)
-      set16(ifd0, n - 1)
-      break
+      set16(ifd, n - 1)
+      return
+    }
+  }
+
+  if (opts.removeLocation) {
+    // The GPS section, plus maker notes: their layout is vendor-specific and
+    // unchecked, and some phones and cameras store location inside them.
+    removeEntry(ifd0, 0x8825, (e) => wipeIfd(u32(e + 8)))
+    if (exifIfd) {
+      removeEntry(exifIfd, 0x927c, (e) => {
+        const bytes = (TYPE_SIZE[u16(e + 2)] ?? 1) * u32(e + 4)
+        if (bytes > 4 && inBounds(u32(e + 8), bytes)) zero(u32(e + 8), bytes)
+      })
     }
   }
 
@@ -240,27 +269,54 @@ export function canKeepMetadata(source: Blob, outputType: string): boolean {
 }
 
 /**
- * Copies the source JPEG's EXIF into the output JPEG. Orientation is reset
- * (the pixels are already upright), the old thumbnail is dropped (it would
- * show the unedited image), and location is removed unless asked to keep it.
+ * The metadata segments to copy from the source JPEG for this mode.
+ * - keep-all: EXIF plus XMP and IPTC (captions, credits, keywords).
+ * - keep-no-location: EXIF only, with GPS and maker notes removed. XMP and IPTC
+ *   are dropped because they can also hold coordinates or place names.
+ * EXIF orientation is reset (the pixels are already upright) and the old
+ * thumbnail is dropped (it would show the unedited image).
  */
+async function metadataSegments(
+  source: Blob,
+  outputType: string,
+  mode: MetadataMode,
+  size: { width: number; height: number }
+): Promise<Uint8Array[]> {
+  if (mode === 'strip' || !canKeepMetadata(source, outputType)) return []
+  const segments = findMetadataSegments(new Uint8Array(await source.arrayBuffer()))
+  const kept: Uint8Array[] = []
+  for (const s of segments) {
+    if (s.kind === 'exif') {
+      try {
+        // EXIF goes first: readers expect it as the first APP1 segment.
+        kept.unshift(patchExif(s.bytes, { removeLocation: mode === 'keep-no-location', ...size }))
+      } catch {
+        // Unreadable EXIF is left out; the rest of the file is still valid.
+      }
+    } else if (mode === 'keep-all') {
+      kept.push(s.bytes.slice())
+    }
+  }
+  return kept
+}
+
+/** How many bytes `carryOverMetadata` will add, so a size target can leave room for them. */
+export async function metadataOverhead(source: Blob, outputType: string, mode: MetadataMode): Promise<number> {
+  const segments = await metadataSegments(source, outputType, mode, { width: 1, height: 1 })
+  return segments.reduce((n, s) => n + s.length, 0)
+}
+
+/** Copies the source JPEG's metadata into the output JPEG, as chosen by `mode`. */
 export async function carryOverMetadata(
   source: Blob,
   output: Blob,
   mode: MetadataMode,
   size: { width: number; height: number }
 ): Promise<Blob> {
-  if (mode === 'strip' || !canKeepMetadata(source, output.type)) return output
-  const src = new Uint8Array(await source.arrayBuffer())
+  const segments = await metadataSegments(source, output.type, mode, size)
+  if (!segments.length) return output
   const out = new Uint8Array(await output.arrayBuffer())
-  const at = findExifSegment(src)
-  if (!at || out[0] !== 0xff || out[1] !== 0xd8) return output
-  try {
-    const segment = patchExif(src.subarray(at[0], at[1]), { removeLocation: mode === 'keep-no-location', ...size })
-    // Insert straight after the output's SOI marker.
-    return new Blob([out.slice(0, 2), segment.slice(), out.slice(2)], { type: "image/jpeg" })
-  } catch {
-    // Unreadable EXIF: the clean output is still a valid file.
-    return output
-  }
+  if (out[0] !== 0xff || out[1] !== 0xd8) return output
+  // Insert straight after the output's SOI marker, keeping the source order (EXIF first).
+  return new Blob([out.slice(0, 2), ...segments.map((s) => s.slice()), out.slice(2)], { type: 'image/jpeg' })
 }
