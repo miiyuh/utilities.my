@@ -98,6 +98,8 @@ export default function FaviconGeneratorPage() {
   // Dark-mode variant (browser tabs follow the system theme).
   const [darkOn, setDarkOn] = React.useState(false)
   const [darkTransparent, setDarkTransparent] = React.useState(false)
+  /** A transparent dark-mode image is used as it is (no padding), without touching the main icon's padding. */
+  const [darkImageAsIs, setDarkImageAsIs] = React.useState(false)
   const [darkBg, setDarkBg] = useHex('#e6f4ee')
   const [darkTextColor, setDarkTextColor] = useHex('#155e46')
   const [darkImage, setDarkImage] = React.useState<{ image: ImageBitmap | HTMLImageElement; width: number; height: number; name: string } | null>(null)
@@ -122,7 +124,10 @@ export default function FaviconGeneratorPage() {
     if (source.kind === 'image' && darkImage) return { kind: 'image', image: darkImage.image, width: darkImage.width, height: darkImage.height }
     return source
   }, [darkOn, source, darkTextColor, darkImage])
-  const darkStyle = React.useMemo<FaviconStyle>(() => ({ ...style, background: darkTransparent ? null : darkBg }), [style, darkTransparent, darkBg])
+  const darkStyle = React.useMemo<FaviconStyle>(
+    () => ({ ...style, background: darkTransparent ? null : darkBg, padding: darkImageAsIs && darkImage ? 0 : style.padding }),
+    [style, darkTransparent, darkBg, darkImageAsIs, darkImage]
+  )
 
   // Previews redraw whenever the design changes (after the chosen font is ready).
   React.useEffect(() => {
@@ -172,7 +177,9 @@ export default function FaviconGeneratorPage() {
     try {
       const img = await decodeImage(file)
       setDarkImage({ ...img, image: img.source, name: file.name })
-      if (hasTransparency(img.source, img.width, img.height)) setDarkTransparent(true)
+      const seeThrough = hasTransparency(img.source, img.width, img.height)
+      setDarkImageAsIs(seeThrough)
+      if (seeThrough) setDarkTransparent(true)
     } catch (e) {
       setImageError(e instanceof Error ? e.message : 'This image could not be opened.')
     }
@@ -368,11 +375,11 @@ export default function FaviconGeneratorPage() {
                       {transparent && (
                         <p className="text-xs text-muted-foreground">
                           Nothing is drawn behind your {kind === 'image' ? 'image' : kind} and nothing is cut off, so transparent areas stay transparent.
-                          Apple and Android home-screen icons still get a solid background, because those platforms require one.
+                          The Apple home-screen icon and Android's maskable icon still get a solid background, because those require one.
                         </p>
                       )}
                     </div>
-                    {!transparent && (
+                    {(!transparent || (darkOn && !darkTransparent)) && (
                       <div className="space-y-2">
                         <span className="block text-sm font-medium">Shape</span>
                         <fieldset className="flex flex-wrap gap-1.5">
@@ -381,6 +388,7 @@ export default function FaviconGeneratorPage() {
                             <Chip key={s} active={shape === s} onClick={() => setShape(s)}>{s[0].toUpperCase() + s.slice(1)}</Chip>
                           ))}
                         </fieldset>
+                        {transparent && <p className="text-xs text-muted-foreground">Used by the dark-mode icon, which has a background.</p>}
                       </div>
                     )}
                     <div className="space-y-2">
