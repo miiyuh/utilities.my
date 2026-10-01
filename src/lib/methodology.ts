@@ -42,16 +42,22 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/unit-converter',
     summary:
-      'Every linear unit is stored as a factor relative to one SI base unit (metre, kilogram, litre, square metre, metre per second). A value is multiplied into the base unit and divided out into the target, so any pair converts consistently.',
+      'Every linear unit is stored as a factor relative to one base unit (metre, kilogram, litre, square metre, metre per second, pascal, joule, second, byte, bit per second). A value is multiplied into the base unit and divided out into the target, so any pair converts consistently.',
     formulas: [
       'result = value × factor(from) ÷ factor(to)',
       '1 yd = 0.9144 m · 1 mi = 1609.344 m · 1 lb = 0.45359237 kg',
-      '1 US gal = 3.785411784 L · 1 acre = 4046.8564224 m² · 1 knot = 1852 m/h',
+      '1 US gal = 3.785411784 L · 1 UK gal = 4.54609 L · 1 acre = 4046.8564224 m² · 1 knot = 1852 m/h',
+      '1 psi = 6894.757 Pa · 1 bar = 100 kPa · 1 atm = 101.325 kPa',
+      '1 kcal = 4.184 kJ · 1 kWh = 3,600 kJ',
       'K = °C + 273.15 · °F = (K − 273.15) × 9/5 + 32',
+      'L/100 km = 100 ÷ (km/L) · km/L = mpg × 1.609344 ÷ gallon in litres',
     ],
     notes: [
       'Imperial and US customary factors are the exact values defined by the 1959 international yard and pound agreement.',
-      'Temperature is not a simple ratio, so it converts through kelvin with an offset.',
+      'Temperature is not a simple ratio, so it converts through kelvin with an offset. Fuel economy in litres per 100 km is the inverse of kilometres per litre.',
+      'Kilocalories use the 4.184 kJ calorie printed on food labels. Tablespoons and teaspoons are metric (15 mL and 5 mL).',
+      'Storage has both decimal units (1 GB = 1,000,000,000 bytes, as drive makers count) and binary ones (1 GiB = 1,073,741,824 bytes, as many computers report).',
+      'A small non-zero answer is never rounded down to 0: below the chosen decimal places it keeps three significant figures.',
     ],
     sources: [
       { label: 'NIST Special Publication 811, Guide for the Use of the SI', url: 'https://www.nist.gov/pml/special-publication-811' },

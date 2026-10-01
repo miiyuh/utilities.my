@@ -38,6 +38,13 @@ import { EmojiPicker } from '@/components/emoji-picker'
 const EMOJI_PICKS = ['⚡', '🔥', '🌿', '☕', '🚀', '💡', '🎯', '⭐', '📦', '🧭', '🍜', '🎨']
 const PREVIEW_SIZES = [16, 32, 48, 180, 192, 512]
 
+/** Home-screen preview backgrounds: photos and paintings by miiyuh, bundled so the preview makes no outside requests. */
+const WALLPAPERS = [
+  { id: 'forest', name: 'Misty forest', src: '/assets/img/wallpapers/misty-forest.webp' },
+  { id: 'cabin', name: 'Mountain cabin', src: '/assets/img/wallpapers/mountain-cabin.webp' },
+  { id: 'sky', name: 'Pink sky', src: '/assets/img/wallpapers/pink-sky.webp' },
+]
+
 type SourceKind = 'text' | 'emoji' | 'image'
 
 /** Colour setter that ignores no-op notifications (the picker re-emits on every render). */
@@ -96,6 +103,7 @@ export default function FaviconGeneratorPage() {
   const [shortName, setShortName] = React.useState('My site')
   const [themeColor, setThemeColor] = useHex('#2f9e7a')
   // Dark-mode variant (browser tabs follow the system theme).
+  const [wallpaper, setWallpaper] = React.useState(0)
   const [darkOn, setDarkOn] = React.useState(false)
   const [darkTransparent, setDarkTransparent] = React.useState(false)
   /** A transparent dark-mode image is used as it is (no padding), without touching the main icon's padding. */
@@ -499,19 +507,54 @@ export default function FaviconGeneratorPage() {
                           <BrowserTab icon={previews.dark32 ?? previews[32]} title={appName} dark />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                          <figure className="flex flex-col items-center gap-2 rounded-md bg-[linear-gradient(135deg,#3b5bdb,#9c36b5)] p-4">
-                            <img src={previews.apple} alt="" className="h-16 w-16 rounded-[22%] shadow-md" />
-                            <figcaption className="max-w-full truncate text-xs text-white">{shortName || appName}</figcaption>
-                          </figure>
-                          <figure className="flex flex-col items-center gap-2 rounded-md bg-[linear-gradient(135deg,#0b7285,#2b8a3e)] p-4">
-                            <img src={previews.maskable} alt="" className="h-16 w-16 rounded-full shadow-md" />
-                            <figcaption className="max-w-full truncate text-xs text-white">{shortName || appName}</figcaption>
-                          </figure>
+                          {[
+                            { id: 'iphone', label: 'iPhone home screen', src: previews.apple, iconClass: 'rounded-[22%]' },
+                            { id: 'android', label: 'Android (adaptive)', src: previews.maskable, iconClass: 'rounded-full' },
+                          ].map((p) => (
+                            <figure key={p.id} className="space-y-2">
+                              <div className="relative aspect-[4/5] overflow-hidden rounded-md">
+                                <img src={WALLPAPERS[wallpaper].src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                                {/* A home-screen row: three neighbouring apps, with yours second. */}
+                                <div className="absolute inset-x-0 top-1/2 grid -translate-y-1/2 grid-cols-4 gap-1.5 px-2.5">
+                                  {[0, 1, 2, 3].map((i) => (
+                                    <div key={i} className="flex min-w-0 flex-col items-center gap-1">
+                                      {i === 1 ? (
+                                        <img src={p.src} alt="" className={cn('aspect-square w-full shadow-md', p.iconClass)} />
+                                      ) : (
+                                        <span className={cn('aspect-square w-full bg-white/25 backdrop-blur-sm', p.iconClass)} aria-hidden />
+                                      )}
+                                      {i === 1 ? (
+                                        <span className="max-w-full truncate text-[9px] leading-tight text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">{shortName || appName}</span>
+                                      ) : (
+                                        <span className="h-1.5 w-3/4 rounded-full bg-white/40" aria-hidden />
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <figcaption className="text-center text-[11px] text-muted-foreground">{p.label}</figcaption>
+                            </figure>
+                          ))}
                         </div>
-                        <p className="-mt-2 grid grid-cols-2 gap-4 text-center text-[11px] text-muted-foreground">
-                          <span>iPhone home screen</span>
-                          <span>Android (adaptive)</span>
-                        </p>
+                        <fieldset className="flex flex-wrap items-center gap-2">
+                          <legend className="sr-only">Preview wallpaper</legend>
+                          <span className="text-xs text-muted-foreground" aria-hidden>Wallpaper</span>
+                          {WALLPAPERS.map((w, i) => (
+                            <button
+                              key={w.id}
+                              type="button"
+                              onClick={() => setWallpaper(i)}
+                              aria-pressed={wallpaper === i}
+                              aria-label={w.name}
+                              className={cn(
+                                'size-8 overflow-hidden rounded-full border-2 outline-none transition-colors duration-quick focus-visible:ring-3 focus-visible:ring-ring/50',
+                                wallpaper === i ? 'border-primary' : 'border-border hover:border-primary/60'
+                              )}
+                            >
+                              <img src={w.src} alt="" className="h-full w-full object-cover" />
+                            </button>
+                          ))}
+                        </fieldset>
                         <div className="flex flex-wrap items-end gap-3 rounded-md bg-[conic-gradient(var(--muted)_25%,transparent_0_50%,var(--muted)_0_75%,transparent_0)] bg-[length:12px_12px] p-3">
                           {PREVIEW_SIZES.slice(0, 4).map((s) => (
                             <figure key={s} className="flex flex-col items-center gap-1">

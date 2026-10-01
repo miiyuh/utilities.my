@@ -274,8 +274,9 @@ export function ColorPicker({
           {/* SV Canvas */}
           <div>
             <span id={`${fieldId}-sv`} className="mb-2 block text-sm font-medium">
-              Color
+              Colour
             </span>
+            <div className="relative">
             <canvas
               ref={handleCanvasRef}
               aria-labelledby={`${fieldId}-sv`}
@@ -336,6 +337,13 @@ export function ColorPicker({
               className="w-full cursor-crosshair rounded border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               style={{ aspectRatio: '240 / 140' }}
             />
+            {/* Where the picked colour sits, filled with that colour. */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
+              style={{ left: `${sat}%`, top: `${100 - val}%`, background: currentColor }}
+            />
+            </div>
           </div>
 
           {/* Hue Slider */}

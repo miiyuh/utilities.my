@@ -39,19 +39,76 @@ const tabsListVariants = cva(
   }
 )
 
+interface IndicatorBox {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
 function TabsList({
   className,
   variant = "default",
+  children,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List> &
   VariantProps<typeof tabsListVariants>) {
+  const listRef = React.useRef<HTMLDivElement>(null)
+  const [box, setBox] = React.useState<IndicatorBox | null>(null)
+  // No transition until the active tab first changes, so nothing slides in on page load.
+  const [animate, setAnimate] = React.useState(false)
+  const activeRef = React.useRef<HTMLElement | null>(null)
+
+  React.useLayoutEffect(() => {
+    const list = listRef.current
+    if (!list) return
+    const measure = () => {
+      const active = list.querySelector<HTMLElement>('[data-slot="tabs-trigger"][data-state="active"]')
+      if (activeRef.current && active && active !== activeRef.current) setAnimate(true)
+      activeRef.current = active
+      setBox(active ? { x: active.offsetLeft, y: active.offsetTop, w: active.offsetWidth, h: active.offsetHeight } : null)
+    }
+    measure()
+    // Follow the active tab (Radix flips data-state) and any change in the tabs' sizes.
+    const mutations = new MutationObserver(measure)
+    mutations.observe(list, { attributes: true, subtree: true, attributeFilter: ["data-state"] })
+    const resizes = new ResizeObserver(measure)
+    resizes.observe(list)
+    list.querySelectorAll('[data-slot="tabs-trigger"]').forEach((t) => resizes.observe(t))
+    return () => {
+      mutations.disconnect()
+      resizes.disconnect()
+    }
+  }, [])
+
+  const line = variant === "line"
+
   return (
     <TabsPrimitive.List
+      ref={listRef}
       data-slot="tabs-list"
       data-variant={variant}
-      className={cn(tabsListVariants({ variant }), className)}
+      className={cn(tabsListVariants({ variant }), "relative", className)}
       {...props}
-    />
+    >
+      {box && (
+        <span
+          aria-hidden
+          data-slot="tabs-indicator"
+          className={cn(
+            "pointer-events-none absolute top-0 left-0",
+            line ? "h-0.5 bg-foreground" : "rounded-2xl bg-background shadow-sm dark:border dark:border-input dark:bg-input/30",
+            animate && "transition-[transform,width,height] duration-fast ease-smooth-out motion-reduce:transition-none"
+          )}
+          style={
+            line
+              ? { transform: `translate(${box.x}px, ${box.y + box.h + 3}px)`, width: box.w }
+              : { transform: `translate(${box.x}px, ${box.y}px)`, width: box.w, height: box.h }
+          }
+        />
+      )}
+      {children}
+    </TabsPrimitive.List>
   )
 }
 
@@ -63,10 +120,9 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-2xl border border-transparent! px-3 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground transition-[color,background-color,box-shadow] duration-quick ease-smooth-out group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start group-data-[orientation=vertical]/tabs:px-3 group-data-[orientation=vertical]/tabs:py-0.5 hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent",
-        "data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground",
-        "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity after:duration-quick group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",
+        "relative z-[1] inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-2xl border border-transparent! px-3 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground transition-[color,background-color,box-shadow] duration-quick ease-smooth-out group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start group-data-[orientation=vertical]/tabs:px-3 group-data-[orientation=vertical]/tabs:py-0.5 hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        // The active background (or underline) is the list's sliding indicator, so triggers only change text colour.
+        "data-[state=active]:text-foreground",
         className
       )}
       {...props}

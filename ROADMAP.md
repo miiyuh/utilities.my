@@ -32,6 +32,13 @@ Not agreed yet. Each needs a yes or no first.
 - **Contrast checker**: a standalone version of the Colour Picker's accessibility check, comparing any two colours
 - **Unit price comparer**: which pack is cheaper per gram, litre or piece, for shoppers comparing sizes
 
+### For existing tools
+
+- **Sorter: compare two lists**: paste two lists and see what's only in the first, only in the second, or in both (for guest lists, inventories, email lists)
+- **Percentage Calculator: SST**: add or remove Malaysia's Sales and Service Tax at the current rates, with the rate kept up to date in one place
+- **Percentage Calculator: stacked discounts**: "20% off, then another 10%" worked out as the real total discount (28%, not 30%)
+- **Text Statistics: keyword density**: how often a word or phrase you choose appears, as a count and a share of all words, for writing web pages
+
 ## Technical follow-ups
 
 - **marked 13 → 18**: major upgrade for the Markdown Previewer and legal pages; check that marked-footnote still works first
@@ -42,6 +49,8 @@ Not agreed yet. Each needs a yes or no first.
 
 ## Done recently
 
+- Reworked Text Case Converter, Foot Size Converter, Text Statistics, Sorter, Markdown Previewer, Percentage Calculator and Unit Converter
+- Favicon Generator: no-background option and home-screen previews on real wallpapers
 - Favicon Generator, with dark-mode variants and the full Unicode emoji set
 - Image Converter rebuild: crop/rotate/flip, metadata viewer with privacy controls, AVIF, target file size, presets, before/after comparison
 - Command palette (Ctrl/⌘ K) and keyboard shortcuts

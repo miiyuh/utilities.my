@@ -60,7 +60,7 @@ export const routes: RouteSeo[] = [
     title: 'Unit Converter: Length, Weight, Temperature | utilities.my',
     h1: 'Unit Converter',
     description:
-      'Metres, miles, kilos, pounds, Celsius and Fahrenheit: sorted. Convert length, weight, temperature, area, volume and speed instantly, for free.',
+      'Metres, miles, kilos, pounds, Celsius and Fahrenheit: sorted. Convert length, weight, volume, tyre pressure, calories, fuel economy and more, and see every unit at once.',
     kind: 'tool',
     priority: 0.8,
   },

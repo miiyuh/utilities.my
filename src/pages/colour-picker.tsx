@@ -985,11 +985,11 @@ export default function ColourPickerPage() {
                         >
                           <div className="absolute inset-0" style={{background:'linear-gradient(to right,#fff,rgba(255,255,255,0))'}} />
                           <div className="absolute inset-0" style={{background:'linear-gradient(to top,#000,rgba(0,0,0,0))'}} />
-                          <div className="absolute w-4 h-4 border-2 border-white shadow pointer-events-none bg-white/70" style={{left:`calc(${hsv.s}% - 8px)`,top:`calc(${100-hsv.v}% - 8px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
+                          <div className="absolute w-4 h-4 rounded-full border-2 border-white shadow pointer-events-none" style={{background: hexColour, left:`calc(${hsv.s}% - 8px)`,top:`calc(${100-hsv.v}% - 8px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
                         </div>
                         {/* Hue slider */}
                         <div
-                          className="mt-2 relative h-3 w-full overflow-hidden cursor-pointer border border-border focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          className="mt-2 relative h-3 w-full rounded-full cursor-pointer border border-border focus:outline-none focus:ring-2 focus:ring-primary/40"
                           tabIndex={0}
                           // Custom gradient strip with its own thumb, not a native
                           // range input.
@@ -1002,8 +1002,8 @@ export default function ColourPickerPage() {
                           aria-valuetext={`Hue ${hsv.h} degrees`}
                           onKeyDown={(e)=>{ const step=e.shiftKey?10:1; let h=hsv.h; let changed=false; if(e.key==='ArrowRight'||e.key==='ArrowUp'){h=Math.min(360,h+step);changed=true;} if(e.key==='ArrowLeft'||e.key==='ArrowDown'){h=Math.max(0,h-step);changed=true;} if(e.key==='Home'){h=0;changed=true;} if(e.key==='End'){h=360;changed=true;} if(changed){ const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); e.preventDefault(); } }}
                           onMouseDown={(e)=>{ const rect=(e.currentTarget as HTMLDivElement).getBoundingClientRect(); const move=(ev:MouseEvent)=>{ const x=Math.min(Math.max(0,ev.clientX-rect.left),rect.width); const h=Math.round((x/rect.width)*360); const next={h,s:hsv.s,v:hsv.v}; setHsv(next); updateHexFromHsv(next); }; const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);}; window.addEventListener('mousemove',move); window.addEventListener('mouseup',up); move(e.nativeEvent as unknown as MouseEvent); }}>
-                          <div className="absolute inset-0" style={{background:'linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)'}} />
-                          <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-white shadow bg-white/70" style={{left:`calc(${(hsv.h/360)*100}% - 6px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
+                          <div className="absolute inset-0 rounded-full" style={{background:'linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)'}} />
+                          <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white shadow pointer-events-none" style={{background:`hsl(${hsv.h} 100% 50%)`, left:`calc(${(hsv.h/360)*100}% - 8px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
                         </div>
                         <div className="flex items-center justify-between text-[10px] mt-1 text-muted-foreground">
                           <span>SV</span><span>Hue</span>
