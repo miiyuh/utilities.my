@@ -134,6 +134,23 @@ function escapeXml(s: string) {
   return s.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c] ?? c)
 }
 
+/** An SVG favicon is possible for text and emoji sources that aren't empty. */
+export function canBuildSvg(source: FaviconSource): boolean {
+  if (source.kind === 'text') return source.text.length > 0
+  if (source.kind === 'emoji') return source.emoji.length > 0
+  return false
+}
+
+/**
+ * Resolves once the font a source draws with is loaded. Canvas text silently
+ * falls back to another font until then, so every render that ends up in a
+ * preview or a download waits for this first.
+ */
+export async function fontReady(source: FaviconSource): Promise<void> {
+  if (source.kind === 'text') await document.fonts.load(`${source.weight} 64px ${source.font}`, source.text).catch(() => undefined)
+  if (source.kind === 'emoji') await document.fonts.load("64px 'Noto Color Emoji'", source.emoji).catch(() => undefined)
+}
+
 /** Colours that change in the dark variant of a text/emoji SVG. */
 export interface SvgDarkVariant {
   background: string | null
@@ -147,9 +164,8 @@ export interface SvgDarkVariant {
  * so one file follows the browser's theme.
  */
 export function buildSvg(source: FaviconSource, style: FaviconStyle, dark?: SvgDarkVariant): string | null {
-  if (source.kind === 'image') return null
-  const text = source.kind === 'text' ? source.text : source.emoji
-  if (!text) return null
+  if (!canBuildSvg(source)) return null
+  const text = source.kind === 'text' ? source.text : source.kind === 'emoji' ? source.emoji : ''
   const shape =
     style.shape === 'circle'
       ? '<circle class="bg" cx="50" cy="50" r="50"/>'

@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/page-header";
 import { ToolMethodology } from '@/components/tool-methodology';
 import { CopyButton } from "@/components/ui/copy-button";
@@ -69,7 +69,7 @@ function TimePicker({ date, onChange, is24Hour }: { date: Date; onChange: (date:
 
   return (
     <div className="flex h-[300px] divide-x border-l border-border">
-      <ScrollArea className="h-full w-16">
+      <ScrollArea className="h-full w-16" hideScrollbar>
         <div className="flex flex-col p-2 gap-1">
           {hours.map((h) => (
             <Button
@@ -83,9 +83,8 @@ function TimePicker({ date, onChange, is24Hour }: { date: Date; onChange: (date:
             </Button>
           ))}
         </div>
-        <ScrollBar orientation="vertical" className="invisible" />
       </ScrollArea>
-      <ScrollArea className="h-full w-16">
+      <ScrollArea className="h-full w-16" hideScrollbar>
         <div className="flex flex-col p-2 gap-1">
           {minutes.map((m) => (
             <Button
@@ -99,7 +98,6 @@ function TimePicker({ date, onChange, is24Hour }: { date: Date; onChange: (date:
             </Button>
           ))}
         </div>
-        <ScrollBar orientation="vertical" className="invisible" />
       </ScrollArea>
       {!is24Hour && (
         <div className="flex flex-col p-2 gap-2 justify-center w-16 bg-muted/10">

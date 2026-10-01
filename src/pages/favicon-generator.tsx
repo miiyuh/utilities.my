@@ -23,6 +23,8 @@ import {
   buildIco,
   buildManifest,
   buildSvg,
+  canBuildSvg,
+  fontReady,
   canvasToPng,
   renderFavicon,
   type FaviconShape,
@@ -129,8 +131,7 @@ export default function FaviconGeneratorPage() {
     }
     let cancelled = false
     void (async () => {
-      if (source.kind === 'text') await document.fonts.load(`${source.weight} 64px ${source.font}`, source.text).catch(() => undefined)
-      if (source.kind === 'emoji') await document.fonts.load("64px 'Noto Color Emoji'", source.emoji).catch(() => undefined)
+      await fontReady(source)
       if (cancelled) return
       const next: Record<string, string> = {}
       for (const s of PREVIEW_SIZES) next[s] = renderFavicon(s, source, style).toDataURL('image/png')
@@ -182,13 +183,15 @@ export default function FaviconGeneratorPage() {
     return () => document.removeEventListener('paste', onPaste)
   })
 
-  const svg = source ? buildSvg(source, style, darkOn ? { background: darkStyle.background, color: darkTextColor } : undefined) : null
-  const snippet = buildHtmlSnippet(Boolean(svg), themeColor, Boolean(darkSource))
+  const svgAvailable = source ? canBuildSvg(source) : false
+  const snippet = buildHtmlSnippet(svgAvailable, themeColor, Boolean(darkSource))
 
   const downloadPackage = async () => {
     if (!source) return
     setBuilding(true)
     try {
+      // Everything is drawn after the font has loaded, so no file is made with a fallback font.
+      await fontReady(source)
       const png = (size: number, opts?: Parameters<typeof renderFavicon>[3], s: FaviconStyle = style) => canvasToPng(renderFavicon(size, source, s, opts))
       const [p16, p32, p48] = await Promise.all([png(16), png(32), png(48)])
       const { default: JSZip } = await import('jszip')
@@ -205,6 +208,7 @@ export default function FaviconGeneratorPage() {
       zip.file('android-chrome-192x192.png', await png(192))
       zip.file('android-chrome-512x512.png', await png(512))
       zip.file('maskable-icon-512x512.png', await png(512, { maskable: true }))
+      const svg = buildSvg(source, style, darkOn ? { background: darkStyle.background, color: darkTextColor } : undefined)
       if (svg) zip.file('favicon.svg', svg)
       zip.file('site.webmanifest', buildManifest(appName, shortName, themeColor, style.background ?? '#ffffff'))
       zip.file('README.txt', `Put these files in your site's root folder, then add this to the <head> of every page:\n\n${snippet}\n`)
@@ -220,6 +224,7 @@ export default function FaviconGeneratorPage() {
 
   const downloadIco = async () => {
     if (!source) return
+    await fontReady(source)
     const blobs = await Promise.all([16, 32, 48].map(async (size) => ({ size, blob: await canvasToPng(renderFavicon(size, source, style)) })))
     downloadBlob(await buildIco(blobs), 'favicon.ico', isIOSOrSafari())
   }
@@ -513,7 +518,7 @@ export default function FaviconGeneratorPage() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       The ZIP has favicon.ico (16, 32, 48 px), PNGs for browsers, an Apple touch icon, Android icons (including a maskable one),
-                      {darkSource ? ' dark-mode PNGs,' : ''}{svg ? ` a favicon.svg${darkOn ? ' that follows the theme' : ''}${source?.kind === 'text' && fontId !== 'system' ? ' (your font is drawn into it, because favicons cannot load web fonts)' : ''},` : ''} and site.webmanifest.
+                      {darkSource ? ' dark-mode PNGs,' : ''}{svgAvailable ? ` a favicon.svg${darkOn ? ' that follows the theme' : ''}${source?.kind === 'text' && fontId !== 'system' ? ' (your font is drawn into it, because favicons cannot load web fonts)' : ''},` : ''} and site.webmanifest.
                     </p>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">

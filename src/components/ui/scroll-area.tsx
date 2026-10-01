@@ -8,8 +8,15 @@ import { cn } from "@/lib/utils"
 function ScrollArea({
   className,
   children,
+  hideScrollbar = false,
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
+  /**
+   * Hides the bar but keeps it mounted: Radix only lets the viewport scroll on
+   * an axis that has a scrollbar, so leaving it out would stop scrolling.
+   */
+  hideScrollbar?: boolean
+}) {
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
@@ -22,7 +29,7 @@ function ScrollArea({
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
+      <ScrollBar className={hideScrollbar ? "invisible" : undefined} />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
   )
