@@ -32,7 +32,7 @@ export function antipode([lon, lat]: [number, number]): [number, number] {
 
 /**
  * Night-side region as a closed [lon, lat] ring, for cylindrical projections
- * (e.g. Mercator) where a spherical "circle 90° from the sun" - perfectly
+ * (e.g. Equal Earth) where a spherical "circle 90° from the sun" - perfectly
  * valid on a globe - cannot be projected directly: it isn't a simple curve
  * in (lon, lat) space, so feeding it through geoPath produces a wildly
  * distorted shape. This instead walks the actual terminator curve (where the

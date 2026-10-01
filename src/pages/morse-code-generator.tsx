@@ -1,3 +1,5 @@
+import { MorseChips, MorseReference } from '@/components/morse-reference';
+import { ClearButton } from '@/components/ui/clear-button';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,10 +12,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { Trash, Play, Pause, Stop, SpeakerHigh, Lightning, DeviceMobile, Upload, Download, Eye, Translate, Code, Gear } from 'phosphor-react';
-import { WebHaptics } from 'web-haptics';
+import { Play, Pause, Stop, SpeakerHigh, Lightning, Upload, Download, Eye, Translate, Code, Gear } from 'phosphor-react';
 import { PageHeader } from "@/components/page-header";
 
+import { ToolMethodology } from '@/components/tool-methodology';
 // Morse code alphabet
 const MORSE_CODE_MAP: { [key: string]: string } = {
   'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....',
@@ -70,7 +72,6 @@ export default function MorseCodeGeneratorPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [vibrationEnabled, setVibrationEnabled] = useState(false);
   const [visualEnabled, setVisualEnabled] = useState(true);
   const [volume, setVolume] = useState(0.5);
   const [pitch, setPitch] = useState(600);
@@ -86,7 +87,6 @@ export default function MorseCodeGeneratorPage() {
   const visualRef = useRef<HTMLDivElement>(null);
   const pausedPositionRef = useRef(0);
   const morseSequenceRef = useRef<string>('');
-  const hapticEngineRef = useRef<InstanceType<typeof WebHaptics> | null>(null);
 
   // Both outputs are a pure function of the input and the active tab, so they
   // are computed during render. They used to be state written from an effect,
@@ -100,6 +100,28 @@ export default function MorseCodeGeneratorPage() {
     () => (activeTab === 'text-to-morse' || !inputMorse ? '' : morseToText(inputMorse)),
     [activeTab, inputMorse]
   );
+
+  // Per-character pairs for the output chips (letter <-> code tooltips).
+  const textPairs = useMemo<[string, string][]>(
+    () => inputText.toUpperCase().split('').map((c) => (c === ' ' ? [' ', '/'] : [c, MORSE_CODE_MAP[c] ?? ''])),
+    [inputText]
+  );
+  const morsePairs = useMemo<[string, string][]>(() => {
+    const words = inputMorse.trim().split(/\s*\/\s*|\s{2,}/).filter(Boolean);
+    return words.flatMap((word, wi) => {
+      const letters = word.split(' ').filter(Boolean).map((code): [string, string] => [REVERSE_MORSE_CODE_MAP[code] ?? '?', code]);
+      return wi < words.length - 1 ? [...letters, [' ', '/'] as [string, string]] : letters;
+    });
+  }, [inputMorse]);
+
+  const handleReferencePick = (char: string, code: string) => {
+    if (activeTab === 'text-to-morse') {
+      setInputText((t) => t + char);
+    } else {
+      setInputMorse((m) => (m && !/\s$/.test(m) ? `${m} ` : m) + code);
+    }
+    if (!isPlayingRef.current) playMorseSequence(code);
+  };
 
   // Play audio beep
   const playBeep = (duration: number) => {
@@ -131,38 +153,6 @@ export default function MorseCodeGeneratorPage() {
     oscillatorRef.current = oscillator;
   };
 
-  // Vibrate device with haptic feedback using web-haptics
-  const vibrate = (duration: number, intensity: number = 1) => {
-    // Try web-haptics first if available
-    if (hapticEngineRef.current) {
-      try {
-        hapticEngineRef.current.trigger({
-          pattern: [{ duration, intensity: Math.min(intensity, 1) }]
-        }).catch(() => {
-          // Fallback to native vibration if web-haptics fails
-          if ('vibrate' in navigator) {
-            navigator.vibrate(duration);
-          }
-        });
-        return;
-      } catch {
-        // Continue to fallback
-      }
-    }
-
-    // Fallback to native vibration
-    if ('vibrate' in navigator) {
-      navigator.vibrate(duration);
-    }
-  };
-
-  // Flash light (stub implementation - would require more complex API access)
-  const flashLight = (duration: number) => {
-    // This is a simplified implementation
-    // Real implementation would require MediaDevices API and device permissions
-    console.log(`Flashing light for ${duration}ms`);
-  };
-
   // Visual signal
   const visualSignal = (duration: number) => {
     if (visualRef.current) {
@@ -181,9 +171,7 @@ export default function MorseCodeGeneratorPage() {
     
     if (symbol === '.') {
       if (audioEnabled) playBeep(adjustedDot);
-      if (vibrationEnabled) vibrate(adjustedDot, 0.8); // Lighter vibration for dot
       if (visualEnabled) {
-        flashLight(adjustedDot);
         visualSignal(adjustedDot);
       }
       
@@ -192,9 +180,7 @@ export default function MorseCodeGeneratorPage() {
       }, adjustedDot + adjustedGap);
     } else if (symbol === '-') {
       if (audioEnabled) playBeep(adjustedDash);
-      if (vibrationEnabled) vibrate(adjustedDash, 1.0); // Stronger vibration for dash
       if (visualEnabled) {
-        flashLight(adjustedDash);
         visualSignal(adjustedDash);
       }
       
@@ -280,19 +266,6 @@ export default function MorseCodeGeneratorPage() {
       oscillatorRef.current = null;
     }
     
-    // Stop vibration - try web-haptics first, fallback to native
-    if (hapticEngineRef.current) {
-      try {
-        hapticEngineRef.current.cancel();
-      } catch {
-        // Fallback
-      }
-    }
-    
-    if ('vibrate' in navigator) {
-      navigator.vibrate(0);
-    }
-    
     // Stop visual signal
     setVisualActive(false);
   };
@@ -330,19 +303,6 @@ export default function MorseCodeGeneratorPage() {
       oscillatorRef.current = null;
     }
     
-    // Stop vibration - try web-haptics first, fallback to native
-    if (hapticEngineRef.current) {
-      try {
-        hapticEngineRef.current.cancel();
-      } catch {
-        // Fallback
-      }
-    }
-    
-    if ('vibrate' in navigator) {
-      navigator.vibrate(0);
-    }
-    
     // Stop visual signal
     setVisualActive(false);
     
@@ -360,22 +320,9 @@ export default function MorseCodeGeneratorPage() {
     stopPlayback();
   };
 
-  // Initialize WebHaptics and cleanup on unmount. Declared after stopPlayback
-  // so the cleanup does not close over it while it is still being initialised.
-  useEffect(() => {
-    // Initialize haptic engine if supported
-    if (WebHaptics.isSupported) {
-      hapticEngineRef.current = new WebHaptics();
-    }
-
-    return () => {
-      stopPlayback();
-      // Cleanup haptic engine
-      if (hapticEngineRef.current) {
-        hapticEngineRef.current.destroy();
-      }
-    };
-  }, []);
+  // Stop any playback on unmount. Declared after stopPlayback so the cleanup
+  // does not close over it while it is still being initialised.
+  useEffect(() => () => stopPlayback(), []);
 
   // Import text from file
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -431,9 +378,9 @@ export default function MorseCodeGeneratorPage() {
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Morse Code Generator</h1>
-              <p className="text-lg text-muted-foreground">Convert between text and Morse code with audio, vibration, and visual signals.</p>
+              <p className="text-lg text-muted-foreground">Convert between text and Morse code, then hear it or watch it flash.</p>
             </div>
 
             {/* Tabs for Text-to-Morse and Morse-to-Text */}
@@ -478,9 +425,7 @@ export default function MorseCodeGeneratorPage() {
                         >
                           <Upload className="h-4 w-4 mr-2" /> Import
                         </Button>
-                        <Button variant="outline" onClick={handleClear}>
-                          <Trash className="h-4 w-4 mr-2" /> Clear
-                        </Button>
+                        <ClearButton onClear={handleClear} hasContent={Boolean(inputText)} size="default" confirmTitle="Clear the text?" />
                       </div>
                     </CardContent>
                   </Card>
@@ -491,12 +436,7 @@ export default function MorseCodeGeneratorPage() {
                       <CardTitle>Morse Code</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Textarea 
-                        placeholder="Morse code will appear here..." 
-                        value={outputMorse} 
-                        readOnly 
-                        className="resize-none bg-muted/50 min-h-[200px] font-mono" 
-                      />
+                      <MorseChips pairs={textPairs} show="code" placeholder="Morse code will appear here. Hover or tap a code to see its letter." />
                       <div className="flex flex-wrap gap-2">
                         <CopyButton value={() => outputMorse} label="Copy" disabled={!outputMorse} />
                         <Button onClick={handleExport} disabled={!outputMorse}>
@@ -537,9 +477,7 @@ export default function MorseCodeGeneratorPage() {
                         >
                           <Upload className="h-4 w-4 mr-2" /> Import
                         </Button>
-                        <Button variant="outline" onClick={handleClear}>
-                          <Trash className="h-4 w-4 mr-2" /> Clear
-                        </Button>
+                        <ClearButton onClear={handleClear} hasContent={Boolean(inputMorse)} size="default" confirmTitle="Clear the Morse code?" />
                       </div>
                     </CardContent>
                   </Card>
@@ -550,12 +488,7 @@ export default function MorseCodeGeneratorPage() {
                       <CardTitle>Decoded Text</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Textarea 
-                        placeholder="Decoded text will appear here..." 
-                        value={outputText} 
-                        readOnly 
-                        className="resize-none bg-muted/50 min-h-[200px]" 
-                      />
+                      <MorseChips pairs={morsePairs} show="char" placeholder="Decoded text will appear here. Hover or tap a letter to see its code." />
                       <div className="flex flex-wrap gap-2">
                         <CopyButton value={() => outputText} label="Copy" disabled={!outputText} />
                         <Button onClick={handleExport} disabled={!outputText}>
@@ -620,15 +553,7 @@ export default function MorseCodeGeneratorPage() {
                     />
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <DeviceMobile className="h-4 w-4" />
-                    <Label htmlFor="vibration-toggle">Vibration</Label>
-                    <Switch
-                      id="vibration-toggle"
-                      checked={vibrationEnabled}
-                      onCheckedChange={setVibrationEnabled}
-                    />
-                  </div>
+
                   
                   <div className="flex items-center space-x-2">
                     <Eye className="h-4 w-4" />
@@ -704,22 +629,35 @@ export default function MorseCodeGeneratorPage() {
                       <Eye className="h-4 w-4" />
                       <Label>Visual Signal</Label>
                     </div>
-                    <div 
+                    {/* A signal lamp: dark when off, lit in the site's green when on. Real
+                        signal lamps are usually white; Morse has no colour standard. */}
+                    <div
                       ref={visualRef}
-                      className={`w-full h-24 rounded-lg flex items-center justify-center transition-all duration-micro ${
-                        visualActive 
-                          ? 'bg-yellow-400 shadow-lg shadow-yellow-400/50' 
-                          : 'bg-muted border-2 border-dashed'
-                      }`}
+                      className="flex h-24 w-full items-center justify-center gap-4 rounded-md border border-border bg-muted/40"
+                      aria-hidden
                     >
-                      {visualActive ? (
-                        <span className="text-2xl font-bold text-yellow-900">●</span>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">Signal will appear here during playback</span>
-                      )}
+                      <span
+                        className={`size-14 rounded-full border-2 transition-all duration-micro ${
+                          visualActive
+                            ? 'border-primary bg-primary shadow-[0_0_28px_6px_var(--primary)]'
+                            : 'border-border bg-background'
+                        }`}
+                      />
+                      {!visualActive && <span className="text-sm text-muted-foreground">Lights up with each dot and dash</span>}
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Morse alphabet reference */}
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle>Morse alphabet</CardTitle>
+                <p className="text-sm text-muted-foreground">Click any character to hear it and add it to your input.</p>
+              </CardHeader>
+              <CardContent>
+                <MorseReference map={MORSE_CODE_MAP} onPick={handleReferencePick} />
               </CardContent>
             </Card>
 
@@ -739,12 +677,13 @@ export default function MorseCodeGeneratorPage() {
                 </p>
                 <p className="text-sm text-muted-foreground flex items-start gap-2">
                   <Gear className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span><strong>Controls:</strong> Adjust volume, pitch, and speed of the audio playback. Enable vibration and visual signals for mobile devices.</span>
+                  <span><strong>Controls:</strong> Adjust the volume, pitch and speed of playback, and turn the sound or the flashing light on or off.</span>
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

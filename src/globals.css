@@ -8,82 +8,95 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ---------------------------------------------------------------------------
-   THEME TOKENS - shadcn preset b2DcktdRo (emerald / stone), OKLCH color space
+   THEME TOKENS - "Pandan & Kopi": pandan green on warm paper, kopi-brown
+   neutrals, an amber highlight. OKLCH throughout; text pairs meet WCAG AA.
 --------------------------------------------------------------------------- */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.147 0.004 49.25);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.147 0.004 49.25);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.147 0.004 49.25);
-  --primary: oklch(0.508 0.118 165.612);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0.001 106.424);
-  --muted-foreground: oklch(0.553 0.013 58.071);
-  --accent: oklch(0.97 0.001 106.424);
-  --accent-foreground: oklch(0.216 0.006 56.043);
-  --destructive: oklch(0.577 0.245 27.325);
+  --background: oklch(0.97 0.012 75);
+  --foreground: oklch(0.22 0.015 60);
+  --card: oklch(0.985 0.008 75);
+  --card-foreground: oklch(0.22 0.015 60);
+  --popover: oklch(0.99 0.006 75);
+  --popover-foreground: oklch(0.22 0.015 60);
+  --primary: oklch(0.52 0.11 165);
+  --primary-foreground: oklch(0.985 0.01 165);
+  --secondary: oklch(0.93 0.02 75);
+  --secondary-foreground: oklch(0.3 0.02 60);
+  --muted: oklch(0.935 0.014 75);
+  --muted-foreground: oklch(0.5 0.02 60);
+  --accent: oklch(0.93 0.035 80);
+  --accent-foreground: oklch(0.3 0.04 60);
+  --destructive: oklch(0.48 0.2 27.3);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.923 0.003 48.717);
-  --input: oklch(0.923 0.003 48.717);
-  --ring: oklch(0.709 0.01 56.259);
+  --border: oklch(0.89 0.015 70);
+  --input: oklch(0.89 0.015 70);
+  --ring: oklch(0.62 0.09 165);
+  /* Kopi-amber highlight (selection, charts, small accents). */
+  --highlight: oklch(0.78 0.14 75);
+  /* Status text (AA on cards and muted panels in both themes). */
+  --success: oklch(0.5 0.13 150);
+  --warning: oklch(0.52 0.12 65);
 
-  --chart-1: oklch(0.845 0.143 164.978);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.596 0.145 163.225);
-  --chart-4: oklch(0.508 0.118 165.612);
-  --chart-5: oklch(0.432 0.095 166.913);
+  --chart-1: oklch(0.52 0.11 165);
+  --chart-2: oklch(0.78 0.14 75);
+  --chart-3: oklch(0.45 0.07 55);
+  --chart-4: oklch(0.7 0.1 165);
+  --chart-5: oklch(0.62 0.12 45);
 
-  --sidebar: oklch(0.985 0.001 106.423);
-  --sidebar-foreground: oklch(0.147 0.004 49.25);
-  --sidebar-primary: oklch(0.596 0.145 163.225);
-  --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
-  --sidebar-accent: oklch(0.97 0.001 106.424);
-  --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
-  --sidebar-border: oklch(0.923 0.003 48.717);
-  --sidebar-ring: oklch(0.709 0.01 56.259);
+  --sidebar: oklch(0.955 0.014 75);
+  --sidebar-foreground: oklch(0.22 0.015 60);
+  --sidebar-primary: oklch(0.52 0.11 165);
+  --sidebar-primary-foreground: oklch(0.985 0.01 165);
+  --sidebar-accent: oklch(0.92 0.02 75);
+  --sidebar-accent-foreground: oklch(0.3 0.04 60);
+  --sidebar-border: oklch(0.89 0.015 70);
+  --sidebar-ring: oklch(0.62 0.09 165);
 
   --radius: 0.625rem;
 }
 
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
-  --primary: oklch(0.432 0.095 166.913);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.268 0.007 34.298);
-  --accent-foreground: oklch(0.985 0.001 106.423);
+  --background: oklch(0.17 0.006 60);
+  --foreground: oklch(0.95 0.01 80);
+  --card: oklch(0.205 0.008 60);
+  --card-foreground: oklch(0.95 0.01 80);
+  --popover: oklch(0.22 0.008 60);
+  --popover-foreground: oklch(0.95 0.01 80);
+  --primary: oklch(0.68 0.12 165);
+  --primary-foreground: oklch(0.17 0.02 165);
+  --secondary: oklch(0.26 0.01 60);
+  --secondary-foreground: oklch(0.95 0.01 80);
+  --muted: oklch(0.25 0.008 60);
+  --muted-foreground: oklch(0.72 0.015 75);
+  --accent: oklch(0.29 0.03 70);
+  --accent-foreground: oklch(0.95 0.01 80);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.553 0.013 58.071);
+  --ring: oklch(0.68 0.12 165 / 70%);
+  --highlight: oklch(0.78 0.14 75);
+  --success: oklch(0.78 0.14 150);
+  --warning: oklch(0.8 0.13 80);
 
-  --chart-1: oklch(0.845 0.143 164.978);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.596 0.145 163.225);
-  --chart-4: oklch(0.508 0.118 165.612);
-  --chart-5: oklch(0.432 0.095 166.913);
+  --chart-1: oklch(0.68 0.12 165);
+  --chart-2: oklch(0.78 0.14 75);
+  --chart-3: oklch(0.62 0.07 55);
+  --chart-4: oklch(0.8 0.09 165);
+  --chart-5: oklch(0.68 0.12 45);
 
-  --sidebar: oklch(0.216 0.006 56.043);
-  --sidebar-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-primary: oklch(0.696 0.17 162.48);
-  --sidebar-primary-foreground: oklch(0.262 0.051 172.552);
-  --sidebar-accent: oklch(0.268 0.007 34.298);
-  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
+  --sidebar: oklch(0.195 0.007 60);
+  --sidebar-foreground: oklch(0.95 0.01 80);
+  --sidebar-primary: oklch(0.68 0.12 165);
+  --sidebar-primary-foreground: oklch(0.17 0.02 165);
+  --sidebar-accent: oklch(0.26 0.012 60);
+  --sidebar-accent-foreground: oklch(0.95 0.01 80);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.553 0.013 58.071);
+  --sidebar-ring: oklch(0.68 0.12 165 / 70%);
+}
+
+::selection {
+  background: color-mix(in oklch, var(--highlight) 40%, transparent);
 }
 
 /* ---------------------------------------------------------------------------
@@ -109,6 +122,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-highlight: var(--highlight);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -136,11 +152,16 @@
   --font-code: var(--font-mono);
   --font-serif: 'Instrument Serif', 'Noto Serif', serif;
 
-  /* Radius scale derived from --radius */
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  /* One radius everywhere (0.625rem): every rounded-* step resolves to it.
+     Buttons are the exception and use rounded-full; pills stay rounded-full. */
+  --radius-xs: var(--radius);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
 
   /* Motion - easing (generates ease-* utilities + :root vars) */
   --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
@@ -236,10 +257,10 @@
   }
 
   .minimal-button-ghost {
-    @apply inline-flex items-center justify-center text-foreground px-3 py-2 rounded-2xl transition-all outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/30;
+    @apply inline-flex items-center justify-center text-foreground px-3 py-2 rounded-full transition-all outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/30;
   }
 
-  /* CARD & SURFACES - match the Card component (24px radius, subtle ring, soft shadow) */
+  /* CARD & SURFACES - match the Card component (shared radius, subtle ring, soft shadow) */
   .minimal-card {
     @apply bg-card text-card-foreground rounded-md shadow-sm ring-1 ring-foreground/5 dark:ring-foreground/10 transition-all duration-[var(--duration-quick)] ease-[var(--ease-smooth-out)] hover:shadow-md hover:ring-primary/30 relative z-10;
   }
@@ -318,46 +339,116 @@
   }
 }
 
+/* Balanced headings, no orphaned last words in UI copy. Long-form legal text
+   (.markdown-preview) keeps normal wrapping. */
+@layer base {
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* Tailwind v4's preflight gives buttons the default arrow cursor. Anything
+   clickable gets the pointer instead; disabled controls opt out. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not([data-disabled]),
+  [role="option"]:not([data-disabled]),
+  [role="menuitem"]:not([data-disabled]),
+  [role="menuitemradio"]:not([data-disabled]),
+  [role="checkbox"]:not(:disabled),
+  [role="switch"]:not(:disabled),
+  [role="radio"]:not(:disabled),
+  [role="combobox"]:not(:disabled),
+  [role="slider"],
+  select:not(:disabled),
+  summary,
+  label[for],
+  input[type="file"],
+  input[type="color"],
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
 /* ---------------------------------------------------------------------------
-   MARKDOWN PREVIEW
+   MARKDOWN PREVIEW (long-form reading: privacy policy, terms of service)
 --------------------------------------------------------------------------- */
 @layer base {
   .markdown-preview {
-    line-height: 1.6;
+    max-width: 68ch;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.75;
     word-wrap: break-word;
     color: var(--foreground);
   }
 
+  .markdown-preview > :first-child {
+    margin-top: 0;
+  }
+
+  .markdown-preview p {
+    margin: 0 0 1.25rem;
+  }
+
   .markdown-preview h1,
   .markdown-preview h2,
-  .markdown-preview h3 {
+  .markdown-preview h3,
+  .markdown-preview h4 {
+    font-family: var(--font-heading);
     color: var(--foreground);
     font-weight: 600;
-    line-height: 1.25;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    scroll-margin-top: 5rem;
   }
 
   .markdown-preview h1 {
     font-size: 2.25rem;
-    border-bottom: 2px solid var(--border);
-    padding-bottom: 0.75rem;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
     margin-bottom: 1rem;
   }
 
+  /* "Last Updated" line straight under the title. */
+  .markdown-preview h1 + p {
+    color: var(--muted-foreground);
+    font-size: 0.875rem;
+    margin-bottom: 2rem;
+  }
+
   .markdown-preview h2 {
-    font-size: 1.875rem;
-    border-bottom: 1px solid var(--border);
+    font-size: 1.5rem;
+    margin: 3.5rem 0 1.25rem;
     padding-bottom: 0.5rem;
-    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
   }
 
   .markdown-preview h3 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.15rem;
+    margin: 2.25rem 0 0.75rem;
+  }
+
+  .markdown-preview h4 {
+    font-size: 1rem;
+    margin: 1.75rem 0 0.5rem;
+  }
+
+  .markdown-preview strong {
+    font-weight: 600;
+    color: var(--foreground);
   }
 
   .markdown-preview a {
     color: var(--primary);
     text-decoration: underline;
+    text-underline-offset: 3px;
     cursor: pointer;
   }
 
@@ -367,9 +458,9 @@
 
   .markdown-preview code {
     background-color: var(--muted);
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius);
+    font-size: 0.875em;
     font-family: var(--font-mono);
   }
 
@@ -377,9 +468,10 @@
     background-color: var(--muted);
     border: 1px solid var(--border);
     padding: 1rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius);
     overflow-x: auto;
     font-size: 0.85rem;
+    margin: 0 0 1.25rem;
   }
 
   .markdown-preview pre code {
@@ -389,35 +481,51 @@
   }
 
   .markdown-preview blockquote {
-    border-left: 4px solid var(--primary);
+    border-left: 3px solid var(--primary);
     padding-left: 1rem;
     color: var(--muted-foreground);
-    font-style: italic;
-    margin: 1rem 0;
+    margin: 0 0 1.25rem;
   }
 
   .markdown-preview ul,
   .markdown-preview ol {
-    margin: 1rem 0;
+    margin: 0 0 1.25rem;
     padding-left: 1.5rem;
+  }
+
+  .markdown-preview ul {
+    list-style: disc;
+  }
+
+  .markdown-preview ol {
+    list-style: decimal;
   }
 
   .markdown-preview li {
     margin-bottom: 0.5rem;
+    padding-left: 0.25rem;
+  }
+
+  .markdown-preview li::marker {
+    color: var(--muted-foreground);
+  }
+
+  .markdown-preview li > p {
+    margin: 0;
   }
 
   .markdown-preview table {
     width: 100%;
     border-collapse: collapse;
     border: 1px solid var(--border);
-    margin: 1rem 0;
+    margin: 0 0 1.25rem;
     font-size: 0.875rem;
   }
 
   .markdown-preview th,
   .markdown-preview td {
     border: 1px solid var(--border);
-    padding: 0.5rem;
+    padding: 0.5rem 0.75rem;
     text-align: left;
   }
 
@@ -430,7 +538,7 @@
     border: none;
     height: 1px;
     background-color: var(--border);
-    margin: 2rem 0;
+    margin: 2.5rem 0;
   }
 
   .markdown-preview img {
@@ -438,10 +546,11 @@
     height: auto;
     display: block;
     margin: 1rem 0;
-    border-radius: 0.5rem;
+    border-radius: var(--radius);
     border: 1px solid var(--border);
   }
 }
+
 
 /* ---------------------------------------------------------------------------
    SCROLLBAR
@@ -509,7 +618,7 @@
     background-color: var(--card);
     color: var(--card-foreground);
     border: 1px solid var(--border);
-    border-radius: 0.5rem;
+    border-radius: var(--radius);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
@@ -546,21 +655,13 @@
 }
 
 /* ---------------------------------------------------------------------------
-   EMOJI & MISC
+   MISC
 --------------------------------------------------------------------------- */
-.flag-emoji {
-  font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', system-ui, -apple-system;
-  line-height: 1;
-  display: inline-block;
-  transform: translateY(1px);
-  -webkit-font-smoothing: antialiased;
-}
-
 /* react-remove-scroll (used by every Radix Select, Dialog and Popover) locks
    the page by setting overflow: hidden and a scrollbar-width margin on <body>.
    Because <html> owns the scrollbar here (overflow-y: scroll + stable gutter),
-   that turns <body> into its own scroll container — every sticky header
-   re-anchors to the document top and vanishes — and the margin shifts the
+   that turns <body> into its own scroll container (every sticky header
+   re-anchors to the document top and vanishes), and the margin shifts the
    whole page sideways. Neither is needed: the gutter never changes, and the
    library still blocks wheel and touch scrolling through its event handlers.
    Unlayered and more specific than the injected rule so it wins the cascade. */

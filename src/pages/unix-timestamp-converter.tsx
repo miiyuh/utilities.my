@@ -13,8 +13,38 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
+import { ToolMethodology } from '@/components/tool-methodology';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToolSettings } from "@/hooks/use-tool-settings";
 
 type Unit = 's' | 'ms';
+type DisplayFormatId = 'site' | 'my' | 'my-24' | 'dmy' | 'us' | 'iso' | 'custom';
+
+// `site` resolves to the Settings preference; the rest are fixed date-fns patterns.
+const DISPLAY_FORMATS: { id: DisplayFormatId; label: string; pattern?: string }[] = [
+  { id: 'site', label: 'Site default' },
+  { id: 'my', label: 'Malaysia / UK', pattern: 'd MMMM yyyy, h:mm a' },
+  { id: 'my-24', label: 'Malaysia / UK (24-hour)', pattern: 'd MMMM yyyy, HH:mm' },
+  { id: 'dmy', label: 'DD/MM/YYYY', pattern: 'dd/MM/yyyy HH:mm:ss' },
+  { id: 'us', label: 'US', pattern: 'PPP p' },
+  { id: 'iso', label: 'ISO 8601', pattern: 'yyyy-MM-dd HH:mm:ss' },
+  { id: 'custom', label: 'Custom…' },
+];
+
+const DISPLAY_FORMAT_KEY = 'utilities.my-unix-display-format';
+
+function loadDisplayFormat(): { id: DisplayFormatId; custom: string } {
+  const fallback = { id: 'site' as DisplayFormatId, custom: 'EEEE, d MMMM yyyy HH:mm:ss' };
+  try {
+    const raw = localStorage.getItem(DISPLAY_FORMAT_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as Partial<{ id: DisplayFormatId; custom: string }>;
+    const id = DISPLAY_FORMATS.some(f => f.id === parsed.id) ? parsed.id! : fallback.id;
+    return { id, custom: typeof parsed.custom === 'string' ? parsed.custom : fallback.custom };
+  } catch {
+    return fallback;
+  }
+}
 type EditingField = 'timestamp' | 'human' | null;
 
 function toTimestampString(date: Date, unit: Unit): string {
@@ -34,6 +64,16 @@ export default function UnixTimestampConverterPage() {
   const [humanDraft, setHumanDraft] = useState(() => toHumanString(date));
   const [timestampError, setTimestampError] = useState<string | null>(null);
   const [humanError, setHumanError] = useState<string | null>(null);
+
+  const { fns } = useToolSettings();
+  const [displayFormat, setDisplayFormat] = useState(loadDisplayFormat);
+  useEffect(() => {
+    try {
+      localStorage.setItem(DISPLAY_FORMAT_KEY, JSON.stringify(displayFormat));
+    } catch {
+      // Storage unavailable; the choice just won't persist.
+    }
+  }, [displayFormat]);
 
   // Keep both text fields synced to the canonical `date`, but never clobber
   // the field the user is actively typing into.
@@ -102,6 +142,20 @@ export default function UnixTimestampConverterPage() {
     }
   };
 
+  const displayPattern =
+    displayFormat.id === 'site'
+      ? `${fns.long}, ${fns.time}`
+      : displayFormat.id === 'custom'
+        ? displayFormat.custom
+        : DISPLAY_FORMATS.find(f => f.id === displayFormat.id)?.pattern ?? 'PPP p';
+  let displayText = '';
+  let displayError: string | null = null;
+  try {
+    displayText = displayPattern.trim() ? format(date, displayPattern) : '';
+  } catch (e) {
+    displayError = e instanceof Error ? e.message : 'Invalid format pattern';
+  }
+
   const relative = formatDistanceToNow(date, { addSuffix: true });
   const isValid = !timestampError && !humanError;
 
@@ -116,7 +170,7 @@ export default function UnixTimestampConverterPage() {
 
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Unix Timestamp Converter</h1>
               <p className="text-lg text-muted-foreground max-w-3xl">Convert Unix timestamps to human-readable dates and back, updates live as you type.</p>
             </div>
@@ -210,13 +264,51 @@ export default function UnixTimestampConverterPage() {
                     {humanError && <p className="mt-1 text-xs text-destructive">{humanError}</p>}
                   </div>
 
+                  <div className="space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+                      <div className="space-y-1.5 sm:w-56">
+                        <Label htmlFor="displayFormat">Display format</Label>
+                        <Select
+                          value={displayFormat.id}
+                          onValueChange={(id) => setDisplayFormat(f => ({ ...f, id: id as DisplayFormatId }))}
+                        >
+                          <SelectTrigger id="displayFormat" className="w-full"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {DISPLAY_FORMATS.map(f => (
+                              <SelectItem key={f.id} value={f.id}>{f.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {displayFormat.id === 'custom' && (
+                        <div className="flex-1 space-y-1.5 animate-in fade-in-0 slide-in-from-top-1 duration-fast ease-smooth-out">
+                          <Label htmlFor="customFormat">Pattern (date-fns)</Label>
+                          <Input
+                            id="customFormat"
+                            value={displayFormat.custom}
+                            onChange={(e) => setDisplayFormat(f => ({ ...f, custom: e.target.value }))}
+                            placeholder="e.g., EEEE, d MMMM yyyy HH:mm:ss"
+                            className={cn('font-mono', displayError && 'border-destructive focus-visible:ring-destructive/30')}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    {displayError && <p className="text-xs text-destructive">{displayError}</p>}
+                    {displayFormat.id === 'custom' && !displayError && (
+                      <p className="text-xs text-muted-foreground">
+                        Tokens: <code>d</code> day, <code>MMMM</code> month name, <code>yyyy</code> year, <code>HH</code>/<code>h</code> hour, <code>mm</code> minute, <code>a</code> AM/PM. Wrap literal text in <code>'single quotes'</code>.
+                      </p>
+                    )}
+                  </div>
+
                   <div className={cn(
                     "p-5 bg-muted/40 border border-border rounded-2xl space-y-3 animate-in fade-in-0 duration-quick ease-smooth-out",
                     !isValid && "opacity-50"
                   )}>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-lg font-semibold text-foreground">{format(date, 'PPP p')}</span>
+                      <span className="text-lg font-semibold text-foreground break-words min-w-0">{displayText || '-'}</span>
                       <Badge variant="secondary" className="text-xs">{relative}</Badge>
+                      <CopyButton value={() => displayText} label="" size="icon-sm" title="Copy formatted date" disabled={!displayText} className="ml-auto" />
                     </div>
                     <div className="flex items-center justify-between gap-2 text-sm">
                       <span className="text-muted-foreground">Local ISO</span>
@@ -238,6 +330,7 @@ export default function UnixTimestampConverterPage() {
             </div>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

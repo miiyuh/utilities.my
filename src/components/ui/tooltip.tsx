@@ -18,16 +18,66 @@ function TooltipProvider({
   )
 }
 
+// Radix tooltips only open on hover and focus, so on a touchscreen they were
+// unreachable. A tap on the trigger now opens the tooltip briefly; tapping
+// anywhere else (or waiting) closes it.
+const TOUCH_TOOLTIP_MS = 2500
+const TooltipTouchContext = React.createContext<(() => void) | null>(null)
+
 function Tooltip({
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
+  const open = openProp ?? uncontrolledOpen
+  const timer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  const setOpen = React.useCallback(
+    (next: boolean) => {
+      clearTimeout(timer.current)
+      if (openProp === undefined) setUncontrolledOpen(next)
+      onOpenChange?.(next)
+    },
+    [openProp, onOpenChange]
+  )
+
+  const openFromTap = React.useCallback(() => {
+    setOpen(true)
+    timer.current = setTimeout(() => setOpen(false), TOUCH_TOOLTIP_MS)
+  }, [setOpen])
+
+  React.useEffect(() => () => clearTimeout(timer.current), [])
+
+  return (
+    <TooltipTouchContext.Provider value={openFromTap}>
+      <TooltipPrimitive.Root data-slot="tooltip" open={open} onOpenChange={setOpen} {...props} />
+    </TooltipTouchContext.Provider>
+  )
 }
 
 function TooltipTrigger({
+  onPointerDown,
+  onClick,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+  const openFromTap = React.useContext(TooltipTouchContext)
+  const pointerType = React.useRef<string>("mouse")
+  return (
+    <TooltipPrimitive.Trigger
+      data-slot="tooltip-trigger"
+      onPointerDown={(e) => {
+        pointerType.current = e.pointerType
+        onPointerDown?.(e)
+      }}
+      onClick={(e) => {
+        onClick?.(e)
+        if (pointerType.current !== "mouse") openFromTap?.()
+      }}
+      {...props}
+    />
+  )
 }
 
 function TooltipContent({
@@ -54,4 +104,27 @@ function TooltipContent({
   )
 }
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }
+/**
+ * Shorthand for a tooltip on a single element: the replacement for the native
+ * `title` attribute. Extra props (e.g. from an outer `asChild` trigger) are
+ * forwarded to the wrapped element.
+ */
+function Hint({
+  label,
+  side,
+  children,
+  ...props
+}: Omit<React.ComponentProps<typeof TooltipPrimitive.Trigger>, "asChild"> & {
+  label: React.ReactNode
+  side?: React.ComponentProps<typeof TooltipPrimitive.Content>["side"]
+  children: React.ReactElement
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild {...props}>{children}</TooltipTrigger>
+      <TooltipContent side={side}>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+export { Hint, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }

@@ -3,120 +3,74 @@ import { MarkdownPage } from '@/components/markdown/markdown-page';
 
 const PRIVACY_CONTENT = `# Privacy Policy
 
-*Last Updated: 2025-08-06*
+*Last Updated: 2026-10-01*
 
-This Privacy Policy governs how we collect, use, protect, and handle your information when you use our web-based utility tools and services.
+utilities.my is a collection of free tools that run in your browser. This policy explains what happens to your data when you use them. The short version: what you type, upload or calculate stays on your device, and the only things that leave it are anonymous visit statistics and the requests your browser makes to load the site.
 
-## 1. Introduction
+## 1. What stays on your device
 
-### 1.1 Our Commitment to Privacy
+### 1.1 Everything you put into a tool
 
-utilities.my is built with **privacy by design** principles. We believe in giving users complete control over their data while providing powerful, client-side utility tools.
+Every tool does its work inside your browser. Text you convert, images you resize, photos of your MyKad in Palang IC, numbers you calculate and colours you pick are processed on your device and are **never uploaded** to us or anyone else. There is no server-side processing, and there are no accounts.
 
-### 1.2 Scope of This Policy
+### 1.2 What the site remembers in your browser
 
-This policy describes our practices regarding data collection and usage across all our utility tools, including:
+Some tools save things in your browser's local storage so they are still there next time. This data never leaves your device, and we cannot see it. It includes:
 
-- Text processing tools (case conversion, statistics, markdown preview)
-- Media tools (image to ASCII, colour picker, file compression)
-- Productivity tools (date calculator, timezone converter, unit converter)
-- Fun tools (QR generator, wheel spinner, random sorter)
+- **Preferences**: light or dark theme, and your Settings choices (units, date, time and number formats)
+- **Tool drafts and lists**: for example the text in Text Statistics, your Spin the Wheel items and winners, your pinned World Clock and Timezone Converter cities, your BMI measurements, and your recent colours in the Colour Picker
+- **Tool options**: for example the Unix timestamp display format, and Palang IC's wording and watermark style
 
-## 2. Information We Collect
+Palang IC deliberately **never** stores card images or the date. Images exist only in memory for as long as the tab is open.
 
-### 2.1 Client-Side Processing
+You can remove all of this at any time by clearing this site's data in your browser settings.
 
-Our application is designed with privacy by design principles. **Most of our tools operate entirely within your browser** using client-side processing, which means:
+## 2. What leaves your device
 
-- **Your data stays on your device** - Files and text you process remain in your browser
-- **No server uploads** - We don't upload your sensitive data to our servers
-- **Real-time processing** - Conversions and transformations happen instantly on your device
-- **No tracking** - We don't monitor what tools you use or how you use them
+### 2.1 Anonymous visit statistics
 
-### 2.2 Data We May Store Locally
+We use two privacy-focused analytics services to understand which tools people use and how the site performs:
 
-We use browser local storage **only** for:
+- **Rybbit** (self-hosted by us)
+- **Vercel Web Analytics**
 
-- **Theme Preferences**: Your preferred theme (light/dark mode) and UI customization settings
-- **Tool Settings**: Last used configurations and user preferences for specific utilities
-- **User Experience**: Convenience settings like default units, formats, and recently used options
+They record anonymous page views: the page visited, the referring site, your approximate country, and your browser, operating system and device type. Neither uses cookies, and neither receives anything you type, upload or calculate. We do not use this data to identify you or build a profile of you.
 
-> **Note**: All this data is stored locally on your device and never transmitted to our servers.
+### 2.2 Loading the site
 
-### 2.3 Data We Explicitly Do NOT Collect
+Like any website, loading utilities.my means your browser contacts these services, which can see your IP address and basic request details:
 
-We want to be crystal clear about what we **don't** collect:
+- **Vercel**, which hosts the site
+- **Google Fonts**, which serves the typefaces
+- **REST Countries flag CDN** (flags.restcountries.com), which serves country flag images in the World Clock and Timezone Converter
 
-- Personal identification information (name, email, phone, address)
-- File contents you upload or process through our tools
-- Text or data you input into our utilities
-- IP addresses or precise location data
-- Browsing history or detailed usage analytics
-- Device fingerprinting or tracking identifiers
-- Cookies for tracking purposes
-- Third-party advertising data
+Each of these handles that information under its own privacy policy.
 
-## 3. How We Use Information
+## 3. What we don't do
 
-### 3.1 Enhancing Your Experience
+- No accounts, sign-ups or email collection
+- No advertising, ad networks or data brokers
+- No tracking cookies or cross-site tracking
+- No selling or sharing of personal data
+- No uploading of the content you work with
 
-The minimal information we store locally is used to:
+## 4. Security
 
-- Remember your preferred theme and interface settings
-- Provide consistent user experience across browser sessions
-- Save your tool configurations for convenience
-- Optimize tool performance based on your usage patterns
+The site is served only over HTTPS, with security headers that restrict what scripts and connections the page is allowed to make. Because your data is processed on your device, its safety also depends on your device and browser: keep your browser up to date, and clear the site's data if you use a shared computer.
 
-### 3.2 Service Improvement
+## 5. Your choices
 
-Anonymous, aggregated data helps us:
+- **Clear saved data**: remove this site's data in your browser settings to erase everything stored locally
+- **Use a private window**: nothing is kept after you close it
+- **Block analytics**: content blockers that stop analytics scripts won't break any tool
 
-- Identify which tools are most useful to users
-- Optimize performance and fix technical issues
-- Plan new features and improvements
-- Ensure compatibility across different browsers and devices
+## 6. Changes to this policy
 
-### 3.3 No Profiling or Tracking
+If the way the site handles data changes, we will update this page and the date at the top.
 
-We explicitly do **not**:
+## 7. Contact
 
-- Create detailed user profiles or behavioural tracking
-- Share data with advertising networks or data brokers
-- Use data for marketing or promotional purposes
-- Track users across different websites or services
-
-## 4. Data Security and Protection
-
-### 4.1 Client-Side Security
-
-- **Encryption in Transit**: All connections use HTTPS/TLS encryption
-- **No Data Transmission**: Most processing happens entirely in your browser
-- **Browser Security**: We rely on your browser's built-in security features
-- **No Persistent Server Storage**: Tool data is not saved permanently on our servers
-
-### 4.2 Your Responsibility
-
-Since data processing happens in your browser, we recommend:
-
-- Keep your browser updated with the latest security patches
-- Use trusted networks when processing sensitive data
-- Clear browser data when using shared or public computers
-- Be cautious when processing highly confidential information
-
-## 5. Your Rights and Choices
-
-### 5.1 Data Control
-
-You have complete control over your data:
-
-- **Clear Local Storage**: Remove all saved preferences and settings
-- **Disable JavaScript**: Prevent local storage (may break functionality)
-- **Use Incognito Mode**: For completely temporary sessions
-- **Opt Out**: Stop using our services at any time
-
-## 6. Contact
-
-If you have questions about this Privacy Policy, please contact us through our website.
+Questions about this policy? Open an issue on [GitHub](https://github.com/miiyuh/utilities.my/issues) or get in touch through [miiyuh.com](https://miiyuh.com).
 `;
 
 export default function PrivacyPage() {

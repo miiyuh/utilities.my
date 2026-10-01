@@ -1,16 +1,18 @@
+import { ClearButton } from '@/components/ui/clear-button';
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Trash, TextAa, ArrowsLeftRight, Upload, Download } from 'phosphor-react';
+import { TextAa, ArrowsLeftRight, Upload, Download } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from "@/components/page-header";
 
+import { ToolMethodology } from '@/components/tool-methodology';
 type Mode = 'uppercase' | 'lowercase' | 'title' | 'sentence' | 'toggle' | 'camel' | 'pascal' | 'snake' | 'kebab' | 'constant';
 
 const SMALL_WORDS = new Set(['a','an','and','the','or','but','as','at','by','for','in','of','on','to','via','vs','vs.','per','nor','so','yet']);
@@ -102,7 +104,7 @@ export default function TextCaseConverterPage() {
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
             {/* Big heading */}
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Case Converter</h1>
               <p className="text-lg text-muted-foreground">Convert text between letter cases with smart options.</p>
             </div>
@@ -114,12 +116,12 @@ export default function TextCaseConverterPage() {
                   <CardTitle>Input</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) void handleImport(f); e.currentTarget.value=''; }} />
                     <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="h-4 w-4 mr-1"/> Import</Button>
                     <Button variant="outline" size="sm" onClick={handleExport} disabled={!outputText}><Upload className="h-4 w-4 mr-1"/> Export</Button>
                     <Button variant="outline" size="sm" onClick={handleSwap} disabled={!outputText}><ArrowsLeftRight className="h-4 w-4 mr-1"/> Swap</Button>
-                    <Button variant="outline" size="sm" onClick={handleClear} className="ml-auto"><Trash className="h-4 w-4 mr-1"/> Clear</Button>
+                    <ClearButton onClear={handleClear} hasContent={Boolean(inputText || outputText)} className="ml-auto" confirmTitle="Clear the text?" confirmDescription="This removes the input and output text. It can't be undone." />
                   </div>
                   <Textarea id="inputText" placeholder="Enter text here..." value={inputText} onChange={(e)=> setInputText(e.target.value)} className="resize-none min-h-[240px]" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -172,6 +174,7 @@ export default function TextCaseConverterPage() {
             </div>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

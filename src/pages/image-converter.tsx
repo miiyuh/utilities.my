@@ -1,1456 +1,1085 @@
-"use client"
-
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
-import { SidebarContent } from "@/components/sidebar-content"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Progress } from "@/components/ui/progress"
-
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { 
-  Upload, 
-  Download, 
-  ArrowCounterClockwise, 
-  Image as ImageIcon, 
-  Image as ImageFile, 
-  Spinner, 
-  CheckCircle, 
-  Warning,
-  Info,
-  Trash,
-  ArrowClockwise,
-  Palette,
-  Gear,
-  Stack,
-  X,
-  Play,
-  Archive
-} from 'phosphor-react'
-
-import { PageHeader } from "@/components/page-header";
+import * as React from 'react'
 import {
+  Image as ImageIcon,
+  Upload,
+  Download,
+  PencilSimple,
+  ArrowRight,
+  Spinner,
+  CheckCircle,
+  Warning,
+  MapPin,
+  Info,
+  X,
+  Stack,
+  Archive,
+  Play,
+  ClipboardText,
+} from 'phosphor-react'
+import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar'
+import { SidebarContent } from '@/components/sidebar-content'
+import { PageHeader } from '@/components/page-header'
+import { ToolMethodology } from '@/components/tool-methodology'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Slider } from '@/components/ui/slider'
+import { Switch } from '@/components/ui/switch'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { ClearButton } from '@/components/ui/clear-button'
+import { Hint } from '@/components/ui/tooltip'
+import { ImageEditorDialog } from '@/components/image-editor-dialog'
+import { CompareSlider } from '@/components/compare-slider'
+import { useToast } from '@/hooks/use-toast'
+import { downloadBlob, humanSize, isIOSOrSafari } from '@/lib/image-utils'
+import {
+  FORMATS,
+  MAX_DIMENSION,
+  MAX_FILE_BYTES,
+  NO_EDITS,
+  centredCrop,
+  decodeImage,
+  editedSize,
+  encodeCanvas,
+  encodeToTarget,
+  fitLongEdge,
+  hasEdits,
+  isAcceptedImage,
+  isHeic,
+  outputFilename,
+  renderEdited,
+  type DecodedImage,
+  type Edits,
   type OutputFormat,
-  type BatchFileItem,
-  type ConversionSettings,
-  generateFileId,
-  validateImageFile,
-  processBatchQueue,
-  createBatchZip,
-  downloadBlob,
-  isIOSOrSafari,
-  humanSize,
-  getConvertedFilename
-} from '@/lib/image-utils'
+} from '@/lib/image-pipeline'
+import { canKeepMetadata, carryOverMetadata, readMetadata, type MetadataMode, type MetadataReport } from '@/lib/image-metadata'
+import { cn } from '@/lib/utils'
 
-export default function ImageConverterPage() {
-  // Mode toggle: single or batch
-  const [batchMode, setBatchMode] = useState(false)
-  
-  // Single mode state
-  const [file, setFile] = useState<File | null>(null)
-  const [imgSrc, setImgSrc] = useState<string | null>(null)
-  const [filename, setFilename] = useState<string>('')
-  const [size, setSize] = useState<number>(0)
-  const [naturalWidth, setNaturalWidth] = useState<number | null>(null)
-  const [naturalHeight, setNaturalHeight] = useState<number | null>(null)
+// ---------------------------------------------------------------------------
+// Shared settings
+// ---------------------------------------------------------------------------
 
-  // Shared conversion settings
-  const [format, setFormat] = useState<OutputFormat>('image/png')
-  const [width, setWidth] = useState<number | ''>('')
-  const [height, setHeight] = useState<number | ''>('')
-  const [lockAspect, setLockAspect] = useState(true)
-  const [quality, setQuality] = useState<number>(0.9)
+interface OutputSettings {
+  format: OutputFormat
+  quality: number
+  useTarget: boolean
+  targetKb: string
+  metaMode: MetadataMode
+}
 
-  // Single mode processing state
-  const [processing, setProcessing] = useState(false)
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [imageLoaded, setImageLoaded] = useState(false)
-  const [generatingPreview, setGeneratingPreview] = useState(false)
-  const [downloadBlobState, setDownloadBlobState] = useState<Blob | null>(null)
+interface Preset {
+  id: string
+  label: string
+  hint: string
+  format?: OutputFormat
+  quality?: number
+  targetKb?: number
+  longEdge?: number
+  /** Exact output size; implies a centred crop to its aspect ratio. */
+  exact?: [number, number]
+}
 
-  // Batch mode state
-  const [batchFiles, setBatchFiles] = useState<BatchFileItem[]>([])
-  const [batchProcessing, setBatchProcessing] = useState(false)
-  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 })
-  const [batchZipBlob, setBatchZipBlob] = useState<Blob | null>(null)
-  const [batchError, setBatchError] = useState<string | null>(null)
-  const batchAbortRef = useRef(false)
+const PRESETS: Preset[] = [
+  { id: 'custom', label: 'Custom', hint: 'Set everything yourself.' },
+  { id: 'whatsapp', label: 'WhatsApp / chat', hint: 'Long edge 1600 px, JPEG. Sharp in chats without the extra weight.', format: 'image/jpeg', quality: 0.82, longEdge: 1600 },
+  { id: 'insta-square', label: 'Instagram square', hint: '1080 × 1080 px, cropped to 1:1.', format: 'image/jpeg', quality: 0.9, exact: [1080, 1080] },
+  { id: 'insta-portrait', label: 'Instagram portrait', hint: '1080 × 1350 px, cropped to 4:5.', format: 'image/jpeg', quality: 0.9, exact: [1080, 1350] },
+  { id: 'email', label: 'Email-friendly', hint: 'Long edge 1280 px, kept under 300 KB.', format: 'image/jpeg', targetKb: 300, longEdge: 1280 },
+  { id: 'web', label: 'Website image', hint: 'Long edge 1920 px, WebP. Fast to load.', format: 'image/webp', quality: 0.8, longEdge: 1920 },
+  { id: 'passport', label: 'Passport photo 35 × 45 mm', hint: '413 × 531 px (300 dpi), cropped to 35:45. Fine-tune the crop with Edit.', format: 'image/jpeg', quality: 0.95, exact: [413, 531] },
+]
 
-  const aspectRatioRef = useRef<number | null>(null)
-  const dropRef = useRef<HTMLDivElement | null>(null)
-  const isGeneratingRef = useRef(false)
-  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const currentPreviewUrlRef = useRef<string | null>(null)
+const META_OPTIONS: { value: MetadataMode; label: string }[] = [
+  { value: 'strip', label: 'Remove all metadata (recommended)' },
+  { value: 'keep-no-location', label: 'Keep it, but remove location' },
+  { value: 'keep-all', label: 'Keep everything' },
+]
 
-  const handleFile = useCallback((f: File) => {
-    if (!f) return
-    
-    // Validate file type
-    if (!f.type.startsWith('image/')) {
-      setError('Please select a valid image file (PNG, JPG, WebP, GIF, BMP)')
-      return
-    }
-    
-    // Validate file size (max 50MB)
-    if (f.size > 50 * 1024 * 1024) {
-      setError('File size must be less than 50MB')
-      return
-    }
-    
-    // Clean up previous URLs
-    if (imgSrc) URL.revokeObjectURL(imgSrc)
-    if (downloadUrl && downloadUrl.startsWith('blob:')) URL.revokeObjectURL(downloadUrl)
-    if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl)
-    
-    // Use FileReader for better mobile compatibility
-    const reader = new FileReader()
-    
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string
-      if (dataUrl) {
-        setFile(f)
-        setImgSrc(dataUrl)
-        setFilename(f.name)
-        setSize(f.size)
-        setDownloadUrl(null)
-        setPreviewUrl(null)
-        setMessage(null)
-        setError(null)
-        setImageLoaded(false)
-      }
-    }
-    
-    reader.onerror = () => {
-      setError('Failed to load image. The file may be corrupted or in an unsupported format. Please try a different image.')
-    }
-    
-    // Read the file as data URL (base64)
-    try {
-      reader.readAsDataURL(f)
-    } catch (err) {
-      console.error('FileReader error:', err)
-      setError('Failed to read the image file. Please try again.')
-    }
-  }, [imgSrc, downloadUrl, previewUrl])
+const PASTE_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
 
-  // Handle batch file upload
-  const handleBatchFiles = useCallback((files: FileList | File[]) => {
-    const fileArray = Array.from(files)
-    const validFiles: BatchFileItem[] = []
-    const errors: string[] = []
-    
-    // Check current count
-    const remainingSlots = 20 - batchFiles.length
-    if (remainingSlots <= 0) {
-      setBatchError('Maximum 20 files allowed. Remove some files first.')
-      return
-    }
-    
-    const filesToProcess = fileArray.slice(0, remainingSlots)
-    
-    for (const f of filesToProcess) {
-      const validation = validateImageFile(f)
-      if (validation.valid) {
-        validFiles.push({
-          id: generateFileId(),
-          file: f,
-          status: 'queued',
-          progress: 0,
-          originalName: f.name
-        })
-      } else {
-        errors.push(`${f.name}: ${validation.error}`)
-      }
-    }
-    
-    if (validFiles.length > 0) {
-      setBatchFiles(prev => [...prev, ...validFiles])
-      setBatchZipBlob(null) // Clear previous ZIP
-    }
-    
-    if (errors.length > 0) {
-      setBatchError(`Some files were skipped:\n${errors.join('\n')}`)
-    } else {
-      setBatchError(null)
-    }
-    
-    if (fileArray.length > remainingSlots) {
-      setBatchError(`Only ${remainingSlots} file(s) added. Maximum 20 files allowed.`)
-    }
-  }, [batchFiles.length])
+function validate(file: File): string | null {
+  if (isHeic(file)) return `${file.name} is a HEIC photo, which isn't supported. Save it as JPEG on your iPhone (Settings → Camera → Formats → Most Compatible) or export it as JPEG first.`
+  if (!isAcceptedImage(file)) return `${file.name} isn't an image.`
+  if (file.size > MAX_FILE_BYTES) return `${file.name} is larger than 50 MB.`
+  return null
+}
 
-  useEffect(() => {
-    return () => {
-      // Clean up blob URLs (downloadUrl and previewUrl are still blob URLs)
-      if (downloadUrl && downloadUrl.startsWith('blob:')) URL.revokeObjectURL(downloadUrl)
-      if (currentPreviewUrlRef.current && currentPreviewUrlRef.current.startsWith('blob:')) {
-        URL.revokeObjectURL(currentPreviewUrlRef.current)
-      }
-    }
-  }, [downloadUrl])
+function SizeChange({ from, to, className }: { from: number; to: number; className?: string }) {
+  const smaller = to <= from
+  const pct = from > 0 ? Math.round(Math.abs(1 - to / from) * 100) : 0
+  return (
+    <span className={cn('inline-flex flex-wrap items-baseline gap-x-2 tabular-nums', className)}>
+      <span>{humanSize(from)}</span>
+      <ArrowRight className="h-3.5 w-3.5 self-center text-muted-foreground" />
+      <span className="font-semibold text-foreground">{humanSize(to)}</span>
+      <span className={cn('text-xs font-medium', smaller ? 'text-success' : 'text-warning')}>
+        {pct === 0 ? 'same size' : `${pct}% ${smaller ? 'smaller' : 'larger'}`}
+      </span>
+    </span>
+  )
+}
 
-  const onPreviewLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const el = e.currentTarget
-    if (!el.naturalWidth || !el.naturalHeight) {
-      setError('Failed to load image dimensions. Please try a different image.')
-      return
-    }
-    setNaturalWidth(el.naturalWidth)
-    setNaturalHeight(el.naturalHeight)
-    aspectRatioRef.current = el.naturalWidth / el.naturalHeight
-    if (width === '') setWidth(el.naturalWidth)
-    if (height === '') setHeight(el.naturalHeight)
-    setImageLoaded(true)
-    // Note: Preview will be generated automatically via useEffect, no need to call here
+/** Format, quality / target size and metadata controls, shared by both modes. */
+function OutputControls({
+  settings,
+  onChange,
+  metadataNote,
+}: {
+  settings: OutputSettings
+  onChange: (patch: Partial<OutputSettings>) => void
+  metadataNote: React.ReactNode
+}) {
+  const lossy = FORMATS[settings.format].lossy
+  return (
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="out-format">Format</Label>
+        <Select value={settings.format} onValueChange={(v) => onChange({ format: v as OutputFormat })}>
+          <SelectTrigger id="out-format" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(FORMATS) as OutputFormat[]).map((f) => (
+              <SelectItem key={f} value={f}>
+                {FORMATS[f].label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">{FORMATS[settings.format].note}</p>
+      </div>
+
+      {lossy && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="use-target" className="cursor-pointer">Aim for a file size</Label>
+            <Switch id="use-target" checked={settings.useTarget} onCheckedChange={(c) => onChange({ useTarget: c })} />
+          </div>
+          {settings.useTarget ? (
+            <div className="flex items-center gap-2">
+              <Input
+                id="target-kb"
+                inputMode="numeric"
+                value={settings.targetKb}
+                onChange={(e) => onChange({ targetKb: e.target.value.replace(/[^\d]/g, '') })}
+                className="w-28"
+                aria-label="Target size in kilobytes"
+              />
+              <span className="text-sm text-muted-foreground">KB or less. Quality is tuned automatically.</span>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Quality</span>
+                <span className="font-mono tabular-nums">{Math.round(settings.quality * 100)}%</span>
+              </div>
+              <Slider
+                value={[Math.round(settings.quality * 100)]}
+                min={10}
+                max={100}
+                step={1}
+                onValueChange={(v) => onChange({ quality: v[0] / 100 })}
+                aria-label="Quality"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor="meta-mode">Metadata in the output</Label>
+        <Select value={settings.metaMode} onValueChange={(v) => onChange({ metaMode: v as MetadataMode })}>
+          <SelectTrigger id="meta-mode" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {META_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="text-xs text-muted-foreground">{metadataNote}</div>
+      </div>
+    </div>
+  )
+}
+
+function MetadataPanel({ report, loading }: { report: MetadataReport | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Spinner className="h-4 w-4 animate-spin" /> Reading the file…
+      </p>
+    )
   }
-
-  const onPreviewError = () => {
-    setError('Failed to load image. Please try uploading a different image or check the file format.')
-    setImageLoaded(false)
+  if (!report) {
+    return <p className="text-sm text-muted-foreground">No metadata found. This file doesn&apos;t carry camera, date or location details.</p>
   }
+  return (
+    <div className="space-y-4">
+      {report.hasLocation && (
+        <div className="flex gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <p>
+            <strong>This photo records where it was taken.</strong> Anyone you send the original to can see the location. It&apos;s removed from
+            the converted file unless you choose to keep it.
+          </p>
+        </div>
+      )}
+      <div className="grid gap-4">
+        {report.groups.map((g) => (
+          <section key={g.title} className="space-y-1.5">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</h4>
+            <dl className="space-y-1 text-sm">
+              {g.items.map((it) => (
+                <div key={it.label} className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">{it.label}</dt>
+                  <dd className="min-w-0 text-right font-medium break-words">{it.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
+      </div>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="raw">
+          <AccordionTrigger className="px-3 text-sm">All {report.raw.length} tags in this file</AccordionTrigger>
+          <AccordionContent className="px-3">
+            <dl className="max-h-72 space-y-1 overflow-y-auto font-mono text-xs">
+              {report.raw.map((it) => (
+                <div key={it.label} className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
+                  <dt className="truncate text-muted-foreground">{it.label}</dt>
+                  <dd className="break-words">{it.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  )
+}
 
-  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (batchMode) {
-      const files = e.target.files
-      if (files && files.length > 0) {
-        handleBatchFiles(files)
-      }
-    } else {
-      const f = e.target.files?.[0] ?? null
-      if (f) handleFile(f)
+/** An object URL for a blob, created and revoked with the effect (safe under StrictMode remounts). */
+function useObjectUrl(blob: Blob | null): string | null {
+  const [url, setUrl] = React.useState<string | null>(null)
+  React.useEffect(() => {
+    if (!blob) {
+      setUrl(null)
+      return
     }
-    e.currentTarget.value = ''
-  }
+    const u = URL.createObjectURL(blob)
+    setUrl(u)
+    return () => URL.revokeObjectURL(u)
+  }, [blob])
+  return url
+}
 
-  useEffect(() => {
-    const el = dropRef.current
+function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: (files: File[]) => void; compact?: boolean }) {
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const zoneRef = React.useRef<HTMLButtonElement>(null)
+  const [over, setOver] = React.useState(false)
+  const onFilesRef = React.useRef(onFiles)
+  React.useEffect(() => {
+    onFilesRef.current = onFiles
+  })
+  // Drag-and-drop is a pointer convenience (the button is the accessible path),
+  // so the listeners are attached directly rather than as JSX handlers.
+  React.useEffect(() => {
+    const el = zoneRef.current
     if (!el) return
-    const prevent = (ev: DragEvent) => { ev.preventDefault(); ev.stopPropagation() }
-
-    const onDrop = (ev: DragEvent) => {
-      prevent(ev)
-      if (batchMode) {
-        const files = ev.dataTransfer?.files
-        if (files && files.length > 0) {
-          handleBatchFiles(files)
-        }
-      } else {
-        const f = ev.dataTransfer?.files?.[0] ?? null
-        if (f) handleFile(f)
-      }
-      setIsDragOver(false)
+    const over = (e: DragEvent) => {
+      e.preventDefault()
+      setOver(true)
     }
-    const onDragOver = (ev: DragEvent) => { 
-      prevent(ev)
-      setIsDragOver(true)
+    const leave = () => setOver(false)
+    const drop = (e: DragEvent) => {
+      e.preventDefault()
+      setOver(false)
+      onFilesRef.current(Array.from(e.dataTransfer?.files ?? []))
     }
-    const onDragLeave = (ev: DragEvent) => {
-      prevent(ev)
-      // Only set drag over to false if we're leaving the drop zone itself
-      if (!el.contains(ev.relatedTarget as Node)) {
-        setIsDragOver(false)
-      }
-    }
-
-    el.addEventListener('dragover', onDragOver)
-    el.addEventListener('dragleave', onDragLeave)
-    el.addEventListener('drop', onDrop)
-    el.addEventListener('dragenter', prevent)
-
+    el.addEventListener('dragover', over)
+    el.addEventListener('dragleave', leave)
+    el.addEventListener('drop', drop)
     return () => {
-      el.removeEventListener('dragover', onDragOver)
-      el.removeEventListener('dragleave', onDragLeave)
-      el.removeEventListener('drop', onDrop)
-      el.removeEventListener('dragenter', prevent)
+      el.removeEventListener('dragover', over)
+      el.removeEventListener('dragleave', leave)
+      el.removeEventListener('drop', drop)
     }
-  }, [handleFile, handleBatchFiles, batchMode])
+  }, [])
+  return (
+    <>
+    {/* The whole box is the button: click, tap or press Enter anywhere inside it. */}
+    <button
+      ref={zoneRef}
+      type="button"
+      onClick={() => inputRef.current?.click()}
+      className={cn(
+        'flex w-full flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed text-center transition-colors duration-quick outline-none hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-3 focus-visible:ring-ring/30',
+        compact ? 'p-4' : 'p-8 sm:p-10',
+        over ? 'border-primary bg-primary/5' : 'border-border'
+      )}
+    >
+      {!compact && <Upload className="h-8 w-8 text-muted-foreground" />}
+      <div className="space-y-1">
+        <p className="text-sm font-medium">{multiple ? 'Drop images here' : 'Drop an image here'}</p>
+        <p className="text-xs text-muted-foreground">
+          or paste with {PASTE_KEY} V. PNG, JPEG, WebP, GIF and AVIF, up to 50 MB.
+        </p>
+      </div>
+      <span className="inline-flex h-8 items-center gap-2 rounded-full border border-border bg-background px-3 text-sm font-medium">
+        <Upload className="h-4 w-4" /> {multiple ? 'Choose images' : 'Choose an image'}
+      </span>
+    </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple={multiple}
+        className="hidden"
+        onChange={(e) => {
+          onFiles(Array.from(e.target.files ?? []))
+          e.target.value = ''
+        }}
+      />
+    </>
+  )
+}
 
-  useEffect(() => {
-    if (!lockAspect || !aspectRatioRef.current) return
-    if (naturalWidth && naturalHeight) {
-      if (width !== '' && height === '') {
-        setHeight(Math.round(Number(width) / aspectRatioRef.current))
-      } else if (height !== '' && width === '') {
-        setWidth(Math.round(Number(height) * aspectRatioRef.current))
-      } else if (width !== '' && height !== '') {
-        setHeight(Math.round(Number(width) / aspectRatioRef.current))
+/** Images on the clipboard (Ctrl/⌘ V anywhere on the page). */
+function usePasteImages(onFiles: (files: File[]) => void) {
+  const cb = React.useRef(onFiles)
+  React.useEffect(() => {
+    cb.current = onFiles
+  })
+  React.useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const files = Array.from(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith('image/'))
+      if (files.length) {
+        e.preventDefault()
+        cb.current(files)
       }
     }
-  }, [width, height, lockAspect, naturalWidth, naturalHeight])
+    document.addEventListener('paste', onPaste)
+    return () => document.removeEventListener('paste', onPaste)
+  }, [])
+}
 
-  const convert = async () => {
-    if (!imgSrc || !file) {
-      setError('Please upload an image first')
+// ---------------------------------------------------------------------------
+// Single image
+// ---------------------------------------------------------------------------
+
+interface PreviewResult {
+  blob: Blob
+  before: Blob
+  quality: number
+  fits: boolean
+}
+
+function SingleConverter({
+  settings,
+  setSettings,
+}: {
+  settings: OutputSettings
+  setSettings: React.Dispatch<React.SetStateAction<OutputSettings>>
+}) {
+  const { toast } = useToast()
+  const [file, setFile] = React.useState<File | null>(null)
+  const [image, setImage] = React.useState<DecodedImage | null>(null)
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [edits, setEdits] = React.useState<Edits>(NO_EDITS)
+  const [editorOpen, setEditorOpen] = React.useState(false)
+  const [width, setWidth] = React.useState(0)
+  const [height, setHeight] = React.useState(0)
+  const [lockAspect, setLockAspect] = React.useState(true)
+  const [presetId, setPresetId] = React.useState('custom')
+  const [meta, setMeta] = React.useState<MetadataReport | null>(null)
+  const [metaLoading, setMetaLoading] = React.useState(false)
+  const [preview, setPreview] = React.useState<PreviewResult | null>(null)
+  const [encoding, setEncoding] = React.useState(false)
+  const [encodeError, setEncodeError] = React.useState<string | null>(null)
+  const generation = React.useRef(0)
+  const replaceRef = React.useRef<HTMLInputElement>(null)
+
+  const thumbUrl = useObjectUrl(file)
+  const afterUrl = useObjectUrl(preview?.blob ?? null)
+  const beforeUrl = useObjectUrl(preview?.before ?? null)
+
+  const [ew, eh] = image ? editedSize(image.width, image.height, edits) : [0, 0]
+
+  const load = async (f: File) => {
+    const problem = validate(f)
+    if (problem) {
+      setError(problem)
       return
     }
-    
-    if (!imageLoaded || !naturalWidth || !naturalHeight) {
-      setError('Image is still loading. Please wait a moment and try again.')
-      return
-    }
-    
-    setProcessing(true)
-    setMessage(null)
     setError(null)
-    
+    setLoading(true)
+    setMetaLoading(true)
+    setPreview(null)
+    setEdits(NO_EDITS)
+    setPresetId('custom')
+    void readMetadata(f).then((r) => {
+      setMeta(r)
+      setMetaLoading(false)
+    })
     try {
-      const img = await new Promise<HTMLImageElement>((res, rej) => {
-        const i = new Image()
-        i.onload = () => res(i)
-        i.onerror = () => rej(new Error('Failed to load image'))
-        i.src = imgSrc
-      })
-
-      const targetW = width === '' ? img.naturalWidth : Number(width)
-      const targetH = height === '' ? img.naturalHeight : Number(height)
-
-      // Validate dimensions
-      if (targetW <= 0 || targetH <= 0) {
-        throw new Error('Invalid dimensions. Width and height must be greater than 0.')
-      }
-      
-      if (targetW > 8000 || targetH > 8000) {
-        throw new Error('Dimensions too large. Maximum width/height is 8000px.')
-      }
-
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.max(1, Math.floor(targetW))
-      canvas.height = Math.max(1, Math.floor(targetH))
-      const ctx = canvas.getContext('2d')
-      if (!ctx) throw new Error('Canvas not supported')
-
-      ctx.imageSmoothingEnabled = true
-      ctx.imageSmoothingQuality = 'high'
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-      const mime = format
-      const blob: Blob | null = await new Promise(resolve =>
-        canvas.toBlob(
-          b => resolve(b),
-          mime,
-          mime === 'image/jpeg' || mime === 'image/webp' ? quality : undefined
-        )
-      )
-
-      if (!blob) throw new Error('Failed to create output')
-
-      if (downloadUrl && downloadUrl.startsWith('blob:')) URL.revokeObjectURL(downloadUrl)
-      const outUrl = URL.createObjectURL(blob)
-      setDownloadUrl(outUrl)
-      setDownloadBlobState(blob)
-      
-      // Auto-download the file
-      const fileName = `${filename ? filename.replace(/\.[^/.]+$/, '') : 'converted'}.${format === 'image/png' ? 'png' : format === 'image/jpeg' ? 'jpg' : 'webp'}`
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(typeof window !== 'undefined' && 'MSStream' in window)
-      const isSafari = /^((?!chrome|android))*safari/i.test(navigator.userAgent)
-      
-      if (isIOS || isSafari) {
-        const reader = new FileReader()
-        reader.onload = () => {
-          const dataUrl = reader.result as string
-          const link = document.createElement('a')
-          link.href = dataUrl
-          link.download = fileName
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-        }
-        reader.readAsDataURL(blob)
-      } else {
-        const link = document.createElement('a')
-        link.href = outUrl
-        link.download = fileName
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-      }
-      
-      setMessage(`✓ Conversion complete! Downloaded: ${fileName} (${humanSize(blob.size)})`)
+      const img = await decodeImage(f)
+      setFile(f)
+      setImage(img)
+      setWidth(img.width)
+      setHeight(img.height)
     } catch (e) {
-      console.error(e)
-      const errorMessage = e instanceof Error ? e.message : 'Conversion failed. Please try again.'
-      setError(errorMessage)
+      setImage(null)
+      setFile(null)
+      setError(e instanceof Error ? e.message : 'This image could not be opened.')
     } finally {
-      setProcessing(false)
+      setLoading(false)
     }
   }
 
-  // Mobile-friendly download function
-  const handleDownload = () => {
-    if (!downloadBlobState) return
-
-    const fileName = `${filename ? filename.replace(/\.[^/.]+$/, '') : 'converted'}.${format === 'image/png' ? 'png' : format === 'image/jpeg' ? 'jpg' : 'webp'}`
-    
-    downloadBlob(downloadBlobState, fileName, isIOSOrSafari())
-  }
+  usePasteImages((files) => void load(files[0]))
 
   const clear = () => {
-    // Clean up blob URLs only
-    if (downloadUrl && downloadUrl.startsWith('blob:')) URL.revokeObjectURL(downloadUrl)
-    if (currentPreviewUrlRef.current && currentPreviewUrlRef.current.startsWith('blob:')) {
-      URL.revokeObjectURL(currentPreviewUrlRef.current)
-    }
     setFile(null)
-    setImgSrc(null)
-    setFilename('')
-    setSize(0)
-    setNaturalWidth(null)
-    setNaturalHeight(null)
-    setWidth('')
-    setHeight('')
-    setDownloadUrl(null)
-    setDownloadBlobState(null)
-    setPreviewUrl(null)
-    currentPreviewUrlRef.current = null
-    setMessage(null)
+    setImage(null)
+    setMeta(null)
+    setPreview(null)
+    setEdits(NO_EDITS)
     setError(null)
-    setIsDragOver(false)
-    setImageLoaded(false)
-    setGeneratingPreview(false)
+    setPresetId('custom')
   }
 
-  // Clear batch files
-  const clearBatch = () => {
-    setBatchFiles([])
-    setBatchZipBlob(null)
-    setBatchError(null)
-    setBatchProgress({ current: 0, total: 0 })
-    batchAbortRef.current = false
+  const setOutputSize = (w: number, h: number) => {
+    setWidth(Math.max(1, Math.min(MAX_DIMENSION, Math.round(w))))
+    setHeight(Math.max(1, Math.min(MAX_DIMENSION, Math.round(h))))
   }
 
-  // Remove a single file from batch queue
-  const removeBatchFile = (id: string) => {
-    setBatchFiles(prev => prev.filter(f => f.id !== id))
-    setBatchZipBlob(null)
+  const applyEdits = (next: Edits) => {
+    setEdits(next)
+    if (!image) return
+    const [nw, nh] = editedSize(image.width, image.height, next)
+    const preset = PRESETS.find((p) => p.id === presetId)
+    if (preset?.longEdge) setOutputSize(...fitLongEdge(nw, nh, preset.longEdge))
+    else if (preset?.exact) setOutputSize(...preset.exact)
+    else setOutputSize(nw, nh)
   }
 
-  // Process batch files
-  const processBatch = async () => {
-    if (batchFiles.length === 0) {
-      setBatchError('No files to process')
-      return
-    }
-
-    setBatchProcessing(true)
-    setBatchError(null)
-    setBatchZipBlob(null)
-    batchAbortRef.current = false
-    
-    const settings: ConversionSettings = {
-      format,
-      width,
-      height,
-      quality
-    }
-
-    // Reset all files to queued
-    const resetFiles = batchFiles.map(f => ({
-      ...f,
-      status: 'queued' as const,
-      progress: 0,
-      error: undefined,
-      convertedBlob: undefined
+  const applyPreset = (id: string) => {
+    setPresetId(id)
+    const p = PRESETS.find((x) => x.id === id)
+    if (!p || !image) return
+    setSettings((s) => ({
+      ...s,
+      format: p.format ?? s.format,
+      quality: p.quality ?? s.quality,
+      useTarget: p.targetKb != null,
+      targetKb: p.targetKb != null ? String(p.targetKb) : s.targetKb,
     }))
-    setBatchFiles(resetFiles)
-    setBatchProgress({ current: 0, total: resetFiles.length })
-
-    let finalItems: BatchFileItem[] = resetFiles
-
-    try {
-      const generator = processBatchQueue(resetFiles, settings)
-      
-      for await (const progress of generator) {
-        if (batchAbortRef.current) {
-          break
-        }
-        
-        finalItems = [...progress.items]
-        setBatchFiles(finalItems)
-        setBatchProgress({
-          current: progress.items.filter(i => i.status === 'completed' || i.status === 'error').length,
-          total: progress.totalFiles
-        })
-      }
-
-      // Check how many completed successfully
-      const completedCount = finalItems.filter(f => f.status === 'completed').length
-      const errorCount = finalItems.filter(f => f.status === 'error').length
-      
-      if (batchAbortRef.current) {
-        setBatchError('Batch processing was cancelled')
-      } else if (completedCount === 0) {
-        setBatchError('All files failed to convert')
-      } else if (errorCount > 0) {
-        setBatchError(`${completedCount} of ${finalItems.length} files converted. ${errorCount} failed.`)
-      }
-
-      // Create ZIP if any files completed
-      if (completedCount > 0 && !batchAbortRef.current) {
-        try {
-          const zipBlob = await createBatchZip(finalItems, format)
-          setBatchZipBlob(zipBlob)
-          
-          // Auto-download the ZIP
-          const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-          const zipFilename = `batch-converted-${timestamp}.zip`
-          downloadBlob(zipBlob, zipFilename, isIOSOrSafari())
-        } catch (zipError) {
-          console.error('ZIP creation error:', zipError)
-          setBatchError('Failed to create ZIP file. Try downloading individual files.')
-        }
-      }
-    } catch (e) {
-      console.error('Batch processing error:', e)
-      setBatchError(e instanceof Error ? e.message : 'Batch processing failed')
-    } finally {
-      setBatchProcessing(false)
+    if (p.exact) {
+      const crop = centredCrop(image.width, image.height, edits.rotation, p.exact[0] / p.exact[1])
+      setEdits((e) => ({ ...e, crop }))
+      setOutputSize(...p.exact)
+    } else if (p.longEdge) {
+      setOutputSize(...fitLongEdge(ew, eh, p.longEdge))
+    } else {
+      setOutputSize(ew, eh)
     }
   }
 
-  // Cancel batch processing
-  const cancelBatch = () => {
-    batchAbortRef.current = true
+  const onWidth = (v: string) => {
+    const w = Math.min(MAX_DIMENSION, Number(v.replace(/[^\d]/g, '')) || 0)
+    setPresetId('custom')
+    setWidth(w)
+    if (lockAspect && ew) setHeight(Math.max(1, Math.round((w * eh) / ew)))
+  }
+  const onHeight = (v: string) => {
+    const h = Math.min(MAX_DIMENSION, Number(v.replace(/[^\d]/g, '')) || 0)
+    setPresetId('custom')
+    setHeight(h)
+    if (lockAspect && eh) setWidth(Math.max(1, Math.round((h * ew) / eh)))
   }
 
-  // Download batch ZIP
-  const handleBatchDownload = () => {
-    if (!batchZipBlob) return
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-    const zipFilename = `batch-converted-${timestamp}.zip`
-    downloadBlob(batchZipBlob, zipFilename, isIOSOrSafari())
+  // Live preview, encoded with exactly the settings the download uses, so the
+  // size shown is the size you get.
+  React.useEffect(() => {
+    if (!image || !file || width < 1 || height < 1) return
+    const id = ++generation.current
+    const timer = window.setTimeout(
+      () => {
+        void (async () => {
+          setEncoding(true)
+          setEncodeError(null)
+          try {
+            const canvas = renderEdited(image, edits, width, height, settings.format === 'image/jpeg')
+            const target = Number(settings.targetKb) * 1024
+            const encoded =
+              FORMATS[settings.format].lossy && settings.useTarget && target > 0
+                ? await encodeToTarget(canvas, settings.format, target)
+                : { blob: await encodeCanvas(canvas, settings.format, settings.quality), quality: settings.quality, fits: true }
+            const blob = await carryOverMetadata(file, encoded.blob, settings.metaMode, { width, height })
+            const [bw, bh] = fitLongEdge(width, height, 1400)
+            const before = await encodeCanvas(renderEdited(image, edits, bw, bh), 'image/png', 1)
+            if (id !== generation.current) return
+            setPreview({ blob, before, quality: encoded.quality, fits: encoded.fits })
+          } catch (e) {
+            if (id === generation.current) setEncodeError(e instanceof Error ? e.message : 'Encoding failed.')
+          } finally {
+            if (id === generation.current) setEncoding(false)
+          }
+        })()
+      },
+      settings.format === 'image/avif' ? 700 : 300
+    )
+    return () => window.clearTimeout(timer)
+  }, [image, file, edits, width, height, settings])
+
+  const download = () => {
+    if (!preview || !file) return
+    const name = outputFilename(file.name, settings.format)
+    downloadBlob(preview.blob, name, isIOSOrSafari())
+    toast({ title: 'Image saved', description: `${name} (${humanSize(preview.blob.size)})` })
   }
 
-  // Reprocess a single failed file
-  const reprocessFile = async (id: string) => {
-    const fileItem = batchFiles.find(f => f.id === id)
-    if (!fileItem) return
-    
-    // Update status to processing
-    setBatchFiles(prev => prev.map(f => 
-      f.id === id ? { ...f, status: 'processing' as const, progress: 0, error: undefined } : f
-    ))
-    
-    const settings: ConversionSettings = {
-      format,
-      width,
-      height,
-      quality
-    }
-    
-    try {
-      const singleFileItems = [{ ...fileItem, status: 'queued' as const, progress: 0, error: undefined }]
-      const generator = processBatchQueue(singleFileItems, settings)
-      
-      for await (const progress of generator) {
-        const updatedFile = progress.items[0]
-        setBatchFiles(prev => prev.map(f => 
-          f.id === id ? updatedFile : f
-        ))
-      }
-      
-      // Clear ZIP since we've reprocessed
-      setBatchZipBlob(null)
-    } catch (e) {
-      console.error('Reprocess error:', e)
-      setBatchFiles(prev => prev.map(f => 
-        f.id === id ? { ...f, status: 'error' as const, error: 'Reprocessing failed' } : f
-      ))
-    }
+  const keepPossible = file ? canKeepMetadata(file, settings.format) : false
+  const metadataNote =
+    settings.metaMode === 'strip'
+      ? 'Camera details, dates and location are removed from the converted file.'
+      : keepPossible
+        ? settings.metaMode === 'keep-all'
+          ? 'Everything is copied across, including location if the photo has it.'
+          : 'Camera details and dates are copied across; location is removed.'
+        : 'Metadata can only be carried over from a JPEG to a JPEG. Choose JPEG output to keep it; otherwise it is removed.'
+
+  if (!file || !image) {
+    return (
+      <Card className="minimal-card">
+        <CardContent className="space-y-4 pt-6">
+          <DropZone multiple={false} onFiles={(fs) => fs[0] && void load(fs[0])} />
+          {loading && (
+            <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Spinner className="h-4 w-4 animate-spin" /> Opening the image…
+            </p>
+          )}
+          {error && (
+            <p className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              <Warning className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    )
   }
 
-  // Generate live preview based on current settings (only in single mode)
-  const generatePreview = useCallback(async () => {
-    if (!imgSrc || !imageLoaded) {
-      setPreviewUrl(null)
-      setGeneratingPreview(false)
-      isGeneratingRef.current = false
-      return
-    }
-
-    // Prevent multiple simultaneous generations
-    if (isGeneratingRef.current) {
-      return
-    }
-
-    isGeneratingRef.current = true
-    setGeneratingPreview(true)
-    
-    try {
-      const img = await new Promise<HTMLImageElement>((res, rej) => {
-        const i = new Image()
-        const timeout = setTimeout(() => rej(new Error('Image load timeout')), 10000)
-        i.onload = () => {
-          clearTimeout(timeout)
-          res(i)
-        }
-        i.onerror = () => {
-          clearTimeout(timeout)
-          rej(new Error('Failed to load image'))
-        }
-        i.src = imgSrc
-      })
-
-      const targetW = width === '' ? img.naturalWidth : Number(width)
-      const targetH = height === '' ? img.naturalHeight : Number(height)
-
-      // Skip if invalid dimensions
-      if (targetW <= 0 || targetH <= 0 || targetW > 8000 || targetH > 8000) {
-        setPreviewUrl(null)
-        setGeneratingPreview(false)
-        isGeneratingRef.current = false
-        return
-      }
-
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.max(1, Math.floor(targetW))
-      canvas.height = Math.max(1, Math.floor(targetH))
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        setGeneratingPreview(false)
-        isGeneratingRef.current = false
-        return
-      }
-
-      ctx.imageSmoothingEnabled = true
-      ctx.imageSmoothingQuality = 'high'
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-      const mime = format
-      // Add timeout to toBlob for mobile compatibility
-      const blob: Blob | null = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.warn('toBlob timeout, falling back to dataURL method')
-          reject(new Error('Blob conversion timeout'))
-        }, 5000) // 5 second timeout
-        
-        canvas.toBlob(
-          b => {
-            clearTimeout(timeout)
-            resolve(b)
-          },
-          mime,
-          mime === 'image/jpeg' || mime === 'image/webp' ? quality : undefined
-        )
-      })
-
-      if (!blob) {
-        console.warn('toBlob returned null')
-        setGeneratingPreview(false)
-        isGeneratingRef.current = false
-        return
-      }
-
-      // Clean up old preview URL before creating new one
-      if (currentPreviewUrlRef.current && currentPreviewUrlRef.current.startsWith('blob:')) {
-        URL.revokeObjectURL(currentPreviewUrlRef.current)
-      }
-      const newPreviewUrl = URL.createObjectURL(blob)
-      currentPreviewUrlRef.current = newPreviewUrl
-      setPreviewUrl(newPreviewUrl)
-      setGeneratingPreview(false)
-      isGeneratingRef.current = false
-    } catch (e) {
-      console.error('Preview generation error:', e)
-      // On error, try to use original image as fallback
-      if (imgSrc && currentPreviewUrlRef.current !== imgSrc) {
-        setPreviewUrl(imgSrc)
-        currentPreviewUrlRef.current = imgSrc
-      }
-      setGeneratingPreview(false)
-      isGeneratingRef.current = false
-    }
-  }, [imgSrc, format, width, height, quality, imageLoaded])
-
-  // Generate preview when settings change (only in single mode)
-  useEffect(() => {
-    // Skip preview generation in batch mode
-    if (batchMode) {
-      return
-    }
-    
-    // Clear any existing timeout
-    if (previewTimeoutRef.current) {
-      clearTimeout(previewTimeoutRef.current)
-    }
-    
-    // Debounce preview generation to prevent flashing
-    previewTimeoutRef.current = setTimeout(() => {
-      void generatePreview()
-    }, 500) // Increased debounce to 500ms for smoother experience
-
-    return () => {
-      if (previewTimeoutRef.current) {
-        clearTimeout(previewTimeoutRef.current)
-      }
-    }
-  }, [generatePreview, batchMode])
+  const lossy = FORMATS[settings.format].lossy
 
   return (
-    <TooltipProvider>
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
+      <div className="space-y-6">
+        <Card className="minimal-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-headline text-lg">Your image</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              {thumbUrl && <img src={thumbUrl} alt="" className="h-16 w-16 shrink-0 rounded-md border border-border bg-muted object-cover" />}
+              <div className="min-w-0 flex-1 text-sm">
+                <Hint label={file.name}>
+                  <p className="truncate font-medium">{file.name}</p>
+                </Hint>
+                <p className="text-muted-foreground tabular-nums">
+                  {humanSize(file.size)} · {image.width} × {image.height} px · {file.type.replace('image/', '').toUpperCase()}
+                </p>
+                {hasEdits(edits) && (
+                  <p className="text-xs text-primary tabular-nums">
+                    Edited: {ew} × {eh} px
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => setEditorOpen(true)}>
+                <PencilSimple className="h-4 w-4" /> Crop, rotate, flip
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => replaceRef.current?.click()}>
+                <Upload className="h-4 w-4" /> Choose another image
+              </Button>
+              <input
+                ref={replaceRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) void load(f)
+                  e.target.value = ''
+                }}
+              />
+              <ClearButton
+                onClear={clear}
+                hasContent
+                label="Remove"
+                confirmLabel="Remove image"
+                className="ml-auto"
+                confirmTitle="Remove this image?"
+                confirmDescription="The image and your settings for it will be cleared."
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="minimal-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-headline text-lg">What&apos;s in this file</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MetadataPanel report={meta} loading={metaLoading} />
+          </CardContent>
+        </Card>
+
+        <Card className="minimal-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-headline text-lg">Output</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="preset">Preset</Label>
+              <Select value={presetId} onValueChange={applyPreset}>
+                <SelectTrigger id="preset" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRESETS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{PRESETS.find((p) => p.id === presetId)?.hint}</p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-end gap-2">
+                <div className="flex-1 space-y-1.5">
+                  <Label htmlFor="out-w">Width (px)</Label>
+                  <Input id="out-w" inputMode="numeric" value={width || ''} onChange={(e) => onWidth(e.target.value)} />
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <Label htmlFor="out-h">Height (px)</Label>
+                  <Input id="out-h" inputMode="numeric" value={height || ''} onChange={(e) => onHeight(e.target.value)} />
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <Switch id="lock-aspect" checked={lockAspect} onCheckedChange={setLockAspect} />
+                  <Label htmlFor="lock-aspect" className="cursor-pointer font-normal">Keep aspect ratio</Label>
+                </div>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {ew ? Math.round((width / ew) * 100) : 100}% of {hasEdits(edits) ? 'edited' : 'original'} size
+                </span>
+              </div>
+            </div>
+
+            <OutputControls settings={settings} onChange={(p) => setSettings((s) => ({ ...s, ...p }))} metadataNote={metadataNote} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="minimal-card lg:sticky lg:top-20">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-headline text-lg">Preview</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {beforeUrl && afterUrl ? (
+            <CompareSlider before={beforeUrl} after={afterUrl} className="aspect-[4/3] w-full" />
+          ) : (
+            <div className="flex aspect-[4/3] w-full items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
+              <Spinner className="mr-2 h-4 w-4 animate-spin" /> Preparing preview…
+            </div>
+          )}
+          <div className="rounded-md bg-muted/40 p-3 text-sm sm:p-4">
+            <div className="mb-1.5 text-xs text-muted-foreground">File size</div>
+            {preview && !encoding ? (
+              <SizeChange from={file.size} to={preview.blob.size} className="text-base" />
+            ) : (
+              <span className="inline-flex items-center gap-2 text-muted-foreground">
+                <Spinner className="h-4 w-4 animate-spin" />
+                {settings.format === 'image/avif' ? 'Encoding AVIF (this takes a moment)…' : 'Calculating…'}
+              </span>
+            )}
+            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+              <span>
+                Format: <span className="text-foreground">{FORMATS[settings.format].label}</span>
+              </span>
+              <span>
+                Size: <span className="text-foreground tabular-nums">{width} × {height}</span>
+              </span>
+              {lossy && preview && (
+                <span>
+                  Quality: <span className="text-foreground tabular-nums">{Math.round(preview.quality * 100)}%</span>
+                </span>
+              )}
+              <span>
+                Metadata:{' '}
+                <span className="text-foreground">
+                  {settings.metaMode === 'strip' || !keepPossible ? 'removed' : settings.metaMode === 'keep-all' ? 'kept' : 'kept, no location'}
+                </span>
+              </span>
+            </div>
+            {preview && !preview.fits && (
+              <p className="mt-2 flex items-start gap-1.5 text-xs text-warning">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Even at the lowest quality this is above {settings.targetKb} KB. Try smaller dimensions.
+              </p>
+            )}
+            {encodeError && <p className="mt-2 text-xs text-destructive">{encodeError}</p>}
+          </div>
+          <Button onClick={download} disabled={!preview || encoding} className="h-11 w-full text-base">
+            <Download className="h-5 w-5" /> Download {FORMATS[settings.format].label}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <ImageEditorDialog open={editorOpen} onOpenChange={setEditorOpen} image={image} initial={edits} onApply={applyEdits} name={file.name} />
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Batch
+// ---------------------------------------------------------------------------
+
+interface BatchItem {
+  id: string
+  file: File
+  edits: Edits
+  status: 'queued' | 'working' | 'done' | 'error'
+  error?: string
+  output?: Blob
+  hasLocation?: boolean
+}
+
+const LONG_EDGES = [
+  { value: '0', label: 'Keep original size' },
+  { value: '3840', label: 'Up to 3840 px (4K)' },
+  { value: '2560', label: 'Up to 2560 px' },
+  { value: '1920', label: 'Up to 1920 px (Full HD)' },
+  { value: '1600', label: 'Up to 1600 px' },
+  { value: '1280', label: 'Up to 1280 px' },
+  { value: '800', label: 'Up to 800 px' },
+]
+
+const MAX_BATCH = 30
+
+function BatchThumb({ file }: { file: File }) {
+  const url = useObjectUrl(file)
+  return (
+    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+      {url && <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
+    </div>
+  )
+}
+
+function BatchConverter({
+  settings,
+  setSettings,
+}: {
+  settings: OutputSettings
+  setSettings: React.Dispatch<React.SetStateAction<OutputSettings>>
+}) {
+  const { toast } = useToast()
+  const [items, setItems] = React.useState<BatchItem[]>([])
+  const [longEdge, setLongEdge] = React.useState('0')
+  const [running, setRunning] = React.useState(false)
+  const [notice, setNotice] = React.useState<string | null>(null)
+  const [editing, setEditing] = React.useState<{ id: string; image: DecodedImage } | null>(null)
+
+  const patch = (id: string, p: Partial<BatchItem>) => setItems((prev) => prev.map((x) => (x.id === id ? { ...x, ...p } : x)))
+
+  const add = (files: File[]) => {
+    const problems: string[] = []
+    const room = MAX_BATCH - items.length
+    const accepted: BatchItem[] = []
+    for (const f of files) {
+      const p = validate(f)
+      if (p) problems.push(p)
+      else if (accepted.length < room) accepted.push({ id: crypto.randomUUID(), file: f, edits: NO_EDITS, status: 'queued' })
+    }
+    if (files.length - problems.length > room) problems.push(`Only ${MAX_BATCH} images fit in one batch.`)
+    setNotice(problems.length ? problems.join(' ') : null)
+    setItems((prev) => [...prev, ...accepted])
+    for (const it of accepted) {
+      void readMetadata(it.file).then((r) => patch(it.id, { hasLocation: Boolean(r?.hasLocation) }))
+    }
+  }
+
+  usePasteImages(add)
+
+  const openEditor = async (item: BatchItem) => {
+    try {
+      setEditing({ id: item.id, image: await decodeImage(item.file) })
+    } catch (e) {
+      patch(item.id, { status: 'error', error: e instanceof Error ? e.message : 'Could not open this image.' })
+    }
+  }
+
+  const convertAll = async () => {
+    setRunning(true)
+    const target = Number(settings.targetKb) * 1024
+    for (const item of items) {
+      patch(item.id, { status: 'working', error: undefined })
+      try {
+        const img = await decodeImage(item.file)
+        const [ew, eh] = editedSize(img.width, img.height, item.edits)
+        const [w, h] = Number(longEdge) > 0 ? fitLongEdge(ew, eh, Number(longEdge)) : [ew, eh]
+        const canvas = renderEdited(img, item.edits, w, h, settings.format === 'image/jpeg')
+        const encoded =
+          FORMATS[settings.format].lossy && settings.useTarget && target > 0
+            ? (await encodeToTarget(canvas, settings.format, target)).blob
+            : await encodeCanvas(canvas, settings.format, settings.quality)
+        const output = await carryOverMetadata(item.file, encoded, settings.metaMode, { width: w, height: h })
+        patch(item.id, { status: 'done', output })
+      } catch (e) {
+        patch(item.id, { status: 'error', error: e instanceof Error ? e.message : 'Conversion failed.' })
+      }
+    }
+    setRunning(false)
+  }
+
+  const done = items.filter((i) => i.status === 'done' && i.output)
+  const totalIn = done.reduce((s, i) => s + i.file.size, 0)
+  const totalOut = done.reduce((s, i) => s + (i.output?.size ?? 0), 0)
+  const finished = items.filter((i) => i.status === 'done' || i.status === 'error').length
+  const progress = items.length ? Math.round((finished / items.length) * 100) : 0
+  const withLocation = items.filter((i) => i.hasLocation).length
+
+  const downloadZip = async () => {
+    const { default: JSZip } = await import('jszip')
+    const zip = new JSZip()
+    const used = new Map<string, number>()
+    for (const it of done) {
+      let name = outputFilename(it.file.name, settings.format)
+      const n = used.get(name) ?? 0
+      used.set(name, n + 1)
+      if (n > 0) name = name.replace(/(\.[^.]+)$/, `-${n + 1}$1`)
+      zip.file(name, it.output!)
+    }
+    const blob = await zip.generateAsync({ type: 'blob' })
+    downloadBlob(blob, 'utilities-my-images.zip', isIOSOrSafari())
+    toast({ title: 'ZIP saved', description: `${done.length} image${done.length === 1 ? '' : 's'}, ${humanSize(blob.size)}` })
+  }
+
+  const metadataNote =
+    settings.metaMode === 'strip'
+      ? 'Camera details, dates and location are removed from every file.'
+      : 'Kept only for JPEG files converted to JPEG; removed from everything else.'
+
+  const editingItem = editing ? items.find((x) => x.id === editing.id) : undefined
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
+      <Card className="minimal-card">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
+          <CardTitle className="font-headline text-lg">
+            Images ({items.length}/{MAX_BATCH})
+          </CardTitle>
+          <ClearButton
+            onClear={() => setItems([])}
+            hasContent={items.length > 0}
+            disabled={running}
+            label="Clear all"
+            confirmLabel="Clear all images"
+            confirmTitle="Clear every image?"
+            confirmDescription="All images and converted results in this batch will be removed."
+          />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <DropZone multiple onFiles={add} compact={items.length > 0} />
+          {notice && <p className="text-sm text-warning">{notice}</p>}
+          {withLocation > 0 && (
+            <p className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+              {withLocation} of these photos record where they were taken. That&apos;s removed on conversion unless you keep metadata.
+            </p>
+          )}
+          <ul className="divide-y divide-border">
+            {items.map((it) => (
+              <li key={it.id} className="flex items-center gap-3 py-2.5">
+                <BatchThumb file={it.file} />
+                <div className="min-w-0 flex-1 text-sm">
+                  <Hint label={it.file.name}>
+                    <p className="truncate font-medium">{it.file.name}</p>
+                  </Hint>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                    {it.status === 'done' && it.output ? <SizeChange from={it.file.size} to={it.output.size} /> : <span className="tabular-nums">{humanSize(it.file.size)}</span>}
+                    {it.hasLocation && (
+                      <Badge variant="outline" className="gap-1 border-warning/50 text-[10px] text-warning">
+                        <MapPin className="h-3 w-3" /> Location
+                      </Badge>
+                    )}
+                    {hasEdits(it.edits) && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Edited
+                      </Badge>
+                    )}
+                    {it.status === 'error' && <span className="text-destructive">{it.error}</span>}
+                  </div>
+                </div>
+                {it.status === 'working' && <Spinner className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Converting" />}
+                {it.status === 'done' && <CheckCircle className="h-4 w-4 text-success" aria-label="Done" />}
+                {it.status === 'error' && <Warning className="h-4 w-4 text-destructive" aria-label="Failed" />}
+                <Button variant="ghost" size="icon-sm" onClick={() => void openEditor(it)} disabled={running} title="Crop, rotate, flip">
+                  <PencilSimple className="h-4 w-4" />
+                </Button>
+                {it.status === 'done' && it.output && (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => downloadBlob(it.output!, outputFilename(it.file.name, settings.format), isIOSOrSafari())}
+                    title="Download this image"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setItems((prev) => prev.filter((x) => x.id !== it.id))}
+                  disabled={running}
+                  title="Remove from batch"
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card className="minimal-card lg:sticky lg:top-20">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-headline text-lg">Output for all images</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="long-edge">Size</Label>
+            <Select value={longEdge} onValueChange={setLongEdge}>
+              <SelectTrigger id="long-edge" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LONG_EDGES.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Images are only ever shrunk, never enlarged. The aspect ratio is kept.</p>
+          </div>
+          <OutputControls settings={settings} onChange={(p) => setSettings((s) => ({ ...s, ...p }))} metadataNote={metadataNote} />
+
+          {(running || done.length > 0) && (
+            <div className="space-y-2">
+              <Progress value={progress} />
+              {done.length > 0 && (
+                <p className="text-sm">
+                  Total: <SizeChange from={totalIn} to={totalOut} />
+                </p>
+              )}
+            </div>
+          )}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button onClick={() => void convertAll()} disabled={!items.length || running} className="h-11">
+              {running ? <Spinner className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {running ? 'Converting…' : items.length ? `Convert ${items.length}` : 'Convert'}
+            </Button>
+            <Button variant="outline" onClick={() => void downloadZip()} disabled={!done.length || running} className="h-11">
+              <Archive className="h-4 w-4" /> Download ZIP
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {editing && (
+        <ImageEditorDialog
+          open
+          onOpenChange={(o) => !o && setEditing(null)}
+          image={editing.image}
+          initial={editingItem?.edits ?? NO_EDITS}
+          onApply={(e) => patch(editing.id, { edits: e, status: 'queued', output: undefined })}
+          name={editingItem?.file.name}
+        />
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+export default function ImageConverterPage() {
+  const [mode, setMode] = React.useState<'single' | 'batch'>('single')
+  const [settings, setSettings] = React.useState<OutputSettings>({
+    format: 'image/webp',
+    quality: 0.85,
+    useTarget: false,
+    targetKb: '500',
+    metaMode: 'strip',
+  })
+
+  return (
+    <>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarContent />
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={ImageIcon} title="Image Converter" />
-
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto">
-            {/* Big heading */}
-            <div className="mb-6 sm:mb-8 hidden sm:block">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">Image Converter & Resizer</h1>
-              <p className="text-base sm:text-lg text-muted-foreground">Convert images between formats, resize, and download the result.</p>
+          <div className="w-full max-w-7xl mx-auto space-y-6">
+            <div className="mb-2 max-sm:sr-only">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">Image Converter</h1>
+              <p className="text-base sm:text-lg text-muted-foreground max-w-3xl">
+                Change a picture&apos;s format or size, crop it, see exactly what&apos;s inside it, and know the file size before you download. Nothing is
+                uploaded.
+              </p>
             </div>
 
-            {/* Mode Toggle */}
-            <div className="mb-6 sm:mb-8">
-              <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg border border-border">
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                  <span className={`text-sm font-medium ${!batchMode ? 'text-foreground' : 'text-muted-foreground'}`}>Single</span>
-                </div>
-                <Switch
-                  checked={batchMode}
-                  onCheckedChange={(checked) => {
-                    setBatchMode(checked)
-                    // Clear state when switching modes
-                    if (checked) {
-                      clear()
-                    } else {
-                      clearBatch()
-                    }
-                  }}
-                  disabled={processing || batchProcessing}
-                />
-                <div className="flex items-center gap-2">
-                  <Stack className="h-5 w-5 text-muted-foreground" />
-                  <span className={`text-sm font-medium ${batchMode ? 'text-foreground' : 'text-muted-foreground'}`}>Batch (Max 20)</span>
-                </div>
-                {batchMode && batchFiles.length > 0 && (
-                  <Badge variant="secondary" className="ml-auto">
-                    {batchFiles.length}/20 files
-                  </Badge>
-                )}
-              </div>
-            </div>
-            
-            <div className={`${batchMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : 'space-y-8'}`}>
-              {/* Left Column / Single: Upload Area & File List */}
-              <div>
-                <Card className="minimal-card">
-                <CardContent>
-                  {/*
-                    Drop target only. This used to be role="button", but in three
-                    of its four states it contains real buttons and a scrollable
-                    list, and interactive content nested inside a button is invalid
-                    and traps keyboard navigation. The click-to-upload affordance
-                    now lives on a real <button> in the two empty states; the
-                    non-empty states already have "Change" and "Add More".
-                  */}
-                  <div
-                    ref={dropRef}
-                    className={`
-                      relative border-2 border-dashed rounded-lg p-4 sm:p-6 flex items-center justify-center text-center transition-all duration-quick
-                        ${isDragOver
-                        ? 'border-primary bg-primary/5 scale-[1.01]'
-                        : 'border-muted-foreground/25'
-                      }
-                      ${!(batchMode && batchFiles.length > 0) && 'hover:border-primary/50 hover:bg-accent/50'}
-                      min-h-[100px] sm:min-h-[100px]
-                    `}
-                  >
-                    {/* Single Mode Upload Content */}
-                    {!batchMode && !imgSrc && (
-                      <button
-                        type="button"
-                        aria-label="Drop image here or click to upload"
-                        onClick={() => {
-                          const inp = document.getElementById('file-input') as HTMLInputElement | null
-                          inp?.click()
-                        }}
-                        className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full cursor-pointer rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      >
-                        <span className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
-                          isDragOver ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
-                        }`}>
-                          <Upload className="h-6 w-6" />
-                        </span>
-                        <span className="block text-center sm:text-left flex-1">
-                          <span className="block font-medium text-foreground mb-1">
-                            {isDragOver ? 'Drop your image here' : 'Drag & drop an image here'}
-                          </span>
-                          <span className="block text-sm text-muted-foreground">or click to choose file • PNG, JPG, WebP, GIF, BMP • Max 50MB</span>
-                        </span>
-                      </button>
-                    )}
-                    
-                    {/* Batch Mode Upload Content */}
-                    {batchMode && batchFiles.length === 0 && (
-                      <button
-                        type="button"
-                        aria-label="Drop images here or click to upload, maximum 20"
-                        onClick={() => {
-                          const inp = document.getElementById('file-input') as HTMLInputElement | null
-                          inp?.click()
-                        }}
-                        className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full cursor-pointer rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      >
-                        <span className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-medium ease-smooth-out ${
-                          isDragOver ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
-                        }`}>
-                          <Stack className="h-6 w-6" />
-                        </span>
-                        <span className="block text-center sm:text-left flex-1">
-                          <span className="block font-medium text-foreground mb-1">
-                            {isDragOver ? 'Drop your images here' : 'Drag & drop images here (max 20)'}
-                          </span>
-                          <span className="block text-sm text-muted-foreground">or click to choose files • PNG, JPG, WebP, GIF, BMP • Max 50MB each</span>
-                        </span>
-                      </button>
-                    )}
-                    
-                    {/* Batch Mode: Files Added */}
-                    {batchMode && batchFiles.length > 0 && (
-                      <div className="w-full text-left">
-                        <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b">
-                          <Badge variant="secondary" className="text-sm">
-                            <Stack className="h-3.5 w-3.5 mr-1" />
-                            {batchFiles.length}/20 files
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-xs whitespace-nowrap"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (batchFiles.length < 20) {
-                                const inp = document.getElementById('file-input') as HTMLInputElement | null
-                                inp?.click()
-                                // Remove focus outline
-                                ;(e.target as HTMLButtonElement).blur()
-                              }
-                            }}
-                            disabled={batchFiles.length >= 20}
-                          >
-                            <Upload className="h-3.5 w-3.5 mr-1" />
-                            {batchFiles.length >= 20 ? 'Max Files Reached' : 'Add More'}
-                          </Button>
-                        </div>
-                        <div 
-                          className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar"
-                          onWheel={() => {
-                            if (document.activeElement instanceof HTMLElement) {
-                              document.activeElement.blur()
-                            }
-                          }}
-                        >
-                          {batchFiles.map((item) => (
-                            <div
-                              key={item.id}
-                              className="flex items-center gap-3 p-2 bg-background/50 rounded-lg border border-border/50"
-                            >
-                              <div className="flex-shrink-0">
-                                {item.status === 'queued' && (
-                                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                                    <ImageFile className="h-3.5 w-3.5 text-muted-foreground" />
-                                  </div>
-                                )}
-                                {item.status === 'processing' && (
-                                  <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                    <Spinner className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-                                  </div>
-                                )}
-                                {item.status === 'completed' && (
-                                  <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                                    <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                                  </div>
-                                )}
-                                {item.status === 'error' && (
-                                  <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center">
-                                    <Warning className="h-3.5 w-3.5 text-destructive" />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium truncate" title={item.originalName}>
-                                  {item.originalName}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {item.status === 'queued' && humanSize(item.file.size)}
-                                  {item.status === 'processing' && `Processing... ${item.progress}%`}
-                                  {item.status === 'completed' && (
-                                    <span className="text-green-600 dark:text-green-400">
-                                      Converted → {getConvertedFilename(item.originalName, format)}
-                                    </span>
-                                  )}
-                                  {item.status === 'error' && (
-                                    <span className="text-destructive">{item.error}</span>
-                                  )}
-                                </div>
-                                {item.status === 'processing' && (
-                                  <Progress value={item.progress} className="h-1 mt-1" />
-                                )}
-                              </div>
-                              <div className="flex-shrink-0 flex items-center gap-1">
-                                {item.status === 'error' && !batchProcessing && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 w-7 p-0"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      void reprocessFile(item.id)
-                                    }}
-                                    title="Retry"
-                                  >
-                                    <ArrowClockwise className="h-3.5 w-3.5" />
-                                  </Button>
-                                )}
-                                {!batchProcessing && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-white hover:bg-destructive"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      removeBatchFile(item.id)
-                                    }}
-                                    title="Remove"
-                                  >
-                                    <X className="h-3.5 w-3.5" />
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Single Mode: File Selected */}
-                    {!batchMode && imgSrc && (
-                      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
-                        <div className="relative flex-shrink-0">
-                          <img
-                            src={imgSrc}
-                            alt="preview"
-                            className="w-16 h-16 object-contain rounded-lg border border-border bg-background shadow-sm"
-                            onError={(e) => {
-                              // Fallback: show a placeholder on error
-                              e.currentTarget.style.display = 'none'
-                            }}
-                          />
-                          <div className="absolute -top-1 -right-1">
-                            <Badge className="bg-green-500 hover:bg-green-600 text-white shadow-md text-xs px-1.5 py-0.5">
-                              <CheckCircle className="h-2.5 w-2.5" />
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0 text-center sm:text-left">
-                          <div className="font-medium text-foreground truncate" title={filename}>{filename}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {humanSize(size)} • {imageLoaded && naturalWidth && naturalHeight ? `${naturalWidth}×${naturalHeight}px` : (
-                              <span className="inline-flex items-center gap-1">
-                                <Spinner className="h-3 w-3 animate-spin" />
-                                Loading dimensions...
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2 mt-2 sm:mt-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              const inp = document.getElementById('file-input') as HTMLInputElement | null
-                              inp?.click()
-                              // Remove focus outline
-                              ;(e.target as HTMLButtonElement).blur()
-                            }}
-                          >
-                            <ArrowClockwise className="h-4 w-4 mr-1" />
-                            Change
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              clear()
-                            }}
-                          >
-                            <Trash className="h-4 w-4 mr-1" />
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    <input 
-                      id="file-input" 
-                      type="file" 
-                      accept="image/*"
-                      multiple={batchMode}
-                      onChange={onInputChange} 
-                      className="sr-only" 
-                    />
-                    {/* Hidden image for loading original dimensions (single mode only) */}
-                    {!batchMode && imgSrc && (
-                      <img
-                        src={imgSrc}
-                        alt=""
-                        onLoad={onPreviewLoad}
-                        onError={onPreviewError}
-                        className="sr-only"
-                      />
-                    )}
-                  </div>
-                  
-                  {/* Error Display - Single Mode */}
-                  {!batchMode && error && (
-                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 mt-4">
-                      <Warning className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-destructive text-sm mb-1">Upload Error</div>
-                        <div className="text-sm text-destructive/80 leading-snug">{error}</div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Error Display - Batch Mode */}
-                  {batchMode && batchError && (
-                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 mt-4">
-                      <Warning className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-destructive text-sm mb-1">Batch Error</div>
-                        <div className="text-sm text-destructive/80 leading-snug whitespace-pre-line">{batchError}</div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              </div>
+            <Tabs value={mode} onValueChange={(v) => setMode(v as 'single' | 'batch')} className="gap-6">
+              <TabsList className="grid w-full grid-cols-2 sm:w-fit">
+                <TabsTrigger value="single">
+                  <ImageIcon className="h-4 w-4" /> One image
+                </TabsTrigger>
+                <TabsTrigger value="batch">
+                  <Stack className="h-4 w-4" /> Many images
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="single">
+                <SingleConverter settings={settings} setSettings={setSettings} />
+              </TabsContent>
+              <TabsContent value="batch">
+                <BatchConverter settings={settings} setSettings={setSettings} />
+              </TabsContent>
+            </Tabs>
 
-              {/* Right Column / Single: Settings & Preview */}
-              <div className={batchMode ? '' : 'space-y-8'}>
-              <Card className="minimal-card">
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="font-headline text-lg sm:text-xl md:text-2xl tracking-tight flex items-center gap-2">
-                    <Gear className="h-5 w-5 sm:h-6 sm:w-6" />
-                    <span className="truncate">
-                      {batchMode ? 'Conversion Settings' : 'Conversion Settings & Live Preview'}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 sm:space-y-8">
-                  <div className={`grid gap-6 sm:gap-8 ${batchMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
-                    {/* Left: Settings */}
-                    <div className="space-y-4 sm:space-y-6">
-                      <div className="space-y-3 sm:space-y-4">
-                        <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
-                          <Palette className="h-4 w-4 sm:h-5 sm:w-5" />
-                          Output Settings {batchMode && <Badge variant="outline" className="ml-2 text-xs">Applied to all files</Badge>}
-                        </h3>
-                        
-                        {/* Format Selection */}
-                        <div className="space-y-2">
-                          <Label htmlFor="format" className="text-sm font-medium">Output Format</Label>
-                          <Select value={format} onValueChange={(value: OutputFormat) => setFormat(value)} disabled={batchProcessing}>
-                            <SelectTrigger className="h-10">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="image/png">
-                                <div className="flex items-center gap-2">
-                                  <Palette className="h-4 w-4" />
-                                  <span className="hidden sm:inline">PNG - Lossless</span>
-                                  <span className="sm:hidden">PNG</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="image/jpeg">
-                                <div className="flex items-center gap-2">
-                                  <ImageIcon className="h-4 w-4" />
-                                  <span className="hidden sm:inline">JPG - Compressed</span>
-                                  <span className="sm:hidden">JPG</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="image/webp">
-                                <div className="flex items-center gap-2">
-                                  <ImageFile className="h-4 w-4" />
-                                  <span className="hidden sm:inline">WebP - Modern</span>
-                                  <span className="sm:hidden">WebP</span>
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Dimensions - Different behavior for batch mode */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <Label htmlFor="width" className="text-sm font-medium">
-                              Width (px) {batchMode && <span className="text-xs text-muted-foreground">(empty = original)</span>}
-                            </Label>
-                            <Input
-                              id="width"
-                              type="number"
-                              min={1}
-                              max={8000}
-                              value={width === '' ? '' : String(width)}
-                              onChange={e => setWidth(e.target.value === '' ? '' : Number(e.target.value))}
-                              disabled={batchMode ? batchProcessing : !imgSrc}
-                              placeholder={batchMode ? "Original" : "Auto"}
-                              className="h-10"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="height" className="text-sm font-medium">
-                              Height (px) {batchMode && <span className="text-xs text-muted-foreground">(empty = original)</span>}
-                            </Label>
-                            <Input
-                              id="height"
-                              type="number"
-                              min={1}
-                              max={8000}
-                              value={height === '' ? '' : String(height)}
-                              onChange={e => setHeight(e.target.value === '' ? '' : Number(e.target.value))}
-                              disabled={batchMode ? batchProcessing : !imgSrc}
-                              placeholder={batchMode ? "Original" : "Auto"}
-                              className="h-10"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Options */}
-                        <div className="space-y-3 sm:space-y-4">
-                          {!batchMode && (
-                            <div className="flex items-center space-x-2">
-                              <Switch
-                                id="aspect-ratio"
-                                checked={lockAspect}
-                                onCheckedChange={setLockAspect}
-                              />
-                              <Label htmlFor="aspect-ratio" className="text-sm font-medium cursor-pointer flex-1">
-                                Keep aspect ratio
-                              </Label>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>When enabled, changing width or height will automatically adjust the other dimension to maintain the original image proportions.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </div>
-                          )}
-
-                          {(format === 'image/jpeg' || format === 'image/webp') && (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-sm font-medium text-muted-foreground">Quality</Label>
-                                <Badge variant="outline" className="text-xs">
-                                  {Math.round(quality * 100)}%
-                                </Badge>
-                              </div>
-                              <Slider
-                                value={[quality]}
-                                onValueChange={([value]) => setQuality(value)}
-                                min={0.1}
-                                max={1}
-                                step={0.05}
-                                disabled={batchMode ? batchProcessing : !imgSrc}
-                                className="w-full"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Output Information - Single Mode Only */}
-                      {!batchMode && imgSrc && (
-                        <div className="space-y-3 sm:space-y-4">
-                          <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
-                            <ImageFile className="h-4 w-4 sm:h-5 sm:w-5" />
-                            Output Information
-                          </h3>
-                          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                            <div className="p-2 sm:p-3 bg-muted/20 rounded-lg text-center">
-                              <div className="text-xs text-muted-foreground mb-1">Format</div>
-                              <div className="font-medium text-xs sm:text-sm">{format.split('/')[1].toUpperCase()}</div>
-                            </div>
-                            {width !== '' && height !== '' && (
-                              <div className="p-2 sm:p-3 bg-muted/20 rounded-lg text-center">
-                                <div className="text-xs text-muted-foreground mb-1">Output Size</div>
-                                <div className="font-medium text-xs sm:text-sm">{width}×{height}px</div>
-                              </div>
-                            )}
-                            {naturalWidth && naturalHeight && (
-                              <>
-                                <div className="p-2 sm:p-3 bg-muted/20 rounded-lg text-center">
-                                  <div className="text-xs text-muted-foreground mb-1">Original</div>
-                                  <div className="font-medium text-xs sm:text-sm">{naturalWidth}×{naturalHeight}px</div>
-                                </div>
-                                {width !== '' && height !== '' && (
-                                  <div className="p-2 sm:p-3 bg-muted/20 rounded-lg text-center">
-                                    <div className="text-xs text-muted-foreground mb-1">Scale</div>
-                                    <div className="font-medium text-xs sm:text-sm">
-                                      {((Number(width) / naturalWidth) * 100).toFixed(1)}%
-                                    </div>
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Batch Mode: Summary */}
-                      {batchMode && batchFiles.length > 0 && (
-                        <div className="space-y-3 sm:space-y-4">
-                          <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
-                            <Archive className="h-4 w-4 sm:h-5 sm:w-5" />
-                            Batch Summary
-                          </h3>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                            <div className="p-2 sm:p-3 bg-muted/20 rounded-lg text-center">
-                              <div className="text-xs text-muted-foreground mb-1">Total Files</div>
-                              <div className="font-medium text-xs sm:text-sm">{batchFiles.length}</div>
-                            </div>
-                            <div className="p-2 sm:p-3 bg-muted/20 rounded-lg text-center">
-                              <div className="text-xs text-muted-foreground mb-1">Output Format</div>
-                              <div className="font-medium text-xs sm:text-sm">{format.split('/')[1].toUpperCase()}</div>
-                            </div>
-                            <div className="p-2 sm:p-3 bg-green-500/10 rounded-lg text-center">
-                              <div className="text-xs text-muted-foreground mb-1">Completed</div>
-                              <div className="font-medium text-xs sm:text-sm text-green-600 dark:text-green-400">
-                                {batchFiles.filter(f => f.status === 'completed').length}
-                              </div>
-                            </div>
-                            <div className="p-2 sm:p-3 bg-destructive/10 rounded-lg text-center">
-                              <div className="text-xs text-muted-foreground mb-1">Failed</div>
-                              <div className="font-medium text-xs sm:text-sm text-destructive">
-                                {batchFiles.filter(f => f.status === 'error').length}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Batch Progress Bar */}
-                          {batchProcessing && (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">Processing...</span>
-                                <span className="font-medium">{batchProgress.current} / {batchProgress.total}</span>
-                              </div>
-                              <Progress value={(batchProgress.current / batchProgress.total) * 100} className="h-2" />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right: Live Preview - Single Mode Only */}
-                    {!batchMode && (
-                      <div className="space-y-3 sm:space-y-4">
-                        <div className="flex items-center gap-2 text-base sm:text-lg font-semibold text-foreground">
-                          <ArrowClockwise className="h-4 w-4 sm:h-5 sm:w-5" />
-                          Live Preview
-                        </div>
-                        <div className="bg-muted/30 border border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-6 flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
-                          {imgSrc ? (
-                            <div className="relative w-full h-full flex items-center justify-center">
-                              {generatingPreview ? (
-                                <div className="text-center space-y-3 sm:space-y-4">
-                                  <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                                    <Spinner className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground animate-spin" />
-                                  </div>
-                                  <div className="text-sm font-medium text-muted-foreground">Generating preview...</div>
-                                  <div className="text-xs text-muted-foreground/70">This may take a moment on mobile</div>
-                                </div>
-                              ) : previewUrl ? (
-                                <>
-                                  <img
-                                    src={previewUrl}
-                                    alt="Live Preview"
-                                    className="max-w-full max-h-[280px] sm:max-h-[380px] object-contain rounded-lg shadow-lg border border-border/50"
-                                    style={{ imageRendering: 'crisp-edges' }}
-                                  />
-                                </>
-                              ) : (
-                                <div className="text-center space-y-3 sm:space-y-4">
-                                  <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                                    <Spinner className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground animate-spin" />
-                                  </div>
-                                  <div className="text-sm font-medium text-muted-foreground">Loading preview...</div>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-center space-y-3 sm:space-y-4">
-                              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
-                                <ImageIcon className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
-                              </div>
-                              <div className="text-sm sm:text-base text-muted-foreground font-medium">Upload an image to see live preview</div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                    {/* Action Buttons - Single Mode */}
-                    {!batchMode && (
-                      <div className="border-t pt-4 sm:pt-6">
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch">
-                          <Button
-                            onClick={convert}
-                            disabled={!imgSrc || !imageLoaded || processing}
-                            className="sm:flex-1 w-full h-11 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                          >
-                            {processing ? (
-                              <>
-                                <Spinner className="h-5 w-5 mr-2 animate-spin" />
-                                Converting & Downloading...
-                              </>
-                            ) : !imageLoaded && imgSrc ? (
-                              <>
-                                <Spinner className="h-5 w-5 mr-2 animate-spin" />
-                                Loading Image...
-                              </>
-                          ) : downloadUrl && downloadBlobState ? (
-                            <>
-                              <CheckCircle className="h-5 w-5 mr-2" />
-                              Downloaded! Convert Another
-                            </>
-                          ) : (
-                            <>
-                              <Download className="h-5 w-5 mr-2" />
-                              Convert & Download
-                            </>
-                          )}
-                        </Button>
-
-                        <div className="flex gap-2 sm:flex-col sm:items-end">
-                          {downloadUrl && downloadBlobState && (
-                            <Button variant="outline" onClick={handleDownload} className="w-full sm:w-44 h-11">
-                              <Download className="h-4 w-4 mr-2" />
-                              Download
-                            </Button>
-                          )}
-
-                          <Button
-                            variant="outline"
-                            onClick={clear}
-                            disabled={processing}
-                            className="w-full sm:w-44 h-11"
-                          >
-                            <ArrowCounterClockwise className="h-4 w-4 mr-2" />
-                            Reset
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    )}
-
-                    {/* Action Buttons - Batch Mode */}
-                    {batchMode && (
-                      <div className="border-t pt-4 sm:pt-6">
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                          {/* Primary Action and Download */}
-                          <div className="flex-1 flex gap-2">
-                            {!batchProcessing ? (
-                              <>
-                                <Button
-                                  onClick={processBatch}
-                                  disabled={batchFiles.length === 0}
-                                  className="flex-1 h-11 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                                >
-                                  {batchZipBlob ? (
-                                    <>
-                                      <Play className="h-4 w-4 mr-2" />
-                                      Process Again
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Play className="h-4 w-4 mr-2" />
-                                      Convert {batchFiles.length} File{batchFiles.length !== 1 ? 's' : ''}
-                                    </>
-                                  )}
-                                </Button>
-                                {batchZipBlob && (
-                                  <Button
-                                    variant="outline"
-                                    onClick={handleBatchDownload}
-                                    className="h-11 px-3 sm:px-6"
-                                    title="Download the ZIP file"
-                                  >
-                                    <Archive className="h-4 w-4" />
-                                    <span className="hidden sm:inline ml-2">Download ZIP</span>
-                                  </Button>
-                                )}
-                              </>
-                            ) : (
-                              <Button
-                                onClick={cancelBatch}
-                                variant="destructive"
-                                className="flex-1 h-11 text-base font-semibold"
-                              >
-                                <X className="h-4 w-4 mr-2" />
-                                Cancel Processing
-                              </Button>
-                            )}
-                          </div>
-
-                          {/* Clear All Button */}
-                          <Button
-                            variant="outline"
-                            onClick={clearBatch}
-                            disabled={batchProcessing}
-                            className="h-11 px-3 sm:px-6"
-                          >
-                            <Trash className="h-4 w-4" />
-                            <span className="hidden sm:inline ml-2">Clear</span>
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Status Messages - Single Mode */}
-                    {!batchMode && message && !message.includes('Downloaded') && (
-                      <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-medium">
-                        <div className="w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-400 flex items-center justify-center flex-shrink-0">
-                          <Spinner className="h-3 w-3 text-white animate-spin" />
-                        </div>
-                        <div className="text-sm text-blue-800 dark:text-blue-200 font-medium leading-snug">{message}</div>
-                      </div>
-                    )}
-                    
-                    {!batchMode && error && (
-                      <div className="p-3 sm:p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-medium">
-                        <Warning className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
-                        <div className="text-sm text-destructive leading-snug font-medium">{error}</div>
-                      </div>
-                    )}
-                </CardContent>
-              </Card>
-              </div>
-            </div>
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ClipboardText className="h-3.5 w-3.5" /> Tip: copy an image anywhere, then paste it here to start.
+            </p>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
-    </TooltipProvider>
+    </>
   )
 }

@@ -4,8 +4,8 @@
   "description": "a fast, privacy-friendly collection of free online tools. no signup required.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#141415",
-  "theme_color": "#caa07d",
+  "background_color": "#110f0d",
+  "theme_color": "#3eaf86",
   "orientation": "portrait-primary",
   "icons": [
     {

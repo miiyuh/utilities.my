@@ -42,6 +42,7 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 ### 🎲 Image & Fun Tools
 - **Image Converter** - Convert images between different formats (PNG, JPG, WebP) with resizing
+- **Favicon Generator** - Turn a letter, emoji or image into favicon.ico, PNGs, Apple and Android icons, a web manifest and the HTML snippet
 - **Palang IC** - Stamp the purpose across a MyKad copy so it cannot be reused, exported as A4 PDF or PNG, entirely in the browser
 - **Spin the Wheel** - Customizable decision-making wheel with animations
 - **Morse Code Generator** - Convert text to Morse code and vice versa with audio and visual playback
@@ -145,6 +146,8 @@ utilities.my is a productivity-focused web application that consolidates essenti
 
 Contributions are welcome! Whether you're fixing bugs, improving documentation, or adding new utilities, your contributions help make this better.
 
+See the [Roadmap](ROADMAP.md) for what's planned. Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before taking part. Found a security issue? Report it privately as described in [SECURITY.md](SECURITY.md), not in a public issue.
+
 ### How to Contribute
 
 1. **Fork the repository** and create your feature branch
@@ -177,7 +180,7 @@ Contributions are welcome! Whether you're fixing bugs, improving documentation, 
 7. Test with both dark and light themes
 8. Test keyboard navigation and accessibility
 
-> Step 4 is required, not optional. There is no SPA fallback rewrite any more —
+> Step 4 is required, not optional. There is no SPA fallback rewrite any more:
 > each route is served as its own prerendered HTML file, so a route missing from
 > `src/lib/seo.ts` returns a real 404 in production. The build fails if a tool in
 > `tools.ts` has no matching entry, so this is caught before deploy.

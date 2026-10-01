@@ -2,7 +2,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
-import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/number-input';
+import { useSettings } from '@/contexts/settings-context';
+import { groupDigits } from '@/lib/format';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowsLeftRight, Ruler, Thermometer, Cube, Square, Gauge, Clock, Scales, WifiHigh, HardDrive } from 'phosphor-react';
@@ -11,6 +13,7 @@ import { SidebarContent } from "@/components/sidebar-content";
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from "@/components/page-header";
 
+import { ToolMethodology } from '@/components/tool-methodology';
 type LinearUnit = { value: string; label: string; factor: number };
 type AffineUnit = { value: string; label: string; toBase: (x: number) => number; fromBase: (x: number) => number };
 type Unit = LinearUnit | AffineUnit;
@@ -164,6 +167,9 @@ export default function UnitConverterPage() {
   const [precision, setPrecision] = useState(6);
   const [keepZeros, setKeepZeros] = useState(false);
 
+  const { settings: { numberFormat } } = useSettings();
+  const g = (raw: string) => groupDigits(raw, numberFormat);
+
   const fromUnit = category.units.find(u => u.value === fromUnitValue) ?? category.units[0];
   const toUnit = category.units.find(u => u.value === toUnitValue) ?? category.units[1] ?? category.units[0];
 
@@ -195,8 +201,8 @@ export default function UnitConverterPage() {
   const summary = useMemo(() => {
     if (!rawValue || rawValue.trim() === '') return `Enter a value to convert ${fromUnit.label} → ${toUnit.label}`;
     if (isNaN(parsedRaw) || derivedValue === '') return `Enter a valid number to see ${fromUnit.label} → ${toUnit.label}`;
-    return `${fromValue} ${fromUnit.label} = ${toValue} ${toUnit.label}`;
-  }, [rawValue, parsedRaw, derivedValue, fromUnit, toUnit, fromValue, toValue]);
+    return `${groupDigits(fromValue, numberFormat)} ${fromUnit.label} = ${groupDigits(toValue, numberFormat)} ${toUnit.label}`;
+  }, [rawValue, parsedRaw, derivedValue, fromUnit, toUnit, fromValue, toValue, numberFormat]);
 
   return (
     <>
@@ -209,7 +215,7 @@ export default function UnitConverterPage() {
 
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Unit Converter</h1>
               <p className="text-lg text-muted-foreground max-w-3xl">Convert between units with live two-way input and precision control.</p>
             </div>
@@ -242,16 +248,14 @@ export default function UnitConverterPage() {
                   <div>
                     <Label htmlFor="fromValue" className="mb-1.5 block">From</Label>
                     <div className="flex gap-2">
-                      <Input
+                      <NumberInput
                         id="fromValue"
-                        type="number"
-                        inputMode="decimal"
                         value={fromValue}
-                        onChange={(e) => { setEditingSide('from'); setRawValue(e.target.value); }}
+                        onValueChange={(v) => { setEditingSide('from'); setRawValue(v); }}
                         placeholder="0"
                         className="font-mono"
                       />
-                      <CopyButton value={() => fromValue} label="" title="Copy" disabled={!fromValue} />
+                      <CopyButton value={() => g(fromValue)} label="" title="Copy" disabled={!fromValue} />
                     </div>
                     <Select value={fromUnitValue} onValueChange={setFromUnitValue}>
                       <SelectTrigger className="w-full mt-2">
@@ -279,16 +283,14 @@ export default function UnitConverterPage() {
                   <div>
                     <Label htmlFor="toValue" className="mb-1.5 block">To</Label>
                     <div className="flex gap-2">
-                      <Input
+                      <NumberInput
                         id="toValue"
-                        type="number"
-                        inputMode="decimal"
                         value={toValue}
-                        onChange={(e) => { setEditingSide('to'); setRawValue(e.target.value); }}
+                        onValueChange={(v) => { setEditingSide('to'); setRawValue(v); }}
                         placeholder="0"
                         className="font-mono"
                       />
-                      <CopyButton value={() => toValue} label="" title="Copy" disabled={!toValue} />
+                      <CopyButton value={() => g(toValue)} label="" title="Copy" disabled={!toValue} />
                     </div>
                     <Select value={toUnitValue} onValueChange={setToUnitValue}>
                       <SelectTrigger className="w-full mt-2">
@@ -330,6 +332,7 @@ export default function UnitConverterPage() {
             </Card>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

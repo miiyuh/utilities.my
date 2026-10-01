@@ -1,32 +1,15 @@
 import { useSettings } from '@/contexts/settings-context';
+import { dayjsPatterns, fnsPatterns, formatNumber as formatNumberWith } from '@/lib/format';
 
 export function useToolSettings() {
   const { settings } = useSettings();
 
-  const formatNumber = (num: number, decimals: number = 2): string => {
-    const formatted = num.toFixed(decimals);
-    if (settings.numberFormat === 'comma') {
-      return formatted.replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace('.', ',');
-    }
-    return formatted.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
+  const fns = fnsPatterns(settings.dateFormat, settings.timeFormat);
+  const dayjs = dayjsPatterns(settings.dateFormat, settings.timeFormat);
+  const is24h = settings.timeFormat === '24h';
 
-  const formatDate = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    switch (settings.dateFormat) {
-      case 'MM/DD/YYYY':
-        return `${month}/${day}/${year}`;
-      case 'DD/MM/YYYY':
-        return `${day}/${month}/${year}`;
-      case 'ISO':
-        return `${year}-${month}-${day}`;
-      default:
-        return `${month}/${day}/${year}`;
-    }
-  };
+  const formatNumber = (num: number, maxDecimals: number = 2, minDecimals: number = 0): string =>
+    formatNumberWith(num, settings.numberFormat, maxDecimals, minDecimals);
 
   const formatCurrency = (amount: number): string => {
     const currencySymbols: Record<string, string> = {
@@ -90,8 +73,10 @@ export function useToolSettings() {
 
   return {
     ...settings,
+    fns,
+    dayjs,
+    is24h,
     formatNumber,
-    formatDate,
     formatCurrency,
     convertToUserTimezone,
     getUnitsForMeasurement,

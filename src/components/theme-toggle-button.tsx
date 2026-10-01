@@ -1,56 +1,30 @@
 // src/components/theme-toggle-button.tsx
 "use client";
 
-import { Moon, Sun, Monitor } from "phosphor-react";
+import { Moon, Sun } from "phosphor-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
+/**
+ * Flips between light and dark. Until the user clicks, next-themes follows the
+ * OS preference; the first click stores an explicit choice.
+ */
 export function ThemeToggleButton() {
-  const { setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const next = resolvedTheme === "dark" ? "light" : "dark";
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="relative"
-          aria-label="Toggle theme"
-        >
-          <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="minimal-card border p-2">
-        <DropdownMenuItem 
-          onClick={() => setTheme("light")}
-          className="minimal-menu-item cursor-pointer"
-        >
-          <Sun className="h-4 w-4 mr-2" />
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => setTheme("dark")}
-          className="minimal-menu-item cursor-pointer"
-        >
-          <Moon className="h-4 w-4 mr-2" />
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => setTheme("system")}
-          className="minimal-menu-item cursor-pointer"
-        >
-          <Monitor className="h-4 w-4 mr-2" />
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button
+      variant="outline"
+      size="icon-sm"
+      className="relative size-8"
+      aria-label={`Switch to ${next} theme`}
+      title={`Switch to ${next} theme`}
+      onClick={() => setTheme(next)}
+    >
+      <Sun aria-hidden className="size-4 scale-100 opacity-100 blur-none transition-[scale,opacity,filter] duration-fast ease-[cubic-bezier(0.2,0,0,1)] dark:scale-25 dark:opacity-0 dark:blur-[4px]" />
+      <Moon aria-hidden className="absolute size-4 scale-25 opacity-0 blur-[4px] transition-[scale,opacity,filter] duration-fast ease-[cubic-bezier(0.2,0,0,1)] dark:scale-100 dark:opacity-100 dark:blur-none" />
+      <span className="sr-only">Switch to {next} theme</span>
+    </Button>
   );
 }

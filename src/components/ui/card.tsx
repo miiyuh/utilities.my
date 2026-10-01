@@ -33,13 +33,16 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+/** A real h2, so cards appear in the page's heading outline under its h1. */
+function CardTitle({ className, children, ...props }: React.ComponentProps<"h2">) {
   return (
-    <div
+    <h2
       data-slot="card-title"
       className={cn("font-heading text-base font-medium", className)}
       {...props}
-    />
+    >
+      {children}
+    </h2>
   )
 }
 

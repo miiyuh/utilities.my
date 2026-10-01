@@ -1,24 +1,27 @@
+import { ClearButton } from '@/components/ui/clear-button';
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Percent, Calculator, TrendUp, TrendDown, Divide, PlusCircle, MinusCircle, ArrowCounterClockwise } from 'phosphor-react';
-import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { PageHeader } from "@/components/page-header";
+import { ToolMethodology } from '@/components/tool-methodology';
 import { cn } from '@/lib/utils';
+import { useToolSettings } from '@/hooks/use-tool-settings';
+import { groupDigits } from '@/lib/format';
 
 const QUICK_PERCENTS = [5, 10, 15, 20, 25, 50];
 
-function fmt(n: number) {
-  if (!isFinite(n)) return '';
-  return Number(n.toLocaleString(undefined, { maximumFractionDigits: 2 }));
-}
 
 export default function PercentageCalculatorPage() {
+  const { formatNumber, numberFormat } = useToolSettings();
+  const fmt = (n: number) => formatNumber(n, 2);
+  // Echo raw inputs back with the same grouping the fields use.
+  const g = (raw: string) => groupDigits(raw, numberFormat);
   // What is X% of Y?
   const [percentOf, setPercentOf] = useState({ percent: '', value: '' });
 
@@ -71,7 +74,7 @@ export default function PercentageCalculatorPage() {
 
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
                 Percentage Calculator
               </h1>
@@ -83,23 +86,23 @@ export default function PercentageCalculatorPage() {
             <Card className="w-full shadow-sm">
               <CardContent>
                 <Tabs defaultValue="percent-of" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 group-data-[orientation=horizontal]/tabs:h-auto">
-                    <TabsTrigger value="percent-of" className="flex items-center gap-2 py-2">
+                  <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+                    <TabsTrigger value="percent-of" className="flex items-center gap-2">
                       <Calculator className="h-4 w-4" />
                       <span className="hidden sm:inline">% of a number</span>
                       <span className="sm:hidden">% of</span>
                     </TabsTrigger>
-                    <TabsTrigger value="what-percent" className="flex items-center gap-2 py-2">
+                    <TabsTrigger value="what-percent" className="flex items-center gap-2">
                       <Divide className="h-4 w-4" />
                       <span className="hidden sm:inline">X is what %</span>
                       <span className="sm:hidden">X is %</span>
                     </TabsTrigger>
-                    <TabsTrigger value="change" className="flex items-center gap-2 py-2">
+                    <TabsTrigger value="change" className="flex items-center gap-2">
                       <TrendUp className="h-4 w-4" />
                       <span className="hidden sm:inline">% change</span>
                       <span className="sm:hidden">Change</span>
                     </TabsTrigger>
-                    <TabsTrigger value="adjust" className="flex items-center gap-2 py-2">
+                    <TabsTrigger value="adjust" className="flex items-center gap-2">
                       <PlusCircle className="h-4 w-4" />
                       <span className="hidden sm:inline">Adjust by %</span>
                       <span className="sm:hidden">Adjust</span>
@@ -112,13 +115,11 @@ export default function PercentageCalculatorPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <Label htmlFor="percent-1" className="mb-1.5 block">Percentage (%)</Label>
-                        <Input
+                        <NumberInput
                           id="percent-1"
-                          type="number"
-                          inputMode="decimal"
                           placeholder="e.g., 25"
                           value={percentOf.percent}
-                          onChange={(e) => setPercentOf({ ...percentOf, percent: e.target.value })}
+                          onValueChange={(v) => setPercentOf({ ...percentOf, percent: v })}
                         />
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {QUICK_PERCENTS.map((q) => (
@@ -138,13 +139,11 @@ export default function PercentageCalculatorPage() {
                       </div>
                       <div>
                         <Label htmlFor="value-1" className="mb-1.5 block">Of Value</Label>
-                        <Input
+                        <NumberInput
                           id="value-1"
-                          type="number"
-                          inputMode="decimal"
                           placeholder="e.g., 200"
                           value={percentOf.value}
-                          onChange={(e) => setPercentOf({ ...percentOf, value: e.target.value })}
+                          onValueChange={(v) => setPercentOf({ ...percentOf, value: v })}
                         />
                       </div>
                     </div>
@@ -154,10 +153,10 @@ export default function PercentageCalculatorPage() {
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="text-3xl font-bold text-primary tabular-nums">{fmt(percentOfResult)}</div>
                           <div className="text-sm text-muted-foreground">
-                            {percentOf.percent}% of {percentOf.value} is <span className="font-medium text-foreground">{fmt(percentOfResult)}</span>
+                            {g(percentOf.percent)}% of {g(percentOf.value)} is <span className="font-medium text-foreground">{fmt(percentOfResult)}</span>
                           </div>
                           <div className="ml-auto">
-                            <CopyButton size="sm" value={`${fmt(percentOfResult)}`} />
+                            <CopyButton size="sm" value={fmt(percentOfResult)} />
                           </div>
                         </div>
                       </div>
@@ -170,24 +169,20 @@ export default function PercentageCalculatorPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <Label htmlFor="part" className="mb-1.5 block">Part (X)</Label>
-                        <Input
+                        <NumberInput
                           id="part"
-                          type="number"
-                          inputMode="decimal"
                           placeholder="e.g., 50"
                           value={isWhatPercent.part}
-                          onChange={(e) => setIsWhatPercent({ ...isWhatPercent, part: e.target.value })}
+                          onValueChange={(v) => setIsWhatPercent({ ...isWhatPercent, part: v })}
                         />
                       </div>
                       <div>
                         <Label htmlFor="whole" className="mb-1.5 block">Whole (Y)</Label>
-                        <Input
+                        <NumberInput
                           id="whole"
-                          type="number"
-                          inputMode="decimal"
                           placeholder="e.g., 200"
                           value={isWhatPercent.whole}
-                          onChange={(e) => setIsWhatPercent({ ...isWhatPercent, whole: e.target.value })}
+                          onValueChange={(v) => setIsWhatPercent({ ...isWhatPercent, whole: v })}
                         />
                       </div>
                     </div>
@@ -197,7 +192,7 @@ export default function PercentageCalculatorPage() {
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="text-3xl font-bold text-primary tabular-nums">{fmt(whatPercentResult)}%</div>
                           <div className="text-sm text-muted-foreground">
-                            {isWhatPercent.part} is <span className="font-medium text-foreground">{fmt(whatPercentResult)}%</span> of {isWhatPercent.whole}
+                            {g(isWhatPercent.part)} is <span className="font-medium text-foreground">{fmt(whatPercentResult)}%</span> of {isWhatPercent.whole}
                           </div>
                           <div className="ml-auto">
                             <CopyButton size="sm" value={`${fmt(whatPercentResult)}%`} />
@@ -213,24 +208,20 @@ export default function PercentageCalculatorPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <Label htmlFor="original" className="mb-1.5 block">Original Value</Label>
-                        <Input
+                        <NumberInput
                           id="original"
-                          type="number"
-                          inputMode="decimal"
                           placeholder="e.g., 100"
                           value={percentChange.original}
-                          onChange={(e) => setPercentChange({ ...percentChange, original: e.target.value })}
+                          onValueChange={(v) => setPercentChange({ ...percentChange, original: v })}
                         />
                       </div>
                       <div>
                         <Label htmlFor="new-value" className="mb-1.5 block">New Value</Label>
-                        <Input
+                        <NumberInput
                           id="new-value"
-                          type="number"
-                          inputMode="decimal"
                           placeholder="e.g., 150"
                           value={percentChange.newValue}
-                          onChange={(e) => setPercentChange({ ...percentChange, newValue: e.target.value })}
+                          onValueChange={(v) => setPercentChange({ ...percentChange, newValue: v })}
                         />
                       </div>
                     </div>
@@ -247,7 +238,7 @@ export default function PercentageCalculatorPage() {
                             {changeResult.percent >= 0 ? '+' : ''}{fmt(changeResult.percent)}%
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {percentChange.original} → {percentChange.newValue} is a change of{' '}
+                            {g(percentChange.original)} → {g(percentChange.newValue)} is a change of{' '}
                             <span className="font-medium text-foreground">{changeResult.change >= 0 ? '+' : ''}{fmt(changeResult.change)}</span>
                             {' '}({changeResult.percent >= 0 ? '+' : ''}{fmt(changeResult.percent)}%)
                           </div>
@@ -271,24 +262,20 @@ export default function PercentageCalculatorPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <Label htmlFor="base-value" className="mb-1.5 block">Value</Label>
-                        <Input
+                        <NumberInput
                           id="base-value"
-                          type="number"
-                          inputMode="decimal"
                           placeholder="e.g., 100"
                           value={adjustByPercent.value}
-                          onChange={(e) => setAdjustByPercent({ ...adjustByPercent, value: e.target.value })}
+                          onValueChange={(v) => setAdjustByPercent({ ...adjustByPercent, value: v })}
                         />
                       </div>
                       <div>
                         <Label htmlFor="adjust-percent" className="mb-1.5 block">Percentage (%)</Label>
-                        <Input
+                        <NumberInput
                           id="adjust-percent"
-                          type="number"
-                          inputMode="decimal"
                           placeholder="e.g., 20"
                           value={adjustByPercent.percent}
-                          onChange={(e) => setAdjustByPercent({ ...adjustByPercent, percent: e.target.value })}
+                          onValueChange={(v) => setAdjustByPercent({ ...adjustByPercent, percent: v })}
                         />
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {QUICK_PERCENTS.map((q) => (
@@ -318,7 +305,7 @@ export default function PercentageCalculatorPage() {
                               <div className="text-2xl font-bold text-green-500 tabular-nums">{fmt(adjustResult.increase)}</div>
                             </div>
                             <div className="ml-auto">
-                              <CopyButton size="sm" value={`${fmt(adjustResult.increase)}`} />
+                              <CopyButton size="sm" value={fmt(adjustResult.increase)} />
                             </div>
                           </div>
                         </div>
@@ -330,7 +317,7 @@ export default function PercentageCalculatorPage() {
                               <div className="text-2xl font-bold text-red-500 tabular-nums">{fmt(adjustResult.decrease)}</div>
                             </div>
                             <div className="ml-auto">
-                              <CopyButton size="sm" value={`${fmt(adjustResult.decrease)}`} />
+                              <CopyButton size="sm" value={fmt(adjustResult.decrease)} />
                             </div>
                           </div>
                         </div>
@@ -342,23 +329,24 @@ export default function PercentageCalculatorPage() {
             </Card>
 
             <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 text-muted-foreground"
-                onClick={() => {
+              <ClearButton
+                onClear={() => {
                   setPercentOf({ percent: '', value: '' });
                   setIsWhatPercent({ part: '', whole: '' });
                   setPercentChange({ original: '', newValue: '' });
                   setAdjustByPercent({ value: '', percent: '' });
                 }}
-              >
-                <ArrowCounterClockwise className="h-4 w-4" /> Reset all
-              </Button>
+                hasContent={[percentOf, isWhatPercent, percentChange, adjustByPercent].some((o) => Object.values(o).some(Boolean))}
+                label="Reset all"
+                icon={ArrowCounterClockwise}
+                className="h-8"
+                confirmTitle="Reset all calculators?"
+                confirmDescription="This clears every number you entered on all four tabs."
+              />
             </div>
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

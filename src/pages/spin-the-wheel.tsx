@@ -1,3 +1,4 @@
+import { ClearButton } from '@/components/ui/clear-button';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -7,12 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowCounterClockwise, Trash, Plus, Disc, Shuffle, X, SortAscending, Upload, Download, ShareNetwork } from 'phosphor-react';
+import { ArrowCounterClockwise, Plus, Disc, Shuffle, X, SortAscending, Upload, Download, ShareNetwork } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { SpinWheelCanvas } from '@/components/spin-wheel-canvas';
+import { SpinWheel } from '@/components/spin-wheel';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from "@/components/page-header";
+import { ToolMethodology } from '@/components/tool-methodology';
 const DEFAULT_ITEMS = [
   "Sushi", "Ramen", "Tempura", "Katsudon", "Takoyaki", "Okonomiyaki", // Japanese
   "Nasi Lemak", "Char Kuey Teow", "Roti Canai", "Satay", "Laksa", "Hainanese Chicken Rice" // Malaysian
@@ -192,7 +194,7 @@ export default function SpinTheWheelPage() {
         <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
           <div className="w-full max-w-7xl mx-auto space-y-8">
             {/* Big heading */}
-            <div className="mb-8 hidden sm:block">
+            <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
                 Spin the Wheel
               </h1>
@@ -206,19 +208,19 @@ export default function SpinTheWheelPage() {
               {/* Wheel Section */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Disc className="h-5 w-5" />
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <Disc className="h-5 w-5" aria-hidden />
                       Wheel
-                    </div>
+                    </CardTitle>
                     <Badge variant="secondary">
                       {items.length} {items.length === 1 ? 'option' : 'options'}
                     </Badge>
-                  </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-center items-center w-full">
-                    <SpinWheelCanvas 
+                    <SpinWheel 
                       items={items}
                       onSpin={handleSpin}
                       disabled={items.length < 2}
@@ -317,12 +319,21 @@ export default function SpinTheWheelPage() {
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={handleReset}>
-                        <ArrowCounterClockwise className="w-4 h-4 mr-1" /> Reset
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={handleClear}>
-                        <Trash className="w-4 h-4 mr-1" /> Clear All
-                      </Button>
+                      <ClearButton
+                        onClear={handleReset}
+                        hasContent={itemsInput !== DEFAULT_ITEMS.join("\n") || winners.length > 0}
+                        label="Reset"
+                        icon={ArrowCounterClockwise}
+                        confirmTitle="Reset the wheel?"
+                        confirmDescription="This replaces your items with the default list and clears the winner history."
+                      />
+                      <ClearButton
+                        onClear={handleClear}
+                        hasContent={Boolean(itemsInput) || winners.length > 0}
+                        label="Clear All"
+                        confirmTitle="Clear all items?"
+                        confirmDescription="This removes every item and the winner history. It can't be undone."
+                      />
                     </div>
                   </div>
 
@@ -345,18 +356,16 @@ export default function SpinTheWheelPage() {
             {winners.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Winner History ({winners.length})</span>
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <CardTitle>Winner history ({winners.length})</CardTitle>
+                    <div className="flex flex-wrap items-center gap-2">
                       <CopyButton value={() => winners.join('\n')} label="Copy" size="sm" toastTitle="Copied winners" toastDescription="Winner list copied to clipboard." />
                       <Button variant="outline" size="sm" onClick={handleExportWinners}>
                         <Download className="w-4 h-4 mr-2"/> Export CSV
                       </Button>
-                      <Button variant="outline" size="sm" onClick={()=> setWinners([])}>
-                        <Trash className="w-4 h-4 mr-2"/> Clear
-                      </Button>
+                      <ClearButton onClear={() => setWinners([])} hasContent={winners.length > 0} confirmTitle="Clear winner history?" confirmDescription="This removes the list of past winners. It can't be undone." />
                     </div>
-                  </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
@@ -375,6 +384,7 @@ export default function SpinTheWheelPage() {
             )}
           </div>
         </div>
+        <ToolMethodology />
       </SidebarInset>
     </>
   );

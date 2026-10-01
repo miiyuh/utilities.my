@@ -1,15 +1,17 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { DatePreset, NumberFormat, TimeFormat } from '@/lib/format';
 
 export type UnitSystem = 'metric' | 'imperial';
-export type DateFormat = 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'ISO';
-export type NumberFormat = 'period' | 'comma';
+export type DateFormat = DatePreset;
+export type { NumberFormat, TimeFormat };
 export type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CAD' | 'AUD' | 'CHF' | 'CNY' | 'MYR';
 
 export interface ToolSettings {
   defaultUnits: UnitSystem;
   dateFormat: DateFormat;
+  timeFormat: TimeFormat;
   timeZone: string;
   numberFormat: NumberFormat;
   currency: Currency;
@@ -23,7 +25,8 @@ interface SettingsContextType {
 
 const defaultSettings: ToolSettings = {
   defaultUnits: 'metric',
-  dateFormat: 'DD/MM/YYYY',
+  dateFormat: 'my',
+  timeFormat: '24h',
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   numberFormat: 'period',
   currency: 'MYR',
@@ -33,16 +36,26 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 const STORAGE_KEY = 'utilities-tool-settings';
 
+// Date formats were stored as literal patterns before the presets existed.
+const LEGACY_DATE_FORMATS: Record<string, DateFormat> = {
+  'DD/MM/YYYY': 'my',
+  'MM/DD/YYYY': 'us',
+  ISO: 'iso',
+};
+
 /**
  * Read once, synchronously, as the initial state. Loading from an effect meant
- * the provider rendered null on the first pass — the whole app was blank for a
- * frame — and then re-rendered with the stored values.
+ * the provider rendered null on the first pass (the whole app was blank for a
+ * frame) and then re-rendered with the stored values.
  */
 function loadSettings(): ToolSettings {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      return { ...defaultSettings, ...(JSON.parse(saved) as Partial<ToolSettings>) };
+      const parsed = JSON.parse(saved) as Partial<ToolSettings>;
+      const merged = { ...defaultSettings, ...parsed };
+      merged.dateFormat = LEGACY_DATE_FORMATS[merged.dateFormat] ?? merged.dateFormat;
+      return merged;
     }
   } catch (error) {
     console.error('Failed to load settings:', error);
