@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { PageHeader } from "@/components/page-header";
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { cn } from '@/lib/utils';
 import { useToolSettings } from '@/hooks/use-tool-settings';
@@ -72,16 +73,9 @@ export default function PercentageCalculatorPage() {
       <SidebarInset>
         <PageHeader icon={Percent} title="Percentage Calculator" />
 
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
-                Percentage Calculator
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-3xl">
-                Discounts, tips, marks and price changes, worked out as you type and explained in plain words.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Percentage Calculator">Discounts, tips, marks and price changes, worked out as you type and explained in plain words.</PageIntro>
 
             <Card className="w-full shadow-sm">
               <CardContent>
@@ -151,7 +145,7 @@ export default function PercentageCalculatorPage() {
 
                     {!Number.isFinite(percentOfResult) && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">Enter both numbers to see the answer.</p>}
                     {Number.isFinite(percentOfResult) && (
-                      <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                      <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="text-3xl font-bold text-primary tabular-nums">{fmt(percentOfResult)}</div>
                           <div className="text-sm text-muted-foreground">
@@ -191,7 +185,7 @@ export default function PercentageCalculatorPage() {
 
                     {!Number.isFinite(whatPercentResult) && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">Enter both numbers to see the answer.</p>}
                     {Number.isFinite(whatPercentResult) && (
-                      <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                      <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="text-3xl font-bold text-primary tabular-nums">{fmt(whatPercentResult)}%</div>
                           <div className="text-sm text-muted-foreground">
@@ -231,7 +225,7 @@ export default function PercentageCalculatorPage() {
 
                     {!changeResult && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">Enter both numbers to see the answer.</p>}
                     {changeResult && (
-                      <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                      <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">
                           {changeResult.percent >= 0 ? (
                             <TrendUp className="h-6 w-6 text-primary shrink-0" aria-hidden />
@@ -303,7 +297,7 @@ export default function PercentageCalculatorPage() {
                     {!adjustResult && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">Enter both numbers to see the answer.</p>}
                     {adjustResult && (
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                        <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                           <div className="flex items-center gap-3">
                             <PlusCircle className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
                             <div>
@@ -315,7 +309,7 @@ export default function PercentageCalculatorPage() {
                             </div>
                           </div>
                         </div>
-                        <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                        <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                           <div className="flex items-center gap-3">
                             <MinusCircle className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
                             <div>

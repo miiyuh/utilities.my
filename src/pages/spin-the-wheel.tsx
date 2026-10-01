@@ -14,6 +14,7 @@ import { SidebarContent } from "@/components/sidebar-content";
 import { SpinWheel } from '@/components/spin-wheel';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from "@/components/page-header";
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { shuffleInPlace } from '@/lib/random';
 const DEFAULT_ITEMS = [
@@ -190,17 +191,10 @@ export default function SpinTheWheelPage() {
       <SidebarInset>
         <PageHeader icon={Disc} title="Spin the Wheel" />
         
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
             {/* Big heading */}
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
-                Spin the Wheel
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                A fun utility to pick a random item from a list. Perfect for making decisions!
-              </p>
-            </div>
+            <PageIntro title="Spin the Wheel">Can&apos;t decide? Add your options and let the wheel pick one, fairly.</PageIntro>
 
             {/* Main Content */}
             <div className="grid gap-8 lg:grid-cols-2">

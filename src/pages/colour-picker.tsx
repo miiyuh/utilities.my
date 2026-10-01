@@ -14,6 +14,7 @@ import { Slider } from '@/components/ui/slider';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { PageHeader } from "@/components/page-header";
+import { PageIntro } from '@/components/page-intro';
 
 import { ToolMethodology } from '@/components/tool-methodology';
 import { Hint } from '@/components/ui/tooltip';
@@ -937,13 +938,10 @@ export default function ColourPickerPage() {
       </Sidebar>
       <SidebarInset>
   <PageHeader icon={Palette} title="Colour Picker" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto">
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
             {/* Big heading */}
-            <div className="mb-6 md:mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 md:mb-6 text-foreground border-b border-border pb-3 md:pb-4">Colour Picker</h1>
-              <p className="text-base md:text-lg text-muted-foreground">Pick colours and get their codes in various formats.</p>
-            </div>
+            <PageIntro title="Colour Picker">Pick any colour, or take one from a photo, and copy its HEX, RGB, HSL or OKLCH code. Check it reads well on light and dark too.</PageIntro>
             
             <div className="space-y-8">
             <Tabs value={tab} onValueChange={(v) => setTab(v as 'input' | 'image')} className="gap-6">
@@ -1074,7 +1072,7 @@ export default function ColourPickerPage() {
                         id="image-upload-button"
                         variant="outline"
                         onClick={() => fileInputRef.current?.click()}
-                        className="h-9 md:h-10 px-3 md:px-4 text-sm"
+                        
                       >
                         <Upload className="mr-2 h-4 w-4" /> Upload
                       </Button>
@@ -1082,7 +1080,7 @@ export default function ColourPickerPage() {
                         <Button
                           variant="outline"
                           onClick={resetImage}
-                          className="h-9 md:h-10 px-2 md:px-3 hover:bg-destructive/5 hover:border-destructive/30 hover:text-destructive"
+                          className="hover:bg-destructive/5 hover:border-destructive/30 hover:text-destructive"
                           title="Remove current image"
                         >
                           <X className="h-4 w-4" />

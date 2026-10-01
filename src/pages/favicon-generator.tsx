@@ -3,6 +3,7 @@ import { AppWindow, Download, Archive, Upload, TextAa, Smiley, Image as ImageIco
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar'
 import { SidebarContent } from '@/components/sidebar-content'
 import { PageHeader } from '@/components/page-header'
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -259,14 +260,9 @@ export default function FaviconGeneratorPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={AppWindow} title="Favicon Generator" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-6">
-            <div className="mb-2 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">Favicon Generator</h1>
-              <p className="text-base sm:text-lg text-muted-foreground max-w-3xl">
-                Make every icon your site needs from a letter, an emoji or an image: browser tabs, iPhone and Android home screens, and the code to add them.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Favicon Generator">Make every icon your site needs from a letter, an emoji or an image: browser tabs, iPhone and Android home screens, and the code to add them.</PageIntro>
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start">
               <div className="space-y-6">
@@ -576,10 +572,10 @@ export default function FaviconGeneratorPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid gap-2 sm:grid-cols-2">
-                      <Button onClick={() => void downloadPackage()} disabled={!source || building} className="h-11">
+                      <Button onClick={() => void downloadPackage()} disabled={!source || building} size="xl">
                         <Archive className="h-4 w-4" /> Everything (ZIP)
                       </Button>
-                      <Button variant="outline" onClick={() => void downloadIco()} disabled={!source} className="h-11">
+                      <Button variant="outline" onClick={() => void downloadIco()} disabled={!source} size="xl">
                         <Download className="h-4 w-4" /> favicon.ico only
                       </Button>
                     </div>

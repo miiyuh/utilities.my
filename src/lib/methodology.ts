@@ -100,7 +100,11 @@ export const METHODOLOGY: Method[] = [
     summary:
       'A Unix timestamp counts seconds (or milliseconds) since 1970-01-01 00:00:00 UTC. Conversions use your browser\'s clock and time zone for the local view, and UTC for the ISO view.',
     formulas: ['date = 1970-01-01T00:00:00Z + timestamp seconds'],
-    notes: ['As defined by POSIX, leap seconds are not counted, so every day is exactly 86,400 seconds.'],
+    notes: [
+      'As defined by POSIX, leap seconds are not counted, so every day is exactly 86,400 seconds.',
+      'Detect reads 12 or more digits as milliseconds and fewer as seconds. Every timestamp since September 2001 has 10 digits in seconds and 13 in milliseconds.',
+      'ISO week numbers follow ISO 8601: weeks start on Monday, and week 1 is the week with the year\'s first Thursday.',
+    ],
     sources: [
       { label: 'POSIX (IEEE Std 1003.1): Seconds Since the Epoch', url: 'https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap04.html' },
     ],
@@ -109,7 +113,11 @@ export const METHODOLOGY: Method[] = [
     path: '/timezone-converter',
     summary:
       'UTC offsets and daylight-saving rules come from the IANA time zone database built into your browser, read through dayjs\' timezone plugin.',
-    notes: ['Because the rules ship with the browser, an outdated browser can be wrong for zones whose rules changed recently.'],
+    notes: [
+      'Because the rules ship with the browser, an outdated browser can be wrong for zones whose rules changed recently.',
+      'Every zone in the tz database is listed (418), named after its main city, with the country and region from the database\'s zone.tab. Asia/Jerusalem is listed under Palestine.',
+      'Add to calendar sends the selected range in UTC, so each calendar shows it in its owner\'s own time zone. Google and Outlook open in a new tab; the .ics file is a standard iCalendar event.',
+    ],
     sources: [
       { label: 'IANA Time Zone Database', url: 'https://www.iana.org/time-zones' },
       { label: 'City list: kevinroberts/city-timezones', url: 'https://github.com/kevinroberts/city-timezones' },

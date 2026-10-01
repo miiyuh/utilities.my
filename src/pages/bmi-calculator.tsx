@@ -17,6 +17,7 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from "@/components/page-header";
+import { PageIntro } from '@/components/page-intro';
 
 import { ToolMethodology } from '@/components/tool-methodology';
 type UnitSystem = "metric" | "imperial";
@@ -280,12 +281,9 @@ export default function BmiCalculatorPage() {
       <SidebarInset>
         <PageHeader icon={Activity} title="BMI Calculator" />
 
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">BMI Calculator</h1>
-              <p className="text-lg text-muted-foreground max-w-3xl">Compute your Body Mass Index (BMI) using metric or imperial units.</p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="BMI Calculator">See where your height and weight land on the BMI scale, in metric or imperial, with WHO or Asian cut-offs.</PageIntro>
 
             <div>
               <Card className="w-full shadow-sm">

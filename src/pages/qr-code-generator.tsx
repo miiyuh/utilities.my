@@ -18,6 +18,7 @@ import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PageHeader } from "@/components/page-header";
+import { PageIntro } from '@/components/page-intro';
 
 import { ToolMethodology } from '@/components/tool-methodology';
 type PayloadType = "url" | "text" | "email" | "sms" | "tel" | "wifi";
@@ -593,13 +594,10 @@ export default function QrCodeGeneratorPage() {
       </Sidebar>
       <SidebarInset>
   <PageHeader icon={QrCode} title="QR Code Generator" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto">
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
             {/* Big heading */}
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">QR Code Generator</h1>
-              <p className="text-lg text-muted-foreground">Generate QR codes from text or URLs.</p>
-            </div>
+            <PageIntro title="QR Code Generator">Turn any link or text into a QR code, style it to match, and download it as PNG or SVG.</PageIntro>
             
             <div className="space-y-8">
               <div className="grid lg:grid-cols-3 gap-8 lg:items-start">

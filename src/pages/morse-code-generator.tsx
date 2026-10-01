@@ -14,6 +14,7 @@ import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { Play, Pause, Stop, SpeakerHigh, Lightning, Upload, Download, Eye, Translate, Code, Gear } from 'phosphor-react';
 import { PageHeader } from "@/components/page-header";
+import { PageIntro } from '@/components/page-intro';
 
 import { ToolMethodology } from '@/components/tool-methodology';
 // Morse code alphabet
@@ -375,13 +376,10 @@ export default function MorseCodeGeneratorPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Lightning} title="Morse Code Generator" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
             {/* Big heading */}
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Morse Code Generator</h1>
-              <p className="text-lg text-muted-foreground">Convert between text and Morse code, then hear it or watch it flash.</p>
-            </div>
+            <PageIntro title="Morse Code Generator">Convert between text and Morse code, then hear it or watch it flash.</PageIntro>
 
             {/* Tabs for Text-to-Morse and Morse-to-Text */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

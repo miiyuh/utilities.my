@@ -6,6 +6,7 @@ import timezone from 'dayjs/plugin/timezone';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GlobeClock, type GlobeView, type GlobeMode } from '@/components/globe-clock';
 import { cn } from '@/lib/utils';
 import { useToolSettings } from '@/hooks/use-tool-settings';
-import { CITY_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
+import { ALL_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
 import { Clock, Sun, Moon, X, MagnifyingGlass, DotsSixVertical } from 'phosphor-react';
 import {
   DndContext,
@@ -168,11 +169,11 @@ export default function WorldClockPage() {
 
   const comboItems = React.useMemo(
     () =>
-      CITY_ZONES.filter((c) => !zones.includes(c.timezone)).map((c) => ({
+      ALL_ZONES.filter((c) => !zones.includes(c.timezone)).map((c) => ({
         value: c.timezone,
         label: c.city,
         leading: <Flag emoji={c.flag} />,
-        description: `${c.country} · ${c.timezone}`,
+        description: c.note ? `${c.country} · ${c.note}` : `${c.country} · ${c.timezone}`,
       })),
     [zones]
   );
@@ -195,17 +196,9 @@ export default function WorldClockPage() {
       <SidebarInset>
         <PageHeader icon={Clock} title="World Clock" />
 
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 text-foreground border-b border-border pb-4">
-                World Clock
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-3xl">
-                Spin the globe or flip to a flat map. Hover cities for live times, click to pin them to
-                your list, or switch to timezone view to see the world&apos;s legal time regions.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="World Clock">Spin the globe or flip to a flat map. Hover cities for live times, click to pin them to your list, or switch to timezone view to see the world&apos;s legal time regions.</PageIntro>
 
             {/* Toolbar */}
             <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
@@ -235,7 +228,7 @@ export default function WorldClockPage() {
                     placeholder="Add a city…"
                     onValueChange={addZone}
                     resetOnSelect
-                    inputClassName="h-8 py-1 px-3 text-sm"
+                    inputClassName="h-11 py-1 px-3 text-sm"
                   />
                 </div>
               </div>

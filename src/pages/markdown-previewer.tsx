@@ -15,7 +15,7 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { useToast } from '@/hooks/use-toast';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { PageHeader } from "@/components/page-header";
-import { Chip } from '@/components/ui/chip';
+import { PageIntro } from '@/components/page-intro';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils';
@@ -387,69 +387,74 @@ export default function MarkdownPreviewerPage() {
       </Sidebar>
       <SidebarInset>
   <PageHeader icon={Article} title="Markdown Previewer" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
             {/* Big heading */}
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Markdown Previewer</h1>
-              <p className="max-w-3xl text-base text-muted-foreground sm:text-lg">Write Markdown and watch it take shape as you type. Copy it formatted for an email or document, or download the file.</p>
-            </div>
+            <PageIntro title="Markdown Previewer">Write Markdown and watch it take shape as you type. Copy it formatted for an email or document, or download the file.</PageIntro>
             
-            {/* Toolbar */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-md border border-border bg-card p-3">
-              <fieldset className="flex flex-wrap gap-1.5">
+            {/* Toolbar: icon buttons of one size; each names itself in a tooltip and to screen readers. */}
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-card p-2">
+              <fieldset className="flex items-center gap-1">
                 <legend className="sr-only">View</legend>
                 {VIEWS.map((v) => (
-                  <Chip key={v.id} active={viewMode === v.id} onClick={() => setViewMode(v.id)}>
-                    <v.icon className="h-4 w-4" aria-hidden /> {v.label}
-                  </Chip>
+                  <Button
+                    key={v.id}
+                    variant={viewMode === v.id ? 'default' : 'ghost'}
+                    size="icon"
+                    onClick={() => setViewMode(v.id)}
+                    aria-pressed={viewMode === v.id}
+                    title={v.label}
+                  >
+                    <v.icon className="h-4 w-4" />
+                  </Button>
                 ))}
               </fieldset>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".md,.markdown,.txt,text/markdown,text/plain"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.currentTarget.files?.[0];
-                    if (f) void openFile(f);
-                    e.currentTarget.value = '';
-                  }}
-                />
-                <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                  <UploadSimple className="h-4 w-4" /> Open
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => void copyFormatted()} disabled={!markdownText.trim()}>
-                  <TextAa className="h-4 w-4" /> Copy formatted
-                </Button>
-                <CopyButton value={() => markdownText} size="sm" label="Copy Markdown" toastTitle="Copied" toastDescription="Your Markdown is on the clipboard." disabled={!markdownText} />
-                <CopyButton value={renderNow} size="sm" label="Copy HTML" icon={<CodeIconFallback />} toastTitle="Copied" toastDescription="The HTML is on the clipboard." disabled={!markdownText} />
-                <Button variant="outline" size="sm" onClick={handleDownload} disabled={!markdownText}>
-                  <DownloadSimple className="h-4 w-4" /> Download .md
-                </Button>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
-                <ClearButton
-                  onClear={handleResetDemo}
-                  hasContent={markdownText !== initialMarkdown}
-                  variant="outline"
-                  size="sm"
-                  label="Start over"
-                  icon={ArrowCounterClockwise}
-                  confirmTitle="Start over with the example?"
-                  confirmDescription="This replaces everything in the editor with the example text."
-                  confirmLabel="Start over"
-                />
-                <ClearButton
-                  onClear={handleClearInput}
-                  hasContent={Boolean(markdownText)}
-                  size="sm"
-                  confirmTitle="Clear the editor?"
-                  confirmDescription="This removes all the Markdown in the editor. It can't be undone."
-                  confirmLabel="Clear editor"
-                />
-              </div>
+              <span className="mx-1 h-6 w-px bg-border" aria-hidden />
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".md,.markdown,.txt,text/markdown,text/plain"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.currentTarget.files?.[0];
+                  if (f) void openFile(f);
+                  e.currentTarget.value = '';
+                }}
+              />
+              <Button variant="outline" size="icon" onClick={() => fileRef.current?.click()} title="Open a .md file">
+                <UploadSimple className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => void copyFormatted()} disabled={!markdownText.trim()} title="Copy formatted (for email and documents)">
+                <TextAa className="h-4 w-4" />
+              </Button>
+              <CopyButton value={() => markdownText} size="icon" label="" title="Copy Markdown" toastTitle="Copied" toastDescription="Your Markdown is on the clipboard." disabled={!markdownText} />
+              <CopyButton value={renderNow} size="icon" label="" icon={<CodeIconFallback />} title="Copy HTML" toastTitle="Copied" toastDescription="The HTML is on the clipboard." disabled={!markdownText} />
+              <Button variant="outline" size="icon" onClick={handleDownload} disabled={!markdownText} title="Download .md">
+                <DownloadSimple className="h-4 w-4" />
+              </Button>
+              <span className="mx-1 h-6 w-px bg-border" aria-hidden />
+              <ClearButton
+                onClear={handleResetDemo}
+                hasContent={markdownText !== initialMarkdown}
+                variant="outline"
+                size="icon"
+                iconOnly
+                label="Start over with the example"
+                icon={ArrowCounterClockwise}
+                confirmTitle="Start over with the example?"
+                confirmDescription="This replaces everything in the editor with the example text."
+                confirmLabel="Start over"
+              />
+              <ClearButton
+                onClear={handleClearInput}
+                hasContent={Boolean(markdownText)}
+                size="icon"
+                iconOnly
+                label="Clear the editor"
+                confirmTitle="Clear the editor?"
+                confirmDescription="This removes all the Markdown in the editor. It can't be undone."
+                confirmLabel="Clear editor"
+              />
             </div>
 
             {/* Main Workspace */}

@@ -1,163 +1,163 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { format, formatDistanceToNow, getDayOfYear, getISOWeek, isLeapYear } from 'date-fns';
+import { Calendar as CalendarIcon, Clock, Timer } from 'phosphor-react';
+import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
+import { SidebarContent } from '@/components/sidebar-content';
+import { PageHeader } from '@/components/page-header';
+import { PageIntro } from '@/components/page-intro';
+import { ToolMethodology } from '@/components/tool-methodology';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Chip } from '@/components/ui/chip';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { ArrowsLeftRight, Calendar as CalendarIcon, Timer, Clock } from 'phosphor-react';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
-import { SidebarContent } from "@/components/sidebar-content";
-import { format, parseISO, formatDistanceToNow, startOfDay, endOfDay } from 'date-fns';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { PageHeader } from "@/components/page-header";
-import { ToolMethodology } from '@/components/tool-methodology';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToolSettings } from "@/hooks/use-tool-settings";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useToolSettings } from '@/hooks/use-tool-settings';
+import { cn } from '@/lib/utils';
 
-type Unit = 's' | 'ms';
-type DisplayFormatId = 'site' | 'my' | 'my-24' | 'dmy' | 'us' | 'iso' | 'custom';
+type UnitMode = 'auto' | 's' | 'ms';
+type Zone = 'local' | 'utc';
 
-// `site` resolves to the Settings preference; the rest are fixed date-fns patterns.
-const DISPLAY_FORMATS: { id: DisplayFormatId; label: string; pattern?: string }[] = [
-  { id: 'site', label: 'Site default' },
-  { id: 'my', label: 'Malaysia / UK', pattern: 'd MMMM yyyy, h:mm a' },
-  { id: 'my-24', label: 'Malaysia / UK (24-hour)', pattern: 'd MMMM yyyy, HH:mm' },
-  { id: 'dmy', label: 'DD/MM/YYYY', pattern: 'dd/MM/yyyy HH:mm:ss' },
-  { id: 'us', label: 'US', pattern: 'PPP p' },
-  { id: 'iso', label: 'ISO 8601', pattern: 'yyyy-MM-dd HH:mm:ss' },
-  { id: 'custom', label: 'Custom…' },
-];
+const PATTERN_KEY = 'utilities.my-unix-custom-pattern';
+const DEFAULT_PATTERN = 'EEEE, d MMMM yyyy HH:mm:ss';
 
-const DISPLAY_FORMAT_KEY = 'utilities.my-unix-display-format';
-
-function loadDisplayFormat(): { id: DisplayFormatId; custom: string } {
-  const fallback = { id: 'site' as DisplayFormatId, custom: 'EEEE, d MMMM yyyy HH:mm:ss' };
+function loadPattern(): string {
   try {
-    const raw = localStorage.getItem(DISPLAY_FORMAT_KEY);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw) as Partial<{ id: DisplayFormatId; custom: string }>;
-    const id = DISPLAY_FORMATS.some(f => f.id === parsed.id) ? parsed.id! : fallback.id;
-    return { id, custom: typeof parsed.custom === 'string' ? parsed.custom : fallback.custom };
+    return localStorage.getItem(PATTERN_KEY) ?? DEFAULT_PATTERN;
   } catch {
-    return fallback;
+    return DEFAULT_PATTERN;
   }
 }
-type EditingField = 'timestamp' | 'human' | null;
 
-function toTimestampString(date: Date, unit: Unit): string {
-  return unit === 'ms' ? String(date.getTime()) : String(Math.floor(date.getTime() / 1000));
+/** 13+ digits is milliseconds (since late 2001), fewer is seconds. */
+const detectUnit = (digits: string): 's' | 'ms' => (digits.replace('-', '').length >= 12 ? 'ms' : 's');
+
+interface Parts {
+  y: number
+  m: number
+  d: number
+  h: number
+  min: number
+  s: number
 }
 
-function toHumanString(date: Date): string {
-  return format(date, "yyyy-MM-dd'T'HH:mm:ss");
+/** A date's calendar parts in the chosen zone. */
+function partsOf(date: Date, zone: Zone): Parts {
+  return zone === 'utc'
+    ? { y: date.getUTCFullYear(), m: date.getUTCMonth(), d: date.getUTCDate(), h: date.getUTCHours(), min: date.getUTCMinutes(), s: date.getUTCSeconds() }
+    : { y: date.getFullYear(), m: date.getMonth(), d: date.getDate(), h: date.getHours(), min: date.getMinutes(), s: date.getSeconds() };
 }
+
+function fromParts(p: Parts, zone: Zone): Date {
+  return zone === 'utc' ? new Date(Date.UTC(p.y, p.m, p.d, p.h, p.min, p.s)) : new Date(p.y, p.m, p.d, p.h, p.min, p.s);
+}
+
+const pad = (n: number) => String(n).padStart(2, '0');
 
 export default function UnixTimestampConverterPage() {
-  const [unit, setUnit] = useState<Unit>('s');
-  const [date, setDate] = useState<Date>(() => new Date());
-  const [editingField, setEditingField] = useState<EditingField>(null);
-
-  const [timestampDraft, setTimestampDraft] = useState(() => toTimestampString(date, unit));
-  const [humanDraft, setHumanDraft] = useState(() => toHumanString(date));
-  const [timestampError, setTimestampError] = useState<string | null>(null);
-  const [humanError, setHumanError] = useState<string | null>(null);
-
   const { fns } = useToolSettings();
-  const [displayFormat, setDisplayFormat] = useState(loadDisplayFormat);
+  const [date, setDate] = useState(() => new Date());
+  const [unitMode, setUnitMode] = useState<UnitMode>('auto');
+  const [zone, setZone] = useState<Zone>('local');
+  const [draft, setDraft] = useState(() => String(Math.floor(Date.now() / 1000)));
+  const [error, setError] = useState<string | null>(null);
+  const [pattern, setPattern] = useState(loadPattern);
+  const [now, setNow] = useState(() => Date.now());
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
   useEffect(() => {
     try {
-      localStorage.setItem(DISPLAY_FORMAT_KEY, JSON.stringify(displayFormat));
+      localStorage.setItem(PATTERN_KEY, pattern);
     } catch {
-      // Storage unavailable; the choice just won't persist.
+      // Not kept in a private window; nothing else to do.
     }
-  }, [displayFormat]);
+  }, [pattern]);
 
-  // Keep both text fields synced to the canonical `date`, but never clobber
-  // the field the user is actively typing into.
-  useEffect(() => {
-    if (editingField !== 'timestamp') setTimestampDraft(toTimestampString(date, unit));
-    if (editingField !== 'human') setHumanDraft(toHumanString(date));
-  }, [date, unit, editingField]);
+  const unit: 's' | 'ms' = unitMode === 'auto' ? detectUnit(draft) : unitMode;
+  const zoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const handleTimestampChange = (value: string) => {
-    setEditingField('timestamp');
-    setTimestampDraft(value);
-    if (value.trim() === '') { setTimestampError(null); return; }
-    const num = Number(value);
-    if (!Number.isFinite(num)) { setTimestampError('Enter a valid number'); return; }
-    const d = unit === 'ms' ? new Date(num) : new Date(num * 1000);
-    if (isNaN(d.getTime())) { setTimestampError('Timestamp out of range'); return; }
-    setTimestampError(null);
+  /** Sets the moment from anything other than the timestamp box, and rewrites the box to match. */
+  const setMoment = (d: Date) => {
+    setDate(d);
+    setError(null);
+    setDraft(unit === 'ms' ? String(d.getTime()) : String(Math.floor(d.getTime() / 1000)));
+  };
+
+  const onTimestamp = (raw: string) => {
+    const value = raw.replace(/[\s,_]/g, '');
+    setDraft(value);
+    if (value === '') return setError(null);
+    if (!/^-?\d+$/.test(value)) return setError('Use digits only, like 1727740800.');
+    const n = Number(value);
+    const u = unitMode === 'auto' ? detectUnit(value) : unitMode;
+    const d = new Date(u === 'ms' ? n : n * 1000);
+    if (Number.isNaN(d.getTime())) return setError('That timestamp is outside the range a date can hold.');
+    setError(null);
     setDate(d);
   };
 
-  const handleHumanChange = (value: string) => {
-    setEditingField('human');
-    setHumanDraft(value);
-    if (value.trim() === '') { setHumanError(null); return; }
-    const d = parseISO(value);
-    if (isNaN(d.getTime())) { setHumanError('Invalid date/time format'); return; }
-    setHumanError(null);
-    setDate(d);
-  };
-
-  const setCanonicalDate = (d: Date) => {
-    setEditingField(null);
-    setTimestampError(null);
-    setHumanError(null);
-    setDate(d);
-  };
-
-  const handleTimeOfDayChange = (value: string) => {
-    const [hours, minutes, seconds] = value.split(':').map(Number);
-    const next = new Date(date);
-    next.setHours(hours || 0, minutes || 0, seconds || 0);
-    setCanonicalDate(next);
-  };
-
-  const toggleUnit = () => {
-    // The timestamp field is just a view of the canonical `date`; force it to
-    // re-render under the new unit rather than reinterpreting stale digits.
-    setEditingField(null);
-    setUnit(u => (u === 's' ? 'ms' : 's'));
-  };
-
-  const handleSwap = () => {
-    // Re-parse whichever text field currently holds a valid value, and make
-    // that the canonical date - mirrors "swap" on a two-way converter.
-    if (editingField === 'human' && !humanError) {
-      const d = parseISO(humanDraft);
-      if (!isNaN(d.getTime())) setCanonicalDate(d);
-      return;
-    }
-    if (!timestampError) {
-      const num = Number(timestampDraft);
-      if (Number.isFinite(num)) {
-        const d = unit === 'ms' ? new Date(num) : new Date(num * 1000);
-        if (!isNaN(d.getTime())) setCanonicalDate(d);
-      }
+  const pickUnit = (m: UnitMode) => {
+    setUnitMode(m);
+    // Re-read the digits under the new unit, so "1727740800" stays what it was typed as.
+    const u = m === 'auto' ? detectUnit(draft) : m;
+    if (/^-?\d+$/.test(draft)) {
+      const d = new Date(u === 'ms' ? Number(draft) : Number(draft) * 1000);
+      if (!Number.isNaN(d.getTime())) setDate(d);
     }
   };
 
-  const displayPattern =
-    displayFormat.id === 'site'
-      ? `${fns.long}, ${fns.time}`
-      : displayFormat.id === 'custom'
-        ? displayFormat.custom
-        : DISPLAY_FORMATS.find(f => f.id === displayFormat.id)?.pattern ?? 'PPP p';
-  let displayText = '';
-  let displayError: string | null = null;
+  const p = partsOf(date, zone);
+  const nudge = (ms: number) => setMoment(new Date(date.getTime() + ms));
+  const dayEdge = (end: boolean) => setMoment(fromParts({ ...p, h: end ? 23 : 0, min: end ? 59 : 0, s: end ? 59 : 0 }, zone));
+
+  const onPickDay = (d: Date | undefined) => {
+    if (!d) return;
+    setMoment(fromParts({ ...p, y: d.getFullYear(), m: d.getMonth(), d: d.getDate() }, zone));
+    setPickerOpen(false);
+  };
+  const onPickTime = (v: string) => {
+    const [h, min, s] = v.split(':').map((x) => Number(x) || 0);
+    setMoment(fromParts({ ...p, h, min, s: s ?? 0 }, zone));
+  };
+
+  let custom = '';
+  let customError: string | null = null;
   try {
-    displayText = displayPattern.trim() ? format(date, displayPattern) : '';
+    custom = pattern.trim() ? format(date, pattern) : '';
   } catch (e) {
-    displayError = e instanceof Error ? e.message : 'Invalid format pattern';
+    customError = e instanceof RangeError ? 'This pattern has a letter that isn’t a date code. Put plain words in single quotes.' : 'This pattern can’t be used.';
   }
 
-  const relative = formatDistanceToNow(date, { addSuffix: true });
-  const isValid = !timestampError && !humanError;
+  const seconds = Math.floor(date.getTime() / 1000);
+  // Shift by the offset so date-fns (which formats in local time) shows the UTC wall clock.
+  const utcHuman = `${format(new Date(date.getTime() + date.getTimezoneOffset() * 60000), `${fns.long}, HH:mm:ss`)} UTC`;
+  const rows: { label: string; value: string; code?: boolean }[] = [
+    { label: 'Your time', value: format(date, `${fns.long}, ${fns.time}`) },
+    { label: 'UTC', value: utcHuman },
+    { label: 'Relative', value: formatDistanceToNow(date, { addSuffix: true }) },
+    { label: 'Unix seconds', value: String(seconds), code: true },
+    { label: 'Unix milliseconds', value: String(date.getTime()), code: true },
+    { label: 'ISO 8601 (UTC)', value: date.toISOString().replace('.000Z', 'Z'), code: true },
+    { label: 'ISO 8601 (your time)', value: format(date, "yyyy-MM-dd'T'HH:mm:ssxxx"), code: true },
+    { label: 'HTTP and email (RFC 7231)', value: date.toUTCString(), code: true },
+    { label: 'Calendar', value: `${format(date, 'EEEE')} · ISO week ${getISOWeek(date)} · day ${getDayOfYear(date)} of ${isLeapYear(date) ? 366 : 365}` },
+  ];
+
+  const nudges: { label: string; run: () => void }[] = [
+    { label: 'Start of day', run: () => dayEdge(false) },
+    { label: 'End of day', run: () => dayEdge(true) },
+    { label: '−1 day', run: () => nudge(-86_400_000) },
+    { label: '+1 day', run: () => nudge(86_400_000) },
+    { label: '−1 hour', run: () => nudge(-3_600_000) },
+    { label: '+1 hour', run: () => nudge(3_600_000) },
+  ];
 
   return (
     <>
@@ -167,163 +167,118 @@ export default function UnixTimestampConverterPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Timer} title="Unix Timestamp Converter" />
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Unix Timestamp Converter">Turn a Unix timestamp into a real date and time, or a date back into a timestamp, as you type.</PageIntro>
 
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Unix Timestamp Converter</h1>
-              <p className="text-lg text-muted-foreground max-w-3xl">Convert Unix timestamps to human-readable dates and back, updates live as you type.</p>
-            </div>
-
-            <div className="max-w-2xl mx-auto w-full">
-              <Card className="w-full shadow-sm">
-                <CardContent className="space-y-6">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => setCanonicalDate(new Date())}>
-                      <Clock className="h-4 w-4" /> Now
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setCanonicalDate(startOfDay(date))}>
-                      Start of day
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setCanonicalDate(endOfDay(date))}>
-                      End of day
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={toggleUnit}
-                      className="ml-auto font-mono"
-                      title="Toggle seconds / milliseconds"
-                    >
-                      {unit === 'ms' ? 'milliseconds' : 'seconds'}
-                    </Button>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="timestamp" className="mb-1.5 block">
-                      Unix Timestamp ({unit === 'ms' ? 'milliseconds' : 'seconds'})
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="timestamp"
-                        type="text"
-                        inputMode="numeric"
-                        value={timestampDraft}
-                        onChange={(e) => handleTimestampChange(e.target.value.trim())}
-                        placeholder={unit === 'ms' ? 'e.g., 1678886400123' : 'e.g., 1678886400'}
-                        className={cn('font-mono', timestampError && 'border-destructive focus-visible:ring-destructive/30')}
-                      />
-                      <CopyButton value={() => timestampDraft} label="" title="Copy timestamp" disabled={!timestampDraft} />
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
+              <div className="space-y-6 lg:sticky lg:top-20">
+                <Card className="minimal-card">
+                  <CardContent className="flex flex-wrap items-center gap-3">
+                    <Clock className="h-5 w-5 text-muted-foreground" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground">Right now</p>
+                      <p className="font-code text-lg tabular-nums">{Math.floor(now / 1000)}</p>
                     </div>
-                    {timestampError && <p className="mt-1 text-xs text-destructive">{timestampError}</p>}
-                  </div>
+                    <CopyButton value={() => String(Math.floor(Date.now() / 1000))} size="sm" label="Copy" toastTitle="Copied" toastDescription="The current Unix time is on your clipboard." />
+                    <Button variant="outline" size="sm" onClick={() => setMoment(new Date())}>Use now</Button>
+                  </CardContent>
+                </Card>
 
-                  <div className="flex justify-center">
-                    <Button variant="outline" size="icon" onClick={handleSwap} title="Re-sync from the field you last edited">
-                      <ArrowsLeftRight className="h-4 w-4" />
-                    </Button>
-                  </div>
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">Timestamp</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="ts-input">Unix timestamp</Label>
+                      <Input
+                        id="ts-input"
+                        inputMode="numeric"
+                        value={draft}
+                        onChange={(e) => onTimestamp(e.target.value)}
+                        placeholder="e.g. 1727740800"
+                        aria-invalid={Boolean(error)}
+                        aria-describedby="ts-help"
+                        className="h-12 font-code text-xl md:text-xl"
+                      />
+                      <p id="ts-help" className={cn('text-xs', error ? 'text-destructive' : 'text-muted-foreground')}>
+                        {error ?? (unitMode === 'auto' ? `Read as ${unit === 'ms' ? 'milliseconds' : 'seconds'} (${unit === 'ms' ? '13' : '10'} digits is typical).` : `Read as ${unit === 'ms' ? 'milliseconds' : 'seconds'}.`)}
+                      </p>
+                    </div>
+                    <fieldset>
+                      <legend className="mb-2 text-sm font-medium">Unit</legend>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Chip active={unitMode === 'auto'} onClick={() => pickUnit('auto')}>Detect</Chip>
+                        <Chip active={unitMode === 's'} onClick={() => pickUnit('s')}>Seconds</Chip>
+                        <Chip active={unitMode === 'ms'} onClick={() => pickUnit('ms')}>Milliseconds</Chip>
+                      </div>
+                    </fieldset>
+                  </CardContent>
+                </Card>
 
-                  <div>
-                    <Label htmlFor="humanDate" className="mb-1.5 block">Human Readable Date &amp; Time</Label>
-                    <div className="flex gap-2">
-                      <Popover>
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">Date and time</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <fieldset>
+                      <legend className="mb-2 text-sm font-medium">Time zone</legend>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Chip active={zone === 'local'} onClick={() => setZone('local')}>Your time ({zoneName.split('/').pop()?.replace(/_/g, ' ')})</Chip>
+                        <Chip active={zone === 'utc'} onClick={() => setZone('utc')}>UTC</Chip>
+                      </div>
+                    </fieldset>
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                      <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" size="icon" title="Pick a date">
+                          <Button variant="outline" className="justify-start font-normal">
                             <CalendarIcon className="h-4 w-4" />
+                            {format(new Date(p.y, p.m, p.d), fns.long)}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={(d) => d && setCanonicalDate(d)}
-                            autoFocus
-                          />
-                          <div className="p-3 border-t border-border">
-                            <Input
-                              type="time"
-                              step="1"
-                              value={format(date, 'HH:mm:ss')}
-                              onChange={(e) => handleTimeOfDayChange(e.target.value)}
-                            />
-                          </div>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={new Date(p.y, p.m, p.d)} defaultMonth={new Date(p.y, p.m, p.d)} onSelect={onPickDay} autoFocus />
                         </PopoverContent>
                       </Popover>
-                      <Input
-                        id="humanDate"
-                        type="text"
-                        value={humanDraft}
-                        onChange={(e) => handleHumanChange(e.target.value)}
-                        placeholder="e.g., 2023-03-15T12:00:00"
-                        className={cn('font-mono flex-1', humanError && 'border-destructive focus-visible:ring-destructive/30')}
-                      />
-                      <CopyButton value={() => humanDraft} label="" title="Copy date" disabled={!humanDraft} />
+                      <Label htmlFor="ts-time" className="sr-only">Time</Label>
+                      <Input id="ts-time" type="time" step="1" value={`${pad(p.h)}:${pad(p.min)}:${pad(p.s)}`} onChange={(e) => onPickTime(e.target.value)} className="w-36 font-code" />
                     </div>
-                    {humanError && <p className="mt-1 text-xs text-destructive">{humanError}</p>}
-                  </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {nudges.map((n) => (
+                        <Button key={n.label} variant="outline" size="sm" onClick={n.run}>{n.label}</Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-                  <div className="space-y-2">
-                    <div className="flex flex-col sm:flex-row sm:items-end gap-2">
-                      <div className="space-y-1.5 sm:w-56">
-                        <Label htmlFor="displayFormat">Display format</Label>
-                        <Select
-                          value={displayFormat.id}
-                          onValueChange={(id) => setDisplayFormat(f => ({ ...f, id: id as DisplayFormatId }))}
-                        >
-                          <SelectTrigger id="displayFormat" className="w-full"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {DISPLAY_FORMATS.map(f => (
-                              <SelectItem key={f.id} value={f.id}>{f.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {displayFormat.id === 'custom' && (
-                        <div className="flex-1 space-y-1.5 animate-in fade-in-0 slide-in-from-top-1 duration-fast ease-smooth-out">
-                          <Label htmlFor="customFormat">Pattern (date-fns)</Label>
-                          <Input
-                            id="customFormat"
-                            value={displayFormat.custom}
-                            onChange={(e) => setDisplayFormat(f => ({ ...f, custom: e.target.value }))}
-                            placeholder="e.g., EEEE, d MMMM yyyy HH:mm:ss"
-                            className={cn('font-mono', displayError && 'border-destructive focus-visible:ring-destructive/30')}
-                          />
+              <Card className="minimal-card">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-headline text-lg">The same moment, in every format</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-0.5">
+                    {rows.map((r) => (
+                      <li key={r.label} className="flex min-h-12 items-center gap-3 rounded-md px-3 transition-colors duration-quick hover:bg-muted">
+                        <div className="min-w-0 flex-1 py-1.5">
+                          <p className="text-xs text-muted-foreground">{r.label}</p>
+                          <p className={cn('break-all text-sm tabular-nums', r.code && 'font-code')}>{r.value}</p>
                         </div>
-                      )}
+                        <CopyButton value={() => r.value} label="" size="icon-sm" variant="ghost" aria-label={`Copy ${r.label}`} title={`Copy ${r.label}`} toastTitle="Copied" toastDescription={r.value} />
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="space-y-1.5 border-t border-border pt-4">
+                    <Label htmlFor="ts-pattern">Your own format</Label>
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                      <Input id="ts-pattern" value={pattern} onChange={(e) => setPattern(e.target.value)} placeholder={DEFAULT_PATTERN} aria-describedby="ts-pattern-help" className="font-code" />
+                      <CopyButton value={() => custom} label="" size="icon" title="Copy your format" toastTitle="Copied" toastDescription={custom} disabled={!custom} />
                     </div>
-                    {displayError && <p className="text-xs text-destructive">{displayError}</p>}
-                    {displayFormat.id === 'custom' && !displayError && (
-                      <p className="text-xs text-muted-foreground">
-                        Tokens: <code>d</code> day, <code>MMMM</code> month name, <code>yyyy</code> year, <code>HH</code>/<code>h</code> hour, <code>mm</code> minute, <code>a</code> AM/PM. Wrap literal text in <code>'single quotes'</code>.
-                      </p>
-                    )}
-                  </div>
-
-                  <div className={cn(
-                    "p-5 bg-muted/40 border border-border rounded-2xl space-y-3 animate-in fade-in-0 duration-quick ease-smooth-out",
-                    !isValid && "opacity-50"
-                  )}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-lg font-semibold text-foreground break-words min-w-0">{displayText || '-'}</span>
-                      <Badge variant="secondary" className="text-xs">{relative}</Badge>
-                      <CopyButton value={() => displayText} label="" size="icon-sm" title="Copy formatted date" disabled={!displayText} className="ml-auto" />
-                    </div>
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="text-muted-foreground">Local ISO</span>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-mono text-foreground truncate">{format(date, "yyyy-MM-dd'T'HH:mm:ssxxx")}</span>
-                        <CopyButton value={() => format(date, "yyyy-MM-dd'T'HH:mm:ssxxx")} label="" size="icon-sm" title="Copy Local ISO" />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="text-muted-foreground">UTC ISO</span>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-mono text-foreground truncate">{date.toISOString()}</span>
-                        <CopyButton value={() => date.toISOString()} label="" size="icon-sm" title="Copy UTC ISO" />
-                      </div>
-                    </div>
+                    <p className={cn('text-sm tabular-nums', customError ? 'text-destructive' : 'text-foreground')}>{customError ?? (custom || ' ')}</p>
+                    <p id="ts-pattern-help" className="text-xs text-muted-foreground">
+                      A date-fns pattern: yyyy year, MM month, dd day, HH hour, mm minutes, ss seconds, EEEE weekday. Put plain words in single quotes.
+                    </p>
                   </div>
                 </CardContent>
               </Card>

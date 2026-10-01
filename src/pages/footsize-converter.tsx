@@ -3,6 +3,7 @@ import { PersonSimpleWalk, Ruler } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -73,14 +74,9 @@ export default function FootSizeConverterPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={PersonSimpleWalk} title="Foot Size Converter" />
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
-          <div className="mx-auto w-full max-w-7xl space-y-8 pb-16 lg:pb-24">
-            <div className="mb-2 max-sm:sr-only">
-              <h1 className="mb-4 border-b border-border pb-3 text-4xl font-bold tracking-tight text-foreground sm:mb-6 sm:pb-4 sm:text-5xl">Foot Size Converter</h1>
-              <p className="max-w-3xl text-base text-muted-foreground sm:text-lg">
-                Find your shoe size in UK, EU or US sizes, from a size you know or from the length of your foot.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Foot Size Converter">Find your shoe size in UK, EU or US sizes, from a size you know or from the length of your foot.</PageIntro>
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
               <div className="space-y-6 lg:sticky lg:top-20">

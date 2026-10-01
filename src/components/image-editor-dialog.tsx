@@ -66,7 +66,9 @@ export function ImageEditorDialog({
   const [crop, setCrop] = React.useState<CropRect>(initial.crop ?? FULL)
   const [ratioId, setRatioId] = React.useState('free')
   const [box, setBox] = React.useState<{ w: number; h: number } | null>(null)
-  const wrapRef = React.useRef<HTMLDivElement>(null)
+  // A callback ref: the dialog's content mounts a render after `open` flips (it portals in),
+  // so the observer must attach when the element appears, not when `open` changes.
+  const [wrapEl, setWrapEl] = React.useState<HTMLDivElement | null>(null)
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const drag = React.useRef<Drag | null>(null)
 
@@ -83,15 +85,17 @@ export function ImageEditorDialog({
   const [rw, rh] = image ? rotatedSize(image.width, image.height, rotation) : [1, 1]
 
   React.useEffect(() => {
-    const el = wrapRef.current
-    if (!el) return
+    if (!wrapEl) return
+    // Measure straight away (client sizes ignore the dialog's zoom-in transform),
+    // then keep following size changes such as a rotation.
+    if (wrapEl.clientWidth > 0) setBox({ w: wrapEl.clientWidth, h: wrapEl.clientHeight })
     const ro = new ResizeObserver((entries) => {
       const r = entries[0]?.contentRect
       if (r && r.width > 0) setBox({ w: r.width, h: r.height })
     })
-    ro.observe(el)
+    ro.observe(wrapEl)
     return () => ro.disconnect()
-  }, [open, rw, rh])
+  }, [wrapEl])
 
   // The background shows the whole rotated/flipped image; the crop is an overlay.
   React.useEffect(() => {
@@ -252,7 +256,7 @@ export function ImageEditorDialog({
 
         <div className="flex justify-center rounded-md bg-muted/40 p-2">
           <div
-            ref={wrapRef}
+            ref={setWrapEl}
             className="relative overflow-hidden"
             style={{ aspectRatio: `${rw} / ${rh}`, width: `min(100%, calc(58vh * ${rw / rh}))`, touchAction: 'none' }}
             onPointerMove={onPointerMove}

@@ -6,6 +6,7 @@ import timezone from 'dayjs/plugin/timezone';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -17,8 +18,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useToolSettings } from '@/hooks/use-tool-settings';
-import { CITY_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
-import { Globe, X, ArrowLeft, ArrowRight, ArrowClockwise, CaretUp, CaretDown, Calendar as CalendarIcon } from 'phosphor-react';
+import { ALL_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
+import { Globe, X, ArrowLeft, ArrowRight, ArrowClockwise, CaretUp, CaretDown, Calendar as CalendarIcon, CalendarPlus, DownloadSimple } from 'phosphor-react';
+import { Input } from '@/components/ui/input';
+import { buildIcs, googleCalendarUrl, outlookUrl, type CalendarEvent } from '@/lib/calendar-links';
+import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils';
 import { Hint } from '@/components/ui/tooltip';
 
 dayjs.extend(utc);
@@ -176,6 +180,8 @@ export default function TimezoneConverterPage() {
       : `${s.format(`ddd ${rangeTimeFmt}`)} – ${e.format(`ddd ${rangeTimeFmt}`)}`;
   };
 
+  const [eventTitle, setEventTitle] = React.useState('Meeting');
+
   const buildRangeSummary = () => {
     if (!rangeStart || !rangeEnd) return '';
     return zones.map((tz) => {
@@ -185,6 +191,26 @@ export default function TimezoneConverterPage() {
       return `${zoneLabel(tz)}: ${s.format(`${dj.weekday} · ${rangeTimeFmt}`)} – ${e.format(endFmt)} (${tz})`;
     }).join('\n');
   };
+
+  /** The selected range as a calendar event (null with no selection), with every zone's local time in the description. */
+  const calendarEvent: CalendarEvent | null =
+    rangeStart && rangeEnd
+      ? {
+          title: eventTitle.trim() || 'Meeting',
+          start: rangeStart.toDate(),
+          end: rangeEnd.toDate(),
+          details: `${buildRangeSummary()}
+
+Planned with utilities.my/timezone-converter`,
+        }
+      : null;
+
+  const downloadIcs = () => {
+    if (!calendarEvent) return;
+    const name = (eventTitle.trim() || 'meeting').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'meeting';
+    downloadBlob(new Blob([buildIcs(calendarEvent)], { type: 'text/calendar;charset=utf-8' }), `${name}.ics`, isIOSOrSafari());
+  };
+
 
   const addZone = (tz: string | null) => {
     if (!tz || zones.includes(tz)) return;
@@ -204,11 +230,11 @@ export default function TimezoneConverterPage() {
 
   const comboItems = React.useMemo(
     () =>
-      CITY_ZONES.filter((c) => !zones.includes(c.timezone)).map((c) => ({
+      ALL_ZONES.filter((c) => !zones.includes(c.timezone)).map((c) => ({
         value: c.timezone,
         label: c.city,
         leading: <Flag emoji={c.flag} />,
-        description: `${c.country} · ${c.timezone}`,
+        description: c.note ? `${c.country} · ${c.note}` : `${c.country} · ${c.timezone}`,
       })),
     [zones]
   );
@@ -222,17 +248,9 @@ export default function TimezoneConverterPage() {
       <SidebarInset>
         <PageHeader icon={Globe} title="Timezone Converter" />
 
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-6">
-            <div className="max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 text-foreground border-b border-border pb-4">
-                Timezone Converter
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-3xl">
-                Compare a whole day across timezones on one aligned timeline, spot overlapping working
-                hours instantly. Click an hour, or drag across hours, to select a time range in every zone.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Timezone Converter">Line up a whole day across timezones and spot the hours that work for everyone. Click or drag across hours to pick a time in every zone.</PageIntro>
 
             {/* Toolbar */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -327,14 +345,17 @@ export default function TimezoneConverterPage() {
                               <span className="text-[9px] uppercase tracking-wide text-primary font-semibold">Home</span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums min-w-0">
-                            {rangeStart && rangeEnd ? (
-                              <span className="text-primary font-medium truncate">{zoneRangeLabel(tz)}</span>
-                            ) : (
+                          {rangeStart && rangeEnd ? (
+                            <div className="text-xs tabular-nums">
+                              <span className="block font-medium text-primary">{zoneRangeLabel(tz)}</span>
+                              <span className="block text-muted-foreground">GMT{local.format('Z').replace(':00', '')}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums min-w-0">
                               <span className="text-foreground font-medium">{local.format(timeFmt)}</span>
-                            )}
-                            <span className="shrink-0">GMT{local.format('Z').replace(':00', '')}</span>
-                          </div>
+                              <span className="shrink-0">GMT{local.format('Z').replace(':00', '')}</span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button aria-label="Move up" onClick={() => moveZone(tz, -1)} className="text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={idx === 0}>
                               <CaretUp className="h-3 w-3" />
@@ -428,6 +449,34 @@ export default function TimezoneConverterPage() {
                         size="sm"
                         toastDescription="Time range copied for all zones."
                       />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <CalendarPlus className="h-4 w-4" /> Add to calendar
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-72 space-y-3">
+                          <div className="space-y-1.5">
+                            <Label htmlFor={`${fieldId}-event`}>Event name</Label>
+                            <Input id={`${fieldId}-event`} value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} placeholder="Meeting" />
+                          </div>
+                          <div className="grid gap-1.5">
+                            <Button variant="outline" size="sm" className="justify-start" asChild>
+                              <a href={calendarEvent ? googleCalendarUrl(calendarEvent) : undefined} target="_blank" rel="noopener noreferrer">Google Calendar</a>
+                            </Button>
+                            <Button variant="outline" size="sm" className="justify-start" asChild>
+                              <a href={calendarEvent ? outlookUrl(calendarEvent, 'live') : undefined} target="_blank" rel="noopener noreferrer">Outlook.com</a>
+                            </Button>
+                            <Button variant="outline" size="sm" className="justify-start" asChild>
+                              <a href={calendarEvent ? outlookUrl(calendarEvent, 'office') : undefined} target="_blank" rel="noopener noreferrer">Outlook (work or school)</a>
+                            </Button>
+                            <Button variant="outline" size="sm" className="justify-start" onClick={downloadIcs}>
+                              <DownloadSimple className="h-4 w-4" /> Apple Calendar and others (.ics)
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Google and Outlook open in a new tab with the event filled in. The .ics file opens in Apple Calendar or any other calendar app.</p>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </>
                 ) : (

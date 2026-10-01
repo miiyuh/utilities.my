@@ -186,13 +186,13 @@
 }
 
 /* Named duration utilities (v4 has no duration theme namespace) */
-@utility duration-stagger { transition-duration: var(--duration-stagger); }
-@utility duration-micro { transition-duration: var(--duration-micro); }
-@utility duration-quick { transition-duration: var(--duration-quick); }
-@utility duration-fast { transition-duration: var(--duration-fast); }
-@utility duration-medium { transition-duration: var(--duration-medium); }
-@utility duration-slow { transition-duration: var(--duration-slow); }
-@utility duration-very-slow { transition-duration: var(--duration-very-slow); }
+@utility duration-stagger { transition-duration: var(--duration-stagger); --tw-duration: var(--duration-stagger); }
+@utility duration-micro { transition-duration: var(--duration-micro); --tw-duration: var(--duration-micro); }
+@utility duration-quick { transition-duration: var(--duration-quick); --tw-duration: var(--duration-quick); }
+@utility duration-fast { transition-duration: var(--duration-fast); --tw-duration: var(--duration-fast); }
+@utility duration-medium { transition-duration: var(--duration-medium); --tw-duration: var(--duration-medium); }
+@utility duration-slow { transition-duration: var(--duration-slow); --tw-duration: var(--duration-slow); }
+@utility duration-very-slow { transition-duration: var(--duration-very-slow); --tw-duration: var(--duration-very-slow); }
 
 @keyframes accordion-down {
   from { height: 0; }

@@ -18,6 +18,7 @@ import {
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,7 +104,7 @@ export default function UnitConverterPage() {
 
   const unitSelect = (id: string, value: string, onChange: (v: string) => void, label: string) => (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger id={id} aria-label={label} className="h-12 w-full sm:w-56">
+      <SelectTrigger id={id} aria-label={label} className="w-full data-[size=default]:h-12 sm:w-56">
         <SelectValue />
       </SelectTrigger>
       <SelectContent className="max-h-[50vh]">
@@ -124,14 +125,9 @@ export default function UnitConverterPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Ruler} title="Unit Converter" />
-        <div className="flex flex-1 flex-col p-4 lg:p-8">
-          <div className="mx-auto w-full max-w-7xl space-y-8 pb-16 lg:pb-24">
-            <div className="mb-2 max-sm:sr-only">
-              <h1 className="mb-4 border-b border-border pb-3 text-4xl font-bold tracking-tight text-foreground sm:mb-6 sm:pb-4 sm:text-5xl">Unit Converter</h1>
-              <p className="max-w-3xl text-base text-muted-foreground sm:text-lg">
-                Metres, miles, kilos, pounds: sorted. Type on either side, and see your amount in every unit at once.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Unit Converter">Metres, miles, kilos, pounds: sorted. Type on either side, and see your amount in every unit at once.</PageIntro>
 
             <fieldset className="pt-2">
               <legend className="mb-3 text-sm font-medium">What are you converting?</legend>
@@ -244,21 +240,24 @@ export default function UnitConverterPage() {
                   <p className="text-sm text-muted-foreground">Select a unit to convert to it.</p>
                 </CardHeader>
                 <CardContent>
-                  <ul className="divide-y divide-border">
+                  <ul className="space-y-0.5">
                     {category.units.map((x) => {
                       const shown = Number.isFinite(fromNumber) ? roundForDisplay(convert(fromNumber, from, x), decimals, keepZeros) : '';
                       const isTo = x.id === toId;
                       const isFrom = x.id === fromId;
                       return (
-                        <li key={x.id} className={cn('flex items-center gap-2 py-1', isTo && 'rounded-md bg-primary/10')}>
+                        <li
+                          key={x.id}
+                          className={cn(
+                            'flex min-h-10 items-center gap-1 rounded-md pr-1 transition-colors duration-quick',
+                            isTo ? 'bg-primary/10' : !isFrom && 'hover:bg-muted'
+                          )}
+                        >
                           <button
                             type="button"
                             onClick={() => setToId(x.id)}
                             disabled={isFrom}
-                            className={cn(
-                              'flex min-w-0 flex-1 items-baseline justify-between gap-3 rounded-md px-2 py-1.5 text-left text-sm outline-none transition-colors duration-quick focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default',
-                              !isFrom && 'hover:bg-muted'
-                            )}
+                            className="flex min-h-10 min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 text-left text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default"
                             aria-pressed={isTo}
                           >
                             <span className={cn('min-w-0', isTo ? 'font-medium text-primary' : 'text-muted-foreground')}>
