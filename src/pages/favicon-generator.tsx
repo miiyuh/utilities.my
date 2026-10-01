@@ -25,6 +25,7 @@ import {
   buildSvg,
   canBuildSvg,
   fontReady,
+  hasTransparency,
   canvasToPng,
   renderFavicon,
   type FaviconShape,
@@ -156,6 +157,11 @@ export default function FaviconGeneratorPage() {
       setImage({ ...img, image: img.source, name: file.name })
       setImageError(null)
       setKind('image')
+      // A logo with see-through areas is meant to be used as it is: no background, no padding.
+      if (hasTransparency(img.source, img.width, img.height)) {
+        setTransparent(true)
+        setPadding(0)
+      }
     } catch (e) {
       setImageError(e instanceof Error ? e.message : 'This image could not be opened.')
     }
@@ -166,6 +172,7 @@ export default function FaviconGeneratorPage() {
     try {
       const img = await decodeImage(file)
       setDarkImage({ ...img, image: img.source, name: file.name })
+      if (hasTransparency(img.source, img.width, img.height)) setDarkTransparent(true)
     } catch (e) {
       setImageError(e instanceof Error ? e.message : 'This image could not be opened.')
     }
@@ -346,26 +353,33 @@ export default function FaviconGeneratorPage() {
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="space-y-2">
-                      <span className="text-sm font-medium">Shape</span>
-                      <fieldset className="flex flex-wrap gap-1.5">
-                        <legend className="sr-only">Shape</legend>
-                        {(['square', 'rounded', 'circle'] as FaviconShape[]).map((s) => (
-                          <Chip key={s} active={shape === s} onClick={() => setShape(s)}>{s[0].toUpperCase() + s.slice(1)}</Chip>
-                        ))}
-                      </fieldset>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                      <div className="flex items-center gap-2">
-                        <Switch id="fav-transparent" checked={transparent} onCheckedChange={setTransparent} />
-                        <Label htmlFor="fav-transparent" className="cursor-pointer font-normal">Transparent background</Label>
+                      <span className="text-sm font-medium">Background</span>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <fieldset className="flex flex-wrap gap-1.5">
+                          <legend className="sr-only">Background</legend>
+                          <Chip active={!transparent} onClick={() => setTransparent(false)}>Colour</Chip>
+                          <Chip active={transparent} onClick={() => setTransparent(true)}>None</Chip>
+                        </fieldset>
+                        {!transparent && <ColorPicker value={bgColor} onChange={setBgColor} className="h-8 w-8" />}
                       </div>
-                      {!transparent && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Background</span>
-                          <ColorPicker value={bgColor} onChange={setBgColor} className="h-8 w-8" />
-                        </div>
+                      {transparent && (
+                        <p className="text-xs text-muted-foreground">
+                          Nothing is drawn behind your {kind === 'image' ? 'image' : kind} and nothing is cut off, so transparent areas stay transparent.
+                          Apple and Android home-screen icons still get a solid background, because those platforms require one.
+                        </p>
                       )}
                     </div>
+                    {!transparent && (
+                      <div className="space-y-2">
+                        <span className="text-sm font-medium">Shape</span>
+                        <fieldset className="flex flex-wrap gap-1.5">
+                          <legend className="sr-only">Shape</legend>
+                          {(['square', 'rounded', 'circle'] as FaviconShape[]).map((s) => (
+                            <Chip key={s} active={shape === s} onClick={() => setShape(s)}>{s[0].toUpperCase() + s.slice(1)}</Chip>
+                          ))}
+                        </fieldset>
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Padding</span>
@@ -416,15 +430,14 @@ export default function FaviconGeneratorPage() {
                             </div>
                           )}
                           <div className="flex items-center gap-2">
-                            <Switch id="fav-dark-transparent" checked={darkTransparent} onCheckedChange={setDarkTransparent} />
-                            <Label htmlFor="fav-dark-transparent" className="cursor-pointer font-normal">Transparent background</Label>
+                            <span className="text-sm text-muted-foreground">Background</span>
+                            <fieldset className="flex flex-wrap gap-1.5">
+                              <legend className="sr-only">Dark mode background</legend>
+                              <Chip active={!darkTransparent} onClick={() => setDarkTransparent(false)}>Colour</Chip>
+                              <Chip active={darkTransparent} onClick={() => setDarkTransparent(true)}>None</Chip>
+                            </fieldset>
+                            {!darkTransparent && <ColorPicker value={darkBg} onChange={setDarkBg} className="h-8 w-8" />}
                           </div>
-                          {!darkTransparent && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Background</span>
-                              <ColorPicker value={darkBg} onChange={setDarkBg} className="h-8 w-8" />
-                            </div>
-                          )}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           Browsers switch to this version in tab bars when the system is in dark mode. Home-screen icons on iPhone and Android
