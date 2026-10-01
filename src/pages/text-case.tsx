@@ -1,97 +1,37 @@
-import { ClearButton } from '@/components/ui/clear-button';
-import React, { useEffect, useRef, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CopyButton } from '@/components/ui/copy-button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { TextAa, ArrowsLeftRight, Upload, Download } from 'phosphor-react';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
-import { SidebarContent } from "@/components/sidebar-content";
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PageHeader } from "@/components/page-header";
-
+import { useMemo, useRef, useState } from 'react';
+import { TextAa, UploadSimple } from 'phosphor-react';
+import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
+import { SidebarContent } from '@/components/sidebar-content';
+import { PageHeader } from '@/components/page-header';
 import { ToolMethodology } from '@/components/tool-methodology';
-type Mode = 'uppercase' | 'lowercase' | 'title' | 'sentence' | 'toggle' | 'camel' | 'pascal' | 'snake' | 'kebab' | 'constant';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ClearButton } from '@/components/ui/clear-button';
+import { CopyButton } from '@/components/ui/copy-button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { CASES, convertAll, type CaseOptions } from '@/lib/text-case';
+import { cn } from '@/lib/utils';
 
-const SMALL_WORDS = new Set(['a','an','and','the','or','but','as','at','by','for','in','of','on','to','via','vs','vs.','per','nor','so','yet']);
+const EXAMPLE = 'Nasi lemak and teh tarik for the KL office';
+
+const OPTIONS: { key: keyof CaseOptions; label: string; hint: string }[] = [
+  { key: 'smartTitle', label: 'Smart title case', hint: 'Keeps short words like “and”, “dan” and “bin” lowercase.' },
+  { key: 'keepAcronyms', label: 'Keep acronyms', hint: 'Leaves words like IC, KL and iPhone as you wrote them.' },
+  { key: 'tidySpaces', label: 'Tidy spaces', hint: 'Trims each line and squeezes extra spaces.' },
+];
 
 export default function TextCaseConverterPage() {
-  const [inputText, setInputText] = useState('');
-  const [outputText, setOutputText] = useState('');
-  const [mode, setMode] = useState<Mode>('title');
-  const [auto, setAuto] = useState(true);
-  const [trim, setTrim] = useState(true);
-  const [collapseSpaces, setCollapseSpaces] = useState(true);
-  const [smartTitle, setSmartTitle] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement|null>(null);
+  const [text, setText] = useState('');
+  const [opts, setOpts] = useState<CaseOptions>({ smartTitle: true, keepAcronyms: true, tidySpaces: true });
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  // helpers
-  const toWords = (s: string) => s
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .split(/[^A-Za-z0-9]+/)
-    .filter(Boolean);
+  const isEmpty = text.trim() === '';
+  const results = useMemo(() => convertAll(isEmpty ? EXAMPLE : text, opts), [text, isEmpty, opts]);
+  const words = isEmpty ? 0 : text.trim().split(/\s+/).length;
 
-  const buildTextForWordModes = (s: string, sep: string, transform: (w:string, i:number)=>string) => {
-    const words = toWords(s);
-    return words.map(transform).join(sep);
-  };
-
-  const toggleCase = (s: string) => s.replace(/[A-Za-z]/g, ch => ch === ch.toLowerCase() ? ch.toUpperCase() : ch.toLowerCase());
-
-  const sentenceCase = (s: string) => {
-    const lower = s.toLowerCase();
-    return lower.replace(/(^\s*[a-z])|([.!?]\s*[a-z])/g, m => m.toUpperCase());
-  };
-
-  const titleCase = (s: string) => {
-    const lower = s.toLowerCase();
-    const parts = lower.split(/(\b[^\w']+\b)/); // keep delimiters
-    let idxWord = 0; const wordsTotal = toWords(s).length;
-    return parts.map(part => {
-      if (!/[A-Za-z0-9]/.test(part)) return part; // delimiter
-      const w = part;
-      const isSmall = smartTitle && SMALL_WORDS.has(w);
-      const shouldCap = !smartTitle || idxWord === 0 || idxWord === wordsTotal - 1 || !isSmall;
-      idxWord++;
-      return shouldCap ? w.replace(/\b\w/g, c => c.toUpperCase()) : w;
-    }).join('');
-  };
-
-  const convert = (s: string, m: Mode) => {
-    let t = s;
-    if (trim) t = t.trim();
-    if (collapseSpaces) t = t.replace(/\s+/g, ' ');
-    switch (m) {
-      case 'uppercase': return t.toUpperCase();
-      case 'lowercase': return t.toLowerCase();
-      case 'toggle': return toggleCase(t);
-      case 'sentence': return sentenceCase(t);
-      case 'title': return titleCase(t);
-      case 'camel': return buildTextForWordModes(t, '', (w,i)=> i===0? w.toLowerCase(): (w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()));
-      case 'pascal': return buildTextForWordModes(t, '', (w)=> w.charAt(0).toUpperCase()+w.slice(1).toLowerCase());
-      case 'snake': return buildTextForWordModes(t, '_', (w)=> w.toLowerCase());
-      case 'kebab': return buildTextForWordModes(t, '-', (w)=> w.toLowerCase());
-      case 'constant': return buildTextForWordModes(t, '_', (w)=> w.toUpperCase());
-    }
-  };
-
-  // effects
-  useEffect(()=>{
-    if (auto) setOutputText(convert(inputText, mode));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputText, mode, trim, collapseSpaces, smartTitle, auto]);
-
-  // actions
-  const handleConvertNow = () => setOutputText(convert(inputText, mode));
-  const handleClear = () => { setInputText(''); setOutputText(''); };
-  const handleSwap = () => { setInputText(outputText); setOutputText(inputText); };
-  const handleImport = async (file: File) => { const text = await file.text(); setInputText(text.replace(/\r\n?/g,'\n')); };
-  const handleExport = () => {
-    const blob = new Blob([outputText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='converted.txt'; a.click(); URL.revokeObjectURL(url);
-  };
+  const importFile = async (file: File) => setText((await file.text()).replace(/\r\n?/g, '\n'));
 
   return (
     <>
@@ -101,74 +41,114 @@ export default function TextCaseConverterPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={TextAa} title="Text Case Converter" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
-            {/* Big heading */}
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Case Converter</h1>
-              <p className="text-lg text-muted-foreground">Convert text between letter cases with smart options.</p>
+        <div className="flex flex-1 flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8 pb-16 lg:pb-24">
+            <div className="mb-2 max-sm:sr-only">
+              <h1 className="mb-4 border-b border-border pb-3 text-4xl font-bold tracking-tight text-foreground sm:mb-6 sm:pb-4 sm:text-5xl">Text Case Converter</h1>
+              <p className="max-w-3xl text-base text-muted-foreground sm:text-lg">
+                Type or paste once and get every case at the same time, from Sentence case to snake_case. Copy the one you need.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Input */}
-              <Card className="flex flex-col overflow-hidden">
-                <CardHeader>
-                  <CardTitle>Input</CardTitle>
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
+              <Card className="minimal-card lg:sticky lg:top-20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-headline text-lg">Your text</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) void handleImport(f); e.currentTarget.value=''; }} />
-                    <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="h-4 w-4 mr-1"/> Import</Button>
-                    <Button variant="outline" size="sm" onClick={handleExport} disabled={!outputText}><Upload className="h-4 w-4 mr-1"/> Export</Button>
-                    <Button variant="outline" size="sm" onClick={handleSwap} disabled={!outputText}><ArrowsLeftRight className="h-4 w-4 mr-1"/> Swap</Button>
-                    <ClearButton onClear={handleClear} hasContent={Boolean(inputText || outputText)} className="ml-auto" confirmTitle="Clear the text?" confirmDescription="This removes the input and output text. It can't be undone." />
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept=".txt,text/plain"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.currentTarget.files?.[0];
+                        if (f) void importFile(f);
+                        e.currentTarget.value = '';
+                      }}
+                    />
+                    <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                      <UploadSimple className="h-4 w-4" /> Open a .txt file
+                    </Button>
+                    <ClearButton
+                      onClear={() => setText('')}
+                      hasContent={!isEmpty}
+                      className="ml-auto"
+                      confirmTitle="Clear your text?"
+                      confirmDescription="This removes the text you entered. It can't be undone."
+                      confirmLabel="Clear text"
+                    />
                   </div>
-                  <Textarea id="inputText" placeholder="Enter text here..." value={inputText} onChange={(e)=> setInputText(e.target.value)} className="resize-none min-h-[240px]" />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="mode">Mode</Label>
-                      <Select value={mode} onValueChange={(v)=> setMode(v as Mode)}>
-                        <SelectTrigger id="mode"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="title">Title Case</SelectItem>
-                          <SelectItem value="sentence">Sentence case</SelectItem>
-                          <SelectItem value="uppercase">UPPERCASE</SelectItem>
-                          <SelectItem value="lowercase">lowercase</SelectItem>
-                          <SelectItem value="toggle">tOGGLE cASE</SelectItem>
-                          <SelectItem value="camel">camelCase</SelectItem>
-                          <SelectItem value="pascal">PascalCase</SelectItem>
-                          <SelectItem value="snake">snake_case</SelectItem>
-                          <SelectItem value="kebab">kebab-case</SelectItem>
-                          <SelectItem value="constant">CONSTANT_CASE</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Options</Label>
-                      <div className="grid grid-cols-1 gap-2 text-sm">
-                        <div className="flex items-center space-x-2"><Checkbox id="auto" checked={auto} onCheckedChange={(c)=> setAuto(Boolean(c))} /><Label htmlFor="auto" className="font-normal">Auto convert</Label></div>
-                        <div className="flex items-center space-x-2"><Checkbox id="trim" checked={trim} onCheckedChange={(c)=> setTrim(Boolean(c))} /><Label htmlFor="trim" className="font-normal">Trim edges</Label></div>
-                        <div className="flex items-center space-x-2"><Checkbox id="collapse" checked={collapseSpaces} onCheckedChange={(c)=> setCollapseSpaces(Boolean(c))} /><Label htmlFor="collapse" className="font-normal">Collapse whitespace</Label></div>
-                        <div className="flex items-center space-x-2"><Checkbox id="smartTitle" checked={smartTitle} onCheckedChange={(c)=> setSmartTitle(Boolean(c))} disabled={mode!=='title'} /><Label htmlFor="smartTitle" className="font-normal">Smart Title (ignore small words)</Label></div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="case-input" className="sr-only">Text to convert</Label>
+                    <Textarea
+                      id="case-input"
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder={`e.g. ${EXAMPLE}`}
+                      className="min-h-[200px] resize-y text-base sm:text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground tabular-nums">
+                      {words.toLocaleString()} {words === 1 ? 'word' : 'words'} · {text.length.toLocaleString()} characters
+                    </p>
+                  </div>
+                  <fieldset className="space-y-3">
+                    <legend className="mb-2 text-sm font-medium">Options</legend>
+                    {OPTIONS.map((o) => (
+                      <div key={o.key} className="flex items-start gap-3">
+                        <Switch
+                          id={`case-${o.key}`}
+                          checked={opts[o.key]}
+                          onCheckedChange={(v) => setOpts((p) => ({ ...p, [o.key]: v }))}
+                          className="mt-0.5"
+                          aria-describedby={`case-${o.key}-hint`}
+                        />
+                        <div>
+                          <Label htmlFor={`case-${o.key}`} className="cursor-pointer font-normal">{o.label}</Label>
+                          <p id={`case-${o.key}-hint`} className="text-xs text-muted-foreground">{o.hint}</p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    ))}
+                  </fieldset>
                 </CardContent>
               </Card>
 
-              {/* Output */}
-              <Card className="flex flex-col">
-                <CardHeader>
-                  <CardTitle>Output</CardTitle>
+              <Card className="minimal-card">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-headline text-lg">Every case</CardTitle>
+                  {isEmpty && <p className="text-sm text-muted-foreground">Showing an example. Your text replaces it as you type.</p>}
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {!auto && (
-                    <Button onClick={handleConvertNow} className="h-10 w-full">Convert</Button>
-                  )}
-                  <Textarea id="outputText" placeholder="Converted text will appear here..." value={outputText} readOnly className="resize-none bg-muted/50 min-h-[240px]" />
-                  <div className="flex justify-end">
-                    <CopyButton value={() => outputText} label="Copy Output" title="Copy output text" disabled={!outputText} />
-                  </div>
+                <CardContent>
+                  <ul className="divide-y divide-border">
+                    {CASES.map((c) => (
+                      <li key={c.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <p className={cn('text-xs font-medium text-muted-foreground', c.code && 'font-code')}>{c.name}</p>
+                          <p
+                            className={cn(
+                              'max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-sm',
+                              c.code && 'font-code',
+                              isEmpty && 'text-muted-foreground'
+                            )}
+                          >
+                            {results.get(c.id)}
+                          </p>
+                        </div>
+                        <CopyButton
+                          value={() => results.get(c.id) ?? ''}
+                          label=""
+                          size="icon-sm"
+                          variant="ghost"
+                          aria-label={`Copy ${c.name}`}
+                          title={`Copy ${c.name}`}
+                          toastTitle="Copied"
+                          toastDescription={`${c.name} copied to the clipboard.`}
+                          disabled={isEmpty}
+                        />
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
             </div>

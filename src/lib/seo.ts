@@ -42,7 +42,7 @@ export const routes: RouteSeo[] = [
     title: 'Text Case Converter: UPPER, lower, Title Case | utilities.my',
     h1: 'Text Case Converter',
     description:
-      'Switch your text between UPPERCASE, lowercase, Title Case, Sentence case, camelCase, snake_case and more in one click. Free, and it never leaves your browser.',
+      'See your text in every case at once, from Sentence case and Title Case to camelCase and snake_case, and copy the one you need. Handles Malay names and acronyms.',
     kind: 'tool',
     priority: 0.8,
   },
@@ -87,7 +87,7 @@ export const routes: RouteSeo[] = [
     title: 'Markdown Previewer: Live Editor and Preview | utilities.my',
     h1: 'Markdown Previewer',
     description:
-      'Write Markdown and watch it take shape as you type, with tables, task lists, footnotes and code blocks. Copy the HTML or download your .md file.',
+      'Write Markdown and watch it take shape as you type, with tables, task lists and footnotes. Copy it formatted for an email or document, copy the HTML, or download the .md file.',
     kind: 'tool',
     priority: 0.8,
   },
@@ -141,7 +141,7 @@ export const routes: RouteSeo[] = [
     title: 'Word and Character Counter: Text Statistics | utilities.my',
     h1: 'Text Statistics',
     description:
-      'Count words, characters, sentences and reading time at a glance as you type. Free, instant, and your text stays in your browser.',
+      'Count words, characters and reading time as you type, and check your text fits a meta description, an X post or an Instagram caption. Works for Malay and English.',
     kind: 'tool',
     priority: 0.8,
   },
@@ -150,7 +150,7 @@ export const routes: RouteSeo[] = [
     title: 'Text Sorter: Sort Lines A to Z or by Number | utilities.my',
     h1: 'Sorter',
     description:
-      'Put any list in order: A to Z, by number, or shuffled. Remove duplicates and blank lines too. Paste it in, sort it, copy it out.',
+      'Put any list in order: A to Z, by number or by length. Remove duplicates, split a comma list into lines or join it back, and undo any step.',
     kind: 'tool',
     priority: 0.8,
   },
@@ -183,10 +183,10 @@ export const routes: RouteSeo[] = [
   },
   {
     path: '/foot-size-converter',
-    title: 'Shoe Size Converter: US, UK, EU and CM | utilities.my',
+    title: 'Shoe Size Converter: UK, EU, US and Foot Length | utilities.my',
     h1: 'Foot Size Converter',
     description:
-      'Find your shoe size in US, UK, EU or centimetres, so you can order from any international store without squinting at size charts.',
+      'Find your shoe size in UK, EU or US sizes from a size you know or the length of your foot, with a full chart for men, women and kids.',
     kind: 'tool',
     priority: 0.8,
   },

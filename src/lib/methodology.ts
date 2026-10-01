@@ -61,8 +61,9 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/foot-size-converter',
     summary:
-      'A lookup table of equivalent sizes across US, UK, EU and foot length in centimetres, with separate tables for men and women.',
+      'A lookup table of equivalent sizes across UK, EU, US and foot length in centimetres, with separate tables for men, women and kids.',
     notes: [
+      'From a foot length, the result is the smallest size that fits at least that length, since a shoe shorter than your foot won\'t fit.',
       'Shoe size systems are not defined by one exact formula, and brands differ by half a size or more. Treat the result as a starting point.',
       'Foot length in centimetres (the basis of the Mondopoint system) is the most reliable number to compare.',
     ],
@@ -157,11 +158,21 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/text-statistics',
     summary:
-      'Words are split on whitespace and sentences on . ! or ?. Reading and speaking times are estimates based on average rates.',
-    formulas: ['Reading time = words ÷ 200 per minute', 'Speaking time = words ÷ 130 per minute'],
-    notes: ['200 wpm is a deliberately conservative silent-reading rate; studies put the adult average around 238 wpm for non-fiction.'],
+      'A word is a run of letters or digits in any script, so Malay, accented and non-Latin text count properly. Sentences end at . ! ? or …, or at a blank line. Reading and speaking times are estimates based on average rates.',
+    formulas: [
+      'Reading time = words ÷ 200 per minute',
+      'Speaking time = words ÷ 130 per minute',
+      'Reading ease = 206.835 − 1.015 × (words ÷ sentences) − 84.6 × (syllables ÷ words)',
+    ],
+    notes: [
+      '200 wpm is a deliberately conservative silent-reading rate; studies put the adult average around 238 wpm for non-fiction.',
+      'The reading ease score is designed for English and uses an approximate syllable count. It needs at least 30 words.',
+      'Length limits are counted as plain characters. Some platforms count links or emoji differently, and they change their limits from time to time.',
+      'Leaving everyday words out of the top words list affects only that list, never the word count.',
+    ],
     sources: [
       { label: 'Brysbaert (2019), How many words do we read per minute?', url: 'https://doi.org/10.1016/j.jml.2019.104047' },
+      { label: 'Flesch (1948), A new readability yardstick', url: 'https://doi.org/10.1037/h0057532' },
     ],
   },
   {
@@ -189,9 +200,14 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/sorter',
     summary:
-      'Alphabetical sorting uses your browser\'s locale-aware comparison. Natural sort compares runs of digits as numbers, so "item 2" comes before "item 10". Shuffle uses Fisher–Yates with your browser\'s secure random generator.',
+      'Text sorting uses your browser\'s locale-aware comparison. With numbers in order on, runs of digits compare as numbers, so "item 2" comes before "item 10". Shuffle uses Fisher–Yates with your browser\'s secure random generator.',
+    notes: [
+      'Sorting by number uses the first number on each line, ignoring thousands separators, so "RM 1,250" sorts as 1250. Lines without a number go last.',
+      'Removing duplicates keeps the first copy of each line and ignores capitals unless Match capitals is on.',
+      'Every change is kept so it can be undone, up to the last 50.',
+    ],
     sources: [
-      { label: 'MDN: String.prototype.localeCompare()', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare' },
+      { label: 'MDN: Intl.Collator', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator' },
       { label: 'MDN: Crypto.getRandomValues()', url: 'https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues' },
     ],
   },
@@ -251,7 +267,12 @@ export const METHODOLOGY: Method[] = [
   },
   {
     path: '/text-case',
-    summary: 'Case changes use your browser\'s Unicode-aware upper- and lower-casing; title and sentence case are built from those rules.',
+    summary: 'Case changes use your browser\'s Unicode-aware upper- and lower-casing, so accented and non-Latin letters convert correctly. Title and sentence case are built from those rules.',
+    notes: [
+      'Smart title case keeps short joining words lowercase in the middle of a line: English ones like "and" and "of", Malay ones like "dan" and "untuk", and the parts of Malaysian names such as "bin", "binti", "a/l" and "a/p".',
+      'Keep acronyms leaves words that already have capitals inside them (IC, KL, iPhone) as written. It switches itself off when most of the text is in capitals, since that is shouting rather than acronyms.',
+      'Code-style cases (camelCase, snake_case and the rest) convert each line separately, so a list of names becomes a list of identifiers.',
+    ],
     sources: [],
   },
 ];

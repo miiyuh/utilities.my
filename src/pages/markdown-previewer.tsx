@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Download, Eye, Article, Info, Columns, ArrowCounterClockwise } from 'phosphor-react';
+import { DownloadSimple, Eye, Article, Info, Columns, ArrowCounterClockwise, PencilSimple, TextAa, UploadSimple } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { marked, Renderer, Tokens } from 'marked';
@@ -15,6 +15,10 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { useToast } from '@/hooks/use-toast';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { PageHeader } from "@/components/page-header";
+import { Chip } from '@/components/ui/chip';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils';
 
 import { ToolMethodology } from '@/components/tool-methodology';
 // Fallback simple icons for actions not present in lucide-react selection
@@ -60,18 +64,16 @@ marked.use({ renderer: new AppRenderer(), gfm: true, breaks: true });
 
 interface EditorPaneProps { markdownText: string; setMarkdownText: (v: string)=>void; wrap: boolean; }
 const EditorPane: React.FC<EditorPaneProps> = ({ markdownText, setMarkdownText, wrap }) => {
-  const { formatNumber } = useToolSettings();
   return (
   <div className="flex flex-col h-full min-h-0 md:min-h-[400px]">
     <div className="flex items-center justify-between px-3 py-2 border-b bg-background/70">
       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Markdown</span>
-      <span className="text-[10px] text-muted-foreground">{formatNumber(markdownText.length, 0)} chars</span>
     </div>
     <Textarea
       value={markdownText}
       onChange={(e)=>setMarkdownText(e.target.value)}
       className={"field-sizing-fixed flex-1 min-h-0 resize-none font-code text-sm p-3 bg-transparent border-0 focus-visible:ring-0 focus-visible:outline-none overflow-y-auto " + (wrap ? 'whitespace-pre-wrap' : 'whitespace-pre')}
-      placeholder="Type your Markdown here..."
+      placeholder="Type your Markdown here…"
     />
   </div>
   );
@@ -88,168 +90,37 @@ const PreviewPane: React.FC<{ htmlOutput: string }> = ({ htmlOutput }) => (
   </div>
 );
 
-const initialMarkdown = `# Markdown Comprehensive Demo
+const VIEWS = [
+  { id: 'edit', label: 'Write', icon: PencilSimple },
+  { id: 'split', label: 'Split', icon: Columns },
+  { id: 'preview', label: 'Preview', icon: Eye },
+] as const;
 
-This document demonstrates a wide variety of Markdown features.
+const initialMarkdown = `# Weekend plan
 
-## 1. Headings
+Write on the left and see it formatted on the right. Everything stays in your browser.
 
-# Heading 1 (H1)
-## Heading 2 (H2)
-### Heading 3 (H3)
-#### Heading 4 (H4)
-##### Heading 5 (H5)
-###### Heading 6 (H6)
+## To do
 
-## 2. Emphasis
+- [x] Book a table for Saturday
+- [ ] Buy durian (the good kind)
+- [ ] Message the group chat
 
-You can make text **bold** using double asterisks or double underscores: __bold__.
-You can make text *italic* using single asterisks or single underscores: _italic_.
-You can combine them for ***bold and italic*** or ___bold and italic___.
-You can also use ~~strikethrough~~.
+## Where to eat
 
-## 3. Lists
+| Place | Area | Budget |
+| --- | --- | --- |
+| Nasi kandar | George Town | RM 15 |
+| Dim sum | Ipoh | RM 30 |
+| Satay | Kajang | RM 20 |
 
-### Unordered Lists
-- Item A
-- Item B
-  - Sub-item B1 (indent 2 spaces)
-  - Sub-item B2
-    * Deeper sub-item B2a (indent 4 spaces, can use \`*\`)
-    * Deeper sub-item B2b
-- Item C
+> **Bold**, *italic*, \`code\` and [links](https://utilities.my) all work. See the cheat sheet below for more.
 
-### Ordered Lists
-1. First item
-2. Second item
-   1. Sub-item 1 (indent 2 spaces)
-   2. Sub-item 2
-      i. Roman numeral sub-item (Note: GFM might not style this distinctively without specific CSS)
-      ii. Another Roman numeral
-3. Third item
+1. Leave at 9 a.m.
+2. Stop for breakfast
+3. Arrive by noon[^1]
 
-### Task Lists (GFM)
-- [x] Completed task: Review feature specifications
-- [ ] Incomplete task: Implement new login flow
-- [ ] Another task: Write unit tests
-  - [x] Sub-task completed: Draft test cases
-  - [ ] Sub-task pending: Execute tests
-
-### Lists with Paragraphs (Loose Lists)
-- This is the first item in a loose list.
-
-  This is a paragraph belonging to the first item. It must be indented to align with the item's content (e.g., 2 or 4 spaces from the start of the line).
-
-- This is the second item.
-
-  It also contains multiple lines of text, forming a paragraph. This list becomes "loose" because of the blank line separating items or because items contain block-level content like paragraphs.
-
-## 4. Links
-
-### Inline Links
-Visit [Google](https://www.google.com "Google's Homepage").
-You can also create links with [relative paths](/about).
-
-### Reference-style Links
-Here's a link to [Firebase][fb].
-And another to the [Mozilla Developer Network][mdn].
-
-[fb]: https://firebase.google.com/ "Firebase - Develop Apps"
-[mdn]: https://developer.mozilla.org/ "MDN Web Docs - Resources for Developers"
-
-## 5. Images
-
-![A placeholder image for demonstration](https://picsum.photos/200/300 "Beautiful Landscape 200x300")
-
-Images can also be linked using reference style:
-![Another placeholder][placeholder-img]
-
-[placeholder-img]: https://picsum.photos/200/300 "Nature Photo 200x300"
-
-## 6. Code
-
-### Inline Code
-Use backticks for inline code, for example, to reference a variable like \`userCount\` or a function \`getUser()_new\`.
-
-### Fenced Code Blocks
-You can specify the language for syntax highlighting:
-\`\`\`javascript
-// JavaScript code example
-function greet(name) {
-  console.log(\`Hello, \${name}!\`);
-}
-greet("Developer");
-\`\`\`
-
-\`\`\`python
-# Python code example
-def hello_world():
-  print("Hello from Python!")
-
-hello_world()
-\`\`\`
-
-\`\`\`html
-<!-- HTML code example -->
-<div>
-  <p class="greeting">This is an HTML code block.</p>
-</div>
-\`\`\`
-
-\`\`\`
-A code block without a language specified.
-Plain text or data can go here.
-  Indentation is preserved.
-\`\`\`
-
-## 7. Blockquotes
-
-> This is a blockquote.
-> It can span multiple lines, and subsequent lines are part of the same quote.
->
-> > Nested blockquotes are also possible by adding more \`>\` symbols.
-> > This allows for quoting conversations or different sources.
->
-> Back to the first level of blockquote.
-
-## 8. Horizontal Rules
-
-You can create a horizontal rule using three or more hyphens, asterisks, or underscores on a line by themselves:
-
----
-
-***
-
-___
-
-
-## 9. Tables (GFM)
-
-| Feature         | Support Level | Notes                                   |
-| :-------------- | :-----------: | :-------------------------------------- |
-| Headings        |    Full       | H1 to H6                                |
-| Emphasis        |    Full       | Bold, Italic, Strikethrough             |
-| Lists           |    Full       | Ordered, Unordered, Task, Nested        |
-| Links           |    Full       | Inline, Reference                       |
-| Code Blocks     |    Full       | Fenced, with language highlighting      |
-| Tables          |    Full       | Requires header and separator row       |
-| Alignment (Col) |    Full       | Use colons in the separator row         |
-
-## 10. Footnotes
-
-Here's some text that requires a footnote for more details.[^1]
-You can have multiple footnotes in your document.[^note-id]
-
-[^1]: This is the detailed explanation for the first footnote.
-[^note-id]: This is another footnote, identified by 'note-id'. It can be longer and might even contain multiple paragraphs if your Markdown processor supports it.
-
-## 11. Escaping Characters
-
-To display literal characters that have special meaning in Markdown syntax, use a backslash (\\\`\\\`) before the character:
-\\*This is not italic\\*
-\\[This is not a link label\\]
-\\\`This is not inline code\\\`
-\\# This is not a heading
+[^1]: Traffic permitting.
 `;
 
 const markdownExamples = [
@@ -262,27 +133,27 @@ const markdownExamples = [
     content: `*This text will be italic*\n_This will also be italic_\n\n**This text will be bold**\n__This will also be bold__\n\n~~This text will be strikethrough~~\n\n***Bold and italic***`,
   },
   {
-    title: "Task Lists (GFM)",
+    title: "Task lists",
     content: `- [x] Finish project proposal\n- [ ] Schedule team meeting\n- [ ] Review pull requests`,
   },
   {
-    title: "Links & Images",
+    title: "Links and images",
     content: `[I'm an inline-style link](https://www.google.com)\n\n![alt text](https://picsum.photos/100/50 "Beautiful Photo 100x50")`,
   },
   {
-    title: "Code (Inline & Fenced)",
+    title: "Code",
     content: "Inline `code` has `back-ticks around` it.\n\n```javascript\n// Code block\nvar s = \"JavaScript syntax highlighting\";\nalert(s);\n```",
   },
   {
-    title: "Blockquotes & Horizontal Rules",
+    title: "Quotes and dividers",
     content: `> Blockquotes are very handy in email to emulate reply text.\n> This line is part of the same quote.\n\n---\n\n***\n\n___`,
   },
   {
-    title: "Tables (GFM)",
+    title: "Tables",
     content: `| Header 1 | Header 2 | Header 3 |\n| :------- | :------: | -------: |\n| Left     | Center   | Right    |\n| Cell A   | Cell B   | Cell C   |`,
   },
   {
-    title: "Lists (Ordered, Unordered, Nested)",
+    title: "Lists",
     content: `**Ordered List:**\n1. Item 1\n2. Item 2\n   1. Sub-item 2.1\n   2. Sub-item 2.2\n3. Item 3\n\n**Unordered List:**\n- Item A\n- Item B\n  - Sub-item B.1\n  - Sub-item B.2\n    * Deeper Sub B.2.a\n- Item C`
   }
 ];
@@ -290,7 +161,13 @@ const markdownExamples = [
 
 export default function MarkdownPreviewerPage() {
   const { formatNumber } = useToolSettings();
-  const [markdownText, setMarkdownText] = useState(initialMarkdown);
+  const [markdownText, setMarkdownText] = useState(() => {
+    try {
+      return localStorage.getItem('markdown-previewer-content') ?? initialMarkdown;
+    } catch {
+      return initialMarkdown;
+    }
+  });
   const [htmlOutput, setHtmlOutput] = useState('');
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('split');
   const [wrap, setWrap] = useState(true);
@@ -298,30 +175,17 @@ export default function MarkdownPreviewerPage() {
   const draggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const LS_KEY = 'markdown-previewer-content';
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
 
-  // Autosave / load
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LS_KEY);
-      if (saved && saved !== markdownText) {
-        setMarkdownText(saved);
-      }
-    } catch {
-      toast({ title: 'Error', description: 'Failed to load saved content.' });
-      // Optionally log error.
-    }
-    // Only run on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Keep the draft between visits. Blocked storage (a private window) just means it isn't kept.
   useEffect(() => {
     try {
       localStorage.setItem(LS_KEY, markdownText);
     } catch {
-      toast({ title: 'Error', description: 'Failed to save content.' });
-      // Optionally log error.
+      // Not saved; nothing else to do.
     }
-  }, [markdownText, toast]);
+  }, [markdownText]);
 
   // Debounced parse for performance on large documents
   useEffect(() => {
@@ -331,7 +195,7 @@ export default function MarkdownPreviewerPage() {
         const sanitized = DOMPurify.sanitize(rawMarkup);
         setHtmlOutput(sanitized);
       } catch {
-        toast({ title: 'Error', description: 'Failed to render Markdown.' });
+        toast({ title: "Couldn't show the preview", description: 'Something in this Markdown could not be rendered.', variant: 'destructive' });
         setHtmlOutput('');
       }
     }, 120); // 120ms debounce
@@ -340,25 +204,33 @@ export default function MarkdownPreviewerPage() {
 
   const handleClearInput = () => {
     setMarkdownText('');
-    toast({ title: 'Cleared', description: 'Editor content removed.' });
   };
 
   const handleResetDemo = () => {
     setMarkdownText(initialMarkdown);
-    toast({ title: 'Demo Reset', description: 'Restored example markdown.' });
   };
 
   const handleDownload = () => {
-    const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'document.md';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    toast({ title: 'Download Started', description: 'Saved as document.md' });
+    downloadBlob(new Blob([markdownText], { type: 'text/markdown;charset=utf-8' }), 'document.md', isIOSOrSafari());
+    toast({ title: 'Saved', description: 'Downloaded as document.md.' });
+  };
+
+  const openFile = async (file: File) => setMarkdownText((await file.text()).replace(/\r\n?/g, '\n'));
+
+  /** Copies the preview as rich text, so it pastes formatted into email, Docs or Word. */
+  const copyFormatted = async () => {
+    const plain = new DOMParser().parseFromString(htmlOutput, 'text/html').body.innerText;
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([htmlOutput], { type: 'text/html' }),
+          'text/plain': new Blob([plain], { type: 'text/plain' }),
+        }),
+      ]);
+      toast({ title: 'Copied', description: 'Paste it into an email or document to keep the formatting.' });
+    } catch {
+      toast({ title: "Couldn't copy", description: 'Your browser blocked rich-text copying. Try Copy HTML instead.', variant: 'destructive' });
+    }
   };
 
   const startDrag = () => {
@@ -516,48 +388,63 @@ export default function MarkdownPreviewerPage() {
             {/* Big heading */}
             <div className="mb-8 max-sm:sr-only">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Markdown Previewer</h1>
-              <p className="text-lg text-muted-foreground">Write Markdown and see a live preview.</p>
+              <p className="max-w-3xl text-base text-muted-foreground sm:text-lg">Write Markdown and watch it take shape as you type. Copy it formatted for an email or document, or download the file.</p>
             </div>
             
-            {/* Controls Bar */}
-            <div className="flex flex-nowrap gap-3 items-center border rounded-md p-3 bg-background/60 justify-start overflow-x-auto">
-              <div className="flex items-center gap-1 shrink-0">
-                <Button variant={viewMode==='edit'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={()=>setViewMode('edit')} title="Editor only"><Article className="h-4 w-4"/></Button>
-                <Button variant={viewMode==='preview'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={()=>setViewMode('preview')} title="Preview only"><Eye className="h-4 w-4"/></Button>
-                <Button variant={viewMode==='split'?'default':'outline'} size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={()=>setViewMode('split')} title="Split view"><Columns className="h-4 w-4"/></Button>
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-md border border-border bg-card p-3">
+              <fieldset className="flex flex-wrap gap-1.5">
+                <legend className="sr-only">View</legend>
+                {VIEWS.map((v) => (
+                  <Chip key={v.id} active={viewMode === v.id} onClick={() => setViewMode(v.id)}>
+                    <v.icon className="h-4 w-4" aria-hidden /> {v.label}
+                  </Chip>
+                ))}
+              </fieldset>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".md,.markdown,.txt,text/markdown,text/plain"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.currentTarget.files?.[0];
+                    if (f) void openFile(f);
+                    e.currentTarget.value = '';
+                  }}
+                />
+                <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                  <UploadSimple className="h-4 w-4" /> Open
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => void copyFormatted()} disabled={!markdownText.trim()}>
+                  <TextAa className="h-4 w-4" /> Copy formatted
+                </Button>
+                <CopyButton value={() => markdownText} size="sm" label="Copy Markdown" toastTitle="Copied" toastDescription="Your Markdown is on the clipboard." disabled={!markdownText} />
+                <CopyButton value={() => htmlOutput} size="sm" label="Copy HTML" icon={<CodeIconFallback />} toastTitle="Copied" toastDescription="The HTML is on the clipboard." disabled={!markdownText} />
+                <Button variant="outline" size="sm" onClick={handleDownload} disabled={!markdownText}>
+                  <DownloadSimple className="h-4 w-4" /> Download .md
+                </Button>
               </div>
-              <div className="h-6 w-px bg-border shrink-0" />
-              <div className="flex items-center gap-1 shrink-0">
-                <CopyButton
-                  value={() => markdownText}
-                  label=""
+              <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
+                <ClearButton
+                  onClear={handleResetDemo}
+                  hasContent={markdownText !== initialMarkdown}
                   variant="outline"
                   size="sm"
-                  className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0"
-                  title="Copy Markdown"
-                  toastTitle="Markdown Copied"
-                  toastDescription="Source markdown copied to clipboard."
+                  label="Start over"
+                  icon={ArrowCounterClockwise}
+                  confirmTitle="Start over with the example?"
+                  confirmDescription="This replaces everything in the editor with the example text."
+                  confirmLabel="Start over"
                 />
-                <CopyButton
-                  value={() => htmlOutput}
-                  label=""
-                  icon={<CodeIconFallback />}
-                  variant="outline"
+                <ClearButton
+                  onClear={handleClearInput}
+                  hasContent={Boolean(markdownText)}
                   size="sm"
-                  className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0"
-                  title="Copy Rendered HTML"
-                  toastTitle="HTML Copied"
-                  toastDescription="Rendered HTML copied to clipboard."
+                  confirmTitle="Clear the editor?"
+                  confirmDescription="This removes all the Markdown in the editor. It can't be undone."
+                  confirmLabel="Clear editor"
                 />
-                <Button variant="outline" size="sm" className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" onClick={handleDownload} title="Download .md"><Download className="h-4 w-4"/></Button>
-                <ClearButton onClear={handleClearInput} hasContent={Boolean(markdownText)} iconOnly className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" confirmTitle="Clear the editor?" confirmDescription="This removes all the Markdown in the editor. It can't be undone." />
-                <ClearButton onClear={handleResetDemo} hasContent={markdownText !== initialMarkdown} label="Reset Demo Content" icon={ArrowCounterClockwise} iconOnly className="min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto shrink-0" confirmTitle="Replace with the demo?" confirmDescription="This replaces everything in the editor with the example Markdown." />
-              </div>
-              <div className="h-6 w-px bg-border shrink-0" />
-              <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
-                <span>{formatNumber(wordCount, 0)} words</span>
-                <span>{formatNumber(lineCount, 0)} lines</span>
-                <span>{formatNumber(charCount, 0)} chars</span>
               </div>
             </div>
 
@@ -635,14 +522,14 @@ export default function MarkdownPreviewerPage() {
                   </div>
                 </div>
               )}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t bg-background/70 px-3 py-1.5 text-[11px] gap-2">
-                <div className="flex gap-2 flex-wrap items-center">
-                  <button onClick={()=>setWrap(w=>!w)} className="px-2 py-0.5 rounded border text-muted-foreground hover:text-foreground hover:border-primary/60 transition-colors">
-                    {wrap ? 'Disable Wrap' : 'Enable Wrap'}
-                  </button>
-                  <span className="text-muted-foreground hidden sm:inline">{formatNumber(wordCount, 0)} words • {formatNumber(lineCount, 0)} lines • {formatNumber(charCount, 0)} chars</span>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t bg-background/70 px-3 py-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Switch id="md-wrap" checked={wrap} onCheckedChange={setWrap} />
+                  <Label htmlFor="md-wrap" className="cursor-pointer text-xs font-normal">Wrap long lines</Label>
                 </div>
-                <span className="text-muted-foreground">Debounced live preview</span>
+                <span className="tabular-nums">
+                  {formatNumber(wordCount, 0)} words · {formatNumber(lineCount, 0)} lines · {formatNumber(charCount, 0)} characters
+                </span>
               </div>
             </div>
 
@@ -651,12 +538,12 @@ export default function MarkdownPreviewerPage() {
               <CardHeader className="pb-6">
                 <div className="flex items-center gap-2">
                   <Info className="h-5 w-5 text-muted-foreground" />
-                  <CardTitle className="text-xl font-headline">Markdown Quick Reference</CardTitle>
+                  <CardTitle className="text-xl font-headline">Markdown cheat sheet</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 <Accordion type="single" collapsible className="w-full">
-                  {markdownExamples.sort((a,b) => a.title.localeCompare(b.title)).map((example, index) => (
+                  {[...markdownExamples].sort((a,b) => a.title.localeCompare(b.title)).map((example, index) => (
                     <AccordionItem value={`item-${index}`} key={index}>
                       <AccordionTrigger>{example.title}</AccordionTrigger>
                       <AccordionContent>
