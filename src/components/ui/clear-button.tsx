@@ -28,6 +28,8 @@ interface ClearButtonProps extends Omit<React.ComponentProps<typeof Button>, "on
   confirmDescription?: string
   /** The confirm button's label; should repeat the consequence ("Remove image"). Defaults to `label`. */
   confirmLabel?: string
+  /** "outline" for actions that replace content rather than delete it (Start over). Still confirms. */
+  variant?: "destructive" | "outline"
 }
 
 /**
@@ -43,6 +45,7 @@ function ClearButton({
   confirmTitle = "Clear everything?",
   confirmDescription = "This removes what you have entered. It can't be undone.",
   confirmLabel,
+  variant = "destructive",
   size = "sm",
   disabled,
   ...props
@@ -53,7 +56,7 @@ function ClearButton({
       <AlertDialogTrigger asChild>
         <Button
           type="button"
-          variant="destructive"
+          variant={variant}
           size={size}
           disabled={disabled || !hasContent}
           title={iconOnly ? label : undefined}

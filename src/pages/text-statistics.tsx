@@ -1,168 +1,84 @@
-import { ClearButton } from '@/components/ui/clear-button';
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
-import { SidebarContent } from "@/components/sidebar-content";
-import { TextAa, TextStrikethrough, ChartBar, Eye, Note, Clock, Hash, Upload, Download } from 'phosphor-react';
-import { Button } from '@/components/ui/button';
-import { CopyButton } from '@/components/ui/copy-button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { PageHeader } from "@/components/page-header";
-
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { ChartBar, UploadSimple } from 'phosphor-react';
+import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
+import { SidebarContent } from '@/components/sidebar-content';
+import { PageHeader } from '@/components/page-header';
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
-type WordCount = { word: string; count: number };
-interface FullStats {
-  characters: number;
-  charactersNoSpaces: number;
-  words: number;
-  uniqueWords: number;
-  sentences: number;
-  paragraphs: number;
-  lines: number;
-  avgWordLength: number;
-  longestWord: string;
-  longestSentenceWords: number;
-  readingTimeMinutes: number;
-  speakingTimeMinutes: number;
-  estimatedPages: number;
-  topWords: WordCount[];
-  charFreq: Record<string, number>;
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ClearButton } from '@/components/ui/clear-button';
+import { CopyButton } from '@/components/ui/copy-button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { useToolSettings } from '@/hooks/use-tool-settings';
+import { LIMITS, computeStats, easeLabel, formatDuration, type StatsOptions } from '@/lib/text-stats';
+import { cn } from '@/lib/utils';
+
+const STORAGE_KEY = 'textstats.input';
+
+function loadDraft(): string {
+  try {
+    return localStorage.getItem(STORAGE_KEY) ?? '';
+  } catch {
+    return '';
+  }
 }
 
-const STOPWORDS = new Set([
-  'a','an','and','the','or','but','if','then','else','for','to','of','in','on','at','by','with','as','is','it','this','that','these','those','be','been','are','was','were','from','up','down','over','under','i','you','he','she','we','they','them','me','my','your','their','our'
-]);
-
 export default function TextStatisticsPage() {
-  // Restore the saved draft synchronously; loading it from a mount effect meant
-  // the textarea rendered empty and then repopulated.
-  const [inputText, setInputText] = useState(() => localStorage.getItem('textstats.input') ?? '');
-  const [stats, setStats] = useState<FullStats | null>(null);
-  const [selStats, setSelStats] = useState<FullStats | null>(null);
-  const [selection, setSelection] = useState<{start:number; end:number}>({start:0,end:0});
-  const [caseSensitive, setCaseSensitive] = useState(false);
-  const [ignoreStopwords, setIgnoreStopwords] = useState(true);
-  const [countNumbers, setCountNumbers] = useState(true);
-  const [debounceMs] = useState(150);
-  const fileInputRef = useRef<HTMLInputElement|null>(null);
-  const textRef = useRef<HTMLTextAreaElement|null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>|null>(null);
+  const { formatNumber } = useToolSettings();
+  const n = (v: number) => formatNumber(v, 1);
+  const [text, setText] = useState(loadDraft);
+  const [opts, setOpts] = useState<StatsOptions>({ countNumbers: true, ignoreCommonWords: true });
+  const [selection, setSelection] = useState<[number, number]>([0, 0]);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const deferred = useDeferredValue(text);
 
-  // compute helper
-  const computeStats = useCallback((text: string): FullStats => {
-    const characters = text.length;
-    const charactersNoSpaces = text.replace(/\s/g, '').length;
-    const lines = text ? text.split('\n').length : 0;
-    const paragraphs = (()=>{
-      const p = text.split(/\n\s*\n/).filter(Boolean).length;
-      return p || (text.trim()? 1: 0);
-    })();
-    const sentenceRegex = /[.!?]+(?=\s|$)/g;
-    const sentences = (text.match(sentenceRegex) || []).length || (text.trim()? 1: 0);
-
-    // tokens
-    const tokenRegex = /[A-Za-z0-9'’]+/g;
-    const tokens = (text.match(tokenRegex) || [])
-      .filter(tok => countNumbers || !/^\d+$/.test(tok));
-    const norm = (s: string) => (caseSensitive? s : s.toLowerCase());
-    const filteredTokens = tokens.map(norm).filter(tok => ignoreStopwords? !STOPWORDS.has(tok) : true);
-    const words = filteredTokens.length;
-    const uniqueWords = new Set(filteredTokens).size;
-    const avgWordLength = words ? Math.round((filteredTokens.reduce((sum, w)=> sum + w.length, 0) / words) * 10) / 10 : 0;
-    const longestWord = filteredTokens.reduce((acc,w)=> w.length>acc.length? w: acc, '');
-
-    // longest sentence by word count
-    const sentenceParts = text.split(/(?<=[.!?])\s+/);
-    const longestSentenceWords = sentenceParts.reduce((m, s)=>{
-      const wc = (s.match(tokenRegex) || []).length;
-      return Math.max(m, wc);
-    }, 0);
-
-    const readingTimeMinutes = Math.max(1, Math.ceil(words / 200));
-    const speakingTimeMinutes = Math.max(1, Math.ceil(words / 130));
-    const estimatedPages = Math.max(1, Math.ceil(words / 500));
-
-    // word frequencies
-    const freqMap = new Map<string, number>();
-    for (const w of filteredTokens) freqMap.set(w, (freqMap.get(w) || 0) + 1);
-    const topWords = Array.from(freqMap.entries()).map(([word,count])=>({word,count})).sort((a,b)=> b.count - a.count).slice(0, 50);
-
-    // char frequencies (non-space)
-    const charFreq: Record<string, number> = {};
-    for (const ch of text) {
-      if (/\s/.test(ch)) continue;
-      const c = caseSensitive? ch : ch.toLowerCase();
-      charFreq[c] = (charFreq[c] || 0) + 1;
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, text);
+    } catch {
+      // Storage unavailable (private window): the draft just isn't kept.
     }
+  }, [text]);
 
-    return { characters, charactersNoSpaces, words, uniqueWords, sentences, paragraphs, lines, avgWordLength, longestWord, longestSentenceWords, readingTimeMinutes, speakingTimeMinutes, estimatedPages, topWords, charFreq };
-  }, [caseSensitive, ignoreStopwords, countNumbers]);
+  const stats = useMemo(() => computeStats(deferred, opts), [deferred, opts]);
+  const selected = selection[1] > selection[0] ? text.slice(selection[0], selection[1]) : '';
+  const selStats = useMemo(() => (selected.trim() ? computeStats(selected, opts) : null), [selected, opts]);
 
-  // persist input
-  useEffect(()=>{ localStorage.setItem('textstats.input', inputText); }, [inputText]);
-
-  // debounce compute global stats
-  useEffect(()=>{
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(()=>{
-      if (!inputText.trim()) { setStats(null); return; }
-      setStats(computeStats(inputText));
-      // update selection stats as well
-      const {start,end} = selection;
-      if (start !== end) {
-        const sub = inputText.slice(Math.min(start,end), Math.max(start,end));
-        setSelStats(sub.trim()? computeStats(sub) : null);
-      } else {
-        setSelStats(null);
-      }
-    }, debounceMs);
-    return ()=> { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [inputText, computeStats, selection, debounceMs]);
-
-  // selection tracking
-  const onSelect = () => {
-    if (!textRef.current) return;
-    setSelection({ start: textRef.current.selectionStart ?? 0, end: textRef.current.selectionEnd ?? 0 });
+  const trackSelection = (el: HTMLTextAreaElement) => setSelection([el.selectionStart ?? 0, el.selectionEnd ?? 0]);
+  const importFile = async (file: File) => {
+    setText((await file.text()).replace(/\r\n?/g, '\n'));
+    setSelection([0, 0]);
   };
 
-  // actions
-  const handleClear = () => { setInputText(''); setStats(null); setSelStats(null); };
-  const buildSummary = () => {
-    if (!stats) return '';
-    return [
-      `Characters: ${stats.characters}`,
-      `Characters (no spaces): ${stats.charactersNoSpaces}`,
-      `Words: ${stats.words} (unique: ${stats.uniqueWords})`,
-      `Sentences: ${stats.sentences}`,
-      `Paragraphs: ${stats.paragraphs}`,
-      `Lines: ${stats.lines}`,
-      `Avg word length: ${stats.avgWordLength}`,
-      `Longest word: ${stats.longestWord || '-'}`,
-      `Longest sentence (words): ${stats.longestSentenceWords}`,
-      `Reading time: ~${stats.readingTimeMinutes} min`,
-      `Speaking time: ~${stats.speakingTimeMinutes} min`,
-      `Estimated pages (~500 wpp): ~${stats.estimatedPages}`,
+  const summary = () =>
+    [
+      `Words: ${n(stats.words)}`,
+      `Characters: ${n(stats.characters)} (${n(stats.charactersNoSpaces)} without spaces)`,
+      `Sentences: ${n(stats.sentences)}`,
+      `Paragraphs: ${n(stats.paragraphs)}`,
+      `Reading time: ${formatDuration(stats.readingSeconds)}`,
+      `Speaking time: ${formatDuration(stats.speakingSeconds)}`,
     ].join('\n');
-  };
-  const handleExportJson = () => {
-    if (!stats) return;
-    const blob = new Blob([JSON.stringify(stats, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'text-stats.json'; a.click(); URL.revokeObjectURL(url);
-  };
-  const handleImportFile = async (file: File) => {
-    const text = await file.text();
-    setInputText(text.replace(/\r\n?/g, '\n'));
-  };
 
-  const charFreqSorted = useMemo(()=> {
-    if (!stats) return [] as Array<[string, number]>;
-    return Object.entries(stats.charFreq).sort((a,b)=> b[1] - a[1]).slice(0, 50);
-  }, [stats]);
+  const headline = [
+    { label: 'Words', value: n(stats.words) },
+    { label: 'Characters', value: n(stats.characters) },
+    { label: 'Reading time', value: formatDuration(stats.readingSeconds) },
+    { label: 'Speaking time', value: formatDuration(stats.speakingSeconds) },
+  ];
+
+  const details = [
+    { label: 'Characters without spaces', value: n(stats.charactersNoSpaces) },
+    { label: 'Sentences', value: n(stats.sentences) },
+    { label: 'Paragraphs', value: n(stats.paragraphs) },
+    { label: 'Lines', value: n(stats.lines) },
+    { label: 'Different words', value: n(stats.uniqueWords) },
+    { label: 'Average word length', value: `${n(stats.avgWordLength)} letters` },
+    { label: 'Longest word', value: stats.longestWord || 'None yet' },
+  ];
 
   return (
     <>
@@ -172,137 +88,172 @@ export default function TextStatisticsPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={ChartBar} title="Text Statistics" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 lg:pb-24">
-            {/* Big heading */}
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Text Statistics</h1>
-              <p className="text-lg text-muted-foreground">Analyse text for counts, reading time, and distributions with live options.</p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Text Statistics">Count words, characters and reading time as you type, and check your text fits the length a post or page allows.</PageIntro>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Input Section */}
-              <Card className="flex flex-col overflow-hidden">
-                <CardHeader>
-                  <CardTitle>Enter Text</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={(e)=> { const f=e.currentTarget.files?.[0]; if (f) void handleImportFile(f); e.currentTarget.value=''; }} />
-                    <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Download className="h-4 w-4 mr-1"/> Import</Button>
-                    <Button variant="outline" size="sm" onClick={handleExportJson} disabled={!stats}><Upload className="h-4 w-4 mr-1"/> Export JSON</Button>
-                    <CopyButton value={buildSummary} label="Copy summary" toastDescription="Summary copied." size="sm" disabled={!stats} />
-                    <ClearButton onClear={handleClear} hasContent={Boolean(inputText)} className="ml-auto" confirmTitle="Clear the text?" confirmDescription="This removes the text you are analysing. It can't be undone." />
-                  </div>
-                  <Textarea
-                    id="textInput"
-                    ref={textRef}
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    onSelect={onSelect}
-                    placeholder="Paste or type your text here..."
-                    className="resize-none min-h-[360px]"
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="caseSensitive" checked={caseSensitive} onCheckedChange={(c)=> setCaseSensitive(Boolean(c))} />
-                      <Label htmlFor="caseSensitive" className="text-sm">Case sensitive</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="ignoreStop" checked={ignoreStopwords} onCheckedChange={(c)=> setIgnoreStopwords(Boolean(c))} />
-                      <Label htmlFor="ignoreStop" className="text-sm">Ignore common stopwords</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="countNums" checked={countNumbers} onCheckedChange={(c)=> setCountNumbers(Boolean(c))} />
-                      <Label htmlFor="countNums" className="text-sm">Count numbers as words</Label>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Results Section */}
-              <Card className="flex flex-col">
-                <CardHeader>
-                  <CardTitle>Results</CardTitle>
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start">
+              <Card className="minimal-card lg:sticky lg:top-20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-headline text-lg">Your text</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {selStats && (
-                    <div className="rounded-md border p-3 text-xs">
-                      <div className="font-medium mb-1">Selection</div>
-                      <div className="grid grid-cols-2 gap-2 text-muted-foreground">
-                        <div>Chars: <span className="text-foreground font-medium">{selStats.characters}</span></div>
-                        <div>Words: <span className="text-foreground font-medium">{selStats.words}</span></div>
-                        <div>Sentences: <span className="text-foreground font-medium">{selStats.sentences}</span></div>
-                        <div>Reading: <span className="text-foreground font-medium">~{selStats.readingTimeMinutes} min</span></div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept=".txt,.md,text/plain,text/markdown"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.currentTarget.files?.[0];
+                        if (f) void importFile(f);
+                        e.currentTarget.value = '';
+                      }}
+                    />
+                    <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                      <UploadSimple className="h-4 w-4" /> Open a text file
+                    </Button>
+                    <CopyButton value={summary} label="Copy summary" size="sm" toastTitle="Copied" toastDescription="The summary is on your clipboard." disabled={!text.trim()} />
+                    <ClearButton
+                      onClear={() => {
+                        setText('');
+                        setSelection([0, 0]);
+                      }}
+                      hasContent={Boolean(text.trim())}
+                      className="ml-auto"
+                      confirmTitle="Clear your text?"
+                      confirmDescription="This removes the text you entered. It can't be undone."
+                      confirmLabel="Clear text"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="stats-input" className="sr-only">Text to analyse</Label>
+                    <Textarea
+                      id="stats-input"
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      onSelect={(e) => trackSelection(e.currentTarget)}
+                      placeholder="Paste or type your text here…"
+                      className="min-h-[320px] resize-y text-base sm:text-sm"
+                    />
+                    <p className="min-h-4 text-xs text-muted-foreground tabular-nums" aria-live="polite">
+                      {selStats ? `Selection: ${n(selStats.words)} ${selStats.words === 1 ? 'word' : 'words'} · ${n(selStats.characters)} characters` : 'Select part of the text to count just that part.'}
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Switch id="stats-numbers" checked={opts.countNumbers} onCheckedChange={(v) => setOpts((p) => ({ ...p, countNumbers: v }))} className="mt-0.5" />
+                      <Label htmlFor="stats-numbers" className="cursor-pointer font-normal">Count numbers as words</Label>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Switch id="stats-common" checked={opts.ignoreCommonWords} onCheckedChange={(v) => setOpts((p) => ({ ...p, ignoreCommonWords: v }))} className="mt-0.5" aria-describedby="stats-common-hint" />
+                      <div>
+                        <Label htmlFor="stats-common" className="cursor-pointer font-normal">Leave everyday words out of top words</Label>
+                        <p id="stats-common-hint" className="text-xs text-muted-foreground">Skips words like “the”, “and”, “yang” and “dan”. The word count is unaffected.</p>
                       </div>
                     </div>
-                  )}
-
-                  {stats ? (
-                    <Tabs defaultValue="overview" className="w-full">
-                      <TabsList>
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="words">Top words</TabsTrigger>
-                        <TabsTrigger value="chars">Characters</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="overview" className="pt-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <StatCard icon={TextAa} label="Characters (incl. spaces)" value={stats.characters} />
-                          <StatCard icon={TextStrikethrough} label="Characters (no spaces)" value={stats.charactersNoSpaces} />
-                          <StatCard icon={TextAa} label="Words" value={`${stats.words} (unique ${stats.uniqueWords})`} />
-                          <StatCard icon={Eye} label="Sentences" value={stats.sentences} />
-                          <StatCard icon={Note} label="Paragraphs" value={stats.paragraphs} />
-                          <StatCard icon={Hash} label="Lines" value={stats.lines} />
-                          <StatCard icon={TextAa} label="Avg word length" value={stats.avgWordLength} />
-                          <StatCard icon={TextAa} label="Longest word" value={stats.longestWord || '-'} />
-                          <StatCard icon={TextAa} label="Longest sentence (words)" value={stats.longestSentenceWords} />
-                          <StatCard icon={Clock} label="Reading time" value={`~${stats.readingTimeMinutes} min`} />
-                          <StatCard icon={Clock} label="Speaking time" value={`~${stats.speakingTimeMinutes} min`} />
-                          <StatCard icon={ChartBar} label="Estimated pages (~500 wpp)" value={`~${stats.estimatedPages}`} />
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="words" className="pt-4">
-                        {stats.topWords.length ? (
-                          <div className="space-y-2">
-                            {stats.topWords.slice(0, 50).map((w)=> (
-                              <div key={w.word} className="flex items-center justify-between rounded-md border px-3 py-2">
-                                <div className="font-mono text-sm">{w.word}</div>
-                                <div className="text-sm text-muted-foreground">{w.count}</div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-sm text-muted-foreground">No words after filters.</div>
-                        )}
-                      </TabsContent>
-                      <TabsContent value="chars" className="pt-4">
-                        {charFreqSorted.length ? (
-                          <div className="space-y-3">
-                            {charFreqSorted.map(([ch,count])=> (
-                              <div key={ch} className="space-y-1">
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="font-mono">{JSON.stringify(ch)}</span>
-                                  <span className="text-muted-foreground">{count}</span>
-                                </div>
-                                <Progress value={Math.min(100, (count / charFreqSorted[0][1]) * 100)} />
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-sm text-muted-foreground">No characters counted.</div>
-                        )}
-                      </TabsContent>
-                    </Tabs>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      <div className="text-center">
-                        <TextAa className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Enter text to see statistics</p>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
+
+              <div className="space-y-6">
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">At a glance</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <dl className="grid grid-cols-2 gap-3">
+                      {headline.map((s) => (
+                        <div key={s.label} className="rounded-md bg-muted p-3">
+                          <dt className="text-xs text-muted-foreground">{s.label}</dt>
+                          <dd className="font-headline text-2xl font-semibold tabular-nums">{s.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <dl className="divide-y divide-border text-sm">
+                      {details.map((d) => (
+                        <div key={d.label} className="flex items-baseline justify-between gap-4 py-2">
+                          <dt className="text-muted-foreground">{d.label}</dt>
+                          <dd className="min-w-0 break-all text-right font-medium tabular-nums">{d.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p className="text-xs text-muted-foreground">Times assume reading at about 200 words a minute and speaking at about 130.</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">Will it fit?</CardTitle>
+                    <p className="text-sm text-muted-foreground">Your {n(stats.characters)} characters against common limits.</p>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3">
+                      {LIMITS.map((l) => {
+                        const over = stats.characters - l.max;
+                        const pct = Math.min(100, (stats.characters / l.max) * 100);
+                        return (
+                          <li key={l.id} className="space-y-1">
+                            <div className="flex items-baseline justify-between gap-3 text-sm">
+                              <span>{l.label}</span>
+                              <span className={cn('tabular-nums', over > 0 ? 'font-medium text-warning' : 'text-muted-foreground')}>
+                                {over > 0 ? `${n(over)} over` : `${n(-over)} left`} <span className="text-muted-foreground">/ {n(l.max)}</span>
+                              </span>
+                            </div>
+                            <div className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+                              <div className={cn('h-full rounded-full', over > 0 ? 'bg-warning' : 'bg-primary')} style={{ width: `${pct}%` }} />
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <p className="mt-4 text-xs text-muted-foreground">Counted as plain characters. Some platforms count links and emoji differently, and they change their limits from time to time.</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">Top words</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {stats.topWords.length ? (
+                      <ol className="space-y-1.5 text-sm">
+                        {stats.topWords.slice(0, 10).map((w, i) => (
+                          <li key={w.word} className="flex items-center gap-3">
+                            <span className="w-5 text-right text-xs text-muted-foreground tabular-nums">{i + 1}</span>
+                            <span className="min-w-0 flex-1 break-all font-medium">{w.word}</span>
+                            <span className="relative h-1.5 w-24 overflow-hidden rounded-full bg-muted" aria-hidden>
+                              <span className="absolute inset-y-0 left-0 rounded-full bg-primary" style={{ width: `${(w.count / stats.topWords[0].count) * 100}%` }} />
+                            </span>
+                            <span className="w-10 text-right tabular-nums text-muted-foreground">{n(w.count)}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">The words you use most will show here.</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">Readability</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {stats.readingEase == null ? (
+                      <p className="text-muted-foreground">Write at least 30 words to get a readability score.</p>
+                    ) : (
+                      <p>
+                        <span className="font-headline text-2xl font-semibold tabular-nums">{stats.readingEase}</span>{' '}
+                        <span className="font-medium">{easeLabel(stats.readingEase)}</span>
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Flesch reading ease, from 0 (very hard) to 100 (very easy). It's built for English, so treat it as a rough guide for other languages.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
@@ -311,16 +262,3 @@ export default function TextStatisticsPage() {
     </>
   );
 }
-
-function StatCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-center p-4 rounded-lg border bg-card shadow-sm">
-      <Icon className="h-6 w-6 text-muted-foreground mr-4 shrink-0" />
-      <div>
-        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
-        <p className="text-xl font-semibold text-foreground">{value}</p>
-      </div>
-    </div>
-  );
-}
-

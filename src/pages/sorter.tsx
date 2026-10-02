@@ -1,208 +1,140 @@
-import { ClearButton } from '@/components/ui/clear-button';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { CopyButton } from '@/components/ui/copy-button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useToast } from '@/hooks/use-toast';
-import { SortAscending, TextAa, X, Upload, Download, Shuffle, ArrowsLeftRight, Info } from 'phosphor-react';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
-import { SidebarContent } from "@/components/sidebar-content";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/page-header";
-
+import { useMemo, useRef, useState } from 'react';
+import {
+  ArrowCounterClockwise,
+  ArrowsDownUp,
+  Eraser,
+  Copy as CopyIcon,
+  DownloadSimple,
+  ListNumbers,
+  Rows,
+  Shuffle,
+  SortAscending,
+  TextAlignLeft,
+  UploadSimple,
+} from 'phosphor-react';
+import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
+import { SidebarContent } from '@/components/sidebar-content';
+import { PageHeader } from '@/components/page-header';
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { ClearButton } from '@/components/ui/clear-button';
+import { CopyButton } from '@/components/ui/copy-button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NumberInput } from '@/components/ui/number-input';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils';
+import {
+  joinItems,
+  listStats,
+  numberLines,
+  removeDuplicates,
+  removeEmpty,
+  reverseLines,
+  sortLines,
+  splitItems,
+  splitLines,
+  trimLines,
+  type Result,
+  type SortBy,
+} from '@/lib/list-tools';
 import { shuffleInPlace } from '@/lib/random';
+
+const SORT_BY: { id: SortBy; label: string }[] = [
+  { id: 'text', label: 'Text' },
+  { id: 'number', label: 'Number' },
+  { id: 'length', label: 'Length' },
+  { id: 'column', label: 'Column' },
+];
+
+const SEPARATORS: { id: string; label: string }[] = [
+  { id: ',', label: 'Comma' },
+  { id: ';', label: 'Semicolon' },
+  { id: '\t', label: 'Tab' },
+  { id: ' ', label: 'Space' },
+];
+
+const ORDER_LABELS: Record<SortBy, [string, string]> = {
+  text: ['A to Z', 'Z to A'],
+  number: ['Smallest first', 'Largest first'],
+  length: ['Shortest first', 'Longest first'],
+  column: ['Ascending', 'Descending'],
+};
+
 export default function SorterPage() {
-  const { toast } = useToast();
-  const [inputText, setInputText] = useState('');
-  const [outputText, setOutputText] = useState('');
-  const [sortType, setSortType] = useState<'alpha' | 'numeric' | 'length' | 'column'>('alpha');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [text, setText] = useState('');
+  const [history, setHistory] = useState<string[]>([]);
+  const [message, setMessage] = useState('');
+  const [by, setBy] = useState<SortBy>('text');
+  const [descending, setDescending] = useState(false);
+  const [natural, setNatural] = useState(true);
   const [caseSensitive, setCaseSensitive] = useState(false);
-  const [removeDuplicates, setRemoveDuplicates] = useState(false);
-  const [autoSort, setAutoSort] = useState(true);
-  const [trimLines, setTrimLines] = useState(true);
-  const [removeEmpty, setRemoveEmpty] = useState(false);
-  const [naturalSort, setNaturalSort] = useState(true); // applies to alpha sort
-  // Column sort controls
-  const [columnIndex, setColumnIndex] = useState<number>(1);
-  const [columnNumeric, setColumnNumeric] = useState<boolean>(false);
-  const [delimiter, setDelimiter] = useState<'auto'|'comma'|'tab'|'pipe'|'custom'>('auto');
-  const [customDelimiter, setCustomDelimiter] = useState<string>('');
+  const [column, setColumn] = useState('1');
+  const [delimiter, setDelimiter] = useState('');
+  const [separator, setSeparator] = useState(',');
+  const fileRef = useRef<HTMLInputElement>(null);
+  // True while the person is typing; the first keystroke after an action saves an undo step,
+  // so Undo brings back their edits' starting point instead of discarding them.
+  const [typing, setTyping] = useState(false);
 
-  const [stats, setStats] = useState<{inCount:number; outCount:number; uniqueCount:number}>({inCount:0,outCount:0,uniqueCount:0});
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const lines = useMemo(() => splitLines(text), [text]);
+  const stats = useMemo(() => listStats(lines, caseSensitive), [lines, caseSensitive]);
+  const hasText = text.trim() !== '';
 
-  const naturalCompare = (a: string, b: string) => {
-    // Split into numeric and non-numeric parts
-    const ax = a.match(/(\d+|\D+)/g) || [a];
-    const bx = b.match(/(\d+|\D+)/g) || [b];
-    const len = Math.max(ax.length, bx.length);
-    for (let i = 0; i < len; i++) {
-      const as = ax[i] ?? '';
-      const bs = bx[i] ?? '';
-      const an = /^\d+$/.test(as) ? Number(as) : NaN;
-      const bn = /^\d+$/.test(bs) ? Number(bs) : NaN;
-      if (!Number.isNaN(an) && !Number.isNaN(bn)) {
-        if (an !== bn) return an - bn;
-      } else {
-        const cmp = as.localeCompare(bs);
-        if (cmp !== 0) return cmp;
-      }
-    }
-    return 0;
+  /** Applies an action to the list, keeping the previous version for Undo. */
+  const apply = (fn: (lines: string[]) => Result) => {
+    if (!hasText) return;
+    const r = fn(lines);
+    const next = r.lines.join('\n');
+    if (next !== text) setHistory((h) => [...h.slice(-49), text]);
+    setTyping(false);
+    setText(next);
+    setMessage(r.message);
   };
 
-  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const getDelimiterRegex = useCallback((sample: string): RegExp => {
-    if (delimiter === 'comma') return /,/g;
-    if (delimiter === 'tab') return /\t/g;
-    if (delimiter === 'pipe') return /\|/g;
-    if (delimiter === 'custom') {
-      const d = customDelimiter || ',';
-      return new RegExp(escapeRegExp(d), 'g');
-    }
-    // auto detect on sample
-    if (sample.includes('\t')) return /\t/g;
-    if (sample.includes(',')) return /,/g;
-    if (sample.includes('|')) return /\|/g;
-    return /,/g;
-  }, [delimiter, customDelimiter]);
-
-  const buildProcessedLines = useCallback((source: string) => {
-    let lines = source.split('\n');
-    const inCount = lines.length;
-    if (trimLines) lines = lines.map(l => l.trim());
-    if (removeEmpty) lines = lines.filter(l => l.length>0);
-    if (removeDuplicates) {
-      const seen = new Map<string,string>();
-      const unique: string[] = [];
-      for (const line of lines) {
-        const key = caseSensitive ? line : line.toLowerCase();
-        if (!seen.has(key)) { seen.set(key, line); unique.push(line); }
-      }
-      lines = unique;
-    }
-    return { lines, inCount };
-  }, [trimLines, removeEmpty, removeDuplicates, caseSensitive]);
-
-  const sortLines = useCallback((lines: string[]) => {
-    const sample = lines[0] ?? '';
-    const delim = getDelimiterRegex(sample);
-    const idx = Math.max(1, columnIndex) - 1;
-    const pick = (line: string) => {
-      if (sortType === 'column') {
-        const cols = line.split(delim);
-        let v = cols[idx] ?? '';
-        if (!caseSensitive) v = v.toLowerCase();
-        return v;
-      }
-      const v = caseSensitive ? line : line.toLowerCase();
-      if (sortType === 'length') return String(v.length).padStart(10, '0') + '|' + v; // stable-ish key
-      return v;
-    };
-    const cmp = (a: string, b: string) => {
-      if (sortType === 'numeric') {
-        const na = parseFloat(caseSensitive ? a : a.toLowerCase());
-        const nb = parseFloat(caseSensitive ? b : b.toLowerCase());
-        if (!isNaN(na) && !isNaN(nb)) return na - nb;
-      }
-      if (sortType === 'column' && columnNumeric) {
-        const na = parseFloat(pick(a));
-        const nb = parseFloat(pick(b));
-        if (!isNaN(na) && !isNaN(nb)) return na - nb;
-      }
-      const va = pick(a);
-      const vb = pick(b);
-      const base = (sortType === 'alpha' || sortType === 'column') && naturalSort ? naturalCompare(va, vb) : va.localeCompare(vb);
-      if (base !== 0) return base;
-      // stable tie-breaker by original index if available
-      return 0;
-    };
-    const arr = [...lines];
-    arr.sort((a,b)=> sortOrder==='asc'? cmp(a,b) : -cmp(a,b));
-    return arr;
-  }, [sortType, sortOrder, caseSensitive, columnNumeric, columnIndex, naturalSort, getDelimiterRegex]);
-
-  const handleSort = useCallback(() => {
-    if (!inputText.trim()) {
-      setOutputText('');
-      toast({ title: 'Input is empty', description: 'Please enter text to sort.' });
-      return;
-    }
-    const { lines, inCount } = buildProcessedLines(inputText);
-    const sorted = sortLines(lines);
-    const out = sorted.join('\n');
-    setOutputText(out);
-    setStats({inCount, outCount: sorted.length, uniqueCount: sorted.length});
-    toast({ title: 'Text Sorted!', description: `Sorted ${sorted.length} lines.` });
-  }, [inputText, buildProcessedLines, sortLines, toast]);
-  
-
-  const handleClear = useCallback(() => {
-    setInputText('');
-    setOutputText('');
-    setStats({inCount:0,outCount:0,uniqueCount:0});
-  }, []);
-
-  const handleShuffle = () => {
-    const { lines, inCount } = buildProcessedLines(inputText);
-    shuffleInPlace(lines);
-    setOutputText(lines.join('\n'));
-    setStats({inCount, outCount: lines.length, uniqueCount: lines.length});
-    toast({ title: 'Shuffled!', description: `Reordered ${lines.length} lines.` });
+  /** Typing: the first keystroke after an action or Undo saves an undo step. */
+  const edit = (next: string) => {
+    if (!typing && text !== '') setHistory((h) => [...h.slice(-49), text]);
+    setTyping(true);
+    setText(next);
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([outputText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'sorted.txt'; a.click();
-    URL.revokeObjectURL(url);
+  const undo = () => {
+    if (!history.length) return;
+    setTyping(false);
+    setText(history[history.length - 1]);
+    setHistory((h) => h.slice(0, -1));
+    setMessage('Undid the last change.');
   };
 
-  const handleUpload = async (file: File) => {
-    const text = await file.text();
-    setInputText(text);
-    toast({ title: 'File loaded', description: `${file.name} (${text.split('\n').length} lines)` });
+  const sort = () =>
+    apply((l) => sortLines(l, { by, descending, natural, caseSensitive, column: Math.max(1, Number(column) || 1), delimiter }));
+
+  const shuffle = () =>
+    apply((l) => ({ lines: shuffleInPlace([...l]), message: `Shuffled ${l.length.toLocaleString()} ${l.length === 1 ? 'line' : 'lines'}.` }));
+
+  const importFile = async (file: File) => {
+    const t = (await file.text()).replace(/\r\n?/g, '\n');
+    setHistory((h) => (text ? [...h.slice(-49), text] : h));
+    setTyping(false);
+    setText(t);
+    setMessage(`Opened ${file.name}.`);
   };
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key.toLowerCase() === 'enter') { e.preventDefault(); handleSort(); }
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') { e.preventDefault(); void navigator.clipboard.writeText(outputText); toast({ title: 'Copied to clipboard!' }); }
-      if (e.ctrlKey && e.key.toLowerCase() === 'b') { e.preventDefault(); const i=inputText; const o=outputText; setInputText(o); setOutputText(i); }
-      if (e.ctrlKey && e.key.toLowerCase() === 'l') { e.preventDefault(); handleClear(); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [inputText, outputText, handleSort, toast, handleClear]);
+  const download = () => downloadBlob(new Blob([text], { type: 'text/plain;charset=utf-8' }), 'list.txt', isIOSOrSafari());
 
-  // Auto sort with debounce
-  useEffect(() => {
-    if (!autoSort) return;
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      if (inputText.trim()) {
-  // Run silently without toasts using shared helpers
-  const { lines, inCount } = buildProcessedLines(inputText);
-  const sorted = sortLines(lines);
-  setOutputText(sorted.join('\n'));
-  setStats({inCount, outCount: sorted.length, uniqueCount: sorted.length});
-      } else {
-        setOutputText('');
-        setStats({inCount:0,outCount:0,uniqueCount:0});
-      }
-    }, 200);
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, [inputText, sortType, sortOrder, caseSensitive, removeDuplicates, trimLines, removeEmpty, naturalSort, autoSort, buildProcessedLines, sortLines]);
+  const tidyActions: { label: string; icon: typeof Eraser; run: () => void }[] = [
+    { label: 'Remove duplicates', icon: CopyIcon, run: () => apply((l) => removeDuplicates(l, caseSensitive)) },
+    { label: 'Remove empty lines', icon: Rows, run: () => apply(removeEmpty) },
+    { label: 'Tidy spaces', icon: Eraser, run: () => apply(trimLines) },
+    { label: 'Reverse order', icon: ArrowsDownUp, run: () => apply(reverseLines) },
+    { label: 'Shuffle', icon: Shuffle, run: shuffle },
+    { label: 'Number lines', icon: ListNumbers, run: () => apply(numberLines) },
+  ];
 
   return (
     <>
@@ -211,151 +143,163 @@ export default function SorterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-  <PageHeader icon={SortAscending} title="Sorter" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
-            {/* Big heading */}
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Sorter</h1>
-              <p className="text-lg text-muted-foreground">Sort lines of text alphabetically, numerically, by length, or by any column.</p>
-            </div>
+        <PageHeader icon={SortAscending} title="Sorter" />
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Sorter">Paste a list, one item per line, and sort it, tidy it or turn it into a comma-separated line. Every change can be undone.</PageIntro>
 
-            <div className="grid gap-8 lg:grid-cols-2">
-              {/* Left: Input & Controls */}
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
               <Card className="minimal-card">
-                <CardHeader className="pb-2">
-                  <CardTitle className="font-headline text-lg tracking-tight">Input & Controls</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-headline text-lg">Your list</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <input ref={fileInputRef} type="file" accept=".txt,.csv,.tsv,text/plain" className="hidden" onChange={(e)=>{ const f=e.currentTarget.files?.[0]; if (f) void handleUpload(f); e.currentTarget.value=''; }} />
-                    <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}><Upload className="h-4 w-4 mr-1"/> Upload file</Button>
-                    <ClearButton onClear={handleClear} hasContent={Boolean(inputText)} confirmTitle="Clear the list?" confirmDescription="This removes the lines you entered. It can't be undone." />
-                    <div className="text-sm text-muted-foreground ml-auto">Lines: <span className="font-medium">{stats.inCount}</span></div>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept=".txt,.csv,text/plain,text/csv"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.currentTarget.files?.[0];
+                        if (f) void importFile(f);
+                        e.currentTarget.value = '';
+                      }}
+                    />
+                    <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                      <UploadSimple className="h-4 w-4" /> Open a file
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={undo} disabled={!history.length}>
+                      <ArrowCounterClockwise className="h-4 w-4" /> Undo
+                    </Button>
+                    <ClearButton
+                      onClear={() => {
+                        setHistory((h) => [...h.slice(-49), text]);
+                        setText('');
+                        setMessage('Cleared the list. Undo brings it back.');
+                      }}
+                      hasContent={hasText}
+                      className="ml-auto"
+                      confirmTitle="Clear your list?"
+                      confirmDescription="This empties the list. You can bring it back with Undo."
+                      confirmLabel="Clear list"
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="inputText">Input (one item per line)</Label>
-                    <Textarea id="inputText" value={inputText} onChange={(e)=> setInputText(e.target.value)} placeholder="Enter items to sort, one per line..." className="min-h-[320px] resize-none font-code text-base" />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="sortType">Sort Type</Label>
-                      <Select value={sortType} onValueChange={(v: 'alpha' | 'numeric' | 'length' | 'column')=> setSortType(v)}>
-                        <SelectTrigger id="sortType" className="h-11"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="alpha">Alphabetical</SelectItem>
-                          <SelectItem value="numeric">Numerical</SelectItem>
-                          <SelectItem value="length">By Length</SelectItem>
-                          <SelectItem value="column">By Column</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="sortOrder">Order</Label>
-                      <Select value={sortOrder} onValueChange={(v: 'asc' | 'desc')=> setSortOrder(v)}>
-                        <SelectTrigger id="sortOrder" className="h-11"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="asc">Ascending</SelectItem>
-                          <SelectItem value="desc">Descending</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {sortType === 'column' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="columnIndex">Column (1‑based)</Label>
-                        <input id="columnIndex" type="number" min={1} value={columnIndex} onChange={(e)=> setColumnIndex(Math.max(1, Number(e.currentTarget.value)||1))} className="h-11 rounded-md border bg-background px-3 text-sm" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Delimiter</Label>
-                        <Select value={delimiter} onValueChange={(v: 'auto'|'comma'|'tab'|'pipe'|'custom')=> setDelimiter(v)}>
-                          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="auto">Auto-detect</SelectItem>
-                            <SelectItem value="comma">Comma (,)</SelectItem>
-                            <SelectItem value="tab">Tab (\t)</SelectItem>
-                            <SelectItem value="pipe">Pipe (|)</SelectItem>
-                            <SelectItem value="custom">Custom…</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="customDelim">{delimiter==='custom'? 'Custom delimiter' : 'Options'}</Label>
-                        {delimiter==='custom' ? (
-                          <input id="customDelim" value={customDelimiter} onChange={(e)=> setCustomDelimiter(e.currentTarget.value)} placeholder="," className="h-11 rounded-md border bg-background px-3 text-sm" />
-                        ) : (
-                          <div className="flex items-center gap-2 h-11">
-                            <Checkbox id="columnNumeric" checked={columnNumeric} onCheckedChange={(c)=> setColumnNumeric(Boolean(c))} />
-                            <Label htmlFor="columnNumeric" className="font-normal">Treat column as numeric</Label>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Checkbox id="autoSort" checked={autoSort} onCheckedChange={(c)=> setAutoSort(Boolean(c))} />
-                        <Label htmlFor="autoSort" className="font-normal">Auto sort as you type</Label>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Checkbox id="naturalSort" checked={naturalSort} onCheckedChange={(c)=> setNaturalSort(Boolean(c))} />
-                        <Label htmlFor="naturalSort" className="font-normal">Natural sort (1, 2, 10)</Label>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Checkbox id="caseSensitive" checked={caseSensitive} onCheckedChange={(c)=> setCaseSensitive(Boolean(c))} />
-                        <Label htmlFor="caseSensitive" className="font-normal flex items-center"><TextAa className="mr-2 h-4 w-4 text-muted-foreground" /> Case Sensitive</Label>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Checkbox id="trimLines" checked={trimLines} onCheckedChange={(c)=> setTrimLines(Boolean(c))} />
-                        <Label htmlFor="trimLines" className="font-normal">Trim each line</Label>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Checkbox id="removeEmpty" checked={removeEmpty} onCheckedChange={(c)=> setRemoveEmpty(Boolean(c))} />
-                        <Label htmlFor="removeEmpty" className="font-normal">Remove empty lines</Label>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Checkbox id="removeDuplicates" checked={removeDuplicates} onCheckedChange={(c)=> setRemoveDuplicates(Boolean(c))} />
-                        <Label htmlFor="removeDuplicates" className="font-normal flex items-center"><X className="mr-2 h-4 w-4 text-muted-foreground" /> Remove Duplicates</Label>
-                      </div>
+                  <Label htmlFor="sorter-input" className="sr-only">Your list, one item per line</Label>
+                  <Textarea
+                    id="sorter-input"
+                    value={text}
+                    onChange={(e) => edit(e.target.value)}
+                    placeholder={'One item per line, e.g.\nKuala Lumpur\nPenang\nJohor Bahru'}
+                    spellCheck={false}
+                    className="min-h-[360px] resize-y font-code text-base sm:text-sm"
+                  />
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs text-muted-foreground tabular-nums">
+                    <span>
+                      {stats.items.toLocaleString()} {stats.items === 1 ? 'item' : 'items'} · {stats.unique.toLocaleString()} different
+                      {stats.duplicates > 0 && <span className="text-warning"> · {stats.duplicates.toLocaleString()} {stats.duplicates === 1 ? 'duplicate' : 'duplicates'}</span>}
+                    </span>
+                    <div className="flex gap-2">
+                      <CopyButton value={() => text} size="sm" disabled={!hasText} toastTitle="Copied" toastDescription="Your list is on the clipboard." />
+                      <Button variant="outline" size="sm" onClick={download} disabled={!hasText}>
+                        <DownloadSimple className="h-4 w-4" /> Download .txt
+                      </Button>
                     </div>
                   </div>
+                  <output className="block min-h-5 text-sm text-success" aria-live="polite">{message}</output>
+                </CardContent>
+              </Card>
 
-                  <div className="flex flex-wrap items-center gap-3 pt-2">
-                    {!autoSort && (
-                      <Button onClick={handleSort} className="h-10"><SortAscending className="mr-2 h-4 w-4"/> Sort</Button>
+              <div className="space-y-6 lg:sticky lg:top-20">
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">Sort</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <fieldset>
+                      <legend className="mb-2 text-sm font-medium">Sort by</legend>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SORT_BY.map((s) => (
+                          <Chip key={s.id} active={by === s.id} onClick={() => setBy(s.id)}>{s.label}</Chip>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <fieldset>
+                      <legend className="mb-2 text-sm font-medium">Order</legend>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Chip active={!descending} onClick={() => setDescending(false)}>{ORDER_LABELS[by][0]}</Chip>
+                        <Chip active={descending} onClick={() => setDescending(true)}>{ORDER_LABELS[by][1]}</Chip>
+                      </div>
+                    </fieldset>
+                    {by === 'column' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="sorter-column">Column</Label>
+                          <NumberInput id="sorter-column" value={column} onValueChange={setColumn} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="sorter-delimiter">Separated by</Label>
+                          <Input id="sorter-delimiter" value={delimiter} onChange={(e) => setDelimiter(e.target.value)} placeholder="Detect" maxLength={3} />
+                        </div>
+                      </div>
                     )}
-                    <Button variant="outline" onClick={()=> { setSortOrder(o=> o==='asc'? 'desc':'asc'); if (!autoSort) setTimeout(()=> handleSort(), 0); }} className="h-10">Reverse order</Button>
-                    <Button variant="outline" onClick={handleShuffle} className="h-10"><Shuffle className="mr-2 h-4 w-4"/> Shuffle</Button>
-                  </div>
-                </CardContent>
-              </Card>
+                    {by === 'number' && <p className="text-xs text-muted-foreground">Uses the first number on each line, so “RM 1,250” counts as 1250. Lines without a number go last.</p>}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Switch id="sorter-natural" checked={natural} onCheckedChange={setNatural} />
+                        <Label htmlFor="sorter-natural" className="cursor-pointer font-normal">Numbers in order (“item 2” before “item 10”)</Label>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Switch id="sorter-case" checked={caseSensitive} onCheckedChange={setCaseSensitive} />
+                        <Label htmlFor="sorter-case" className="cursor-pointer font-normal">Match capitals (for sorting and duplicates)</Label>
+                      </div>
+                    </div>
+                    <Button onClick={sort} disabled={!hasText} className="w-full">
+                      <SortAscending className="h-4 w-4" /> {hasText ? `Sort ${stats.lines.toLocaleString()} ${stats.lines === 1 ? 'line' : 'lines'}` : 'Sort'}
+                    </Button>
+                  </CardContent>
+                </Card>
 
-              {/* Right: Output */}
-              <Card className="minimal-card">
-                <CardHeader className="pb-2">
-                  <CardTitle className="font-headline text-lg tracking-tight">Output</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button variant="outline" size="sm" onClick={()=> { if (outputText) { setInputText(outputText); toast({ title: 'Replaced input with output' }); } }}><ArrowsLeftRight className="h-4 w-4 mr-1"/> Use as Input</Button>
-                    <Button variant="outline" size="sm" onClick={handleDownload} disabled={!outputText}><Download className="h-4 w-4 mr-1"/> Download</Button>
-                    <CopyButton value={() => outputText} label="Copy" size="sm" disabled={!outputText} toastTitle="Copied to clipboard!" />
-                    <div className="text-sm text-muted-foreground ml-auto">Lines: <span className="font-medium">{stats.outCount}</span></div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="outputText">Sorted Output</Label>
-                    <Textarea id="outputText" value={outputText} readOnly placeholder="Sorted text will appear here..." className="min-h-[320px] resize-none font-code bg-muted/30 text-base" />
-                  </div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-1.5"><Info className="h-3.5 w-3.5"/> Tip: Use Ctrl+Enter to sort, Ctrl+Shift+C to copy output, Ctrl+B to swap.</div>
-                </CardContent>
-              </Card>
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">Tidy up</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-2">
+                      {tidyActions.map((a) => (
+                        <Button key={a.label} variant="outline" onClick={a.run} disabled={!hasText} className="justify-start">
+                          <a.icon className="h-4 w-4" /> {a.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">Split or join</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <fieldset>
+                      <legend className="mb-2 text-sm font-medium">Separator</legend>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SEPARATORS.map((s) => (
+                          <Chip key={s.label} active={separator === s.id} onClick={() => setSeparator(s.id)}>{s.label}</Chip>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="outline" onClick={() => apply((l) => splitItems(l, separator))} disabled={!hasText} className="justify-start">
+                        <Rows className="h-4 w-4" /> Split into lines
+                      </Button>
+                      <Button variant="outline" onClick={() => apply((l) => joinItems(l, separator))} disabled={!hasText} className="justify-start">
+                        <TextAlignLeft className="h-4 w-4" /> Join into one line
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Turn “a, b, c” into a list, or a list back into “a, b, c” for a spreadsheet or an email.</p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
@@ -364,4 +308,3 @@ export default function SorterPage() {
     </>
   );
 }
-

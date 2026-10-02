@@ -42,16 +42,22 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/unit-converter',
     summary:
-      'Every linear unit is stored as a factor relative to one SI base unit (metre, kilogram, litre, square metre, metre per second). A value is multiplied into the base unit and divided out into the target, so any pair converts consistently.',
+      'Every linear unit is stored as a factor relative to one base unit (metre, kilogram, litre, square metre, metre per second, pascal, joule, second, byte, bit per second). A value is multiplied into the base unit and divided out into the target, so any pair converts consistently.',
     formulas: [
       'result = value × factor(from) ÷ factor(to)',
       '1 yd = 0.9144 m · 1 mi = 1609.344 m · 1 lb = 0.45359237 kg',
-      '1 US gal = 3.785411784 L · 1 acre = 4046.8564224 m² · 1 knot = 1852 m/h',
+      '1 US gal = 3.785411784 L · 1 UK gal = 4.54609 L · 1 acre = 4046.8564224 m² · 1 knot = 1852 m/h',
+      '1 psi = 6894.757 Pa · 1 bar = 100 kPa · 1 atm = 101.325 kPa',
+      '1 kcal = 4.184 kJ · 1 kWh = 3,600 kJ',
       'K = °C + 273.15 · °F = (K − 273.15) × 9/5 + 32',
+      'L/100 km = 100 ÷ (km/L) · km/L = mpg × 1.609344 ÷ gallon in litres',
     ],
     notes: [
       'Imperial and US customary factors are the exact values defined by the 1959 international yard and pound agreement.',
-      'Temperature is not a simple ratio, so it converts through kelvin with an offset.',
+      'Temperature is not a simple ratio, so it converts through kelvin with an offset. Fuel economy in litres per 100 km is the inverse of kilometres per litre.',
+      'Kilocalories use the 4.184 kJ calorie printed on food labels. Tablespoons and teaspoons are metric (15 mL and 5 mL).',
+      'Storage has both decimal units (1 GB = 1,000,000,000 bytes, as drive makers count) and binary ones (1 GiB = 1,073,741,824 bytes, as many computers report).',
+      'A small non-zero answer is never rounded down to 0: below the chosen decimal places it keeps three significant figures.',
     ],
     sources: [
       { label: 'NIST Special Publication 811, Guide for the Use of the SI', url: 'https://www.nist.gov/pml/special-publication-811' },
@@ -61,8 +67,9 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/foot-size-converter',
     summary:
-      'A lookup table of equivalent sizes across US, UK, EU and foot length in centimetres, with separate tables for men and women.',
+      'A lookup table of equivalent sizes across UK, EU, US and foot length in centimetres, with separate tables for men, women and kids.',
     notes: [
+      'From a foot length, the result is the smallest size that fits at least that length, since a shoe shorter than your foot won\'t fit.',
       'Shoe size systems are not defined by one exact formula, and brands differ by half a size or more. Treat the result as a starting point.',
       'Foot length in centimetres (the basis of the Mondopoint system) is the most reliable number to compare.',
     ],
@@ -93,7 +100,11 @@ export const METHODOLOGY: Method[] = [
     summary:
       'A Unix timestamp counts seconds (or milliseconds) since 1970-01-01 00:00:00 UTC. Conversions use your browser\'s clock and time zone for the local view, and UTC for the ISO view.',
     formulas: ['date = 1970-01-01T00:00:00Z + timestamp seconds'],
-    notes: ['As defined by POSIX, leap seconds are not counted, so every day is exactly 86,400 seconds.'],
+    notes: [
+      'As defined by POSIX, leap seconds are not counted, so every day is exactly 86,400 seconds.',
+      'Detect reads 12 or more digits as milliseconds and fewer as seconds. Every timestamp since September 2001 has 10 digits in seconds and 13 in milliseconds.',
+      'ISO week numbers follow ISO 8601: weeks start on Monday, and week 1 is the week with the year\'s first Thursday.',
+    ],
     sources: [
       { label: 'POSIX (IEEE Std 1003.1): Seconds Since the Epoch', url: 'https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap04.html' },
     ],
@@ -102,7 +113,11 @@ export const METHODOLOGY: Method[] = [
     path: '/timezone-converter',
     summary:
       'UTC offsets and daylight-saving rules come from the IANA time zone database built into your browser, read through dayjs\' timezone plugin.',
-    notes: ['Because the rules ship with the browser, an outdated browser can be wrong for zones whose rules changed recently.'],
+    notes: [
+      'Because the rules ship with the browser, an outdated browser can be wrong for zones whose rules changed recently.',
+      'Every zone in the tz database is listed (418), named after its main city, with the country and region from the database\'s zone.tab. Asia/Jerusalem is listed under Palestine.',
+      'Add to calendar sends the selected range in UTC, so each calendar shows it in its owner\'s own time zone. Google and Outlook open in a new tab; the .ics file is a standard iCalendar event.',
+    ],
     sources: [
       { label: 'IANA Time Zone Database', url: 'https://www.iana.org/time-zones' },
       { label: 'City list: kevinroberts/city-timezones', url: 'https://github.com/kevinroberts/city-timezones' },
@@ -157,11 +172,21 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/text-statistics',
     summary:
-      'Words are split on whitespace and sentences on . ! or ?. Reading and speaking times are estimates based on average rates.',
-    formulas: ['Reading time = words ÷ 200 per minute', 'Speaking time = words ÷ 130 per minute'],
-    notes: ['200 wpm is a deliberately conservative silent-reading rate; studies put the adult average around 238 wpm for non-fiction.'],
+      'A word is a run of letters or digits in any script, so Malay, accented and non-Latin text count properly. Sentences end at . ! ? or …, or at a blank line. Reading and speaking times are estimates based on average rates.',
+    formulas: [
+      'Reading time = words ÷ 200 per minute',
+      'Speaking time = words ÷ 130 per minute',
+      'Reading ease = 206.835 − 1.015 × (words ÷ sentences) − 84.6 × (syllables ÷ words)',
+    ],
+    notes: [
+      '200 wpm is a deliberately conservative silent-reading rate; studies put the adult average around 238 wpm for non-fiction.',
+      'The reading ease score is designed for English and uses an approximate syllable count. It needs at least 30 words.',
+      'Length limits are counted as plain characters. Some platforms count links or emoji differently, and they change their limits from time to time.',
+      'Leaving everyday words out of the top words list affects only that list, never the word count.',
+    ],
     sources: [
       { label: 'Brysbaert (2019), How many words do we read per minute?', url: 'https://doi.org/10.1016/j.jml.2019.104047' },
+      { label: 'Flesch (1948), A new readability yardstick', url: 'https://doi.org/10.1037/h0057532' },
     ],
   },
   {
@@ -189,9 +214,14 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/sorter',
     summary:
-      'Alphabetical sorting uses your browser\'s locale-aware comparison. Natural sort compares runs of digits as numbers, so "item 2" comes before "item 10". Shuffle uses Fisher–Yates with your browser\'s secure random generator.',
+      'Text sorting uses your browser\'s locale-aware comparison. With numbers in order on, runs of digits compare as numbers, so "item 2" comes before "item 10". Shuffle uses Fisher–Yates with your browser\'s secure random generator.',
+    notes: [
+      'Sorting by number uses the first number on each line, ignoring thousands separators, so "RM 1,250" sorts as 1250. Lines without a number go last.',
+      'Removing duplicates keeps the first copy of each line and ignores capitals unless Match capitals is on.',
+      'Every change is kept so it can be undone, up to the last 50.',
+    ],
     sources: [
-      { label: 'MDN: String.prototype.localeCompare()', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare' },
+      { label: 'MDN: Intl.Collator', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator' },
       { label: 'MDN: Crypto.getRandomValues()', url: 'https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues' },
     ],
   },
@@ -251,7 +281,12 @@ export const METHODOLOGY: Method[] = [
   },
   {
     path: '/text-case',
-    summary: 'Case changes use your browser\'s Unicode-aware upper- and lower-casing; title and sentence case are built from those rules.',
+    summary: 'Case changes use your browser\'s Unicode-aware upper- and lower-casing, so accented and non-Latin letters convert correctly. Title and sentence case are built from those rules.',
+    notes: [
+      'Smart title case keeps short joining words lowercase in the middle of a line: English ones like "and" and "of", Malay ones like "dan" and "untuk", and the parts of Malaysian names such as "bin", "binti", "a/l" and "a/p".',
+      'Keep acronyms leaves words that already have capitals inside them (IC, KL, iPhone) as written. It switches itself off when most of the text is in capitals, since that is shouting rather than acronyms.',
+      'Code-style cases (camelCase, snake_case and the rest) convert each line separately, so a list of names becomes a list of identifiers.',
+    ],
     sources: [],
   },
 ];

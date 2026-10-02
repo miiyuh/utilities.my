@@ -1,5 +1,7 @@
 // Shared city / timezone dataset used by the timezone comparison and world clock tools.
 
+import { ZONE_ROWS } from './zone-data';
+
 export interface CityZone {
   timezone: string;
   city: string;
@@ -59,8 +61,52 @@ export const CITY_ZONES: CityZone[] = [
   { timezone: 'Pacific/Auckland', city: 'Auckland', country: 'New Zealand', flag: '🇳🇿', lat: -36.8485, lon: 174.7633 },
 ];
 
+/** Flag emoji from a two-letter country code (regional indicator letters). */
+const flagOf = (cc: string) => String.fromCodePoint(...cc.toUpperCase().split('').map((ch) => 0x1f1a5 + ch.charCodeAt(0)));
+
+const regionNames = typeof Intl !== 'undefined' && 'DisplayNames' in Intl ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
+
+/** Country names as people say them; the browser's names cover the rest. */
+const COUNTRY_NAMES: Record<string, string> = {
+  PS: 'Palestine',
+  US: 'United States',
+  GB: 'United Kingdom',
+  KR: 'South Korea',
+  KP: 'North Korea',
+  RU: 'Russia',
+  VN: 'Vietnam',
+  LA: 'Laos',
+  IR: 'Iran',
+  SY: 'Syria',
+  TW: 'Taiwan',
+  BN: 'Brunei',
+};
+
+const countryName = (cc: string) => COUNTRY_NAMES[cc] ?? regionNames?.of(cc) ?? cc;
+
+export interface ZoneOption extends CityZone {
+  /** The tz database's note on which part of the country the zone covers, e.g. "Sabah, Sarawak". */
+  note: string;
+}
+
+/**
+ * Every IANA timezone (418, from the tz database), each as a city with its
+ * country, flag and coordinates. Featured cities keep their curated names.
+ */
+export const ALL_ZONES: ZoneOption[] = (() => {
+  const featured = new Map(CITY_ZONES.map((c) => [c.timezone, c]));
+  return ZONE_ROWS.map(([timezone, cc, lat, lon, note]) => {
+    const f = featured.get(timezone);
+    if (f) return { ...f, note };
+    const city = timezone.split('/').pop()!.replace(/_/g, ' ');
+    return { timezone, city, country: countryName(cc), flag: flagOf(cc), lat, lon, note };
+  }).sort((a, b) => a.city.localeCompare(b.city));
+})();
+
+const BY_ZONE = new Map(ALL_ZONES.map((z) => [z.timezone, z]));
+
 export function findCityZone(timezone: string): CityZone | undefined {
-  return CITY_ZONES.find((c) => c.timezone === timezone);
+  return BY_ZONE.get(timezone) ?? CITY_ZONES.find((c) => c.timezone === timezone);
 }
 
 /** Human label for a timezone, falling back to the raw IANA name. */

@@ -15,6 +15,7 @@ import { useToolSettings } from '@/hooks/use-tool-settings'
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar'
 import { SidebarContent } from '@/components/sidebar-content'
 import { PageHeader } from '@/components/page-header'
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -342,17 +343,9 @@ export default function PalangIc() {
       <SidebarInset>
         <PageHeader icon={IdentificationCard} title="Palang IC" />
 
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto">
-            <div className="mb-6 sm:mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">
-                Palang IC
-              </h1>
-              <p className="text-base sm:text-lg text-muted-foreground">
-                Stamp the purpose across a MyKad copy so it can only be used for that one thing. Front and back,
-                exported as an A4 PDF at real card size. Nothing leaves your device.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Palang IC">Stamp the purpose across a MyKad copy so it can only be used for that one thing. Front and back, exported as an A4 PDF at real card size. Nothing leaves your device.</PageIntro>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
               {/* Left column: steps 1–3 */}

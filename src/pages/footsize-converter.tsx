@@ -1,103 +1,70 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Person, ArrowsLeftRight, Info, User, Users } from 'phosphor-react';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
-import { SidebarContent } from "@/components/sidebar-content";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { PageHeader } from "@/components/page-header";
-
+import { useMemo, useState } from 'react';
+import { PersonSimpleWalk, Ruler } from 'phosphor-react';
+import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
+import { SidebarContent } from '@/components/sidebar-content';
+import { PageHeader } from '@/components/page-header';
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
-import { Hint } from '@/components/ui/tooltip';
-type Gender = 'men' | 'women' | 'kids';
-type Region = 'us' | 'uk' | 'eu' | 'cm';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { Label } from '@/components/ui/label';
+import { NumberInput } from '@/components/ui/number-input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SIZES, matchLength, type Category, type SizeSystem } from '@/lib/shoe-sizes';
+import { cn } from '@/lib/utils';
 
-// Comprehensive shoe size conversion tables
-const shoeSizeData = {
-  men: [
-    { us: '6', uk: '5.5', eu: '38.5', cm: '24' },
-    { us: '6.5', uk: '6', eu: '39', cm: '24.5' },
-    { us: '7', uk: '6.5', eu: '40', cm: '25' },
-    { us: '7.5', uk: '7', eu: '40.5', cm: '25.5' },
-    { us: '8', uk: '7.5', eu: '41', cm: '26' },
-    { us: '8.5', uk: '8', eu: '42', cm: '26.5' },
-    { us: '9', uk: '8.5', eu: '42.5', cm: '27' },
-    { us: '9.5', uk: '9', eu: '43', cm: '27.5' },
-    { us: '10', uk: '9.5', eu: '44', cm: '28' },
-    { us: '10.5', uk: '10', eu: '44.5', cm: '28.5' },
-    { us: '11', uk: '10.5', eu: '45', cm: '29' },
-    { us: '11.5', uk: '11', eu: '45.5', cm: '29.5' },
-    { us: '12', uk: '11.5', eu: '46', cm: '30' },
-    { us: '13', uk: '12.5', eu: '47.5', cm: '31' },
-    { us: '14', uk: '13.5', eu: '49', cm: '32' },
-  ],
-  women: [
-    { us: '5', uk: '2.5', eu: '35', cm: '21.5' },
-    { us: '5.5', uk: '3', eu: '35.5', cm: '22' },
-    { us: '6', uk: '3.5', eu: '36', cm: '22.5' },
-    { us: '6.5', uk: '4', eu: '37', cm: '23' },
-    { us: '7', uk: '4.5', eu: '37.5', cm: '23.5' },
-    { us: '7.5', uk: '5', eu: '38', cm: '24' },
-    { us: '8', uk: '5.5', eu: '38.5', cm: '24.5' },
-    { us: '8.5', uk: '6', eu: '39', cm: '25' },
-    { us: '9', uk: '6.5', eu: '40', cm: '25.5' },
-    { us: '9.5', uk: '7', eu: '40.5', cm: '26' },
-    { us: '10', uk: '7.5', eu: '41', cm: '26.5' },
-    { us: '10.5', uk: '8', eu: '42', cm: '27' },
-    { us: '11', uk: '8.5', eu: '42.5', cm: '27.5' },
-    { us: '12', uk: '9.5', eu: '44', cm: '28.5' },
-  ],
-  kids: [
-    { us: '10.5', uk: '10', eu: '27.5', cm: '16.5' },
-    { us: '11', uk: '10.5', eu: '28', cm: '17' },
-    { us: '11.5', uk: '11', eu: '29', cm: '17.5' },
-    { us: '12', uk: '11.5', eu: '30', cm: '18' },
-    { us: '12.5', uk: '12', eu: '30.5', cm: '18.5' },
-    { us: '13', uk: '12.5', eu: '31', cm: '19' },
-    { us: '13.5', uk: '13', eu: '31.5', cm: '19.5' },
-    { us: '1', uk: '13.5', eu: '32', cm: '20' },
-    { us: '1.5', uk: '1', eu: '33', cm: '20.5' },
-    { us: '2', uk: '1.5', eu: '33.5', cm: '21' },
-    { us: '2.5', uk: '2', eu: '34', cm: '21.5' },
-    { us: '3', uk: '2.5', eu: '35', cm: '22' },
-    { us: '3.5', uk: '3', eu: '35.5', cm: '22.5' },
-    { us: '4', uk: '3.5', eu: '36', cm: '23' },
-    { us: '4.5', uk: '4', eu: '36.5', cm: '23.5' },
-    { us: '5', uk: '4.5', eu: '37', cm: '24' },
-    { us: '5.5', uk: '5', eu: '37.5', cm: '24.5' },
-    { us: '6', uk: '5.5', eu: '38', cm: '25' },
-  ],
-};
+type Source = 'length' | SizeSystem;
+
+const CATEGORIES: { id: Category; label: string }[] = [
+  { id: 'men', label: 'Men' },
+  { id: 'women', label: 'Women' },
+  { id: 'kids', label: 'Kids' },
+];
+
+const SOURCES: { id: Source; label: string }[] = [
+  { id: 'uk', label: 'UK size' },
+  { id: 'eu', label: 'EU size' },
+  { id: 'us', label: 'US size' },
+  { id: 'length', label: 'Foot length' },
+];
+
+const SYSTEM_NAMES: Record<SizeSystem, string> = { uk: 'UK', eu: 'EU', us: 'US' };
 
 export default function FootSizeConverterPage() {
-  const [gender, setGender] = useState<Gender>('men');
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedRegion, setSelectedRegion] = useState<Region>('us');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [category, setCategory] = useState<Category>('men');
+  const [source, setSource] = useState<Source>('uk');
+  // The chosen row (when starting from a size) and the typed foot length.
+  const [index, setIndex] = useState<number>(6);
+  const [length, setLength] = useState('');
 
-  const currentData = shoeSizeData[gender];
+  const rows = SIZES[category];
+  const lengthMatch = useMemo(() => (source === 'length' ? matchLength(category, Number(length)) : null), [source, category, length]);
+  const activeIndex = source === 'length' ? (lengthMatch?.index ?? null) : Math.min(index, rows.length - 1);
+  const active = activeIndex == null ? null : rows[activeIndex];
 
-  const findConversions = () => {
-    if (!selectedSize) return null;
-    
-    return currentData.find(row => {
-      const value = row[selectedRegion];
-      return value === selectedSize;
-    });
+  // Switching category keeps the same foot length where possible.
+  const changeCategory = (next: Category) => {
+    if (active && source !== 'length') {
+      const m = matchLength(next, active.cm);
+      if (m) setIndex(m.index);
+    }
+    setCategory(next);
   };
 
-  const conversions = findConversions();
+  const changeSource = (next: Source) => {
+    if (next === 'length' && active) setLength(String(active.cm));
+    if (next !== 'length' && lengthMatch) setIndex(lengthMatch.index);
+    setSource(next);
+  };
 
-  const filteredData = currentData.filter(row => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return Object.values(row).some(val => val.toLowerCase().includes(term));
-  });
+  const tiles = active
+    ? [
+        { id: 'uk', label: 'UK', value: active.uk },
+        { id: 'eu', label: 'EU', value: active.eu },
+        { id: 'us', label: 'US', value: active.us },
+        { id: 'length', label: 'Foot length', value: `${active.cm} cm` },
+      ]
+    : [];
 
   return (
     <>
@@ -106,258 +73,153 @@ export default function FootSizeConverterPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <PageHeader icon={Person} title="Foot Size Converter" />
+        <PageHeader icon={PersonSimpleWalk} title="Foot Size Converter" />
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Foot Size Converter">Find your shoe size in UK, EU or US sizes, from a size you know or from the length of your foot.</PageIntro>
 
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
-            {/* Big heading */}
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
-                Shoe Size Converter & Reference
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-3xl">
-                Convert shoe sizes between US, UK, EU, and CM measurements. Perfect for online shopping.
-              </p>
-            </div>
-
-            <Tabs defaultValue="converter" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="converter" className="flex items-center gap-2">
-                  <ArrowsLeftRight className="h-4 w-4" />
-                  Size Converter
-                </TabsTrigger>
-                <TabsTrigger value="reference" className="flex items-center gap-2">
-                  <Info className="h-4 w-4" />
-                  Size Reference Chart
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Converter Tab */}
-              <TabsContent value="converter" className="mt-4 space-y-8">
-                {/* Gender Selection */}
-                <Card className="w-full shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Select Category
-                    </CardTitle>
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
+              <div className="space-y-6 lg:sticky lg:top-20">
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-headline text-lg">Find your size</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-3 gap-3">
-                      <Button
-                        variant={gender === 'men' ? 'default' : 'outline'}
-                        onClick={() => {
-                          setGender('men');
-                          setSelectedSize('');
-                        }}
-                        className="h-10"
-                      >
-                        <User className="h-4 w-4" />
-                        Men
-                      </Button>
-                      <Button
-                        variant={gender === 'women' ? 'default' : 'outline'}
-                        onClick={() => {
-                          setGender('women');
-                          setSelectedSize('');
-                        }}
-                        className="h-10"
-                      >
-                        <User className="h-4 w-4" />
-                        Women
-                      </Button>
-                      <Button
-                        variant={gender === 'kids' ? 'default' : 'outline'}
-                        onClick={() => {
-                          setGender('kids');
-                          setSelectedSize('');
-                        }}
-                        className="h-10"
-                      >
-                        <User className="h-4 w-4" />
-                        Kids
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <CardContent className="space-y-5">
+                    <fieldset className="space-y-2">
+                      <legend className="mb-2 text-sm font-medium">Shoes for</legend>
+                      <div className="flex flex-wrap gap-1.5">
+                        {CATEGORIES.map((c) => (
+                          <Chip key={c.id} active={category === c.id} onClick={() => changeCategory(c.id)}>{c.label}</Chip>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <fieldset className="space-y-2">
+                      <legend className="mb-2 text-sm font-medium">Start from</legend>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SOURCES.map((s) => (
+                          <Chip key={s.id} active={source === s.id} onClick={() => changeSource(s.id)}>{s.label}</Chip>
+                        ))}
+                      </div>
+                    </fieldset>
 
-                {/* Size Input */}
-                <Card className="w-full shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Person className="h-5 w-5" />
-                      Enter Your Size
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="region" className="mb-1.5 block">Region/System</Label>
-                        <Select value={selectedRegion} onValueChange={(value) => setSelectedRegion(value as Region)}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
+                    {source === 'length' ? (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="foot-length">Foot length</Label>
+                        <div className="relative max-w-[220px]">
+                          <NumberInput id="foot-length" value={length} onValueChange={setLength} placeholder="e.g. 26.2" className="pr-12" />
+                          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">cm</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Heel to the tip of your longest toe. See how to measure below.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="foot-size">{SYSTEM_NAMES[source]} size</Label>
+                        <Select value={String(activeIndex ?? 0)} onValueChange={(v) => setIndex(Number(v))}>
+                          <SelectTrigger id="foot-size" className="max-w-[220px]"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="us">US Size</SelectItem>
-                            <SelectItem value="uk">UK Size</SelectItem>
-                            <SelectItem value="eu">EU Size</SelectItem>
-                            <SelectItem value="cm">CM (Length)</SelectItem>
+                            {rows.map((r, i) => (
+                              <SelectItem key={r.cm} value={String(i)}>{SYSTEM_NAMES[source]} {r[source]}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
-                        <Label htmlFor="size" className="mb-1.5 block">Size</Label>
-                        <Input
-                          id="size"
-                          type="text"
-                          placeholder={`Enter ${selectedRegion.toUpperCase()} size`}
-                          value={selectedSize}
-                          onChange={(e) => setSelectedSize(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    {conversions && (
-                      <div className="mt-2 p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
-                        <div className="text-center mb-4">
-                          <Badge variant="secondary" className="text-xs">
-                            {gender.charAt(0).toUpperCase() + gender.slice(1)}&apos;s Size Conversions
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <div className="text-center p-3 bg-background rounded-xl border border-border/60">
-                            <div className="text-xs text-muted-foreground mb-1">US</div>
-                            <div className="text-2xl font-bold text-primary tabular-nums">{conversions.us}</div>
-                          </div>
-                          <div className="text-center p-3 bg-background rounded-xl border border-border/60">
-                            <div className="text-xs text-muted-foreground mb-1">UK</div>
-                            <div className="text-2xl font-bold text-primary tabular-nums">{conversions.uk}</div>
-                          </div>
-                          <div className="text-center p-3 bg-background rounded-xl border border-border/60">
-                            <div className="text-xs text-muted-foreground mb-1">EU</div>
-                            <div className="text-2xl font-bold text-primary tabular-nums">{conversions.eu}</div>
-                          </div>
-                          <div className="text-center p-3 bg-background rounded-xl border border-border/60">
-                            <div className="text-xs text-muted-foreground mb-1">CM</div>
-                            <div className="text-2xl font-bold text-primary tabular-nums">{conversions.cm}</div>
-                          </div>
-                        </div>
-                      </div>
                     )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
 
-              {/* Reference Chart Tab */}
-              <TabsContent value="reference" className="mt-4 space-y-8">
-                <Card className="w-full shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Info className="h-5 w-5" />
-                      Size Reference Chart
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Gender Selection for Reference */}
-                    <div className="grid grid-cols-3 gap-3">
-                      <Button
-                        variant={gender === 'men' ? 'default' : 'outline'}
-                        onClick={() => setGender('men')}
-                        size="sm"
-                      >
-                        Men
-                      </Button>
-                      <Button
-                        variant={gender === 'women' ? 'default' : 'outline'}
-                        onClick={() => setGender('women')}
-                        size="sm"
-                      >
-                        Women
-                      </Button>
-                      <Button
-                        variant={gender === 'kids' ? 'default' : 'outline'}
-                        onClick={() => setGender('kids')}
-                        size="sm"
-                      >
-                        Kids
-                      </Button>
-                    </div>
-
-                    {/* Search */}
-                    <div>
-                      <Label htmlFor="search" className="mb-1.5 block">Search Sizes</Label>
-                      <Input
-                        id="search"
-                        type="text"
-                        placeholder="Search any size..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-
-                    {/* Table */}
-                    <div className="rounded-2xl border border-border overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="text-center font-bold">US</TableHead>
-                              <TableHead className="text-center font-bold">UK</TableHead>
-                              <TableHead className="text-center font-bold">EU</TableHead>
-                              <TableHead className="text-center font-bold">CM</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredData.map((row, idx) => (
-                              <Hint label="Click to use this size" key={idx}>
-                                <TableRow
-                                className="cursor-pointer hover:bg-muted/50"
-                                onClick={() => {
-                                  setSelectedSize(row[selectedRegion]);
-                                }}
-                              >
-                                <TableCell className="text-center font-medium">{row.us}</TableCell>
-                                <TableCell className="text-center">{row.uk}</TableCell>
-                                <TableCell className="text-center">{row.eu}</TableCell>
-                                <TableCell className="text-center">{row.cm}</TableCell>
-                              </TableRow>
-                              </Hint>
+                    <div className="rounded-md bg-muted p-4" aria-live="polite">
+                      {active ? (
+                        <>
+                          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
+                            {tiles.map((t) => (
+                              <div key={t.id} className={cn('rounded-md bg-card p-3', t.id === source && 'ring-2 ring-primary')}>
+                                <dt className="text-xs text-muted-foreground">{t.label}</dt>
+                                <dd className="whitespace-nowrap font-headline text-2xl font-semibold tabular-nums">{t.value}</dd>
+                              </div>
                             ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                          </dl>
+                          {lengthMatch?.between && (
+                            <p className="mt-3 text-xs text-muted-foreground">
+                              {Number(length).toLocaleString()} cm falls between sizes, so this is the next size up. If you're between sizes, the larger one usually fits better.
+                            </p>
+                          )}
+                          {lengthMatch?.beyond && (
+                            <p className="mt-3 text-xs text-warning">This is the largest size in the chart; your foot is longer than it fits. Check the brand's own chart.</p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Enter your foot length to see your size.</p>
+                      )}
                     </div>
-
-                    <p className="text-xs text-muted-foreground mt-2">Tip: click a row to autofill the Size box above.</p>
-
-                    {filteredData.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No sizes match your search</p>
-                      </div>
-                    )}
+                    <p className="text-xs text-muted-foreground">Sizes vary between brands. Use this as a starting point and check the brand's own chart, or try them on.</p>
                   </CardContent>
                 </Card>
 
-                {/* Sizing Tips */}
-                <Card className="w-full shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Info className="h-5 w-5" />
-                      Sizing Tips
-                    </CardTitle>
+                <Card className="minimal-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 font-headline text-lg"><Ruler className="h-5 w-5" aria-hidden /> Measure your foot</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3 text-sm text-muted-foreground">
-                    <p>• <strong>Measure your feet in the afternoon</strong> - feet tend to swell throughout the day</p>
-                    <p>• <strong>Measure while standing</strong> - your foot spreads when bearing weight</p>
-                    <p>• <strong>Measure both feet</strong> - use the larger measurement if they differ</p>
-                    <p>• <strong>Leave wiggle room</strong> - there should be about 1cm of space between your longest toe and the shoe end</p>
-                    <p>• <strong>Consider the brand</strong> - sizes can vary between manufacturers</p>
-                    <p>• <strong>Check width</strong> - these charts show standard width; some feet need wider or narrower sizes</p>
+                  <CardContent className="space-y-4 text-sm">
+                    <ol className="list-decimal space-y-2 pl-5">
+                      <li>Stand on a sheet of paper with your heel against a wall.</li>
+                      <li>Mark the tip of your longest toe on the paper.</li>
+                      <li>Measure from the wall to the mark in centimetres.</li>
+                      <li>Do the same for your other foot and use the longer of the two.</li>
+                    </ol>
+                    <ul className="space-y-1.5 text-muted-foreground">
+                      <li>Measure in the afternoon or evening, when feet are at their largest.</li>
+                      <li>Stand while you measure: your foot spreads when it carries your weight.</li>
+                      <li>A good fit leaves about 1 cm between your longest toe and the end of the shoe.</li>
+                      <li>These charts are for standard widths. Wide or narrow feet may need a different size.</li>
+                    </ul>
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
+              </div>
+
+              <Card className="minimal-card">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-headline text-lg">Size chart: {CATEGORIES.find((c) => c.id === category)?.label}</CardTitle>
+                  <p className="text-sm text-muted-foreground">Select a row to use that size.</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm tabular-nums">
+                      <thead>
+                        <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                          <th scope="col" className="py-2 pr-3 font-medium">UK</th>
+                          <th scope="col" className="py-2 pr-3 font-medium">EU</th>
+                          <th scope="col" className="py-2 pr-3 font-medium">US</th>
+                          <th scope="col" className="py-2 font-medium">Foot length</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((r, i) => {
+                          const isActive = i === activeIndex;
+                          return (
+                            <tr key={`${r.uk}-${r.cm}`} className={cn('border-b border-border/60 last:border-0', isActive && 'bg-primary/10')} aria-current={isActive ? 'true' : undefined}>
+                              <td className="py-0 pr-3">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIndex(i);
+                                    if (source === 'length') setSource('uk');
+                                  }}
+                                  className={cn('w-full py-2 text-left font-medium outline-none focus-visible:underline', isActive && 'text-primary')}
+                                  aria-label={`Use UK ${r.uk}, EU ${r.eu}, US ${r.us}`}
+                                >
+                                  {r.uk}
+                                </button>
+                              </td>
+                              <td className="py-2 pr-3">{r.eu}</td>
+                              <td className="py-2 pr-3">{r.us}</td>
+                              <td className="py-2 text-muted-foreground">{r.cm} cm</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
         <ToolMethodology />
@@ -365,4 +227,3 @@ export default function FootSizeConverterPage() {
     </>
   );
 }
-

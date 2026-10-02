@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { PageHeader } from "@/components/page-header";
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { cn } from '@/lib/utils';
 import { useToolSettings } from '@/hooks/use-tool-settings';
@@ -72,16 +73,9 @@ export default function PercentageCalculatorPage() {
       <SidebarInset>
         <PageHeader icon={Percent} title="Percentage Calculator" />
 
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">
-                Percentage Calculator
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-3xl">
-                Pick the calculation that matches your question, results update as you type, in plain language.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Percentage Calculator">Discounts, tips, marks and price changes, worked out as you type and explained in plain words.</PageIntro>
 
             <Card className="w-full shadow-sm">
               <CardContent>
@@ -111,13 +105,13 @@ export default function PercentageCalculatorPage() {
 
                   {/* Tab 1: What is X% of Y? */}
                   <TabsContent value="percent-of" className="mt-6 space-y-5">
-                    <p className="text-sm text-muted-foreground">Find how much a percentage is worth of a number. Useful for tips, discounts, and splits.</p>
+                    <p className="text-sm text-muted-foreground">Find how much a percentage is worth of a number. Useful for tips, discounts and splits.</p>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <Label htmlFor="percent-1" className="mb-1.5 block">Percentage (%)</Label>
                         <NumberInput
                           id="percent-1"
-                          placeholder="e.g., 25"
+                          placeholder="e.g. 25"
                           value={percentOf.percent}
                           onValueChange={(v) => setPercentOf({ ...percentOf, percent: v })}
                         />
@@ -127,6 +121,7 @@ export default function PercentageCalculatorPage() {
                               key={q}
                               type="button"
                               onClick={() => setPercentOf({ ...percentOf, percent: String(q) })}
+                              aria-pressed={percentOf.percent === String(q)}
                               className={cn(
                                 "rounded-full border px-2.5 py-1 text-xs transition-colors duration-quick",
                                 percentOf.percent === String(q) ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-muted/50"
@@ -138,18 +133,19 @@ export default function PercentageCalculatorPage() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="value-1" className="mb-1.5 block">Of Value</Label>
+                        <Label htmlFor="value-1" className="mb-1.5 block">Of</Label>
                         <NumberInput
                           id="value-1"
-                          placeholder="e.g., 200"
+                          placeholder="e.g. 200"
                           value={percentOf.value}
                           onValueChange={(v) => setPercentOf({ ...percentOf, value: v })}
                         />
                       </div>
                     </div>
 
+                    {!Number.isFinite(percentOfResult) && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">Enter both numbers to see the answer.</p>}
                     {Number.isFinite(percentOfResult) && (
-                      <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                      <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="text-3xl font-bold text-primary tabular-nums">{fmt(percentOfResult)}</div>
                           <div className="text-sm text-muted-foreground">
@@ -165,34 +161,35 @@ export default function PercentageCalculatorPage() {
 
                   {/* Tab 2: X is what % of Y? */}
                   <TabsContent value="what-percent" className="mt-6 space-y-5">
-                    <p className="text-sm text-muted-foreground">Find what percentage one number is of another. Useful for scores, quotas, and progress.</p>
+                    <p className="text-sm text-muted-foreground">Find what percentage one number is of another. Useful for marks, quotas and progress.</p>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <Label htmlFor="part" className="mb-1.5 block">Part (X)</Label>
+                        <Label htmlFor="part" className="mb-1.5 block">This number</Label>
                         <NumberInput
                           id="part"
-                          placeholder="e.g., 50"
+                          placeholder="e.g. 50"
                           value={isWhatPercent.part}
                           onValueChange={(v) => setIsWhatPercent({ ...isWhatPercent, part: v })}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="whole" className="mb-1.5 block">Whole (Y)</Label>
+                        <Label htmlFor="whole" className="mb-1.5 block">Out of</Label>
                         <NumberInput
                           id="whole"
-                          placeholder="e.g., 200"
+                          placeholder="e.g. 200"
                           value={isWhatPercent.whole}
                           onValueChange={(v) => setIsWhatPercent({ ...isWhatPercent, whole: v })}
                         />
                       </div>
                     </div>
 
+                    {!Number.isFinite(whatPercentResult) && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">{parseFloat(isWhatPercent.whole) === 0 && isWhatPercent.part.trim() !== '' ? 'A percentage of 0 can’t be worked out. Use an “Out of” number other than 0.' : 'Enter both numbers to see the answer.'}</p>}
                     {Number.isFinite(whatPercentResult) && (
-                      <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                      <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="text-3xl font-bold text-primary tabular-nums">{fmt(whatPercentResult)}%</div>
                           <div className="text-sm text-muted-foreground">
-                            {g(isWhatPercent.part)} is <span className="font-medium text-foreground">{fmt(whatPercentResult)}%</span> of {isWhatPercent.whole}
+                            {g(isWhatPercent.part)} is <span className="font-medium text-foreground">{fmt(whatPercentResult)}%</span> of {g(isWhatPercent.whole)}
                           </div>
                           <div className="ml-auto">
                             <CopyButton size="sm" value={`${fmt(whatPercentResult)}%`} />
@@ -207,34 +204,35 @@ export default function PercentageCalculatorPage() {
                     <p className="text-sm text-muted-foreground">Find how much a value grew or shrank, in relative and absolute terms.</p>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <Label htmlFor="original" className="mb-1.5 block">Original Value</Label>
+                        <Label htmlFor="original" className="mb-1.5 block">Original value</Label>
                         <NumberInput
                           id="original"
-                          placeholder="e.g., 100"
+                          placeholder="e.g. 100"
                           value={percentChange.original}
                           onValueChange={(v) => setPercentChange({ ...percentChange, original: v })}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="new-value" className="mb-1.5 block">New Value</Label>
+                        <Label htmlFor="new-value" className="mb-1.5 block">New value</Label>
                         <NumberInput
                           id="new-value"
-                          placeholder="e.g., 150"
+                          placeholder="e.g. 150"
                           value={percentChange.newValue}
                           onValueChange={(v) => setPercentChange({ ...percentChange, newValue: v })}
                         />
                       </div>
                     </div>
 
+                    {!changeResult && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">{parseFloat(percentChange.original) === 0 && percentChange.newValue.trim() !== '' ? 'A change from 0 can’t be shown as a percentage. Use an original value other than 0.' : 'Enter both numbers to see the answer.'}</p>}
                     {changeResult && (
-                      <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                      <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">
                           {changeResult.percent >= 0 ? (
-                            <TrendUp className="h-6 w-6 text-green-500 shrink-0" />
+                            <TrendUp className="h-6 w-6 text-primary shrink-0" aria-hidden />
                           ) : (
-                            <TrendDown className="h-6 w-6 text-red-500 shrink-0" />
+                            <TrendDown className="h-6 w-6 text-primary shrink-0" aria-hidden />
                           )}
-                          <div className={cn("text-3xl font-bold tabular-nums", changeResult.percent >= 0 ? "text-green-500" : "text-red-500")}>
+                          <div className="text-3xl font-bold tabular-nums text-foreground">
                             {changeResult.percent >= 0 ? '+' : ''}{fmt(changeResult.percent)}%
                           </div>
                           <div className="text-sm text-muted-foreground">
@@ -248,7 +246,7 @@ export default function PercentageCalculatorPage() {
                         </div>
                         <div className="mt-4 h-2 w-full bg-background rounded-full overflow-hidden">
                           <div
-                            className={cn("h-full transition-all duration-medium ease-smooth-out", changeResult.percent >= 0 ? "bg-green-500" : "bg-red-500")}
+                            className="h-full bg-primary transition-[width] duration-medium ease-smooth-out"
                             style={{ width: `${Math.min(100, Math.abs(changeResult.percent))}%` }}
                           />
                         </div>
@@ -261,10 +259,10 @@ export default function PercentageCalculatorPage() {
                     <p className="text-sm text-muted-foreground">Apply a percentage increase or decrease to a value at once, side by side.</p>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <Label htmlFor="base-value" className="mb-1.5 block">Value</Label>
+                        <Label htmlFor="base-value" className="mb-1.5 block">Number</Label>
                         <NumberInput
                           id="base-value"
-                          placeholder="e.g., 100"
+                          placeholder="e.g. 100"
                           value={adjustByPercent.value}
                           onValueChange={(v) => setAdjustByPercent({ ...adjustByPercent, value: v })}
                         />
@@ -273,7 +271,7 @@ export default function PercentageCalculatorPage() {
                         <Label htmlFor="adjust-percent" className="mb-1.5 block">Percentage (%)</Label>
                         <NumberInput
                           id="adjust-percent"
-                          placeholder="e.g., 20"
+                          placeholder="e.g. 20"
                           value={adjustByPercent.percent}
                           onValueChange={(v) => setAdjustByPercent({ ...adjustByPercent, percent: v })}
                         />
@@ -283,6 +281,7 @@ export default function PercentageCalculatorPage() {
                               key={q}
                               type="button"
                               onClick={() => setAdjustByPercent({ ...adjustByPercent, percent: String(q) })}
+                              aria-pressed={adjustByPercent.percent === String(q)}
                               className={cn(
                                 "rounded-full border px-2.5 py-1 text-xs transition-colors duration-quick",
                                 adjustByPercent.percent === String(q) ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-muted/50"
@@ -295,26 +294,27 @@ export default function PercentageCalculatorPage() {
                       </div>
                     </div>
 
+                    {!adjustResult && <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">Enter both numbers to see the answer.</p>}
                     {adjustResult && (
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                        <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                           <div className="flex items-center gap-3">
-                            <PlusCircle className="h-5 w-5 text-green-500 shrink-0" />
+                            <PlusCircle className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
                             <div>
                               <div className="text-xs text-muted-foreground mb-0.5">Increase by {adjustByPercent.percent}%</div>
-                              <div className="text-2xl font-bold text-green-500 tabular-nums">{fmt(adjustResult.increase)}</div>
+                              <div className="text-2xl font-bold text-foreground tabular-nums">{fmt(adjustResult.increase)}</div>
                             </div>
                             <div className="ml-auto">
                               <CopyButton size="sm" value={fmt(adjustResult.increase)} />
                             </div>
                           </div>
                         </div>
-                        <div className="p-5 bg-muted/40 border border-border rounded-2xl animate-in fade-in-0 duration-quick ease-smooth-out">
+                        <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                           <div className="flex items-center gap-3">
-                            <MinusCircle className="h-5 w-5 text-red-500 shrink-0" />
+                            <MinusCircle className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
                             <div>
                               <div className="text-xs text-muted-foreground mb-0.5">Decrease by {adjustByPercent.percent}%</div>
-                              <div className="text-2xl font-bold text-red-500 tabular-nums">{fmt(adjustResult.decrease)}</div>
+                              <div className="text-2xl font-bold text-foreground tabular-nums">{fmt(adjustResult.decrease)}</div>
                             </div>
                             <div className="ml-auto">
                               <CopyButton size="sm" value={fmt(adjustResult.decrease)} />
@@ -325,10 +325,7 @@ export default function PercentageCalculatorPage() {
                     )}
                   </TabsContent>
                 </Tabs>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end">
+                <div className="mt-6 flex justify-end border-t border-border pt-4">
               <ClearButton
                 onClear={() => {
                   setPercentOf({ percent: '', value: '' });
@@ -342,8 +339,11 @@ export default function PercentageCalculatorPage() {
                 className="h-8"
                 confirmTitle="Reset all calculators?"
                 confirmDescription="This clears every number you entered on all four tabs."
+                confirmLabel="Reset all"
               />
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
         <ToolMethodology />

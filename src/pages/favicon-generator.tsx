@@ -3,6 +3,7 @@ import { AppWindow, Download, Archive, Upload, TextAa, Smiley, Image as ImageIco
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar'
 import { SidebarContent } from '@/components/sidebar-content'
 import { PageHeader } from '@/components/page-header'
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,7 @@ import {
   buildSvg,
   canBuildSvg,
   fontReady,
+  hasTransparency,
   canvasToPng,
   renderFavicon,
   type FaviconShape,
@@ -36,6 +38,13 @@ import { EmojiPicker } from '@/components/emoji-picker'
 
 const EMOJI_PICKS = ['⚡', '🔥', '🌿', '☕', '🚀', '💡', '🎯', '⭐', '📦', '🧭', '🍜', '🎨']
 const PREVIEW_SIZES = [16, 32, 48, 180, 192, 512]
+
+/** Home-screen preview backgrounds: photos and paintings by miiyuh, bundled so the preview makes no outside requests. */
+const WALLPAPERS = [
+  { id: 'forest', name: 'Misty forest', src: '/assets/img/wallpapers/misty-forest.webp' },
+  { id: 'cabin', name: 'Mountain cabin', src: '/assets/img/wallpapers/mountain-cabin.webp' },
+  { id: 'sky', name: 'Pink sky', src: '/assets/img/wallpapers/pink-sky.webp' },
+]
 
 type SourceKind = 'text' | 'emoji' | 'image'
 
@@ -95,8 +104,11 @@ export default function FaviconGeneratorPage() {
   const [shortName, setShortName] = React.useState('My site')
   const [themeColor, setThemeColor] = useHex('#2f9e7a')
   // Dark-mode variant (browser tabs follow the system theme).
+  const [wallpaper, setWallpaper] = React.useState(0)
   const [darkOn, setDarkOn] = React.useState(false)
   const [darkTransparent, setDarkTransparent] = React.useState(false)
+  /** A transparent dark-mode image is used as it is (no padding), without touching the main icon's padding. */
+  const [darkImageAsIs, setDarkImageAsIs] = React.useState(false)
   const [darkBg, setDarkBg] = useHex('#e6f4ee')
   const [darkTextColor, setDarkTextColor] = useHex('#155e46')
   const [darkImage, setDarkImage] = React.useState<{ image: ImageBitmap | HTMLImageElement; width: number; height: number; name: string } | null>(null)
@@ -121,7 +133,10 @@ export default function FaviconGeneratorPage() {
     if (source.kind === 'image' && darkImage) return { kind: 'image', image: darkImage.image, width: darkImage.width, height: darkImage.height }
     return source
   }, [darkOn, source, darkTextColor, darkImage])
-  const darkStyle = React.useMemo<FaviconStyle>(() => ({ ...style, background: darkTransparent ? null : darkBg }), [style, darkTransparent, darkBg])
+  const darkStyle = React.useMemo<FaviconStyle>(
+    () => ({ ...style, background: darkTransparent ? null : darkBg, padding: source?.kind === 'image' && darkImageAsIs && darkImage ? 0 : style.padding }),
+    [style, darkTransparent, darkBg, darkImageAsIs, darkImage, source]
+  )
 
   // Previews redraw whenever the design changes (after the chosen font is ready).
   React.useEffect(() => {
@@ -156,6 +171,11 @@ export default function FaviconGeneratorPage() {
       setImage({ ...img, image: img.source, name: file.name })
       setImageError(null)
       setKind('image')
+      // A logo with see-through areas is meant to be used as it is: no background, no padding.
+      if (hasTransparency(img.source, img.width, img.height)) {
+        setTransparent(true)
+        setPadding(0)
+      }
     } catch (e) {
       setImageError(e instanceof Error ? e.message : 'This image could not be opened.')
     }
@@ -166,6 +186,9 @@ export default function FaviconGeneratorPage() {
     try {
       const img = await decodeImage(file)
       setDarkImage({ ...img, image: img.source, name: file.name })
+      const seeThrough = hasTransparency(img.source, img.width, img.height)
+      setDarkImageAsIs(seeThrough)
+      if (seeThrough) setDarkTransparent(true)
     } catch (e) {
       setImageError(e instanceof Error ? e.message : 'This image could not be opened.')
     }
@@ -237,14 +260,9 @@ export default function FaviconGeneratorPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={AppWindow} title="Favicon Generator" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-6">
-            <div className="mb-2 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">Favicon Generator</h1>
-              <p className="text-base sm:text-lg text-muted-foreground max-w-3xl">
-                Make every icon your site needs from a letter, an emoji or an image: browser tabs, iPhone and Android home screens, and the code to add them.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Favicon Generator">Make every icon your site needs from a letter, an emoji or an image: browser tabs, iPhone and Android home screens, and the code to add them.</PageIntro>
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start">
               <div className="space-y-6">
@@ -278,19 +296,22 @@ export default function FaviconGeneratorPage() {
                             </Select>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-4">
-                          <fieldset className="flex gap-1.5">
-                            <legend className="sr-only">Weight</legend>
-                            {[
-                              [400, 'Regular'],
-                              [600, 'Semibold'],
-                              [700, 'Bold'],
-                            ].map(([w, label]) => (
-                              <Chip key={w} active={weight === w} onClick={() => setWeight(Number(w))}>{label}</Chip>
-                            ))}
-                          </fieldset>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Colour</span>
+                        <div className="flex flex-wrap gap-x-8 gap-y-4">
+                          <div className="space-y-2">
+                            <span className="block text-sm font-medium" aria-hidden>Weight</span>
+                            <fieldset className="flex flex-wrap gap-1.5">
+                              <legend className="sr-only">Weight</legend>
+                              {[
+                                [400, 'Regular'],
+                                [600, 'Semibold'],
+                                [700, 'Bold'],
+                              ].map(([w, label]) => (
+                                <Chip key={w} active={weight === w} onClick={() => setWeight(Number(w))}>{label}</Chip>
+                              ))}
+                            </fieldset>
+                          </div>
+                          <div className="space-y-2">
+                            <span className="block text-sm font-medium">Text colour</span>
                             <ColorPicker value={textColor} onChange={setTextColor} className="h-8 w-8" />
                           </div>
                         </div>
@@ -346,30 +367,38 @@ export default function FaviconGeneratorPage() {
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="space-y-2">
-                      <span className="text-sm font-medium">Shape</span>
-                      <fieldset className="flex flex-wrap gap-1.5">
-                        <legend className="sr-only">Shape</legend>
-                        {(['square', 'rounded', 'circle'] as FaviconShape[]).map((s) => (
-                          <Chip key={s} active={shape === s} onClick={() => setShape(s)}>{s[0].toUpperCase() + s.slice(1)}</Chip>
-                        ))}
-                      </fieldset>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                      <div className="flex items-center gap-2">
-                        <Switch id="fav-transparent" checked={transparent} onCheckedChange={setTransparent} />
-                        <Label htmlFor="fav-transparent" className="cursor-pointer font-normal">Transparent background</Label>
+                      <span className="block text-sm font-medium">Background</span>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <fieldset className="flex flex-wrap gap-1.5">
+                          <legend className="sr-only">Background</legend>
+                          <Chip active={!transparent} onClick={() => setTransparent(false)}>Colour</Chip>
+                          <Chip active={transparent} onClick={() => setTransparent(true)}>None</Chip>
+                        </fieldset>
+                        {!transparent && <ColorPicker value={bgColor} onChange={setBgColor} className="h-8 w-8" />}
                       </div>
-                      {!transparent && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Background</span>
-                          <ColorPicker value={bgColor} onChange={setBgColor} className="h-8 w-8" />
-                        </div>
+                      {transparent && (
+                        <p className="text-xs text-muted-foreground">
+                          Nothing is drawn behind your {kind === 'image' ? 'image' : kind} and nothing is cut off, so transparent areas stay transparent.
+                          The Apple home-screen icon and Android's maskable icon still get a solid background, because those require one.
+                        </p>
                       )}
                     </div>
+                    {(!transparent || (darkOn && !darkTransparent)) && (
+                      <div className="space-y-2">
+                        <span className="block text-sm font-medium">Shape</span>
+                        <fieldset className="flex flex-wrap gap-1.5">
+                          <legend className="sr-only">Shape</legend>
+                          {(['square', 'rounded', 'circle'] as FaviconShape[]).map((s) => (
+                            <Chip key={s} active={shape === s} onClick={() => setShape(s)}>{s[0].toUpperCase() + s.slice(1)}</Chip>
+                          ))}
+                        </fieldset>
+                        {transparent && <p className="text-xs text-muted-foreground">Used by the dark-mode icon, which has a background.</p>}
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Padding</span>
-                        <span className="font-mono tabular-nums">{Math.round(padding * 100)}%</span>
+                        <span className="font-medium">Padding</span>
+                        <span className="font-mono tabular-nums text-muted-foreground">{Math.round(padding * 100)}%</span>
                       </div>
                       <Slider value={[Math.round(padding * 100)]} min={0} max={35} step={1} onValueChange={(v) => setPadding(v[0] / 100)} aria-label="Padding" />
                     </div>
@@ -408,23 +437,22 @@ export default function FaviconGeneratorPage() {
                             </p>
                           </div>
                         )}
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                          {kind === 'text' && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Text colour</span>
-                              <ColorPicker value={darkTextColor} onChange={setDarkTextColor} className="h-8 w-8" />
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <Switch id="fav-dark-transparent" checked={darkTransparent} onCheckedChange={setDarkTransparent} />
-                            <Label htmlFor="fav-dark-transparent" className="cursor-pointer font-normal">Transparent background</Label>
+                        {kind === 'text' && (
+                          <div className="space-y-2">
+                            <span className="block text-sm font-medium">Text colour</span>
+                            <ColorPicker value={darkTextColor} onChange={setDarkTextColor} className="h-8 w-8" />
                           </div>
-                          {!darkTransparent && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Background</span>
-                              <ColorPicker value={darkBg} onChange={setDarkBg} className="h-8 w-8" />
-                            </div>
-                          )}
+                        )}
+                        <div className="space-y-2">
+                          <span className="block text-sm font-medium">Background</span>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <fieldset className="flex flex-wrap gap-1.5">
+                              <legend className="sr-only">Dark mode background</legend>
+                              <Chip active={!darkTransparent} onClick={() => setDarkTransparent(false)}>Colour</Chip>
+                              <Chip active={darkTransparent} onClick={() => setDarkTransparent(true)}>None</Chip>
+                            </fieldset>
+                            {!darkTransparent && <ColorPicker value={darkBg} onChange={setDarkBg} className="h-8 w-8" />}
+                          </div>
                         </div>
                         <p className="text-xs text-muted-foreground">
                           Browsers switch to this version in tab bars when the system is in dark mode. Home-screen icons on iPhone and Android
@@ -475,19 +503,54 @@ export default function FaviconGeneratorPage() {
                           <BrowserTab icon={previews.dark32 ?? previews[32]} title={appName} dark />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                          <figure className="flex flex-col items-center gap-2 rounded-md bg-[linear-gradient(135deg,#3b5bdb,#9c36b5)] p-4">
-                            <img src={previews.apple} alt="" className="h-16 w-16 rounded-[22%] shadow-md" />
-                            <figcaption className="max-w-full truncate text-xs text-white">{shortName || appName}</figcaption>
-                          </figure>
-                          <figure className="flex flex-col items-center gap-2 rounded-md bg-[linear-gradient(135deg,#0b7285,#2b8a3e)] p-4">
-                            <img src={previews.maskable} alt="" className="h-16 w-16 rounded-full shadow-md" />
-                            <figcaption className="max-w-full truncate text-xs text-white">{shortName || appName}</figcaption>
-                          </figure>
+                          {[
+                            { id: 'iphone', label: 'iPhone home screen', src: previews.apple, iconClass: 'rounded-[22%]' },
+                            { id: 'android', label: 'Android (adaptive)', src: previews.maskable, iconClass: 'rounded-full' },
+                          ].map((p) => (
+                            <figure key={p.id} className="space-y-2">
+                              <div className="relative aspect-[4/5] overflow-hidden rounded-md">
+                                <img src={WALLPAPERS[wallpaper].src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                                {/* A home-screen row: three neighbouring apps, with yours second. */}
+                                <div className="absolute inset-x-0 top-1/2 grid -translate-y-1/2 grid-cols-4 gap-1.5 px-2.5">
+                                  {[0, 1, 2, 3].map((i) => (
+                                    <div key={i} className="flex min-w-0 flex-col items-center gap-1">
+                                      {i === 1 ? (
+                                        <img src={p.src} alt="" className={cn('aspect-square w-full shadow-md', p.iconClass)} />
+                                      ) : (
+                                        <span className={cn('aspect-square w-full bg-white/25 backdrop-blur-sm', p.iconClass)} aria-hidden />
+                                      )}
+                                      {i === 1 ? (
+                                        <span className="max-w-full truncate text-[9px] leading-tight text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">{shortName || appName}</span>
+                                      ) : (
+                                        <span className="h-1.5 w-3/4 rounded-full bg-white/40" aria-hidden />
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <figcaption className="text-center text-[11px] text-muted-foreground">{p.label}</figcaption>
+                            </figure>
+                          ))}
                         </div>
-                        <p className="-mt-2 grid grid-cols-2 gap-4 text-center text-[11px] text-muted-foreground">
-                          <span>iPhone home screen</span>
-                          <span>Android (adaptive)</span>
-                        </p>
+                        <fieldset className="flex flex-wrap items-center gap-2">
+                          <legend className="sr-only">Preview wallpaper</legend>
+                          <span className="text-xs text-muted-foreground" aria-hidden>Wallpaper</span>
+                          {WALLPAPERS.map((w, i) => (
+                            <button
+                              key={w.id}
+                              type="button"
+                              onClick={() => setWallpaper(i)}
+                              aria-pressed={wallpaper === i}
+                              aria-label={w.name}
+                              className={cn(
+                                'size-8 overflow-hidden rounded-full border-2 outline-none transition-colors duration-quick focus-visible:ring-3 focus-visible:ring-ring/50',
+                                wallpaper === i ? 'border-primary' : 'border-border hover:border-primary/60'
+                              )}
+                            >
+                              <img src={w.src} alt="" className="h-full w-full object-cover" />
+                            </button>
+                          ))}
+                        </fieldset>
                         <div className="flex flex-wrap items-end gap-3 rounded-md bg-[conic-gradient(var(--muted)_25%,transparent_0_50%,var(--muted)_0_75%,transparent_0)] bg-[length:12px_12px] p-3">
                           {PREVIEW_SIZES.slice(0, 4).map((s) => (
                             <figure key={s} className="flex flex-col items-center gap-1">
@@ -509,10 +572,10 @@ export default function FaviconGeneratorPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid gap-2 sm:grid-cols-2">
-                      <Button onClick={() => void downloadPackage()} disabled={!source || building} className="h-11">
+                      <Button onClick={() => void downloadPackage()} disabled={!source || building} size="xl">
                         <Archive className="h-4 w-4" /> Everything (ZIP)
                       </Button>
-                      <Button variant="outline" onClick={() => void downloadIco()} disabled={!source} className="h-11">
+                      <Button variant="outline" onClick={() => void downloadIco()} disabled={!source} size="xl">
                         <Download className="h-4 w-4" /> favicon.ico only
                       </Button>
                     </div>

@@ -17,7 +17,7 @@ import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { FeatureCollection, Geometry } from 'geojson';
 import landTopo from 'world-atlas/land-110m.json';
-import { CITY_ZONES } from '@/lib/timezones';
+import { CITY_ZONES, findCityZone, type CityZone } from '@/lib/timezones';
 import { subsolarPoint, antipode, nightRing } from '@/lib/solar';
 import { cn } from '@/lib/utils';
 
@@ -71,7 +71,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
   const svgRef = React.useRef<SVGSVGElement | null>(null);
   const [width, setWidth] = React.useState(720);
 
-  const home = zones[0] ? CITY_ZONES.find((c) => c.timezone === zones[0]) : undefined;
+  const home = zones[0] ? findCityZone(zones[0]) : undefined;
   const instructionsId = React.useId();
   const [rotation, setRotation] = React.useState<EulerRotation>(() =>
     home ? [-home.lon, -home.lat / 2, 0] : [0, -15, 0]
@@ -211,6 +211,15 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
   // --- helpers ----------------------------------------------------------------
   const timeFmt = use24h ? 'HH:mm' : 'h:mm A';
   const selected = React.useMemo(() => new Set(zones), [zones]);
+  /** Cities the person added that aren't among the featured pins. */
+  const addedPins = React.useMemo(
+    () =>
+      zones
+        .filter((z) => !CITY_ZONES.some((c) => c.timezone === z))
+        .map((z) => findCityZone(z))
+        .filter((c): c is CityZone => Boolean(c)),
+    [zones]
+  );
 
   const cityVisible = (lon: number, lat: number): boolean => {
     if (view === 'map') return true;
@@ -370,7 +379,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
         {nightPath && <path d={nightPath} fill="#000" fillOpacity={0.32} pointerEvents="none" />}
 
         {/* City markers */}
-        {(mode === 'cities' ? CITY_ZONES : CITY_ZONES.filter((c) => selected.has(c.timezone))).map((c) => {
+        {(mode === 'cities' ? [...CITY_ZONES, ...addedPins] : addedPins.concat(CITY_ZONES.filter((c) => selected.has(c.timezone)))).map((c) => {
           if (!cityVisible(c.lon, c.lat)) return null;
           const pos = projection([c.lon, c.lat]);
           if (!pos) return null;

@@ -1,6 +1,6 @@
 import Color from 'color';
 import { Eye } from 'phosphor-react';
-import { useCallback, useEffect, useId, useRef, useState, type HTMLAttributes } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ButtonHTMLAttributes } from 'react';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { Hint } from '@/components/ui/tooltip';
 
 export type ColorPickerProps = Omit<
-  HTMLAttributes<HTMLDivElement>,
+  ButtonHTMLAttributes<HTMLButtonElement>,
   'onChange'
 > & {
   /** Hex color value (e.g., "#FF0000") */
@@ -256,14 +256,17 @@ export function ColorPicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Hint label={hexInput}>
-          <div
-          className={cn(
-            'h-10 w-10 rounded border border-border/70 shadow-sm cursor-pointer transition-colors hover:border-primary/70',
-            className
-          )}
-          style={{ backgroundColor: currentColor }}
-          {...(props as React.HTMLAttributes<HTMLDivElement>)}
-        />
+          {/* A real button so the swatch is reachable and operable by keyboard. */}
+          <button
+            type="button"
+            aria-label={`Choose a colour (current ${hexInput})`}
+            className={cn(
+              'h-10 w-10 shrink-0 rounded-full border border-border/70 shadow-sm cursor-pointer transition-colors duration-quick outline-none hover:border-primary/70 focus-visible:ring-3 focus-visible:ring-ring/50',
+              className
+            )}
+            style={{ backgroundColor: currentColor }}
+            {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+          />
         </Hint>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-4" align="start">
@@ -271,8 +274,9 @@ export function ColorPicker({
           {/* SV Canvas */}
           <div>
             <span id={`${fieldId}-sv`} className="mb-2 block text-sm font-medium">
-              Color
+              Colour
             </span>
+            <div className="relative">
             <canvas
               ref={handleCanvasRef}
               aria-labelledby={`${fieldId}-sv`}
@@ -333,6 +337,13 @@ export function ColorPicker({
               className="w-full cursor-crosshair rounded border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               style={{ aspectRatio: '240 / 140' }}
             />
+            {/* Where the picked colour sits, filled with that colour. */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
+              style={{ left: `${sat}%`, top: `${100 - val}%`, background: currentColor }}
+            />
+            </div>
           </div>
 
           {/* Hue Slider */}

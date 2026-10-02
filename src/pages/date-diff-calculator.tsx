@@ -12,6 +12,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/page-header";
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { CopyButton } from "@/components/ui/copy-button";
 import { useToolSettings } from "@/hooks/use-tool-settings";
@@ -302,12 +303,9 @@ export default function DateDiffCalculatorPage() {
       <SidebarInset>
         <PageHeader icon={CalendarIcon} title="Date Difference Calculator" />
 
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-8">
-            <div className="mb-8 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-foreground border-b border-border pb-4">Date Difference Calculator</h1>
-              <p className="text-lg text-muted-foreground max-w-3xl">Calculate the difference between two dates with precision.</p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Date Difference Calculator">Count the days, weeks, months or years between two dates, with the time of day if you need it.</PageIntro>
 
             <Card className="w-full shadow-sm">
               <CardContent className="space-y-6">
@@ -409,7 +407,7 @@ export default function DateDiffCalculatorPage() {
                 )}
 
                 {diffResult && (
-                  <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-border bg-muted/40 text-sm text-muted-foreground animate-in fade-in-0 duration-quick ease-smooth-out">
+                  <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-border bg-muted/40 text-sm text-muted-foreground">
                     <div className="flex items-center overflow-hidden">
                       <span className="font-medium text-foreground mr-1 shrink-0">Summary:</span>
                       <span className="truncate">{summary}</span>

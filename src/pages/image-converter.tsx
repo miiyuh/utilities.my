@@ -19,6 +19,7 @@ import {
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar'
 import { SidebarContent } from '@/components/sidebar-content'
 import { PageHeader } from '@/components/page-header'
+import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -640,13 +641,23 @@ function SingleConverter({
                   </p>
                 )}
               </div>
+              <ClearButton
+                onClear={clear}
+                hasContent
+                iconOnly
+                size="icon-sm"
+                label="Remove image"
+                className="shrink-0 self-start"
+                confirmTitle="Remove this image?"
+                confirmDescription="The image and your settings for it will be cleared."
+              />
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={() => setEditorOpen(true)}>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" onClick={() => setEditorOpen(true)} className="w-full">
                 <PencilSimple className="h-4 w-4" /> Crop, rotate, flip
               </Button>
-              <Button variant="outline" size="sm" onClick={() => replaceRef.current?.click()}>
-                <Upload className="h-4 w-4" /> Choose another image
+              <Button variant="outline" size="sm" onClick={() => replaceRef.current?.click()} className="w-full">
+                <Upload className="h-4 w-4" /> Change image
               </Button>
               <input
                 ref={replaceRef}
@@ -658,15 +669,6 @@ function SingleConverter({
                   if (f) void load(f)
                   e.target.value = ''
                 }}
-              />
-              <ClearButton
-                onClear={clear}
-                hasContent
-                label="Remove"
-                confirmLabel="Remove image"
-                className="ml-auto"
-                confirmTitle="Remove this image?"
-                confirmDescription="The image and your settings for it will be cleared."
               />
             </div>
           </CardContent>
@@ -778,7 +780,7 @@ function SingleConverter({
             )}
             {encodeError && <p className="mt-2 text-xs text-destructive">{encodeError}</p>}
           </div>
-          <Button onClick={download} disabled={!previewCurrent || encoding} className="h-11 w-full text-base">
+          <Button onClick={download} disabled={!previewCurrent || encoding} size="xl" className="w-full">
             <Download className="h-5 w-5" /> Download {FORMATS[settings.format].label}
           </Button>
         </CardContent>
@@ -1043,11 +1045,11 @@ function BatchConverter({
             </div>
           )}
           <div className="grid gap-2 sm:grid-cols-2">
-            <Button onClick={() => void convertAll()} disabled={!items.length || running} className="h-11">
+            <Button onClick={() => void convertAll()} disabled={!items.length || running} size="xl">
               {running ? <Spinner className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               {running ? 'Converting…' : items.length ? `Convert ${items.length}` : 'Convert'}
             </Button>
-            <Button variant="outline" onClick={() => void downloadZip()} disabled={!done.length || running} className="h-11">
+            <Button variant="outline" onClick={() => void downloadZip()} disabled={!done.length || running} size="xl">
               <Archive className="h-4 w-4" /> Download ZIP
             </Button>
           </div>
@@ -1090,15 +1092,9 @@ export default function ImageConverterPage() {
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={ImageIcon} title="Image Converter" />
-        <div className="flex flex-1 flex-col px-4 p-4 lg:p-8">
-          <div className="w-full max-w-7xl mx-auto space-y-6">
-            <div className="mb-2 max-sm:sr-only">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 sm:mb-6 text-foreground border-b border-border pb-3 sm:pb-4">Image Converter</h1>
-              <p className="text-base sm:text-lg text-muted-foreground max-w-3xl">
-                Change a picture&apos;s format or size, crop it, see exactly what&apos;s inside it, and know the file size before you download. Nothing is
-                uploaded.
-              </p>
-            </div>
+        <div className="flex flex-col p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
+            <PageIntro title="Image Converter">Change a picture&apos;s format or size, crop it, see exactly what&apos;s inside it, and know the file size before you download. Nothing is uploaded.</PageIntro>
 
             <Tabs value={mode} onValueChange={(v) => setMode(v as 'single' | 'batch')} className="gap-6">
               <TabsList className="grid w-full grid-cols-2 sm:w-fit">
