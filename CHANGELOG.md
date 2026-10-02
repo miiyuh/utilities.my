@@ -1,3 +1,13 @@
+## [5.1.0](https://github.com/miiyuh/utilities.my/compare/v5.0.0...v5.1.0) (2026-10-02)
+
+### Features
+
+* rework tools, all timezones, calendar sharing and one page layout ([#27](https://github.com/miiyuh/utilities.my/issues/27)) ([2f02e0a](https://github.com/miiyuh/utilities.my/commit/2f02e0aa5ad4a46edef11d01506da15185058acf)), closes [#26](https://github.com/miiyuh/utilities.my/issues/26)
+
+### Bug Fixes
+
+* v5 review fixes, sidebar scrolling, scroll reset and mobile header ([#25](https://github.com/miiyuh/utilities.my/issues/25)) [skip ci] ([dd0a624](https://github.com/miiyuh/utilities.my/commit/dd0a624875c4180de1f97deccb3868e61b95e25e)), closes [#24](https://github.com/miiyuh/utilities.my/issues/24)
+
 ## [5.0.0](https://github.com/miiyuh/utilities.my/compare/v4.0.0...v5.0.0) (2026-10-01)
 
 ### ⚠ BREAKING CHANGES
