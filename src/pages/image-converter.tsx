@@ -298,23 +298,30 @@ function useObjectUrl(blob: Blob | null): string | null {
   return url
 }
 
-/** An object URL an <img> can show: JPEG XL the browser can't read is decoded to PNG first. */
-function useDisplayUrl(blob: Blob | null): string | null {
+/**
+ * An object URL an <img> can show: JPEG XL the browser can't read is decoded to
+ * PNG first. `failed` is set if that decode fails (say the decoder couldn't
+ * download), so callers can say so instead of looking like they're still loading.
+ */
+function useDisplayUrl(blob: Blob | null): { url: string | null; failed: boolean; retry: () => void } {
   const [shown, setShown] = React.useState<Blob | null>(null)
+  const [failed, setFailed] = React.useState(false)
+  const [attempt, setAttempt] = React.useState(0)
   React.useEffect(() => {
     let live = true
     setShown(null)
+    setFailed(false)
     if (blob) {
       displayBlob(blob).then(
         (b) => live && setShown(b),
-        () => live && setShown(null)
+        () => live && setFailed(true)
       )
     }
     return () => {
       live = false
     }
-  }, [blob])
-  return useObjectUrl(shown)
+  }, [blob, attempt])
+  return { url: useObjectUrl(shown), failed, retry: () => setAttempt((n) => n + 1) }
 }
 
 function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: (files: File[]) => void; compact?: boolean }) {
@@ -396,7 +403,7 @@ function usePasteImages(onFiles: (files: File[]) => void) {
   })
   React.useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
-      const files = Array.from(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith('image/'))
+      const files = Array.from(e.clipboardData?.files ?? []).filter(isAcceptedImage)
       if (files.length) {
         e.preventDefault()
         cb.current(files)
@@ -471,8 +478,8 @@ function SingleConverter({
   const loadId = React.useRef(0)
   const replaceRef = React.useRef<HTMLInputElement>(null)
 
-  const thumbUrl = useDisplayUrl(file)
-  const afterUrl = useDisplayUrl(preview?.blob ?? null)
+  const { url: thumbUrl } = useDisplayUrl(file)
+  const { url: afterUrl, failed: afterFailed, retry: retryAfter } = useDisplayUrl(preview?.blob ?? null)
   const beforeUrl = useObjectUrl(preview?.before ?? null)
 
   const [ew, eh] = image ? editedSize(image.width, image.height, edits) : [0, 0]
@@ -775,6 +782,15 @@ function SingleConverter({
         <CardContent className="space-y-4">
           {beforeUrl && afterUrl ? (
             <CompareSlider before={beforeUrl} after={afterUrl} beforeLabel="Uncompressed" className="aspect-[4/3] w-full" />
+          ) : afterFailed ? (
+            <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              <p className="flex items-center gap-2">
+                <Warning className="h-4 w-4 shrink-0 text-warning" /> Couldn&apos;t show the preview. Your download isn&apos;t affected.
+              </p>
+              <Button variant="outline" size="sm" onClick={retryAfter}>
+                Retry
+              </Button>
+            </div>
           ) : (
             <div className="flex aspect-[4/3] w-full items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
               <Spinner className="mr-2 h-4 w-4 animate-spin" /> Preparing preview…
@@ -858,7 +874,7 @@ const LONG_EDGES = [
 const MAX_BATCH = 30
 
 function BatchThumb({ file }: { file: File }) {
-  const url = useDisplayUrl(file)
+  const { url } = useDisplayUrl(file)
   return (
     <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
       {url && <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
