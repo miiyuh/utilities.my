@@ -1,3 +1,9 @@
+## [5.2.0](https://github.com/miiyuh/utilities.my/compare/v5.1.0...v5.2.0) (2026-10-17)
+
+### Features
+
+* **image-converter:** add JPEG XL output and input ([#28](https://github.com/miiyuh/utilities.my/issues/28)) ([5ecb477](https://github.com/miiyuh/utilities.my/commit/5ecb477eb5a84b55c14b36a96cf776576c633f81))
+
 ## [5.1.0](https://github.com/miiyuh/utilities.my/compare/v5.0.0...v5.1.0) (2026-10-02)
 
 ### Features
