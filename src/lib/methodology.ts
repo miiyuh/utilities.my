@@ -230,19 +230,20 @@ export const METHODOLOGY: Method[] = [
     summary:
       "Images are decoded, edited (crop, rotate, flip) and re-encoded on a canvas in your browser, with high-quality smoothing when resizing. The preview is encoded with the exact settings of the download, so the file size shown is the size you get. Nothing is uploaded.",
     formulas: [
-      'Aim for a file size: binary search over quality (7 steps; 5 for AVIF) for the highest quality that fits',
+      'Aim for a file size: binary search over quality (7 steps; 5 for AVIF and JPEG XL; skipped for lossless JPEG XL) for the highest quality that fits',
       'Passport preset: 35 × 45 mm at 300 dpi = 413 × 531 px',
       'Batch sizes: long edge = min(original, chosen limit); images are never enlarged',
     ],
     notes: [
       'Re-encoding writes only pixels, so metadata (camera, date, location) is removed by default. You can choose to keep it when converting JPEG to JPEG; keeping it without location deletes the GPS data and zeroes its bytes.',
       'Browsers cannot save AVIF from a canvas yet, so AVIF uses a WebAssembly encoder that downloads only when you choose AVIF.',
+      'JPEG XL is encoded with libjxl (WebAssembly, effort 5), downloaded only when you choose it. Lossless mode keeps every pixel. If your browser cannot display JPEG XL, the preview shows a PNG of the same pixels while the download stays a real .jxl file. Existing .jxl files can be opened too.',
     ],
     sources: [
       { label: 'WHATWG HTML: canvas toBlob()', url: 'https://html.spec.whatwg.org/multipage/canvas.html#dom-canvas-toblob' },
       { label: 'CIPA DC-008: Exif 2.32 specification', url: 'https://www.cipa.jp/std/documents/download_e.html?DC-008-Translation-2023-E' },
       { label: 'exifr (metadata reader)', url: 'https://github.com/MikeKovarik/exifr' },
-      { label: 'jSquash AVIF encoder (libavif via WebAssembly)', url: 'https://github.com/jamsinclair/jSquash' },
+      { label: 'jSquash AVIF and JPEG XL codecs (libavif, libjxl via WebAssembly)', url: 'https://github.com/jamsinclair/jSquash' },
     ],
   },
   {
