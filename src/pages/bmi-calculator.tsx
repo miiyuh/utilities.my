@@ -2,7 +2,7 @@ import { ClearButton } from '@/components/ui/clear-button';
 import React from "react";
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { Activity, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, ShareNetwork } from "phosphor-react";
+import { Pulse, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, ShareNetwork } from '@phosphor-icons/react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
@@ -277,7 +277,7 @@ export default function BmiCalculatorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <PageHeader icon={Activity} title="BMI Calculator" />
+        <PageHeader icon={Pulse} title="BMI Calculator" />
 
         <div className="flex flex-col p-4 lg:p-8">
           <div className="mx-auto w-full max-w-7xl space-y-8">

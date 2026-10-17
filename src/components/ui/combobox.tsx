@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox"
-import { Check, CaretDown } from "phosphor-react"
+import { Check, CaretDown } from '@phosphor-icons/react'
 
 import { cn } from "@/lib/utils"
 

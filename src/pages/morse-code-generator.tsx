@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { Play, Pause, Stop, SpeakerHigh, Lightning, Upload, Download, Eye, Translate, Code, Gear } from 'phosphor-react';
+import { Play, Pause, Stop, SpeakerHigh, Lightning, Upload, Download, Eye, Translate, Code, Gear } from '@phosphor-icons/react';
 import { PageHeader } from "@/components/page-header";
 import { PageIntro } from '@/components/page-intro';
 

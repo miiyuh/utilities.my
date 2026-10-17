@@ -220,7 +220,7 @@ async function main() {
   // A tool added to src/lib/tools.ts but not to src/lib/seo.ts would silently
   // drop out of the sitemap and 404 in production (there is no SPA fallback
   // rewrite any more), so fail the build instead. tools.ts is read as text to
-  // keep this script free of React and phosphor-react imports.
+  // keep this script free of React and @phosphor-icons/react imports.
   const toolsSource = await readFile(join(ROOT, 'src', 'lib', 'tools.ts'), 'utf8')
   const declared = new Set(routes.map((route) => route.path))
   const missing = [...toolsSource.matchAll(/path:\s*"([^"]+)"/g)]

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { PersonSimpleWalk, Ruler } from 'phosphor-react';
+import { PersonSimpleWalk, Ruler } from '@phosphor-icons/react';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';

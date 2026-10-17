@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { format, formatDistanceToNow, getDayOfYear, getISOWeek, isLeapYear } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, Timer } from 'phosphor-react';
+import { Calendar as CalendarIcon, Clock, Timer } from '@phosphor-icons/react';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';

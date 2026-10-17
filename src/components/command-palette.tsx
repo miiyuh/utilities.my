@@ -13,7 +13,7 @@ import {
   Keyboard,
   ClockCounterClockwise,
   type Icon,
-} from 'phosphor-react'
+} from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'

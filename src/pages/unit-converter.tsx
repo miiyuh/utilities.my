@@ -14,7 +14,7 @@ import {
   Thermometer,
   WifiHigh,
   type Icon,
-} from 'phosphor-react';
+} from '@phosphor-icons/react';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';

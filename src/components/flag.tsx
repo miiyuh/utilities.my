@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Globe } from 'phosphor-react'
+import { Globe } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 
 /**

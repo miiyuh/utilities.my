@@ -4,7 +4,7 @@ import {
   ArrowCounterClockwise,
   ArrowsHorizontal,
   ArrowsVertical,
-} from 'phosphor-react'
+} from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {

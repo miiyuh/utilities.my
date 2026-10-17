@@ -1,5 +1,5 @@
 import Color from 'color';
-import { Eye } from 'phosphor-react';
+import { Eye } from '@phosphor-icons/react';
 import { useCallback, useEffect, useId, useRef, useState, type ButtonHTMLAttributes } from 'react';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';

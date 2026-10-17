@@ -18,7 +18,7 @@ import { GlobeClock, type GlobeView, type GlobeMode } from '@/components/globe-c
 import { cn } from '@/lib/utils';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { ALL_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
-import { Clock, Sun, Moon, X, MagnifyingGlass, DotsSixVertical } from 'phosphor-react';
+import { Clock, Sun, Moon, X, MagnifyingGlass, DotsSixVertical } from '@phosphor-icons/react';
 import {
   DndContext,
   closestCenter,

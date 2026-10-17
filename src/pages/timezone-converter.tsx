@@ -19,7 +19,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { ALL_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
-import { Globe, X, ArrowLeft, ArrowRight, ArrowClockwise, CaretUp, CaretDown, Calendar as CalendarIcon, CalendarPlus, DownloadSimple } from 'phosphor-react';
+import { Globe, X, ArrowLeft, ArrowRight, ArrowClockwise, CaretUp, CaretDown, Calendar as CalendarIcon, CalendarPlus, DownloadSimple } from '@phosphor-icons/react';
 import { Input } from '@/components/ui/input';
 import { buildIcs, googleCalendarUrl, outlookUrl, type CalendarEvent } from '@/lib/calendar-links';
 import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils';

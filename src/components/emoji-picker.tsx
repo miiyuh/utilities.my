@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { MagnifyingGlass, Spinner } from 'phosphor-react'
+import { MagnifyingGlass, Spinner } from '@phosphor-icons/react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 

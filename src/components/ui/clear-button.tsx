@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Trash, type Icon } from "phosphor-react"
+import { Trash, type Icon } from '@phosphor-icons/react'
 
 import { Button } from "@/components/ui/button"
 import {

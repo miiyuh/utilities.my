@@ -8,7 +8,7 @@ import {
   ArrowCounterClockwise,
   ArrowSquareOut,
   Calendar as CalendarIcon,
-} from 'phosphor-react'
+} from '@phosphor-icons/react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { useToolSettings } from '@/hooks/use-tool-settings'

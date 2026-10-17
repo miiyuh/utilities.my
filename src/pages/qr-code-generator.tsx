@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Gear, Upload, QrCode as QrCodeIcon, QrCode, DownloadSimple, ArrowClockwise, Info } from 'phosphor-react';
+import { Download, Gear, Upload, QrCode as QrCodeIcon, QrCode, DownloadSimple, ArrowClockwise, Info } from '@phosphor-icons/react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ColorPicker } from '@/components/ui/color-picker';
