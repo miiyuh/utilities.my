@@ -18,15 +18,15 @@ export interface FaviconStyle {
 
 export const FONT_CHOICES = [
   { id: 'space', label: 'Space Grotesk', css: "'Space Grotesk Variable', system-ui, sans-serif" },
-  { id: 'inter', label: 'Inter', css: "'Inter', system-ui, sans-serif" },
+  { id: 'inter', label: 'Inter', css: "'Inter Variable', system-ui, sans-serif" },
   { id: 'serif', label: 'Instrument Serif', css: "'Instrument Serif', Georgia, serif" },
-  { id: 'mono', label: 'Source Code Pro', css: "'Source Code Pro', ui-monospace, monospace" },
+  { id: 'mono', label: 'Source Code Pro', css: "'Source Code Pro Variable', ui-monospace, monospace" },
   { id: 'system', label: 'System', css: 'system-ui, -apple-system, Segoe UI, sans-serif' },
 ]
 
 const SYSTEM_FONT = FONT_CHOICES.find((f) => f.id === 'system')!.css
 
-const EMOJI_FONT ="'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
+const EMOJI_FONT = "'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
 
 function shapePath(ctx: CanvasRenderingContext2D, size: number, shape: FaviconShape) {
   ctx.beginPath()
@@ -167,7 +167,6 @@ export function canBuildSvg(source: FaviconSource): boolean {
  */
 export async function fontReady(source: FaviconSource): Promise<void> {
   if (source.kind === 'text') await document.fonts.load(`${source.weight} 64px ${source.font}`, source.text).catch(() => undefined)
-  if (source.kind === 'emoji') await document.fonts.load("64px 'Noto Color Emoji'", source.emoji).catch(() => undefined)
 }
 
 /** Colours that change in the dark variant of a text/emoji SVG. */

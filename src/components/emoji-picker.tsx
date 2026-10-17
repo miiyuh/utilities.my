@@ -30,7 +30,7 @@ function loadEmoji(): Promise<EmojiData> {
 
 const TONES = ['', '🏻', '🏼', '🏽', '🏾', '🏿']
 const TONE_SWATCH = ['#ffcc4d', '#f7dece', '#f3d2a2', '#d5ab88', '#af7e57', '#7c533e']
-const EMOJI_FONT = "'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
+const EMOJI_FONT = "'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
 
 /**
  * Every emoji in the current Unicode release (from emoji-test.txt), with
