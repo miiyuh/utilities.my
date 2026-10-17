@@ -10,7 +10,6 @@ import { useToolSettings } from "@/hooks/use-tool-settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useSettings } from "@/contexts/settings-context";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -114,11 +113,10 @@ function readInitialFields(): InitialFields {
 }
 
 export default function BmiCalculatorPage() {
-  const { settings } = useSettings();
   const { formatNumber } = useToolSettings();
   const [initial] = React.useState(readInitialFields);
-  const initialUnit: UnitSystem =
-    initial.unitSystem ?? (settings?.defaultUnits === "imperial" ? "imperial" : "metric");
+  // A shared link or the saved draft decides; otherwise start in metric.
+  const initialUnit: UnitSystem = initial.unitSystem ?? "metric";
 
   const [unitSystem, setUnitSystem] = React.useState<UnitSystem>(initialUnit);
   const [standard, setStandard] = React.useState<BmiStandard>(initial.standard);
