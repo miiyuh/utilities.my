@@ -112,7 +112,7 @@ export const METHODOLOGY: Method[] = [
   {
     path: '/timezone-converter',
     summary:
-      'UTC offsets and daylight-saving rules come from the IANA time zone database built into your browser, read through dayjs\' timezone plugin.',
+      'UTC offsets and daylight-saving rules come from the IANA time zone database built into your browser, read through date-fns and @date-fns/tz.',
     notes: [
       'Because the rules ship with the browser, an outdated browser can be wrong for zones whose rules changed recently.',
       'Every zone in the tz database is listed (418), named after its main city, with the country and region from the database\'s zone.tab. Asia/Jerusalem is listed under Palestine.',

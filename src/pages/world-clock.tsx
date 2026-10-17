@@ -1,8 +1,7 @@
 import { Flag } from '@/components/flag';
 import React from 'react';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import { format } from 'date-fns';
+import { gmtOffset, inZone, localTimeZone } from '@/lib/zoned';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
@@ -37,8 +36,6 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 const STORAGE_KEY = 'utilities.world-clock.zones';
 
@@ -107,10 +104,10 @@ function PinnedCityRow({ tz, isHome, isDay, flag, timeLabel, dateLabel, onRemove
 
 export default function WorldClockPage() {
   const fieldId = React.useId();
-  const localZone = React.useMemo(() => dayjs.tz.guess(), []);
-  const [now, setNow] = React.useState(() => dayjs());
+  const localZone = React.useMemo(() => localTimeZone(), []);
+  const [now, setNow] = React.useState(() => new Date());
   const [search, setSearch] = React.useState('');
-  const { dayjs: dj, is24h } = useToolSettings();
+  const { fns: dj, is24h } = useToolSettings();
   const [use24h, setUse24h] = React.useState(is24h);
   const [showSeconds, setShowSeconds] = React.useState(true);
   const [view, setView] = React.useState<GlobeView>('globe');
@@ -130,7 +127,7 @@ export default function WorldClockPage() {
   });
 
   React.useEffect(() => {
-    const id = setInterval(() => setNow(dayjs()), 1000);
+    const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -178,7 +175,7 @@ export default function WorldClockPage() {
     [zones]
   );
 
-  const timeFmt = `${use24h ? 'HH:mm' : 'h:mm'}${showSeconds ? ':ss' : ''}${use24h ? '' : ' A'}`;
+  const timeFmt = `${use24h ? 'HH:mm' : 'h:mm'}${showSeconds ? ':ss' : ''}${use24h ? '' : ' a'}`;
 
   const visibleZones = zones.filter((tz) => {
     if (!search.trim()) return true;
@@ -282,8 +279,8 @@ export default function WorldClockPage() {
                   <SortableContext items={visibleZones} strategy={verticalListSortingStrategy}>
                     <div className="space-y-1">
                       {visibleZones.map((tz) => {
-                        const t = now.tz(tz);
-                        const hour = t.hour();
+                        const t = inZone(now, tz);
+                        const hour = t.getHours();
                         const isDay = hour >= 6 && hour < 18;
                         const city = findCityZone(tz);
                         const isHome = tz === localZone;
@@ -294,8 +291,8 @@ export default function WorldClockPage() {
                             isHome={isHome}
                             isDay={isDay}
                             flag={city?.flag ?? ''}
-                            timeLabel={t.format(timeFmt)}
-                            dateLabel={`${t.format(dj.weekday)} · GMT${t.format('Z').replace(':00', '')}`}
+                            timeLabel={format(t, timeFmt)}
+                            dateLabel={`${format(t, dj.weekday)} · GMT${gmtOffset(t)}`}
                             onRemove={() => removeZone(tz)}
                           />
                         );

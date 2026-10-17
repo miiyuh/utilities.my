@@ -56,7 +56,7 @@ JPEG XL files can also be opened as input. AVIF and JPEG XL use WebAssembly enco
 - React Router 7
 - Radix UI and Base UI components, with Phosphor and Lucide icons
 - next-themes for the dark and light themes
-- Libraries used by individual tools: dayjs and date-fns (dates), marked and DOMPurify (Markdown), qrcode.react (QR codes), exifr (image metadata), pdf-lib and JSZip (PDF and ZIP export), d3-geo and world-atlas (the world clock globe), dnd-kit (drag and drop)
+- Libraries used by individual tools: date-fns and @date-fns/tz (dates and time zones), marked and DOMPurify (Markdown), qrcode.react (QR codes), exifr (image metadata), pdf-lib and JSZip (PDF and ZIP export), d3-geo and world-atlas (the world clock globe), dnd-kit (drag and drop)
 - oxlint for linting, Husky and commitlint for commit checks, semantic-release for versioning
 
 ## Running it locally
