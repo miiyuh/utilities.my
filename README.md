@@ -61,7 +61,7 @@ JPEG XL files can also be opened as input. AVIF and JPEG XL use WebAssembly enco
 
 ## Running it locally
 
-You need Node.js 20.19+ or 22.12+ and [bun](https://bun.sh) 1.1+.
+You need Node.js 20.19+ or 22.12+ and [bun](https://bun.sh) 1.3+ (the version pinned in `package.json`).
 
 ```bash
 git clone https://github.com/miiyuh/utilities.my.git
