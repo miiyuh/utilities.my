@@ -2,219 +2,115 @@
 
 ---
 
-A comprehensive collection of web-based utilities for everyday tasks, all centralized in one modern, responsive web application.
+Small browser tools for everyday jobs: converting images, units and time zones, checking text, and a few others. Everything runs in your browser. Nothing you enter or drop in is uploaded.
 
-## Overview
+## Tools
 
-utilities.my is a productivity-focused web application that consolidates essential online tools into a single, unified platform. Built with React and modern web technologies, it provides a consistent, responsive interface across all utilities with support for both dark and light themes.
+**Text**
+- **Text Case Converter**: see your text in every case at once and copy the one you need
+- **Text Statistics**: character, word and paragraph counts, and reading time
+- **Sorter**: sort, tidy or split a list, with undo
+- **Morse Code Generator**: text to Morse and back, with sound and light
 
-**Key Benefits:**
-- 🎯 **Centralized Access** - All your frequently-used tools in one place
-- 📱 **Fully Responsive** - Optimized for mobile, tablet, and desktop devices
-- 🎨 **Modern Design** - Clean, intuitive interface with dark/light theme support
-- ⚡ **High Performance** - Fast, lightweight Vite-powered development and builds
+**Writing and web**
+- **Markdown Previewer**: write Markdown and see the result as you type
+- **QR Code Generator**: make a QR code from a link or text
+- **Favicon Generator**: turn a letter, emoji or image into favicon.ico, PNG, Apple and Android icons, a web manifest and the HTML snippet
+- **Colour Picker**: pick a colour and copy its HEX, RGB, HSL or OKLCH code
 
-## Features
+**Images and documents**
+- **Image Converter**: convert between PNG, JPEG, WebP, AVIF and JPEG XL, with crop, rotate, flip and resize. Shows the file size before you download, can aim for a size you set, reads and removes metadata such as location, and handles many files at once as a ZIP
+- **Palang IC**: stamp a purpose across a MyKad copy so it can't be reused, then export it as an A4 PDF or PNG
 
-### 📝 Text Utilities
-- **Text Case Converter** - Transform text between multiple case formats (uppercase, lowercase, title case, camel case, snake case, and more)
-- **Text Statistics** - Comprehensive text analysis including character count, word count, paragraph count, and reading time
-- **Text Sorter** - Sort lines of text alphabetically, numerically, or by length with customizable options
+**Date and time**
+- **Unix Timestamp Converter**: epoch numbers to dates and back
+- **Timezone Converter**: compare times across time zones, with daylight saving handled
+- **World Clock**: the current time in any city, on a globe
+- **Date Difference Calculator**: days, hours or years between two dates
 
-### 🛠️ Development Tools
-- **Markdown Previewer** - Live markdown editor with real-time preview and syntax highlighting
-- **QR Code Generator** - Create QR codes from text or URLs
+**Measurement and numbers**
+- **Unit Converter**: length, weight, temperature, volume and more
+- **BMI Calculator**: metric and imperial units
+- **Foot Size Converter**: shoe size from a size you know or your foot length
+- **Percentage Calculator**: percentages, changes, discounts and tips
 
-### 🎨 Design Tools
-- **Colour Picker** - Advanced colour selection tool with support for HEX, RGB, HSL, CMYK, and HSV formats
+**Other**
+- **Spin the Wheel**: let a wheel pick for you
 
-### ⏰ Date & Time Utilities
-- **Unix Timestamp Converter** - Convert between Unix timestamps and human-readable dates with timezone support
-- **Timezone Converter** - Convert times across global timezones with major city presets and DST handling
-- **Date Difference Calculator** - Calculate precise time differences between dates
-- **World Clock** - View current time across multiple timezones
+### Image Converter formats
 
-### 📏 Measurement & Conversion Tools
-- **Unit Converter** - Convert between various units including length, weight, temperature, and volume
-- **BMI Calculator** - Calculate Body Mass Index with metric and imperial units
-- **Footsize Converter** - Convert between different footsize scales
-- **Percentage Calculator** - Calculate percentages, percentage changes, and more
+| Format | Notes |
+|--------|-------|
+| PNG | Lossless, keeps transparency |
+| JPEG | Works everywhere. No transparency |
+| WebP | Smaller than JPEG at the same quality |
+| AVIF | Smallest files in most cases, slow to encode |
+| JPEG XL | Lossy or lossless. Lossless files are usually much smaller than PNG. Browser support is still uneven, so keep JPEG or WebP for files you plan to share |
 
-### 🎲 Image & Fun Tools
-- **Image Converter** - Convert images between different formats (PNG, JPG, WebP) with resizing
-- **Favicon Generator** - Turn a letter, emoji or image into favicon.ico, PNGs, Apple and Android icons, a web manifest and the HTML snippet
-- **Palang IC** - Stamp the purpose across a MyKad copy so it cannot be reused, exported as A4 PDF or PNG, entirely in the browser
-- **Spin the Wheel** - Customizable decision-making wheel with animations
-- **Morse Code Generator** - Convert text to Morse code and vice versa with audio and visual playback
+JPEG XL files can also be opened as input. AVIF and JPEG XL use WebAssembly encoders ([jSquash](https://github.com/jamsinclair/jSquash)) that download only when you pick that format. If your browser can't display JPEG XL, the preview shows a PNG copy while the download is still a real `.jxl` file.
 
-### 📜 Additional Pages
-- **About** - Project information and details
-- **Settings** - Application configuration and preferences
-- **Privacy Policy** - Privacy information and data handling
-- **Terms of Service** - Terms and conditions
+## Tech stack
 
-## Technology Stack
+- React 19 and TypeScript 7
+- Vite 8 and Tailwind CSS 4
+- React Router 7
+- Radix UI and Base UI components, with Phosphor and Lucide icons
+- next-themes for the dark and light themes
+- Libraries used by individual tools: dayjs and date-fns (dates), marked and DOMPurify (Markdown), qrcode.react (QR codes), exifr (image metadata), pdf-lib and JSZip (PDF and ZIP export), d3-geo and world-atlas (the world clock globe), dnd-kit (drag and drop)
+- oxlint for linting, Husky and commitlint for commit checks, semantic-release for versioning
 
-### Frontend
-- **React 19** - Latest React with hooks and modern features
-- **TypeScript 7** - Full type safety, on the native Go compiler
-- **Vite** - Ultra-fast build tool and dev server
-- **Tailwind CSS** - Utility-first CSS framework
-- **Radix UI** - Accessible component primitives
-- **Lucide React** - Icon library
+## Running it locally
 
-### Routing & State Management
-- **React Router DOM 7** - Client-side routing
-- **React Context** - State management for settings and preferences
-- **next-themes** - Theme switching and persistence
+You need Node.js 20.19+ or 22.12+ and [bun](https://bun.sh) 1.3+ (the version pinned in `package.json`).
 
-### UI & Animation
-- **Framer Motion** - Smooth animations and transitions
-- **sonner** - Toast notifications
-- **dnd-kit** - Drag and drop utilities
-- **Radix UI Dialog, Popover, Select** - Advanced components
+```bash
+git clone https://github.com/miiyuh/utilities.my.git
+cd utilities.my
+bun install
+bun run dev
+```
 
-### Libraries & Utilities
-- **dayjs** - Lightweight date manipulation with timezone support
-- **date-fns** - Additional date utilities
-- **marked** - Markdown parsing with GitHub Flavored Markdown
-- **marked-footnote** - Markdown footnote support
-- **react-markdown** - React component for rendering markdown
-- **rehype-slug** - Auto-generating heading IDs
-- **remark-gfm** - GitHub Flavored Markdown support
-- **qrcode.react** - QR code generation
-- **DOMPurify** - XSS protection
-- **react-colorful** - Color picker component
-- **browser-image-compression** - Client-side image compression
-- **color** - Color manipulation utilities
-- **leaflet & react-leaflet** - Interactive maps
-- **canvas-confetti** - Confetti animations
-- **react-day-picker** - Calendar component
+Then open `http://localhost:5173`.
 
-## 🚀 Installation & Development
-
-### Prerequisites
-- **Node.js 20.19+ or 22.12+** (required by Vite 8)
-- **bun 1.1+** (or npm/yarn)
-- **Git** for version control
-
-### Quick Start
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/miiyuh/utilities.my.git
-   cd utilities.my
-   ```
-
-2. **Install dependencies**
-   ```bash
-   bun install
-   ```
-
-3. **Start development server**
-   ```bash
-   bun run dev
-   ```
-
-4. **Open your browser**
-   Navigate to `http://localhost:5173` (or the port shown in terminal)
-
-### 📋 Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start development server with hot reload on `http://localhost:5173` |
-| `bun run build` | Typecheck, build the production bundle, then prerender per-route HTML, the sitemap and OpenGraph cards |
-| `bun run preview` | Preview production build locally |
-| `bun run lint` | Run oxlint, including type-aware rules via tsgolint |
-| `bun run typecheck` | Check types for both the app and the build scripts |
-
-## 🎨 Design Philosophy
-
-### User-Centered Design
-- **Intuitive Interface** - Clean, uncluttered layouts focused on functionality
-- **Responsive** - Seamless experience across all device sizes
-- **Theme Support** - Beautiful dark and light themes
-
-### Code Quality
-- **TypeScript** - Full type safety throughout the codebase
-- **oxlint** - Fast linting with type-aware rules, a11y checks and React rules
-- **Component-Based** - Modular, reusable components
-- **Consistent Styling** - Tailwind CSS with custom design system
+| Command | What it does |
+|---------|--------------|
+| `bun run dev` | Start the dev server on port 5173 |
+| `bun run build` | Typecheck, build, then prerender each route's HTML, the sitemap and the social cards |
+| `bun run preview` | Serve the production build locally |
+| `bun run lint` | Run oxlint, including type-aware rules |
+| `bun run typecheck` | Check types for the app and the build scripts |
 
 ## Contributing
 
-Contributions are welcome! Whether you're fixing bugs, improving documentation, or adding new utilities, your contributions help make this better.
+Bug fixes, documentation and new tools are all welcome. The [Roadmap](ROADMAP.md) lists what's planned and what's still being discussed. Please read the [Code of Conduct](CODE_OF_CONDUCT.md) first. To report a security problem, follow [SECURITY.md](SECURITY.md) instead of opening a public issue.
 
-See the [Roadmap](ROADMAP.md) for what's planned. Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before taking part. Found a security issue? Report it privately as described in [SECURITY.md](SECURITY.md), not in a public issue.
+1. Fork the repository and create a branch, for example `git checkout -b feat/new-tool`.
+2. Make your change, following the patterns already in the code.
+3. Check it on a phone-sized and a desktop-sized screen, in both themes, and with the keyboard.
+4. Commit using [Conventional Commits](https://www.conventionalcommits.org), for example `feat: add a hash generator`. Commitlint checks this and releases are versioned from it.
+5. Push the branch and open a pull request.
 
-### How to Contribute
+### Adding a tool
 
-1. **Fork the repository** and create your feature branch
-   ```bash
-   git checkout -b feature/new-utility
-   ```
+1. Create `src/pages/<tool-name>.tsx`.
+2. Add it to `src/lib/tools.ts` with an icon and a description.
+3. Add a `<Route>` for it in `src/App.tsx`.
+4. Add an entry to `src/lib/seo.ts` with its title, description and `h1`.
+5. If the tool has a method, formula or sources worth explaining, add them to `src/lib/methodology.ts`.
 
-2. **Make your changes** following the project's code patterns
-3. **Test thoroughly** across different screen sizes and themes
-4. **Commit with clear messages**
-   ```bash
-   git commit -m "Add new utility description"
-   ```
+Step 4 is required. Each route is served as its own prerendered HTML file, with no single-page fallback, so a route missing from `src/lib/seo.ts` returns a 404 in production. The build fails if a tool in `tools.ts` has no matching entry, so you'll find out before deploying.
 
-5. **Push and create a Pull Request**
-   ```bash
-   git push origin feature/new-utility
-   ```
+### Code standards
 
-### Development Guidelines
+- TypeScript throughout
+- Tailwind classes for styling, and shadcn/ui components where one exists
+- Use the shared motion tokens (`duration-quick`, `duration-fast`, `duration-medium`) and the `PageHeader` component instead of hardcoding durations or headers
+- Show loading states for slow work and a clear message when something fails
 
-#### Adding New Utilities
+### Reporting issues
 
-1. Create a new file in `src/pages/[utility-name].tsx`
-2. Add the utility to `src/lib/tools.ts` with icon and description
-3. Add a `<Route>` for it in `src/App.tsx`
-4. **Add an entry to `src/lib/seo.ts`** with its title, description and `h1`
-5. Follow existing component patterns and styling
-6. Ensure responsive design for mobile, tablet, and desktop
-7. Test with both dark and light themes
-8. Test keyboard navigation and accessibility
-
-> Step 4 is required, not optional. There is no SPA fallback rewrite any more:
-> each route is served as its own prerendered HTML file, so a route missing from
-> `src/lib/seo.ts` returns a real 404 in production. The build fails if a tool in
-> `tools.ts` has no matching entry, so this is caught before deploy.
-
-#### Code Standards
-
-- Use TypeScript for all code
-- Follow existing component structure and naming conventions
-- Use Tailwind CSS classes for styling
-- Use shadcn/ui components when available
-- Implement proper error handling and user feedback
-- Add loading states for async operations
-
-### Ideas for Contributions
-
-We're open to new utilities! Some potential additions:
-
-- Base64 Encoder/Decoder
-- URL Encoder/Decoder
-- JSON Formatter and Validator
-- Password Generator
-- Hash Generator (MD5, SHA-256)
-- Binary/Decimal/Hex Converter
-- Regular Expression Tester
-
-### Reporting Issues
-
-Found a bug? Please create an issue with:
-- Clear description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Screenshots if applicable
-- Browser and device info
+Open an issue with what went wrong, the steps to reproduce it, what you expected, your browser and device, and a screenshot if it helps.
 
 ## License
 
-This project is licensed under the MIT License.
+MIT.

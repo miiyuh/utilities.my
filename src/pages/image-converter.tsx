@@ -45,6 +45,7 @@ import {
   NO_EDITS,
   centredCrop,
   decodeImage,
+  displayBlob,
   editedSize,
   encodeCanvas,
   encodeToTarget,
@@ -70,6 +71,8 @@ interface OutputSettings {
   quality: number
   useTarget: boolean
   targetKb: string
+  /** JPEG XL only: no quality loss at all. */
+  lossless: boolean
   metaMode: MetadataMode
 }
 
@@ -135,7 +138,9 @@ function OutputControls({
   onChange: (patch: Partial<OutputSettings>) => void
   metadataNote: React.ReactNode
 }) {
-  const lossy = FORMATS[settings.format].lossy
+  const isJxl = settings.format === 'image/jxl'
+  const lossless = isJxl && settings.lossless
+  const lossy = FORMATS[settings.format].lossy && !lossless
   return (
     <div className="space-y-5">
       <div className="space-y-2">
@@ -154,6 +159,16 @@ function OutputControls({
         </Select>
         <p className="text-xs text-muted-foreground">{FORMATS[settings.format].note}</p>
       </div>
+
+      {isJxl && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="jxl-lossless" className="cursor-pointer">Lossless</Label>
+            <Switch id="jxl-lossless" checked={settings.lossless} onCheckedChange={(c) => onChange({ lossless: c })} />
+          </div>
+          <p className="text-xs text-muted-foreground">Keeps every pixel exactly. Files are bigger than lossy, but usually smaller than PNG.</p>
+        </div>
+      )}
 
       {lossy && (
         <div className="space-y-3">
@@ -283,6 +298,32 @@ function useObjectUrl(blob: Blob | null): string | null {
   return url
 }
 
+/**
+ * An object URL an <img> can show: JPEG XL the browser can't read is decoded to
+ * PNG first. `failed` is set if that decode fails (say the decoder couldn't
+ * download), so callers can say so instead of looking like they're still loading.
+ */
+function useDisplayUrl(blob: Blob | null): { url: string | null; failed: boolean; retry: () => void } {
+  const [shown, setShown] = React.useState<Blob | null>(null)
+  const [failed, setFailed] = React.useState(false)
+  const [attempt, setAttempt] = React.useState(0)
+  React.useEffect(() => {
+    let live = true
+    setShown(null)
+    setFailed(false)
+    if (blob) {
+      displayBlob(blob).then(
+        (b) => live && setShown(b),
+        () => live && setFailed(true)
+      )
+    }
+    return () => {
+      live = false
+    }
+  }, [blob, attempt])
+  return { url: useObjectUrl(shown), failed, retry: () => setAttempt((n) => n + 1) }
+}
+
 function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: (files: File[]) => void; compact?: boolean }) {
   const inputRef = React.useRef<HTMLInputElement>(null)
   const zoneRef = React.useRef<HTMLButtonElement>(null)
@@ -332,7 +373,7 @@ function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: 
       <div className="space-y-1">
         <p className="text-sm font-medium">{multiple ? 'Drop images here' : 'Drop an image here'}</p>
         <p className="text-xs text-muted-foreground">
-          or paste with {PASTE_KEY} V. PNG, JPEG, WebP, GIF and AVIF, up to 50 MB.
+          or paste with {PASTE_KEY} V. PNG, JPEG, WebP, GIF, AVIF and JPEG XL, up to 50 MB.
         </p>
       </div>
       <span className="inline-flex h-8 items-center gap-2 rounded-full border border-border bg-background px-3 text-sm font-medium">
@@ -342,7 +383,7 @@ function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: 
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.jxl"
         multiple={multiple}
         className="hidden"
         onChange={(e) => {
@@ -362,7 +403,7 @@ function usePasteImages(onFiles: (files: File[]) => void) {
   })
   React.useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
-      const files = Array.from(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith('image/'))
+      const files = Array.from(e.clipboardData?.files ?? []).filter(isAcceptedImage)
       if (files.length) {
         e.preventDefault()
         cb.current(files)
@@ -398,13 +439,14 @@ async function encodeOutput(
   size: { width: number; height: number }
 ): Promise<{ blob: Blob; quality: number; fits: boolean }> {
   const target = Number(settings.targetKb) * 1024
-  if (FORMATS[settings.format].lossy && settings.useTarget && target > 0) {
+  const lossless = settings.format === 'image/jxl' && settings.lossless
+  if (FORMATS[settings.format].lossy && !lossless && settings.useTarget && target > 0) {
     const overhead = await metadataOverhead(source, settings.format, settings.metaMode)
     const encoded = await encodeToTarget(canvas, settings.format, Math.max(1, target - overhead))
     const blob = await carryOverMetadata(source, encoded.blob, settings.metaMode, size)
     return { blob, quality: encoded.quality, fits: blob.size <= target }
   }
-  const encoded = await encodeCanvas(canvas, settings.format, settings.quality)
+  const encoded = await encodeCanvas(canvas, settings.format, settings.quality, lossless)
   return { blob: await carryOverMetadata(source, encoded, settings.metaMode, size), quality: settings.quality, fits: true }
 }
 
@@ -436,8 +478,8 @@ function SingleConverter({
   const loadId = React.useRef(0)
   const replaceRef = React.useRef<HTMLInputElement>(null)
 
-  const thumbUrl = useObjectUrl(file)
-  const afterUrl = useObjectUrl(preview?.blob ?? null)
+  const { url: thumbUrl } = useDisplayUrl(file)
+  const { url: afterUrl, failed: afterFailed, retry: retryAfter } = useDisplayUrl(preview?.blob ?? null)
   const beforeUrl = useObjectUrl(preview?.before ?? null)
 
   const [ew, eh] = image ? editedSize(image.width, image.height, edits) : [0, 0]
@@ -516,6 +558,7 @@ function SingleConverter({
       format: p.format ?? s.format,
       quality: p.quality ?? s.quality,
       useTarget: p.targetKb != null,
+      lossless: false,
       targetKb: p.targetKb != null ? String(p.targetKb) : s.targetKb,
     }))
     if (p.exact) {
@@ -574,7 +617,7 @@ function SingleConverter({
           }
         })()
       },
-      settings.format === 'image/avif' ? 700 : 300
+      settings.format === 'image/avif' || settings.format === 'image/jxl' ? 700 : 300
     )
     return () => window.clearTimeout(timer)
   }, [image, file, edits, width, height, settings, inputsKey])
@@ -616,7 +659,7 @@ function SingleConverter({
     )
   }
 
-  const lossy = FORMATS[settings.format].lossy
+  const lossy = FORMATS[settings.format].lossy && !(settings.format === 'image/jxl' && settings.lossless)
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
@@ -662,7 +705,7 @@ function SingleConverter({
               <input
                 ref={replaceRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.jxl"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0]
@@ -739,6 +782,15 @@ function SingleConverter({
         <CardContent className="space-y-4">
           {beforeUrl && afterUrl ? (
             <CompareSlider before={beforeUrl} after={afterUrl} beforeLabel="Uncompressed" className="aspect-[4/3] w-full" />
+          ) : afterFailed ? (
+            <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              <p className="flex items-center gap-2">
+                <Warning className="h-4 w-4 shrink-0 text-warning" /> Couldn&apos;t show the preview. Your download isn&apos;t affected.
+              </p>
+              <Button variant="outline" size="sm" onClick={retryAfter}>
+                Retry
+              </Button>
+            </div>
           ) : (
             <div className="flex aspect-[4/3] w-full items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
               <Spinner className="mr-2 h-4 w-4 animate-spin" /> Preparing preview…
@@ -751,7 +803,7 @@ function SingleConverter({
             ) : (
               <span className="inline-flex items-center gap-2 text-muted-foreground">
                 <Spinner className="h-4 w-4 animate-spin" />
-                {settings.format === 'image/avif' ? 'Encoding AVIF (this takes a moment)…' : 'Calculating…'}
+                {settings.format === 'image/avif' || settings.format === 'image/jxl' ? `Encoding ${FORMATS[settings.format].label} (this takes a moment)…` : 'Calculating…'}
               </span>
             )}
             <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
@@ -822,7 +874,7 @@ const LONG_EDGES = [
 const MAX_BATCH = 30
 
 function BatchThumb({ file }: { file: File }) {
-  const url = useObjectUrl(file)
+  const { url } = useDisplayUrl(file)
   return (
     <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
       {url && <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
@@ -1081,6 +1133,7 @@ export default function ImageConverterPage() {
     quality: 0.85,
     useTarget: false,
     targetKb: '500',
+    lossless: false,
     metaMode: 'strip',
   })
 

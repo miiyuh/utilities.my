@@ -3,7 +3,7 @@
 // only pixels, so metadata (EXIF, GPS, camera details) is dropped unless the
 // caller explicitly puts it back (see image-metadata.ts).
 
-export type OutputFormat = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/avif'
+export type OutputFormat = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/avif' | 'image/jxl'
 export type Rotation = 0 | 90 | 180 | 270
 
 /** Crop in normalised 0–1 coordinates of the rotated + flipped image. */
@@ -28,6 +28,12 @@ export const FORMATS: Record<OutputFormat, { label: string; ext: string; lossy: 
   'image/jpeg': { label: 'JPEG', ext: 'jpg', lossy: true, note: 'Best for photos and maximum compatibility. No transparency.' },
   'image/webp': { label: 'WebP', ext: 'webp', lossy: true, note: 'Smaller than JPEG at the same quality. Works in all modern browsers.' },
   'image/avif': { label: 'AVIF', ext: 'avif', lossy: true, note: 'Smallest files. Newer, and slower to encode.' },
+  'image/jxl': {
+    label: 'JPEG XL',
+    ext: 'jxl',
+    lossy: true,
+    note: 'Small files with an optional lossless mode. Opens in Safari and newer Chrome and Firefox, but many apps and sites cannot read it yet. Slow to encode.',
+  },
 }
 
 export const MAX_DIMENSION = 8000
@@ -41,8 +47,13 @@ export function isHeic(file: File): boolean {
   return /image\/hei[cf]/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)
 }
 
+/** JPEG XL files often arrive with no MIME type, so the extension counts too. */
+export function isJxl(file: Blob & { name?: string }): boolean {
+  return file.type === 'image/jxl' || /\.jxl$/i.test(file.name ?? '')
+}
+
 export function isAcceptedImage(file: File): boolean {
-  return file.type.startsWith('image/')
+  return file.type.startsWith('image/') || isJxl(file)
 }
 
 export function outputFilename(original: string, format: OutputFormat): string {
@@ -75,14 +86,45 @@ function loadElement(blob: Blob): Promise<HTMLImageElement> {
   })
 }
 
+/** Decodes JPEG XL with the WebAssembly decoder, which downloads only when needed. */
+async function decodeJxlPixels(blob: Blob): Promise<ImageData> {
+  const { default: decode } = await import('@jsquash/jxl/decode')
+  const data = await decode(await blob.arrayBuffer())
+  if (!data) throw new Error('decode')
+  return data
+}
+
 async function decodeBlob(blob: Blob): Promise<DecodedImage> {
   // EXIF orientation is applied while decoding, so pixels come out upright.
   try {
     const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' })
     return { source: bmp, width: bmp.width, height: bmp.height }
   } catch {
+    if (isJxl(blob)) {
+      const bmp = await createImageBitmap(await decodeJxlPixels(blob))
+      return { source: bmp, width: bmp.width, height: bmp.height }
+    }
     const img = await loadElement(blob)
     return { source: img, width: img.naturalWidth, height: img.naturalHeight }
+  }
+}
+
+/**
+ * A blob an <img> can show. JPEG XL is shown as-is where the browser can read
+ * it, and otherwise as a PNG of the same pixels (for display only).
+ */
+export async function displayBlob(blob: Blob & { name?: string }): Promise<Blob> {
+  if (!isJxl(blob)) return blob
+  try {
+    ;(await createImageBitmap(blob)).close()
+    return blob
+  } catch {
+    const data = await decodeJxlPixels(blob)
+    const canvas = document.createElement('canvas')
+    canvas.width = data.width
+    canvas.height = data.height
+    canvas.getContext('2d')?.putImageData(data, 0, 0)
+    return canvasToBlob(canvas, 'image/png')
   }
 }
 
@@ -199,8 +241,16 @@ function supportsNativeAvif(): Promise<boolean> {
   return nativeAvif
 }
 
-/** Encodes a canvas. `quality` is 0–1 and ignored for PNG. */
-export async function encodeCanvas(canvas: HTMLCanvasElement, format: OutputFormat, quality: number): Promise<Blob> {
+/** Encodes a canvas. `quality` is 0–1 and ignored for PNG, and for JPEG XL when `lossless`. */
+export async function encodeCanvas(canvas: HTMLCanvasElement, format: OutputFormat, quality: number, lossless = false): Promise<Blob> {
+  if (format === 'image/jxl') {
+    const { default: encode } = await import('@jsquash/jxl/encode')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('Canvas is not available in this browser.')
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const buf = await encode(data, { quality: Math.round(quality * 100), effort: 5, lossless })
+    return new Blob([buf], { type: 'image/jxl' })
+  }
   if (format === 'image/avif' && !(await supportsNativeAvif())) {
     // No browser encodes AVIF from a canvas yet; use a WebAssembly encoder,
     // downloaded only when AVIF is chosen.
@@ -227,7 +277,7 @@ export async function encodeToTarget(
   let lo = 0.05
   let hi = 0.95
   let best: { blob: Blob; quality: number } | null = null
-  const steps = format === 'image/avif' ? 5 : 7
+  const steps = format === 'image/avif' || format === 'image/jxl' ? 5 : 7
   for (let i = 0; i < steps; i++) {
     const q = (lo + hi) / 2
     const blob = await encodeCanvas(canvas, format, q)
