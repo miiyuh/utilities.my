@@ -78,7 +78,7 @@ Then open `http://localhost:5173`.
 | `bun run build` | Typecheck, build, then prerender each route's HTML, the sitemap and the social cards |
 | `bun run preview` | Serve the production build locally |
 | `bun run lint` | Run oxlint, including type-aware rules |
-| `bun run typecheck` | Check types for the app and the build scripts |
+| `bun run typecheck` | Check types for the app and the build scripts, using [tsc-rs](https://github.com/pingdotgg/ts-rust) |
 
 ## Contributing
 
