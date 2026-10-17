@@ -9,6 +9,7 @@
     "build": "bun run typecheck && vite build && bun run scripts/build-seo.ts",
     "preview": "vite preview",
     "lint": "oxlint",
+    "test": "bun test",
     "typecheck": "tsc-rs --noEmit && tsc-rs -p tsconfig.node.json",
     "prepare": "husky",
     "lint:fix": "oxlint --fix"
