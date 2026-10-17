@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox"
 import { Check, CaretDown } from "phosphor-react"

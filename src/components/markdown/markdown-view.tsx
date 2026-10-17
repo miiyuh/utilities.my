@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import { Marked } from 'marked';
 import DOMPurify from 'dompurify';

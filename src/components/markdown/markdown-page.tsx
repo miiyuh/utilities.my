@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import type { Icon } from 'phosphor-react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";

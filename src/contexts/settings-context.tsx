@@ -1,5 +1,3 @@
-"use client";
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { DatePreset, NumberFormat, TimeFormat } from '@/lib/format';
 
