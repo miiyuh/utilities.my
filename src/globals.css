@@ -1,8 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Noto+Color+Emoji&family=Source+Code+Pro:wght@400;500;600&display=swap');
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 @import "tw-animate-css";
+/* Self-hosted fonts. A face only downloads when text actually uses it. */
 @import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/source-code-pro";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
 
 /* Class-based dark mode (driven by next-themes attribute="class") */
 @custom-variant dark (&:is(.dark *));
@@ -144,13 +148,13 @@
 
 @theme {
   /* Typography */
-  --font-sans: 'Space Grotesk Variable', 'Inter', system-ui, sans-serif;
+  --font-sans: 'Space Grotesk Variable', system-ui, sans-serif;
   --font-heading: 'Space Grotesk Variable', system-ui, sans-serif;
   --font-headline: var(--font-heading);
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-body: 'Inter Variable', system-ui, sans-serif;
+  --font-mono: 'Source Code Pro Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-code: var(--font-mono);
-  --font-serif: 'Instrument Serif', 'Noto Serif', serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
 
   /* One radius everywhere (0.625rem): every rounded-* step resolves to it.
      Buttons are the exception and use rounded-full; pills stay rounded-full. */
