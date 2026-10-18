@@ -596,13 +596,11 @@ export default function PalangIc() {
 
                     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="sm:flex-1">
-                            <Button type="button" className="w-full" disabled={!canExport} onClick={exportPdf}>
-                              <FilePdf className="h-4 w-4" />
-                              {exporting === 'pdf' ? 'Building PDF…' : 'Download PDF (A4)'}
-                            </Button>
-                          </span>
+                        <TooltipTrigger render={<span className="sm:flex-1" />}>
+                          <Button type="button" className="w-full" disabled={!canExport} onClick={exportPdf}>
+                            <FilePdf className="h-4 w-4" />
+                            {exporting === 'pdf' ? 'Building PDF…' : 'Download PDF (A4)'}
+                          </Button>
                         </TooltipTrigger>
                         {exportBlocker && <TooltipContent>{exportBlocker}</TooltipContent>}
                       </Tooltip>

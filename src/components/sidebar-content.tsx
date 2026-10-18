@@ -120,20 +120,22 @@ export function SidebarContent() {
           {/* Right: Icon buttons */}
           <div className="flex items-center gap-2">
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/about"
-                  className={cn(
-                    "p-2 rounded-md transition-colors",
-                    pathname === "/about"
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "text-muted-foreground hover:bg-sidebar-accent"
-                  )}
-                  onClick={handleLinkClick}
-                  aria-label="About"
-                >
-                  <Info className="h-4 w-4" aria-hidden />
-                </Link>
+              <TooltipTrigger
+                render={
+                  <Link
+                    to="/about"
+                    className={cn(
+                      "p-2 rounded-md transition-colors",
+                      pathname === "/about"
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "text-muted-foreground hover:bg-sidebar-accent"
+                    )}
+                    onClick={handleLinkClick}
+                    aria-label="About"
+                  />
+                }
+              >
+                <Info className="h-4 w-4" aria-hidden />
               </TooltipTrigger>
               <TooltipContent side="right" align="center" hidden={isMobile}>About</TooltipContent>
             </Tooltip>

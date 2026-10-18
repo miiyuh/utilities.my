@@ -82,7 +82,7 @@ function Button({
   if (!title) return button
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipTrigger render={button} />
       <TooltipContent>{title}</TooltipContent>
     </Tooltip>
   )

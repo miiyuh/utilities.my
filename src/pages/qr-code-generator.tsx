@@ -659,15 +659,13 @@ export default function QrCodeGeneratorPage() {
                     <CardTitle className="flex items-center font-headline text-lg md:text-xl tracking-tight"><Gear className="mr-2 h-5 w-5" /> Customization</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 md:space-y-5">
-                    <TooltipProvider delayDuration={200}>
+                    <TooltipProvider delay={200}>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Label htmlFor="errorCorrectionLevel">Error Correction</Label>
                           <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button type="button" className="inline-flex items-center text-muted-foreground hover:text-foreground" aria-label="About error correction levels">
-                                <Info className="h-3.5 w-3.5" />
-                              </button>
+                            <TooltipTrigger type="button" className="inline-flex items-center text-muted-foreground hover:text-foreground" aria-label="About error correction levels">
+                              <Info className="h-3.5 w-3.5" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs text-xs leading-snug">
                               Higher levels add redundancy for damaged codes but increase density. Use M for most cases.
