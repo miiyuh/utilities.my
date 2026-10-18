@@ -26,6 +26,30 @@ type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type WifiEncryption = "WPA" | "WEP" | "nopass";
 type OutputFormat = "png" | "svg";
 
+const PAYLOAD_TYPES: { value: PayloadType; label: string }[] = [
+  { value: "url", label: "URL" },
+  { value: "text", label: "Plain Text" },
+  { value: "email", label: "Email" },
+  { value: "sms", label: "SMS" },
+  { value: "tel", label: "Phone Number" },
+  { value: "wifi", label: "Wi-Fi Credentials" },
+];
+const ERROR_CORRECTION_LEVELS: { value: ErrorCorrectionLevel; label: string }[] = [
+  { value: "L", label: "Low (7%)" },
+  { value: "M", label: "Medium (15%)" },
+  { value: "Q", label: "Quartile (25%)" },
+  { value: "H", label: "High (30%)" },
+];
+const WIFI_ENCRYPTIONS: { value: WifiEncryption; label: string }[] = [
+  { value: "WPA", label: "WPA/WPA2" },
+  { value: "WEP", label: "WEP" },
+  { value: "nopass", label: "None (Open Network)" },
+];
+const OUTPUT_FORMATS: { value: OutputFormat; label: string }[] = [
+  { value: "png", label: "PNG" },
+  { value: "svg", label: "SVG" },
+];
+
 // SVG output size constant (512x512 pixels)
 const SVG_OUTPUT_SIZE = 512;
 // Fixed preview size inside the preview card
@@ -497,12 +521,12 @@ export default function QrCodeGeneratorPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="wifiEncryption">Encryption</Label>
-              <Select value={wifiEncryption} onValueChange={(value) => setWifiEncryption(value as WifiEncryption)}>
+              <Select items={WIFI_ENCRYPTIONS} value={wifiEncryption} onValueChange={(value) => setWifiEncryption(value as WifiEncryption)}>
                 <SelectTrigger id="wifiEncryption"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="WPA">WPA/WPA2</SelectItem>
-                  <SelectItem value="WEP">WEP</SelectItem>
-                  <SelectItem value="nopass">None (Open Network)</SelectItem>
+                  {WIFI_ENCRYPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -610,15 +634,12 @@ export default function QrCodeGeneratorPage() {
                   <CardContent className="space-y-4 md:space-y-5">
                     <div className="space-y-2">
                         <Label htmlFor="payloadType">Payload Type</Label>
-                        <Select value={payloadType} onValueChange={(value) => setPayloadType(value as PayloadType)}>
+                        <Select items={PAYLOAD_TYPES} value={payloadType} onValueChange={(value) => setPayloadType(value as PayloadType)}>
                             <SelectTrigger id="payloadType"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                            <SelectItem value="url">URL</SelectItem>
-                            <SelectItem value="text">Plain Text</SelectItem>
-                            <SelectItem value="email">Email</SelectItem>
-                            <SelectItem value="sms">SMS</SelectItem>
-                            <SelectItem value="tel">Phone Number</SelectItem>
-                            <SelectItem value="wifi">Wi-Fi Credentials</SelectItem>
+                            {PAYLOAD_TYPES.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -672,13 +693,12 @@ export default function QrCodeGeneratorPage() {
                             </TooltipContent>
                           </Tooltip>
                         </div>
-                        <Select value={errorCorrectionLevel} onValueChange={(value) => setErrorCorrectionLevel(value as ErrorCorrectionLevel)}>
+                        <Select items={ERROR_CORRECTION_LEVELS} value={errorCorrectionLevel} onValueChange={(value) => setErrorCorrectionLevel(value as ErrorCorrectionLevel)}>
                           <SelectTrigger id="errorCorrectionLevel"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="L">Low (7%)</SelectItem>
-                            <SelectItem value="M">Medium (15%)</SelectItem>
-                            <SelectItem value="Q">Quartile (25%)</SelectItem>
-                            <SelectItem value="H">High (30%)</SelectItem>
+                            {ERROR_CORRECTION_LEVELS.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -850,11 +870,12 @@ export default function QrCodeGeneratorPage() {
                     <div className="flex items-end gap-2">
                        <div className="flex-1 space-y-1">
                           <Label htmlFor="outputFormat">File Type</Label>
-                          <Select value={outputFormat} onValueChange={(value) => setOutputFormat(value as OutputFormat)}>
+                          <Select items={OUTPUT_FORMATS} value={outputFormat} onValueChange={(value) => setOutputFormat(value as OutputFormat)}>
                               <SelectTrigger id="outputFormat"><SelectValue /></SelectTrigger>
                               <SelectContent>
-                              <SelectItem value="png">PNG</SelectItem>
-                              <SelectItem value="svg">SVG</SelectItem>
+                              {OUTPUT_FORMATS.map((o) => (
+                                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                              ))}
                               </SelectContent>
                           </Select>
                       </div>

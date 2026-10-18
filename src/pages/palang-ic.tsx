@@ -389,7 +389,7 @@ export default function PalangIc() {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="preset">Template</Label>
-                      <Select value={options.presetId} onValueChange={(v) => patch({ presetId: v as PresetId })}>
+                      <Select items={PRESETS.map((p) => ({ value: p.id, label: p.label }))} value={options.presetId} onValueChange={(v) => patch({ presetId: v as PresetId })}>
                         <SelectTrigger id="preset" className="w-full">
                           <SelectValue placeholder="Choose a template" />
                         </SelectTrigger>
@@ -453,7 +453,7 @@ export default function PalangIc() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="dateStyle">Date style</Label>
-                        <Select value={options.dateStyle} onValueChange={(v) => patch({ dateStyle: v as DateStyle })}>
+                        <Select items={DATE_STYLES.map((d) => ({ value: d.id, label: d.id === 'site' ? d.label : formatDateDisplay(options.date, d.id) }))} value={options.dateStyle} onValueChange={(v) => patch({ dateStyle: v as DateStyle })}>
                           <SelectTrigger id="dateStyle" className="w-full">
                             <SelectValue />
                           </SelectTrigger>

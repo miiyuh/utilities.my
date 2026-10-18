@@ -21,6 +21,11 @@ import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 type UnitSystem = "metric" | "imperial";
 
+const UNIT_SYSTEMS: { value: UnitSystem; label: React.ReactNode }[] = [
+  { value: "metric", label: <div className="flex items-center gap-2"><Ruler className="h-4 w-4" /> Metric (kg, cm)</div> },
+  { value: "imperial", label: <div className="flex items-center gap-2"><Scales className="h-4 w-4" /> Imperial (lb, ft/in)</div> },
+];
+
 function clamp(num: number, min: number, max: number) {
   return Math.min(max, Math.max(min, num));
 }
@@ -289,17 +294,18 @@ export default function BmiCalculatorPage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
                     <div className="w-full sm:w-60">
                       <Label className="mb-1.5 block">Units</Label>
-                      <Select value={unitSystem} onValueChange={(v: UnitSystem) => setUnitSystem(v)}>
+                      <Select items={UNIT_SYSTEMS} value={unitSystem} onValueChange={(v: UnitSystem) => setUnitSystem(v)}>
                         <SelectTrigger><SelectValue placeholder="Select units" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="metric"><div className="flex items-center gap-2"><Ruler className="h-4 w-4" /> Metric (kg, cm)</div></SelectItem>
-                          <SelectItem value="imperial"><div className="flex items-center gap-2"><Scales className="h-4 w-4" /> Imperial (lb, ft/in)</div></SelectItem>
+                          {UNIT_SYSTEMS.map((u) => (
+                            <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="w-full sm:w-72">
                       <Label htmlFor="bmiStandard" className="mb-1.5 block">Cut-offs</Label>
-                      <Select value={standard} onValueChange={(v: BmiStandard) => setStandard(v)}>
+                      <Select items={(Object.keys(BMI_STANDARDS) as BmiStandard[]).map((k) => ({ value: k, label: BMI_STANDARDS[k].label }))} value={standard} onValueChange={(v: BmiStandard) => setStandard(v)}>
                         <SelectTrigger id="bmiStandard"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {(Object.keys(BMI_STANDARDS) as BmiStandard[]).map((k) => (

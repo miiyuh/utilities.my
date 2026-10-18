@@ -114,7 +114,7 @@ export default function FootSizeConverterPage() {
                     ) : (
                       <div className="space-y-1.5">
                         <Label htmlFor="foot-size">{SYSTEM_NAMES[source]} size</Label>
-                        <Select value={String(activeIndex ?? 0)} onValueChange={(v) => setIndex(Number(v))}>
+                        <Select items={rows.map((r, i) => ({ value: String(i), label: `${SYSTEM_NAMES[source]} ${r[source]}` }))} value={String(activeIndex ?? 0)} onValueChange={(v) => setIndex(Number(v))}>
                           <SelectTrigger id="foot-size" className="max-w-[220px]"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {rows.map((r, i) => (

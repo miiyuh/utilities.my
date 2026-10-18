@@ -103,7 +103,7 @@ export default function UnitConverterPage() {
   };
 
   const unitSelect = (id: string, value: string, onChange: (v: string) => void, label: string) => (
-    <Select value={value} onValueChange={onChange}>
+    <Select items={category.units.map((x) => ({ value: x.id, label: <>{x.name} <span className="text-muted-foreground">({x.symbol})</span></> }))} value={value} onValueChange={onChange}>
       <SelectTrigger id={id} aria-label={label} className="w-full data-[size=default]:h-12 sm:w-56">
         <SelectValue />
       </SelectTrigger>
@@ -215,7 +215,7 @@ export default function UnitConverterPage() {
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-border pt-4">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="uc-decimals" className="font-normal">Decimal places</Label>
-                      <Select value={String(decimals)} onValueChange={(v) => setDecimals(Number(v))}>
+                      <Select items={[0, 1, 2, 3, 4, 5, 6, 8, 10].map((d) => ({ value: String(d), label: d }))} value={String(decimals)} onValueChange={(v) => setDecimals(Number(v))}>
                         <SelectTrigger id="uc-decimals" className="w-20"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {[0, 1, 2, 3, 4, 5, 6, 8, 10].map((d) => (

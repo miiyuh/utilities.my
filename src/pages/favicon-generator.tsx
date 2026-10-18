@@ -286,7 +286,7 @@ export default function FaviconGeneratorPage() {
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="fav-font">Font</Label>
-                            <Select value={fontId} onValueChange={setFontId}>
+                            <Select items={FONT_CHOICES.map((f) => ({ value: f.id, label: f.label }))} value={fontId} onValueChange={setFontId}>
                               <SelectTrigger id="fav-font" className="w-full"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 {FONT_CHOICES.map((f) => (
