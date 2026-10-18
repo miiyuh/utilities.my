@@ -277,15 +277,15 @@ export default function SpinTheWheelPage() {
                     <h4 className="text-sm font-medium">Settings</h4>
                     <div className="grid grid-cols-1 gap-3">
                       <div className="flex items-center space-x-2">
-                        <Checkbox id="trimLines" checked={trimLines} onCheckedChange={(c)=> setTrimLines(Boolean(c))} />
+                        <Checkbox id="trimLines" checked={trimLines} onCheckedChange={setTrimLines} />
                         <Label htmlFor="trimLines" className="text-sm cursor-pointer">Trim each line</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Checkbox id="removeDup" checked={removeDuplicates} onCheckedChange={(c)=> setRemoveDuplicates(Boolean(c))} />
+                        <Checkbox id="removeDup" checked={removeDuplicates} onCheckedChange={setRemoveDuplicates} />
                         <Label htmlFor="removeDup" className="text-sm cursor-pointer">Remove duplicates</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Checkbox id="removeAfterWin" checked={removeAfterWin} onCheckedChange={(c)=> setRemoveAfterWin(Boolean(c))} />
+                        <Checkbox id="removeAfterWin" checked={removeAfterWin} onCheckedChange={setRemoveAfterWin} />
                         <Label htmlFor="removeAfterWin" className="text-sm cursor-pointer">Remove winners automatically</Label>
                       </div>
                     </div>
