@@ -53,21 +53,23 @@ function ClearButton({
   const [open, setOpen] = React.useState(false)
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button
-          type="button"
-          variant={variant}
-          size={size}
-          disabled={disabled || !hasContent}
-          title={iconOnly ? label : undefined}
-          // Some of these sit inside clickable areas (e.g. a drop zone); the
-          // click, and those from the portalled dialog, must not reach them.
-          onClick={(e) => e.stopPropagation()}
-          {...props}
-        >
-          <IconComponent className="h-4 w-4" />
-          {!iconOnly && <span>{label}</span>}
-        </Button>
+      <AlertDialogTrigger
+        render={
+          <Button
+            type="button"
+            variant={variant}
+            size={size}
+            disabled={disabled || !hasContent}
+            title={iconOnly ? label : undefined}
+            // Some of these sit inside clickable areas (e.g. a drop zone); the
+            // click, and those from the portalled dialog, must not reach them.
+            onClick={(e) => e.stopPropagation()}
+            {...props}
+          />
+        }
+      >
+        <IconComponent className="h-4 w-4" />
+        {!iconOnly && <span>{label}</span>}
       </AlertDialogTrigger>
       <AlertDialogContent onClick={(e) => e.stopPropagation()} onOverlayClick={() => setOpen(false)}>
         <AlertDialogHeader>
