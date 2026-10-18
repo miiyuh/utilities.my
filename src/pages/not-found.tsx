@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { House, MagnifyingGlass, ArrowLeft } from '@phosphor-icons/react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { tools } from '@/lib/tools'
 
 export default function NotFound() {
@@ -26,12 +26,10 @@ export default function NotFound() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg">
-              <Link to="/">
-                <House className="h-4 w-4 mr-2" />
-                Go to Homepage
-              </Link>
-            </Button>
+            <Link to="/" className={buttonVariants({ size: 'lg' })}>
+              <House className="h-4 w-4 mr-2" />
+              Go to Homepage
+            </Link>
             <Button variant="outline" size="lg" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back

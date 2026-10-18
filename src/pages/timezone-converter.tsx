@@ -6,7 +6,7 @@ import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
 import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Combobox } from '@/components/ui/combobox';
 import { Card } from '@/components/ui/card';
@@ -466,15 +466,15 @@ Planned with utilities.my/timezone-converter`,
                             <Input id={`${fieldId}-event`} value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} placeholder="Meeting" />
                           </div>
                           <div className="grid gap-1.5">
-                            <Button variant="outline" size="sm" className="justify-start" asChild>
-                              <a href={calendarEvent ? googleCalendarUrl(calendarEvent) : undefined} target="_blank" rel="noopener noreferrer">Google Calendar</a>
-                            </Button>
-                            <Button variant="outline" size="sm" className="justify-start" asChild>
-                              <a href={calendarEvent ? outlookUrl(calendarEvent, 'live') : undefined} target="_blank" rel="noopener noreferrer">Outlook.com</a>
-                            </Button>
-                            <Button variant="outline" size="sm" className="justify-start" asChild>
-                              <a href={calendarEvent ? outlookUrl(calendarEvent, 'office') : undefined} target="_blank" rel="noopener noreferrer">Outlook (work or school)</a>
-                            </Button>
+                            <a href={calendarEvent ? googleCalendarUrl(calendarEvent) : undefined} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline', size: 'sm', className: 'justify-start' })}>
+                              Google Calendar
+                            </a>
+                            <a href={calendarEvent ? outlookUrl(calendarEvent, 'live') : undefined} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline', size: 'sm', className: 'justify-start' })}>
+                              Outlook.com
+                            </a>
+                            <a href={calendarEvent ? outlookUrl(calendarEvent, 'office') : undefined} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline', size: 'sm', className: 'justify-start' })}>
+                              Outlook (work or school)
+                            </a>
                             <Button variant="outline" size="sm" className="justify-start" onClick={downloadIcs}>
                               <DownloadSimple className="h-4 w-4" /> Apple Calendar and others (.ics)
                             </Button>
