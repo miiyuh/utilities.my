@@ -295,7 +295,7 @@ Planned with utilities.my/timezone-converter`,
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={new Date(base.getTime())}
+                      selected={new Date(base.getFullYear(), base.getMonth(), base.getDate())}
                       onSelect={handleDatePick}
                       autoFocus
                     />
