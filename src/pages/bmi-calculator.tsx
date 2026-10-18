@@ -424,7 +424,7 @@ export default function BmiCalculatorPage() {
                       </Alert>
                     )}
 
-                    <Accordion type="single" collapsible className="w-full mt-4 border rounded-md">
+                    <Accordion className="w-full mt-4 border rounded-md">
                       <AccordionItem value="disc" className="border-none">
                         <AccordionTrigger className="px-4">Disclaimers</AccordionTrigger>
                         <AccordionContent className="px-4 pt-0 space-y-2">

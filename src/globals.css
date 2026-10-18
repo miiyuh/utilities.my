@@ -185,8 +185,8 @@
   --duration-very-slow: 500ms;
 
   /* Accordion animations */
-  --animate-accordion-down: accordion-down var(--duration-fast) var(--ease-out);
-  --animate-accordion-up: accordion-up var(--duration-fast) var(--ease-out);
+  --animate-accordion-down: accordion-panel-down var(--duration-fast) var(--ease-out);
+  --animate-accordion-up: accordion-panel-up var(--duration-fast) var(--ease-out);
 }
 
 /* Named duration utilities (v4 has no duration theme namespace) */
@@ -198,12 +198,12 @@
 @utility duration-slow { transition-duration: var(--duration-slow); --tw-duration: var(--duration-slow); }
 @utility duration-very-slow { transition-duration: var(--duration-very-slow); --tw-duration: var(--duration-very-slow); }
 
-@keyframes accordion-down {
+@keyframes accordion-panel-down {
   from { height: 0; }
-  to { height: var(--radix-accordion-content-height); }
+  to { height: var(--accordion-panel-height); }
 }
-@keyframes accordion-up {
-  from { height: var(--radix-accordion-content-height); }
+@keyframes accordion-panel-up {
+  from { height: var(--accordion-panel-height); }
   to { height: 0; }
 }
 

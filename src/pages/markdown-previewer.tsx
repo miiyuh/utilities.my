@@ -557,7 +557,7 @@ export default function MarkdownPreviewerPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Accordion type="single" collapsible className="w-full">
+                <Accordion className="w-full">
                   {[...markdownExamples].sort((a,b) => a.title.localeCompare(b.title)).map((example, index) => (
                     <AccordionItem value={`item-${index}`} key={index}>
                       <AccordionTrigger>{example.title}</AccordionTrigger>

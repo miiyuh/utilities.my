@@ -113,7 +113,7 @@ function MethodologySection() {
         Every calculation runs in your browser. Below are the formulas, constants and references each tool uses, so you
         can check any result for yourself.
       </p>
-      <Accordion type="multiple" value={open} onValueChange={setOpen}>
+      <Accordion multiple value={open} onValueChange={setOpen}>
         {METHODOLOGY.map((m) => {
           const tool = tools.find((t) => t.path === m.path)
           if (!tool) return null

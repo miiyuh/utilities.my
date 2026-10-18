@@ -617,7 +617,7 @@ export default function PalangIc() {
                   </CardContent>
                 </Card>
 
-                <Accordion type="single" collapsible className="rounded-md border border-border">
+                <Accordion className="rounded-md border border-border">
                   <AccordionItem value="why" className="border-none">
                     <AccordionTrigger className="px-4 text-sm font-medium">Why palang a copy of your IC?</AccordionTrigger>
                     <AccordionContent className="space-y-3 px-4 text-sm text-muted-foreground">

@@ -54,7 +54,7 @@ export function ToolMethodology({ path }: { path?: string }) {
   return (
     <section className="px-4 pb-8 lg:px-8" aria-label="How this tool works">
       <div className="w-full max-w-7xl mx-auto">
-        <Accordion type="single" collapsible>
+        <Accordion>
           <AccordionItem value="how">
             <AccordionTrigger className="px-4">
               <span className="flex items-center gap-2">

@@ -264,7 +264,7 @@ function MetadataPanel({ report, loading }: { report: MetadataReport | null; loa
           </section>
         ))}
       </div>
-      <Accordion type="single" collapsible>
+      <Accordion>
         <AccordionItem value="raw">
           <AccordionTrigger className="px-3 text-sm">All {report.raw.length} tags in this file</AccordionTrigger>
           <AccordionContent className="px-3">
