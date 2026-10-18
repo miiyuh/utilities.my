@@ -686,9 +686,9 @@ export default function QrCodeGeneratorPage() {
 
                     {outputFormat === 'png' && (
                       <div className="space-y-2">
-                        <Label htmlFor="qrSize">QR Code Size: {qrSize}px</Label>
+                        <Label htmlFor="qrSize" id="qrSize-label">QR Code Size: {qrSize}px</Label>
                         <Slider
-                          id="qrSize"
+                          id="qrSize" aria-labelledby="qrSize-label"
                           min={64}
                           max={1024}
                           step={16}
@@ -749,10 +749,10 @@ export default function QrCodeGeneratorPage() {
 
                     {/* Border Size Section */}
                     <div className="space-y-2">
-                      <Label htmlFor="marginSize">Border Size (Quiet Zone): {marginSize}px</Label>
+                      <Label htmlFor="marginSize" id="marginSize-label">Border Size (Quiet Zone): {marginSize}px</Label>
                       <div className="flex flex-col gap-1">
                         <Slider
-                          id="marginSize"
+                          id="marginSize" aria-labelledby="marginSize-label"
                           min={0}
                           max={64}
                           step={1}
@@ -790,10 +790,10 @@ export default function QrCodeGeneratorPage() {
                                     <img src={logoSrc} alt="Logo preview" className="max-h-20 border rounded-md p-1 bg-white" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="logoSize">Logo Size: {Math.round(logoSize * 100)}% of QR Code</Label>
+                                    <Label htmlFor="logoSize" id="logoSize-label">Logo Size: {Math.round(logoSize * 100)}% of QR Code</Label>
                                     <div className="flex flex-col gap-1">
                                       <Slider
-                                        id="logoSize"
+                                        id="logoSize" aria-labelledby="logoSize-label"
                                         min={5}
                                         max={20}
                                         step={1}
