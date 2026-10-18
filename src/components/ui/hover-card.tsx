@@ -3,6 +3,7 @@ import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card
 
 import { cn } from "@/lib/utils"
 import { tapChangeDetails } from "@/lib/tap-details"
+import { useTouchTap } from "@/hooks/use-touch-tap"
 
 /**
  * Base UI preview cards only respond to hover and focus. Like our tooltips,
@@ -53,21 +54,13 @@ function HoverCardTrigger({
   onClick,
   ...props
 }: PreviewCardPrimitive.Trigger.Props) {
-  const toggle = React.useContext(HoverCardTapContext)
-  const pointerType = React.useRef("mouse")
+  const tap = useTouchTap(React.useContext(HoverCardTapContext), onPointerDown, onClick)
   return (
     <PreviewCardPrimitive.Trigger
       data-slot="hover-card-trigger"
       delay={delay}
       closeDelay={closeDelay}
-      onPointerDown={(e) => {
-        pointerType.current = e.pointerType
-        onPointerDown?.(e)
-      }}
-      onClick={(e) => {
-        onClick?.(e)
-        if (pointerType.current !== "mouse") toggle?.(e)
-      }}
+      {...tap}
       {...props}
     />
   )
