@@ -432,11 +432,9 @@ export default function PalangIc() {
                       <div className="space-y-2">
                         <Label htmlFor="date">Date</Label>
                         <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                          <PopoverTrigger asChild>
-                            <Button id="date" variant="outline" className="w-full justify-start font-normal">
-                              <CalendarIcon className="h-4 w-4" />
-                              {format(parseISO(options.date), fns.numeric)}
-                            </Button>
+                          <PopoverTrigger render={<Button id="date" variant="outline" className="w-full justify-start font-normal" />}>
+                            <CalendarIcon className="h-4 w-4" />
+                            {format(parseISO(options.date), fns.numeric)}
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar

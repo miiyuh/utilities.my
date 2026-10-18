@@ -286,11 +286,9 @@ Planned with utilities.my/timezone-converter`,
                   Next <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="default" className="h-8">
-                      <CalendarIcon className="h-4 w-4" />
-                      {format(base, dj.long)}
-                    </Button>
+                  <PopoverTrigger render={<Button variant="outline" size="default" className="h-8" />}>
+                    <CalendarIcon className="h-4 w-4" />
+                    {format(base, dj.long)}
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
@@ -455,10 +453,8 @@ Planned with utilities.my/timezone-converter`,
                         toastDescription="Time range copied for all zones."
                       />
                       <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <CalendarPlus className="h-4 w-4" /> Add to calendar
-                          </Button>
+                        <PopoverTrigger render={<Button variant="outline" size="sm" />}>
+                          <CalendarPlus className="h-4 w-4" /> Add to calendar
                         </PopoverTrigger>
                         <PopoverContent align="end" className="w-72 space-y-3">
                           <div className="space-y-1.5">

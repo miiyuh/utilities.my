@@ -71,15 +71,13 @@ export function EmojiPicker({ value, onChange }: { value: string; onChange: (emo
         }
       }}
     >
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={`Choose an emoji (current: ${value || 'none'})`}
-          className="flex h-10 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm transition-colors duration-quick hover:bg-muted/60"
-        >
-          <span className="text-2xl leading-none" style={{ fontFamily: EMOJI_FONT }}>{value || '🙂'}</span>
-          <span className="text-muted-foreground">Browse all emoji</span>
-        </button>
+      <PopoverTrigger
+        type="button"
+        aria-label={`Choose an emoji (current: ${value || 'none'})`}
+        className="flex h-10 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm transition-colors duration-quick hover:bg-muted/60"
+      >
+        <span className="text-2xl leading-none" style={{ fontFamily: EMOJI_FONT }}>{value || '🙂'}</span>
+        <span className="text-muted-foreground">Browse all emoji</span>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[min(22rem,calc(100vw-2rem))] p-0">
         <div className="flex items-center gap-2 border-b border-border px-3">
