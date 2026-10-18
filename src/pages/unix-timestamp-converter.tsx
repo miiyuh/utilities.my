@@ -238,11 +238,9 @@ export default function UnixTimestampConverterPage() {
                     </fieldset>
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                       <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="justify-start font-normal">
-                            <CalendarIcon className="h-4 w-4" />
-                            {format(new Date(p.y, p.m, p.d), fns.long)}
-                          </Button>
+                        <PopoverTrigger render={<Button variant="outline" className="justify-start font-normal" />}>
+                          <CalendarIcon className="h-4 w-4" />
+                          {format(new Date(p.y, p.m, p.d), fns.long)}
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar mode="single" selected={new Date(p.y, p.m, p.d)} defaultMonth={new Date(p.y, p.m, p.d)} onSelect={onPickDay} autoFocus />

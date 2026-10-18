@@ -334,7 +334,7 @@ function PaletteDialog({
         </DialogHeader>
         <div className="flex items-center gap-2 border-b border-border px-4">
           <MagnifyingGlass className="h-4 w-4 shrink-0 text-muted-foreground" />
-          {/* Radix moves focus to this input (the first focusable) when the dialog opens. */}
+          {/* Base UI moves focus to this input (the first focusable) when the dialog opens. */}
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}

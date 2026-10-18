@@ -145,7 +145,7 @@ function OutputControls({
     <div className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="out-format">Format</Label>
-        <Select value={settings.format} onValueChange={(v) => onChange({ format: v as OutputFormat })}>
+        <Select items={(Object.keys(FORMATS) as OutputFormat[]).map((f) => ({ value: f, label: FORMATS[f].label }))} value={settings.format} onValueChange={(v) => onChange({ format: v as OutputFormat })}>
           <SelectTrigger id="out-format" className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -209,7 +209,7 @@ function OutputControls({
 
       <div className="space-y-2">
         <Label htmlFor="meta-mode">Metadata in the output</Label>
-        <Select value={settings.metaMode} onValueChange={(v) => onChange({ metaMode: v as MetadataMode })}>
+        <Select items={META_OPTIONS} value={settings.metaMode} onValueChange={(v) => onChange({ metaMode: v as MetadataMode })}>
           <SelectTrigger id="meta-mode" className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -264,7 +264,7 @@ function MetadataPanel({ report, loading }: { report: MetadataReport | null; loa
           </section>
         ))}
       </div>
-      <Accordion type="single" collapsible>
+      <Accordion>
         <AccordionItem value="raw">
           <AccordionTrigger className="px-3 text-sm">All {report.raw.length} tags in this file</AccordionTrigger>
           <AccordionContent className="px-3">
@@ -733,7 +733,7 @@ function SingleConverter({
           <CardContent className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="preset">Preset</Label>
-              <Select value={presetId} onValueChange={applyPreset}>
+              <Select items={PRESETS.map((p) => ({ value: p.id, label: p.label }))} value={presetId} onValueChange={applyPreset}>
                 <SelectTrigger id="preset" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -1070,7 +1070,7 @@ function BatchConverter({
         <CardContent className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="long-edge">Size</Label>
-            <Select value={longEdge} onValueChange={setLongEdge}>
+            <Select items={LONG_EDGES} value={longEdge} onValueChange={setLongEdge}>
               <SelectTrigger id="long-edge" className="w-full">
                 <SelectValue />
               </SelectTrigger>

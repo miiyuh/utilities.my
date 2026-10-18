@@ -40,14 +40,16 @@ const MAINTAINER_PHOTO = 'https://miiyuh.com/_next/image?url=%2Fassets%2Fimg%2Fp
 function MaintainerCard() {
   return (
     <HoverCard>
-      <HoverCardTrigger asChild>
-        <button
-          type="button"
-          className="font-medium text-foreground underline decoration-border underline-offset-2 transition-colors duration-quick hover:decoration-foreground"
-        >
-          miiyuh
-        </button>
-      </HoverCardTrigger>
+      <HoverCardTrigger
+        render={
+          <button
+            type="button"
+            className="font-medium text-foreground underline decoration-border underline-offset-2 transition-colors duration-quick hover:decoration-foreground"
+          >
+            miiyuh
+          </button>
+        }
+      />
       <HoverCardContent align="start" className="space-y-3">
         <div className="flex items-center gap-3">
           {/* Served by miiyuh.com, so a new picture there shows up here too. The initials show while it loads or if it can't. */}
@@ -111,7 +113,7 @@ function MethodologySection() {
         Every calculation runs in your browser. Below are the formulas, constants and references each tool uses, so you
         can check any result for yourself.
       </p>
-      <Accordion type="multiple" value={open} onValueChange={setOpen}>
+      <Accordion multiple value={open} onValueChange={setOpen}>
         {METHODOLOGY.map((m) => {
           const tool = tools.find((t) => t.path === m.path)
           if (!tool) return null
@@ -229,7 +231,7 @@ export default function About() {
                   <ul className="text-sm text-muted-foreground space-y-2">
                     <li className="flex items-center gap-2"><Code className="h-4 w-4 text-muted-foreground" /> Vite, React, TypeScript</li>
                     <li className="flex items-center gap-2"><Wind className="h-4 w-4 text-muted-foreground" /> Tailwind CSS</li>
-                    <li className="flex items-center gap-2"><Cube className="h-4 w-4 text-muted-foreground" /> Radix UI, shadcn/ui</li>
+                    <li className="flex items-center gap-2"><Cube className="h-4 w-4 text-muted-foreground" /> Base UI, shadcn/ui</li>
                     <li className="flex items-center gap-2"><Path className="h-4 w-4 text-muted-foreground" /> Phosphor icons</li>
                   </ul>
                 </div>

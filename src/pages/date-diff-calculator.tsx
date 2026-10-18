@@ -338,11 +338,9 @@ export default function DateDiffCalculatorPage() {
                       </div>
                     </div>
                     <Popover open={isStartOpen} onOpenChange={setIsStartOpen}>
-                      <PopoverTrigger asChild>
-                        <Button type="button" id="startDateInput" variant="outline" className={cn("w-full justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
-                          <CalendarIcon className="h-4 w-4" />
-                          {startDate ? format(startDate, displayFormat) : <span>Pick a date</span>}
-                        </Button>
+                      <PopoverTrigger render={<Button type="button" id="startDateInput" variant="outline" className={cn("w-full justify-start text-left font-normal", !startDate && "text-muted-foreground")} />}>
+                        <CalendarIcon className="h-4 w-4" />
+                        {startDate ? format(startDate, displayFormat) : <span>Pick a date</span>}
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <div className="flex flex-col md:flex-row">
@@ -373,11 +371,9 @@ export default function DateDiffCalculatorPage() {
                       </div>
                     </div>
                     <Popover open={isEndOpen} onOpenChange={setIsEndOpen}>
-                      <PopoverTrigger asChild>
-                        <Button type="button" id="endDateInput" variant="outline" className={cn("w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
-                          <CalendarIcon className="h-4 w-4" />
-                          {endDate ? format(endDate, displayFormat) : <span>Pick a date</span>}
-                        </Button>
+                      <PopoverTrigger render={<Button type="button" id="endDateInput" variant="outline" className={cn("w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")} />}>
+                        <CalendarIcon className="h-4 w-4" />
+                        {endDate ? format(endDate, displayFormat) : <span>Pick a date</span>}
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <div className="flex flex-col md:flex-row">

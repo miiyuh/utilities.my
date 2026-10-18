@@ -568,13 +568,13 @@ export default function MorseCodeGeneratorPage() {
                   {/* Volume Control */}
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <Label htmlFor="volume" className="flex items-center gap-2">
+                      <Label htmlFor="volume" id="volume-label" className="flex items-center gap-2">
                         <SpeakerHigh className="h-4 w-4" /> Volume
                       </Label>
                       <span className="text-sm text-muted-foreground">{Math.round(volume * 100)}%</span>
                     </div>
                     <Slider
-                      id="volume"
+                      id="volume" aria-labelledby="volume-label"
                       min={0}
                       max={1}
                       step={0.01}
@@ -587,13 +587,13 @@ export default function MorseCodeGeneratorPage() {
                   {/* Pitch Control */}
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <Label htmlFor="pitch" className="flex items-center gap-2">
+                      <Label htmlFor="pitch" id="pitch-label" className="flex items-center gap-2">
                         <Lightning className="h-4 w-4" /> Pitch
                       </Label>
                       <span className="text-sm text-muted-foreground">{pitch}Hz</span>
                     </div>
                     <Slider
-                      id="pitch"
+                      id="pitch" aria-labelledby="pitch-label"
                       min={200}
                       max={2000}
                       step={50}
@@ -606,13 +606,13 @@ export default function MorseCodeGeneratorPage() {
                   {/* Speed Control */}
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <Label htmlFor="speed" className="flex items-center gap-2">
+                      <Label htmlFor="speed" id="speed-label" className="flex items-center gap-2">
                         <Play className="h-4 w-4" /> Speed
                       </Label>
                       <span className="text-sm text-muted-foreground">{speed.toFixed(1)}x</span>
                     </div>
                     <Slider
-                      id="speed"
+                      id="speed" aria-labelledby="speed-label"
                       min={0.5}
                       max={3}
                       step={0.1}

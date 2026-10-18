@@ -389,7 +389,7 @@ export default function PalangIc() {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="preset">Template</Label>
-                      <Select value={options.presetId} onValueChange={(v) => patch({ presetId: v as PresetId })}>
+                      <Select items={PRESETS.map((p) => ({ value: p.id, label: p.label }))} value={options.presetId} onValueChange={(v) => patch({ presetId: v as PresetId })}>
                         <SelectTrigger id="preset" className="w-full">
                           <SelectValue placeholder="Choose a template" />
                         </SelectTrigger>
@@ -432,11 +432,9 @@ export default function PalangIc() {
                       <div className="space-y-2">
                         <Label htmlFor="date">Date</Label>
                         <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                          <PopoverTrigger asChild>
-                            <Button id="date" variant="outline" className="w-full justify-start font-normal">
-                              <CalendarIcon className="h-4 w-4" />
-                              {format(parseISO(options.date), fns.numeric)}
-                            </Button>
+                          <PopoverTrigger render={<Button id="date" variant="outline" className="w-full justify-start font-normal" />}>
+                            <CalendarIcon className="h-4 w-4" />
+                            {format(parseISO(options.date), fns.numeric)}
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
@@ -455,7 +453,7 @@ export default function PalangIc() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="dateStyle">Date style</Label>
-                        <Select value={options.dateStyle} onValueChange={(v) => patch({ dateStyle: v as DateStyle })}>
+                        <Select items={DATE_STYLES.map((d) => ({ value: d.id, label: d.id === 'site' ? d.label : formatDateDisplay(options.date, d.id) }))} value={options.dateStyle} onValueChange={(v) => patch({ dateStyle: v as DateStyle })}>
                           <SelectTrigger id="dateStyle" className="w-full">
                             <SelectValue />
                           </SelectTrigger>
@@ -596,13 +594,11 @@ export default function PalangIc() {
 
                     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="sm:flex-1">
-                            <Button type="button" className="w-full" disabled={!canExport} onClick={exportPdf}>
-                              <FilePdf className="h-4 w-4" />
-                              {exporting === 'pdf' ? 'Building PDF…' : 'Download PDF (A4)'}
-                            </Button>
-                          </span>
+                        <TooltipTrigger render={<span className="sm:flex-1" />}>
+                          <Button type="button" className="w-full" disabled={!canExport} onClick={exportPdf}>
+                            <FilePdf className="h-4 w-4" />
+                            {exporting === 'pdf' ? 'Building PDF…' : 'Download PDF (A4)'}
+                          </Button>
                         </TooltipTrigger>
                         {exportBlocker && <TooltipContent>{exportBlocker}</TooltipContent>}
                       </Tooltip>
@@ -621,7 +617,7 @@ export default function PalangIc() {
                   </CardContent>
                 </Card>
 
-                <Accordion type="single" collapsible className="rounded-md border border-border">
+                <Accordion className="rounded-md border border-border">
                   <AccordionItem value="why" className="border-none">
                     <AccordionTrigger className="px-4 text-sm font-medium">Why palang a copy of your IC?</AccordionTrigger>
                     <AccordionContent className="space-y-3 px-4 text-sm text-muted-foreground">

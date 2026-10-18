@@ -254,21 +254,23 @@ export function ColorPicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Hint label={hexInput}>
-          {/* A real button so the swatch is reachable and operable by keyboard. */}
-          <button
-            type="button"
-            aria-label={`Choose a colour (current ${hexInput})`}
-            className={cn(
-              'h-10 w-10 shrink-0 rounded-full border border-border/70 shadow-sm cursor-pointer transition-colors duration-quick outline-none hover:border-primary/70 focus-visible:ring-3 focus-visible:ring-ring/50',
-              className
-            )}
-            style={{ backgroundColor: currentColor }}
-            {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-          />
-        </Hint>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Hint label={hexInput}>
+            {/* A real button so the swatch is reachable and operable by keyboard. */}
+            <button
+              type="button"
+              aria-label={`Choose a colour (current ${hexInput})`}
+              className={cn(
+                'h-10 w-10 shrink-0 rounded-full border border-border/70 shadow-sm cursor-pointer transition-colors duration-quick outline-none hover:border-primary/70 focus-visible:ring-3 focus-visible:ring-ring/50',
+                className
+              )}
+              style={{ backgroundColor: currentColor }}
+              {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+            />
+          </Hint>
+        }
+      />
       <PopoverContent className="w-72 p-4" align="start">
         <div className="space-y-4">
           {/* SV Canvas */}

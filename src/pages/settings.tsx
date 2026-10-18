@@ -12,10 +12,24 @@ import { PageHeader } from "@/components/page-header";
 import { format } from 'date-fns'
 import { DATE_PRESETS, fnsPatterns, type DatePreset } from '@/lib/format'
 
+const NUMBER_FORMATS: { value: NumberFormat; label: string }[] = [
+  { value: 'period', label: '1,234.56 (Period as decimal)' },
+  { value: 'comma', label: '1.234,56 (Comma as decimal)' },
+]
+
 export default function SettingsPage() {
   const { settings, updateSetting, resetSettings } = useSettings()
   // Captured once so the example times in the menus stay stable while you browse them.
   const [now] = useState(() => new Date())
+
+  const dateFormats = (Object.keys(DATE_PRESETS) as DatePreset[]).map((preset) => {
+    const p = fnsPatterns(preset, settings.timeFormat)
+    return { value: preset, label: `${DATE_PRESETS[preset].label}: ${format(now, p.long)} · ${format(now, p.numeric)}` }
+  })
+  const timeFormats: { value: TimeFormat; label: string }[] = [
+    { value: '12h', label: `12-hour (${format(now, 'h:mm a')})` },
+    { value: '24h', label: `24-hour (${format(now, 'HH:mm')})` },
+  ]
 
   return (
     <>
@@ -59,19 +73,14 @@ export default function SettingsPage() {
                   {/* Date Format */}
                   <div className="space-y-2">
                     <Label htmlFor="dateFormat">Date Format</Label>
-                    <Select value={settings.dateFormat} onValueChange={(value: DateFormat) => updateSetting('dateFormat', value)}>
+                    <Select items={dateFormats} value={settings.dateFormat} onValueChange={(value: DateFormat) => updateSetting('dateFormat', value)}>
                       <SelectTrigger id="dateFormat">
                         <SelectValue placeholder="Select date format" />
                       </SelectTrigger>
                       <SelectContent>
-                        {(Object.keys(DATE_PRESETS) as DatePreset[]).map((preset) => {
-                          const p = fnsPatterns(preset, settings.timeFormat)
-                          return (
-                            <SelectItem key={preset} value={preset}>
-                              {DATE_PRESETS[preset].label}: {format(now, p.long)} · {format(now, p.numeric)}
-                            </SelectItem>
-                          )
-                        })}
+                        {dateFormats.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-muted-foreground">
@@ -82,13 +91,14 @@ export default function SettingsPage() {
                   {/* Time Format */}
                   <div className="space-y-2">
                     <Label htmlFor="timeFormat">Time Format</Label>
-                    <Select value={settings.timeFormat} onValueChange={(value: TimeFormat) => updateSetting('timeFormat', value)}>
+                    <Select items={timeFormats} value={settings.timeFormat} onValueChange={(value: TimeFormat) => updateSetting('timeFormat', value)}>
                       <SelectTrigger id="timeFormat">
                         <SelectValue placeholder="Select time format" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="12h">12-hour ({format(now, 'h:mm a')})</SelectItem>
-                        <SelectItem value="24h">24-hour ({format(now, 'HH:mm')})</SelectItem>
+                        {timeFormats.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-muted-foreground">
@@ -99,13 +109,14 @@ export default function SettingsPage() {
                   {/* Number Format */}
                   <div className="space-y-2">
                     <Label htmlFor="numberFormat">Number Format</Label>
-                    <Select value={settings.numberFormat} onValueChange={(value: NumberFormat) => updateSetting('numberFormat', value)}>
+                    <Select items={NUMBER_FORMATS} value={settings.numberFormat} onValueChange={(value: NumberFormat) => updateSetting('numberFormat', value)}>
                       <SelectTrigger id="numberFormat">
                         <SelectValue placeholder="Select number format" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="period">1,234.56 (Period as decimal)</SelectItem>
-                        <SelectItem value="comma">1.234,56 (Comma as decimal)</SelectItem>
+                        {NUMBER_FORMATS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-muted-foreground">
