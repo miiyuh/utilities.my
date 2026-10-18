@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { ArrowSquareOut, MathOperations } from 'phosphor-react'
+import { ArrowSquareOut, MathOperations } from '@phosphor-icons/react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { METHODOLOGY, type Method } from '@/lib/methodology'
 

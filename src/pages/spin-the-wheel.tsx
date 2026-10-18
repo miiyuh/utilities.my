@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowCounterClockwise, Plus, Disc, Shuffle, X, SortAscending, Upload, Download, ShareNetwork } from 'phosphor-react';
+import { ArrowCounterClockwise, Plus, Disc, Shuffle, X, SortAscending, Upload, Download, ShareNetwork } from '@phosphor-icons/react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { SpinWheel } from '@/components/spin-wheel';

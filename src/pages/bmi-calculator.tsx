@@ -2,7 +2,7 @@ import { ClearButton } from '@/components/ui/clear-button';
 import React from "react";
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
-import { Activity, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, ShareNetwork } from "phosphor-react";
+import { Pulse, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, ShareNetwork } from '@phosphor-icons/react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
@@ -10,7 +10,6 @@ import { useToolSettings } from "@/hooks/use-tool-settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useSettings } from "@/contexts/settings-context";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -114,11 +113,10 @@ function readInitialFields(): InitialFields {
 }
 
 export default function BmiCalculatorPage() {
-  const { settings } = useSettings();
   const { formatNumber } = useToolSettings();
   const [initial] = React.useState(readInitialFields);
-  const initialUnit: UnitSystem =
-    initial.unitSystem ?? (settings?.defaultUnits === "imperial" ? "imperial" : "metric");
+  // A shared link or the saved draft decides; otherwise start in metric.
+  const initialUnit: UnitSystem = initial.unitSystem ?? "metric";
 
   const [unitSystem, setUnitSystem] = React.useState<UnitSystem>(initialUnit);
   const [standard, setStandard] = React.useState<BmiStandard>(initial.standard);
@@ -279,7 +277,7 @@ export default function BmiCalculatorPage() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <PageHeader icon={Activity} title="BMI Calculator" />
+        <PageHeader icon={Pulse} title="BMI Calculator" />
 
         <div className="flex flex-col p-4 lg:p-8">
           <div className="mx-auto w-full max-w-7xl space-y-8">

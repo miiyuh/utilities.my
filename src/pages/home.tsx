@@ -5,7 +5,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
-import { Lightning, ArrowUpRight } from "phosphor-react"
+import { Lightning, ArrowUpRight } from '@phosphor-icons/react'
 import { tools } from "@/lib/tools"
 import { PageHeader } from "@/components/page-header";
 

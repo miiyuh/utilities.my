@@ -19,7 +19,7 @@ export const CARD_H_PX = 638
 export const MAX_SOURCE_PX = 4000
 export const MIN_CROP_W = 0.15
 
-export const CANVAS_FONT = "'Space Grotesk Variable', 'Inter', system-ui, sans-serif"
+export const CANVAS_FONT = "'Space Grotesk Variable', 'Inter Variable', system-ui, sans-serif"
 
 export const MKN_GUIDANCE_URL =
   'https://www.mkn.gov.my/web/ms/2022/08/14/kad-pengenalan-tips-penjagaan-dan-palang-salinan/'

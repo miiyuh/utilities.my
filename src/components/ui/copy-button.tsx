@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Copy, Check } from "phosphor-react"
+import { Copy, Check } from '@phosphor-icons/react'
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"

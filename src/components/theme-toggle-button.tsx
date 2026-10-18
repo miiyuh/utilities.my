@@ -1,7 +1,5 @@
 // src/components/theme-toggle-button.tsx
-"use client";
-
-import { Moon, Sun } from "phosphor-react";
+import { Moon, Sun } from '@phosphor-icons/react';
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";

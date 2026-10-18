@@ -1,9 +1,9 @@
 // src/lib/tools.ts
-import type { Icon } from "phosphor-react";
+import type { Icon } from '@phosphor-icons/react';
 import {
   PersonSimpleWalk, TextAa, Palette, Ruler, House,
-  Article, QrCode, Timer, Globe, Calendar, ChartBar, SortAscending, Disc, Activity, Image, Lightning, Clock, Percent, IdentificationCard, AppWindow
-} from "phosphor-react";
+  Article, QrCode, Timer, Globe, Calendar, ChartBar, SortAscending, Disc, Pulse, Image, Lightning, Clock, Percent, IdentificationCard, AppWindow
+} from '@phosphor-icons/react';
 
 export interface Tool {
   name: string;
@@ -17,7 +17,7 @@ export const tools: Tool[] = [
   { name: "Text Case Converter", path: "/text-case", icon: TextAa, description: "See your text in every case at once, then copy the one you need." },
   { name: "Colour Picker", path: "/colour-picker", icon: Palette, description: "Pick any colour and grab its HEX, RGB, HSL or OKLCH code." },
   { name: "Unit Converter", path: "/unit-converter", icon: Ruler, description: "Metres, miles, kilos, pounds: sorted." },
-  { name: "BMI Calculator", path: "/bmi-calculator", icon: Activity, description: "See where your height and weight land on the BMI scale." },
+  { name: "BMI Calculator", path: "/bmi-calculator", icon: Pulse, description: "See where your height and weight land on the BMI scale." },
   { name: "Image Converter", path: "/image-converter", icon: Image, description: "Change a picture's format or size, and see how much space you save." },
   { name: "Markdown Previewer", path: "/markdown-previewer", icon: Article, description: "Write Markdown and watch it take shape as you type." },
   { name: "QR Code Generator", path: "/qr-code-generator", icon: QrCode, description: "Turn any link into a QR code in seconds." },

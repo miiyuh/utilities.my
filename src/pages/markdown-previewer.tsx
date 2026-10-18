@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { DownloadSimple, Eye, Article, Info, Columns, ArrowCounterClockwise, PencilSimple, TextAa, UploadSimple } from 'phosphor-react';
+import { DownloadSimple, Eye, Article, Info, Columns, ArrowCounterClockwise, PencilSimple, TextAa, UploadSimple } from '@phosphor-icons/react';
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { marked, Renderer, Tokens } from 'marked';
@@ -21,7 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils';
 
 import { ToolMethodology } from '@/components/tool-methodology';
-// Fallback simple icons for actions not present in lucide-react selection
+// Fallback simple icons for actions not present in the icon set
 const CodeIconFallback = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
 );

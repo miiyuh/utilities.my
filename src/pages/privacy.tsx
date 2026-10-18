@@ -1,9 +1,9 @@
-import { ShieldCheck } from 'phosphor-react';
+import { ShieldCheck } from '@phosphor-icons/react';
 import { MarkdownPage } from '@/components/markdown/markdown-page';
 
 const PRIVACY_CONTENT = `# Privacy Policy
 
-*Last Updated: 2026-10-01*
+*Last Updated: 2026-10-17*
 
 utilities.my is a collection of free tools that run in your browser. This policy explains what happens to your data when you use them. The short version: what you type, upload or calculate stays on your device, and the only things that leave it are anonymous visit statistics and the requests your browser makes to load the site.
 
@@ -17,7 +17,7 @@ Every tool does its work inside your browser. Text you convert, images you resiz
 
 Some tools save things in your browser's local storage so they are still there next time. This data never leaves your device, and we cannot see it. It includes:
 
-- **Preferences**: light or dark theme, and your Settings choices (units, date, time and number formats)
+- **Preferences**: light or dark theme, and your Settings choices (date, time and number formats)
 - **Tool drafts and lists**: for example the text in Text Statistics, your Spin the Wheel items and winners, your pinned World Clock and Timezone Converter cities, your BMI measurements, and your recent colours in the Colour Picker
 - **Tool options**: for example the Unix timestamp display format, and Palang IC's wording and watermark style
 
@@ -41,7 +41,6 @@ They record anonymous page views: the page visited, the referring site, your app
 Like any website, loading utilities.my means your browser contacts these services, which can see your IP address and basic request details:
 
 - **Vercel**, which hosts the site
-- **Google Fonts**, which serves the typefaces
 - **REST Countries flag CDN** (flags.restcountries.com), which serves country flag images in the World Clock and Timezone Converter
 - **miiyuh.com**, the maintainer's website, which serves the portrait on the About page
 

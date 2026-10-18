@@ -24,21 +24,18 @@ export interface DatePatterns extends DateParts {
   timeSec: string;
 }
 
-export const DATE_PRESETS: Record<DatePreset, { label: string; fns: DateParts; dayjs: DateParts }> = {
+export const DATE_PRESETS: Record<DatePreset, { label: string; fns: DateParts }> = {
   my: {
     label: 'Malaysia / UK',
     fns: { long: 'd MMMM yyyy', weekday: 'EEE, d MMM', numeric: 'dd/MM/yyyy', dayMonth: 'd/M' },
-    dayjs: { long: 'D MMMM YYYY', weekday: 'ddd, D MMM', numeric: 'DD/MM/YYYY', dayMonth: 'D/M' },
   },
   us: {
     label: 'US',
     fns: { long: 'MMMM d, yyyy', weekday: 'EEE, MMM d', numeric: 'MM/dd/yyyy', dayMonth: 'M/d' },
-    dayjs: { long: 'MMMM D, YYYY', weekday: 'ddd, MMM D', numeric: 'MM/DD/YYYY', dayMonth: 'M/D' },
   },
   iso: {
     label: 'ISO 8601',
     fns: { long: 'yyyy-MM-dd', weekday: 'EEE yyyy-MM-dd', numeric: 'yyyy-MM-dd', dayMonth: 'MM-dd' },
-    dayjs: { long: 'YYYY-MM-DD', weekday: 'ddd YYYY-MM-DD', numeric: 'YYYY-MM-DD', dayMonth: 'MM-DD' },
   },
 };
 
@@ -47,13 +44,6 @@ export function fnsPatterns(preset: DatePreset, timeFormat: TimeFormat): DatePat
   return timeFormat === '24h'
     ? { ...p, time: 'HH:mm', timeSec: 'HH:mm:ss' }
     : { ...p, time: 'h:mm a', timeSec: 'h:mm:ss a' };
-}
-
-export function dayjsPatterns(preset: DatePreset, timeFormat: TimeFormat): DatePatterns {
-  const p = (DATE_PRESETS[preset] ?? DATE_PRESETS.my).dayjs;
-  return timeFormat === '24h'
-    ? { ...p, time: 'HH:mm', timeSec: 'HH:mm:ss' }
-    : { ...p, time: 'h:mm A', timeSec: 'h:mm:ss A' };
 }
 
 // ---------------------------------------------------------------------------

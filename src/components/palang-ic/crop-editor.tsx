@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
-import { ArrowCounterClockwise, ArrowClockwise, ArrowsOutSimple } from 'phosphor-react'
+import { ArrowCounterClockwise, ArrowClockwise, ArrowsOutSimple } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import {
   ID1_RATIO,

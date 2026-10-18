@@ -1,20 +1,13 @@
-"use client";
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { DatePreset, NumberFormat, TimeFormat } from '@/lib/format';
 
-export type UnitSystem = 'metric' | 'imperial';
 export type DateFormat = DatePreset;
 export type { NumberFormat, TimeFormat };
-export type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CAD' | 'AUD' | 'CHF' | 'CNY' | 'MYR';
 
 export interface ToolSettings {
-  defaultUnits: UnitSystem;
   dateFormat: DateFormat;
   timeFormat: TimeFormat;
-  timeZone: string;
   numberFormat: NumberFormat;
-  currency: Currency;
 }
 
 interface SettingsContextType {
@@ -24,12 +17,9 @@ interface SettingsContextType {
 }
 
 const defaultSettings: ToolSettings = {
-  defaultUnits: 'metric',
   dateFormat: 'my',
   timeFormat: '24h',
-  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   numberFormat: 'period',
-  currency: 'MYR',
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -53,9 +43,13 @@ function loadSettings(): ToolSettings {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved) as Partial<ToolSettings>;
-      const merged = { ...defaultSettings, ...parsed };
-      merged.dateFormat = LEGACY_DATE_FORMATS[merged.dateFormat] ?? merged.dateFormat;
-      return merged;
+      // Pick known keys, so settings that no longer exist (units, time zone,
+      // currency) are dropped from storage on the next save.
+      return {
+        dateFormat: LEGACY_DATE_FORMATS[parsed.dateFormat ?? ''] ?? parsed.dateFormat ?? defaultSettings.dateFormat,
+        timeFormat: parsed.timeFormat ?? defaultSettings.timeFormat,
+        numberFormat: parsed.numberFormat ?? defaultSettings.numberFormat,
+      };
     }
   } catch (error) {
     console.error('Failed to load settings:', error);

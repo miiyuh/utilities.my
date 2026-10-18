@@ -1,4 +1,4 @@
-import { BookOpen } from 'phosphor-react';
+import { BookOpen } from '@phosphor-icons/react';
 import { MarkdownPage } from '@/components/markdown/markdown-page';
 
 const TERMS_CONTENT = `# Terms of Service

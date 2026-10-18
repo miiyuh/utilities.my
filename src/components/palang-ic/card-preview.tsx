@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { IdentificationCard } from 'phosphor-react'
+import { IdentificationCard } from '@phosphor-icons/react'
 import { ID1_RATIO, renderWatermarkedCard, type CardSide, type WatermarkOptions } from '@/lib/palang-ic'
 
 interface CardPreviewProps {

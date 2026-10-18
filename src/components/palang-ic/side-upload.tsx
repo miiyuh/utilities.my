@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { UploadSimple, Crop, Trash, ArrowsClockwise } from 'phosphor-react'
+import { UploadSimple, Crop, Trash, ArrowsClockwise } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { humanSize } from '@/lib/image-utils'
 import type { CardSide } from '@/lib/palang-ic'

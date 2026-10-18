@@ -6,7 +6,7 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Palette, Shuffle, X, Image as ImageIcon } from 'phosphor-react';
+import { Upload, Palette, Shuffle, X, Image as ImageIcon } from '@phosphor-icons/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { parseColour } from '@/lib/colour-parse';
 import { cn } from '@/lib/utils';

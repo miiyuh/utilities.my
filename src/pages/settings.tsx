@@ -3,11 +3,11 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { ArrowCounterClockwise, Gear } from 'phosphor-react'
+import { ArrowCounterClockwise, Gear } from '@phosphor-icons/react'
 import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
 import { ThemeToggleButton } from "@/components/theme-toggle-button"
-import { useSettings, UnitSystem, DateFormat, NumberFormat, Currency, TimeFormat } from '@/contexts/settings-context'
+import { useSettings, type DateFormat, type NumberFormat, type TimeFormat } from '@/contexts/settings-context'
 import { PageHeader } from "@/components/page-header";
 import { format } from 'date-fns'
 import { DATE_PRESETS, fnsPatterns, type DatePreset } from '@/lib/format'
@@ -16,22 +16,6 @@ export default function SettingsPage() {
   const { settings, updateSetting, resetSettings } = useSettings()
   // Captured once so the example times in the menus stay stable while you browse them.
   const [now] = useState(() => new Date())
-
-  // Get available timezones
-  const timeZones = (Intl as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf?.('timeZone') ?? []
-  const commonTimeZones = [
-    'America/New_York',
-    'America/Chicago', 
-    'America/Denver',
-    'America/Los_Angeles',
-    'Europe/London',
-    'Europe/Paris',
-    'Europe/Berlin',
-    'Asia/Tokyo',
-    'Asia/Shanghai',
-    'Australia/Sydney',
-    'UTC'
-  ]
 
   return (
     <>
@@ -72,23 +56,6 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   
-                  {/* Default Units */}
-                  <div className="space-y-2">
-                    <Label htmlFor="units">Default Units</Label>
-                    <Select value={settings.defaultUnits} onValueChange={(value: UnitSystem) => updateSetting('defaultUnits', value)}>
-                      <SelectTrigger id="units">
-                        <SelectValue placeholder="Select unit system" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="metric">Metric (kg, cm, °C)</SelectItem>
-                        <SelectItem value="imperial">Imperial (lbs, ft, °F)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-sm text-muted-foreground">
-                      Default unit system for the unit converter tool.
-                    </p>
-                  </div>
-
                   {/* Date Format */}
                   <div className="space-y-2">
                     <Label htmlFor="dateFormat">Date Format</Label>
@@ -129,33 +96,6 @@ export default function SettingsPage() {
                     </p>
                   </div>
 
-                  {/* Time Zone */}
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone">Time Zone</Label>
-                    <Select value={settings.timeZone} onValueChange={(value: string) => updateSetting('timeZone', value)}>
-                      <SelectTrigger id="timezone">
-                        <SelectValue placeholder="Select timezone" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        <div className="font-medium text-sm p-2 text-muted-foreground">Common Timezones</div>
-                        {commonTimeZones.map((tz) => (
-                          <SelectItem key={tz} value={tz}>
-                            {tz} ({now.toLocaleTimeString('en-US', { timeZone: tz, timeZoneName: 'short' }).split(' ')[1]})
-                          </SelectItem>
-                        ))}
-                        <div className="font-medium text-sm p-2 text-muted-foreground border-t mt-2">All Timezones</div>
-                        {timeZones.filter((tz: string) => !commonTimeZones.includes(tz)).map((tz: string) => (
-                          <SelectItem key={tz} value={tz}>
-                            {tz}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-sm text-muted-foreground">
-                      Timezone used for timestamp conversion and time-related tools.
-                    </p>
-                  </div>
-
                   {/* Number Format */}
                   <div className="space-y-2">
                     <Label htmlFor="numberFormat">Number Format</Label>
@@ -170,29 +110,6 @@ export default function SettingsPage() {
                     </Select>
                     <p className="text-sm text-muted-foreground">
                       Number formatting for calculations and displays.
-                    </p>
-                  </div>
-
-                  {/* Currency */}
-                  <div className="space-y-2">
-                    <Label htmlFor="currency">Default Currency</Label>
-                    <Select value={settings.currency} onValueChange={(value: Currency) => updateSetting('currency', value)}>
-                      <SelectTrigger id="currency">
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USD">USD - US Dollar ($)</SelectItem>
-                        <SelectItem value="EUR">EUR - Euro (€)</SelectItem>
-                        <SelectItem value="GBP">GBP - British Pound (£)</SelectItem>
-                        <SelectItem value="JPY">JPY - Japanese Yen (¥)</SelectItem>
-                        <SelectItem value="CAD">CAD - Canadian Dollar (C$)</SelectItem>
-                        <SelectItem value="AUD">AUD - Australian Dollar (A$)</SelectItem>
-                        <SelectItem value="CHF">CHF - Swiss Franc (CHF)</SelectItem>
-                        <SelectItem value="CNY">CNY - Chinese Yuan (¥)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-sm text-muted-foreground">
-                      Default currency for financial calculations and displays.
                     </p>
                   </div>
 

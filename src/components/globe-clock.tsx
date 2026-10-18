@@ -1,9 +1,7 @@
 import { Flag } from '@/components/flag';
 import React from 'react';
-import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import { format } from 'date-fns';
+import { gmtOffset, inZone, offsetZone } from '@/lib/zoned';
 import {
   geoOrthographic,
   geoEqualEarth,
@@ -24,9 +22,6 @@ import { cn } from '@/lib/utils';
 /** d3-geo Euler rotation [λ, φ, γ] in degrees. */
 type EulerRotation = [number, number, number];
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
 export type GlobeView = 'globe' | 'map';
 export type GlobeMode = 'cities' | 'timezones';
 
@@ -40,7 +35,7 @@ interface GlobeClockProps {
   zones: string[];
   view: GlobeView;
   mode: GlobeMode;
-  now: Dayjs;
+  now: Date;
   use24h: boolean;
   onToggleCity: (tz: string) => void;
 }
@@ -133,7 +128,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
   const path = React.useMemo(() => geoPath(projection), [projection]);
 
   // --- night hemisphere (recomputed once a minute) ---------------------------
-  const minuteStamp = Math.floor(now.valueOf() / 60_000);
+  const minuteStamp = Math.floor(now.getTime() / 60_000);
   const nightPath = React.useMemo(() => {
     const sun = subsolarPoint(new Date(minuteStamp * 60_000));
     if (view === 'globe') {
@@ -209,7 +204,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
   };
 
   // --- helpers ----------------------------------------------------------------
-  const timeFmt = use24h ? 'HH:mm' : 'h:mm A';
+  const timeFmt = use24h ? 'HH:mm' : 'h:mm a';
   const selected = React.useMemo(() => new Set(zones), [zones]);
   /** Cities the person added that aren't among the featured pins. */
   const addedPins = React.useMemo(
@@ -284,12 +279,13 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
   const zoneTime = (p: TzProps): string => {
     if (p.tz_name1st) {
       try {
-        return now.tz(p.tz_name1st).format(timeFmt);
+        // An unknown zone name gives an invalid date, and format throws.
+        return format(inZone(now, p.tz_name1st), timeFmt);
       } catch {
         /* fall through to raw offset */
       }
     }
-    return now.utcOffset(p.zone * 60).format(timeFmt);
+    return format(inZone(now, offsetZone(p.zone)), timeFmt);
   };
 
   const formatUtcOffset = (zone: number): string => {
@@ -385,7 +381,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
           if (!pos) return null;
           const [x, y] = pos;
           const isSel = selected.has(c.timezone);
-          const local = now.tz(c.timezone);
+          const local = inZone(now, c.timezone);
           return (
             <g
               key={c.timezone}
@@ -394,10 +390,10 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 onToggleCity(c.timezone);
-                pinTooltip(e, null, [`${c.city}, ${c.country}`, `${local.format(timeFmt)} · GMT${local.format('Z').replace(':00', '')}`], c.flag);
+                pinTooltip(e, null, [`${c.city}, ${c.country}`, `${format(local, timeFmt)} · GMT${gmtOffset(local)}`], c.flag);
               }}
               onPointerMove={(e) =>
-                showTooltip(e, [`${c.city}, ${c.country}`, `${local.format(timeFmt)} · GMT${local.format('Z').replace(':00', '')}`], c.flag)
+                showTooltip(e, [`${c.city}, ${c.country}`, `${format(local, timeFmt)} · GMT${gmtOffset(local)}`], c.flag)
               }
               onPointerLeave={() => { if (!pinned) setTooltip(null); }}
             >
@@ -423,7 +419,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
                   paintOrder="stroke"
                   className="font-medium"
                 >
-                  {c.city} {local.format(timeFmt)}
+                  {c.city} {format(local, timeFmt)}
                 </text>
               )}
             </g>

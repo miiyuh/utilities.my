@@ -1,8 +1,6 @@
 import { Flag } from '@/components/flag';
 import React from 'react';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import { addDays, addHours, differenceInCalendarDays, format, isSameDay, startOfDay } from 'date-fns';
 import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
@@ -19,14 +17,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { ALL_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
-import { Globe, X, ArrowLeft, ArrowRight, ArrowClockwise, CaretUp, CaretDown, Calendar as CalendarIcon, CalendarPlus, DownloadSimple } from 'phosphor-react';
+import { Globe, X, ArrowLeft, ArrowRight, ArrowClockwise, CaretUp, CaretDown, Calendar as CalendarIcon, CalendarPlus, DownloadSimple } from '@phosphor-icons/react';
 import { Input } from '@/components/ui/input';
 import { buildIcs, googleCalendarUrl, outlookUrl, type CalendarEvent } from '@/lib/calendar-links';
 import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils';
 import { Hint } from '@/components/ui/tooltip';
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
+import { gmtOffset, inZone, localTimeZone } from '@/lib/zoned';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const STORAGE_KEY = 'utilities.timezone-converter.zones';
@@ -61,7 +57,7 @@ function cellTone(hour: number, isNow: boolean, isSelected: boolean): string {
 
 export default function TimezoneConverterPage() {
   const fieldId = React.useId();
-  const localZone = React.useMemo(() => dayjs.tz.guess(), []);
+  const localZone = React.useMemo(() => localTimeZone(), []);
 
   const [zones, setZones] = React.useState<string[]>(() => {
     try {
@@ -79,14 +75,14 @@ export default function TimezoneConverterPage() {
   const [dayOffset, setDayOffset] = React.useState(0);
   const [range, setRange] = React.useState<HourRange | null>(null);
   const [dragging, setDragging] = React.useState(false);
-  const { dayjs: dj, is24h } = useToolSettings();
+  const { fns: dj, is24h } = useToolSettings();
   const [use24h, setUse24h] = React.useState(is24h);
   const dragAnchor = React.useRef<number | null>(null);
   const gridRef = React.useRef<HTMLDivElement | null>(null);
-  const [now, setNow] = React.useState(() => dayjs());
+  const [now, setNow] = React.useState(() => new Date());
 
   React.useEffect(() => {
-    const id = setInterval(() => setNow(dayjs()), 30_000);
+    const id = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(id);
   }, []);
 
@@ -141,20 +137,20 @@ export default function TimezoneConverterPage() {
   const homeZone = zones[0] ?? localZone;
   // Midnight of the viewed day in the home zone; each column is one absolute hour after it.
   const base = React.useMemo(
-    () => now.tz(homeZone).startOf('day').add(dayOffset, 'day'),
+    () => addDays(startOfDay(inZone(now, homeZone)), dayOffset),
     [now, homeZone, dayOffset]
   );
-  const instants = React.useMemo(() => HOURS.map((i) => base.add(i, 'hour')), [base]);
+  const instants = React.useMemo(() => HOURS.map((i) => addHours(base, i)), [base]);
 
-  const nowIndex = dayOffset === 0 ? now.diff(base, 'hour', true) : -1;
+  const nowIndex = dayOffset === 0 ? (now.getTime() - base.getTime()) / 3_600_000 : -1;
   const nowColumn = Math.floor(nowIndex);
 
   // Selected range as absolute instants; end is exclusive (worldtimebuddy slot semantics).
-  const rangeStart = range ? base.add(range.start, 'hour') : null;
-  const rangeEnd = range ? base.add(range.end + 1, 'hour') : null;
+  const rangeStart = range ? addHours(base, range.start) : null;
+  const rangeEnd = range ? addHours(base, range.end + 1) : null;
 
-  const timeFmt = use24h ? 'HH:mm' : 'h:mm A';
-  const rangeTimeFmt = use24h ? 'HH:mm' : 'h:mm A';
+  const timeFmt = use24h ? 'HH:mm' : 'h:mm a';
+  const rangeTimeFmt = use24h ? 'HH:mm' : 'h:mm a';
 
   const changeDay = (next: number) => {
     setDayOffset(next);
@@ -165,19 +161,24 @@ export default function TimezoneConverterPage() {
 
   const handleDatePick = (date: Date | undefined) => {
     if (!date) return;
-    const today = now.tz(homeZone).startOf('day');
-    const picked = dayjs(date).startOf('day');
-    changeDay(picked.diff(today, 'day'));
+    // Compare calendar dates: the picked day against today's date in the home zone.
+    const today = inZone(now, homeZone);
+    changeDay(
+      differenceInCalendarDays(
+        new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+        new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      )
+    );
   };
 
   /** "09:00 – 12:00", or "Thu 23:00 – Fri 02:00" when the range crosses midnight in that zone. */
   const zoneRangeLabel = (tz: string) => {
     if (!rangeStart || !rangeEnd) return '';
-    const s = rangeStart.tz(tz);
-    const e = rangeEnd.tz(tz);
-    return s.isSame(e, 'day')
-      ? `${s.format(rangeTimeFmt)} – ${e.format(rangeTimeFmt)}`
-      : `${s.format(`ddd ${rangeTimeFmt}`)} – ${e.format(`ddd ${rangeTimeFmt}`)}`;
+    const s = inZone(rangeStart, tz);
+    const e = inZone(rangeEnd, tz);
+    return isSameDay(s, e)
+      ? `${format(s, rangeTimeFmt)} – ${format(e, rangeTimeFmt)}`
+      : `${format(s, `EEE ${rangeTimeFmt}`)} – ${format(e, `EEE ${rangeTimeFmt}`)}`;
   };
 
   const [eventTitle, setEventTitle] = React.useState('Meeting');
@@ -185,10 +186,10 @@ export default function TimezoneConverterPage() {
   const buildRangeSummary = () => {
     if (!rangeStart || !rangeEnd) return '';
     return zones.map((tz) => {
-      const s = rangeStart.tz(tz);
-      const e = rangeEnd.tz(tz);
-      const endFmt = s.isSame(e, 'day') ? rangeTimeFmt : `${dj.weekday} · ${rangeTimeFmt}`;
-      return `${zoneLabel(tz)}: ${s.format(`${dj.weekday} · ${rangeTimeFmt}`)} – ${e.format(endFmt)} (${tz})`;
+      const s = inZone(rangeStart, tz);
+      const e = inZone(rangeEnd, tz);
+      const endFmt = isSameDay(s, e) ? rangeTimeFmt : `${dj.weekday} · ${rangeTimeFmt}`;
+      return `${zoneLabel(tz)}: ${format(s, `${dj.weekday} · ${rangeTimeFmt}`)} – ${format(e, endFmt)} (${tz})`;
     }).join('\n');
   };
 
@@ -197,8 +198,8 @@ export default function TimezoneConverterPage() {
     rangeStart && rangeEnd
       ? {
           title: eventTitle.trim() || 'Meeting',
-          start: rangeStart.toDate(),
-          end: rangeEnd.toDate(),
+          start: new Date(rangeStart.getTime()),
+          end: new Date(rangeEnd.getTime()),
           details: `${buildRangeSummary()}
 
 Planned with utilities.my/timezone-converter`,
@@ -288,13 +289,13 @@ Planned with utilities.my/timezone-converter`,
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="default" className="h-8">
                       <CalendarIcon className="h-4 w-4" />
-                      {base.format(dj.long)}
+                      {format(base, dj.long)}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={base.toDate()}
+                      selected={new Date(base.getFullYear(), base.getMonth(), base.getDate())}
                       onSelect={handleDatePick}
                       autoFocus
                     />
@@ -310,7 +311,7 @@ Planned with utilities.my/timezone-converter`,
                   {/* Hour ruler */}
                   <div className="flex border-b border-border bg-muted/30">
                     <div className="w-48 shrink-0 px-3 py-2 text-xs font-medium text-muted-foreground">
-                      {base.format(dj.weekday)}
+                      {format(base, dj.weekday)}
                     </div>
                     {HOURS.map((h) => (
                       <div
@@ -330,7 +331,7 @@ Planned with utilities.my/timezone-converter`,
                   {zones.map((tz, idx) => {
                     const city = findCityZone(tz);
                     const labelInstant = rangeStart ?? now;
-                    const local = labelInstant.tz(tz);
+                    const local = inZone(labelInstant, tz);
                     return (
                       <div key={tz} className="flex items-stretch group">
                         {/* Label */}
@@ -348,12 +349,12 @@ Planned with utilities.my/timezone-converter`,
                           {rangeStart && rangeEnd ? (
                             <div className="text-xs tabular-nums">
                               <span className="block font-medium text-primary">{zoneRangeLabel(tz)}</span>
-                              <span className="block text-muted-foreground">GMT{local.format('Z').replace(':00', '')}</span>
+                              <span className="block text-muted-foreground">GMT{gmtOffset(local)}</span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums min-w-0">
-                              <span className="text-foreground font-medium">{local.format(timeFmt)}</span>
-                              <span className="shrink-0">GMT{local.format('Z').replace(':00', '')}</span>
+                              <span className="text-foreground font-medium">{format(local, timeFmt)}</span>
+                              <span className="shrink-0">GMT{gmtOffset(local)}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -371,11 +372,12 @@ Planned with utilities.my/timezone-converter`,
 
                         {/* Hour cells */}
                         {instants.map((inst, i) => {
-                          const localHour = inst.tz(tz).hour();
+                          const cell = inZone(inst, tz);
+                          const localHour = cell.getHours();
                           const isMidnight = localHour === 0;
                           const inRange = range != null && i >= range.start && i <= range.end;
                           return (
-                            <Hint label={inst.tz(tz).format(`${dj.weekday} · ${rangeTimeFmt}`)} key={i}>
+                            <Hint label={format(cell, `${dj.weekday} · ${rangeTimeFmt}`)} key={i}>
                               <button
                               onPointerDown={(e) => {
                                 e.preventDefault();
@@ -390,7 +392,7 @@ Planned with utilities.my/timezone-converter`,
                               <span>{use24h ? localHour : ((localHour % 12) || 12)}</span>
                               {isMidnight && (
                                 <span className="text-[8px] text-muted-foreground leading-none mt-0.5">
-                                  {inst.tz(tz).format(dj.dayMonth)}
+                                  {format(cell, dj.dayMonth)}
                                 </span>
                               )}
                             </button>
@@ -432,8 +434,11 @@ Planned with utilities.my/timezone-converter`,
                   <>
                     <div className="min-w-0">
                       <span className="font-medium text-foreground">
-                        {rangeStart.tz(homeZone).format(`${dj.weekday} · ${rangeTimeFmt}`)} –{' '}
-                        {rangeEnd.tz(homeZone).format(rangeStart.tz(homeZone).isSame(rangeEnd.tz(homeZone), 'day') ? rangeTimeFmt : `${dj.weekday} · ${rangeTimeFmt}`)}
+                        {format(inZone(rangeStart, homeZone), `${dj.weekday} · ${rangeTimeFmt}`)} –{' '}
+                        {format(
+                          inZone(rangeEnd, homeZone),
+                          isSameDay(inZone(rangeStart, homeZone), inZone(rangeEnd, homeZone)) ? rangeTimeFmt : `${dj.weekday} · ${rangeTimeFmt}`
+                        )}
                       </span>{' '}
                       <span className="text-muted-foreground">
                         in {zoneLabel(homeZone)} · {range.end - range.start + 1}h

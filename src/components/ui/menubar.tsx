@@ -1,10 +1,8 @@
-"use client"
-
 import * as React from "react"
 import { Menubar as MenubarPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
-import { CheckIcon, ChevronRightIcon } from "lucide-react"
+import { CheckIcon, CaretRightIcon } from "@phosphor-icons/react"
 
 function Menubar({
   className,
@@ -242,7 +240,7 @@ function MenubarSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto size-4" />
+      <CaretRightIcon className="ml-auto size-4" />
     </MenubarPrimitive.SubTrigger>
   )
 }

@@ -17,7 +17,7 @@ import {
   MathOperations,
   ShieldCheck,
   Globe,
-} from 'phosphor-react'
+} from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'

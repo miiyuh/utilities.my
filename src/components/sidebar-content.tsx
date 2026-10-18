@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ArrowLeft, Info } from "phosphor-react"
+import { ArrowLeft, Info } from '@phosphor-icons/react'
 import { tools as originalTools } from "@/lib/tools"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"

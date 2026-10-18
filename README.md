@@ -54,9 +54,9 @@ JPEG XL files can also be opened as input. AVIF and JPEG XL use WebAssembly enco
 - React 19 and TypeScript 7
 - Vite 8 and Tailwind CSS 4
 - React Router 7
-- Radix UI and Base UI components, with Phosphor and Lucide icons
+- Radix UI and Base UI components, with Phosphor icons
 - next-themes for the dark and light themes
-- Libraries used by individual tools: dayjs and date-fns (dates), marked and DOMPurify (Markdown), qrcode.react (QR codes), exifr (image metadata), pdf-lib and JSZip (PDF and ZIP export), d3-geo and world-atlas (the world clock globe), dnd-kit (drag and drop)
+- Libraries used by individual tools: date-fns and @date-fns/tz (dates and time zones), marked and DOMPurify (Markdown), qrcode.react (QR codes), exifr (image metadata), pdf-lib and JSZip (PDF and ZIP export), d3-geo and world-atlas (the world clock globe), dnd-kit (drag and drop)
 - oxlint for linting, Husky and commitlint for commit checks, semantic-release for versioning
 
 ## Running it locally
@@ -78,7 +78,8 @@ Then open `http://localhost:5173`.
 | `bun run build` | Typecheck, build, then prerender each route's HTML, the sitemap and the social cards |
 | `bun run preview` | Serve the production build locally |
 | `bun run lint` | Run oxlint, including type-aware rules |
-| `bun run typecheck` | Check types for the app and the build scripts |
+| `bun run test` | Run the tests with bun test |
+| `bun run typecheck` | Check types for the app and the build scripts, using [tsc-rs](https://github.com/pingdotgg/ts-rust) |
 
 ## Contributing
 

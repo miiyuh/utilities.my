@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ArrowCounterClockwise, Play } from 'phosphor-react'
+import { ArrowCounterClockwise, Play } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { randomInt } from '@/lib/random'

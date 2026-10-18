@@ -30,7 +30,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+          // Exact package paths: a bare 'node_modules/react' prefix also matched
+          // react-router, react-day-picker and others, pulling them (and the
+          // date libraries behind the calendar) into every page's first load.
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) {
             return 'vendor-react'
           }
           if (id.includes('node_modules/clsx') || id.includes('node_modules/class-variance-authority')) {
@@ -38,9 +41,6 @@ export default defineConfig({
           }
           if (id.includes('node_modules/pdf-lib') || id.includes('node_modules/@pdf-lib')) {
             return 'vendor-pdf'
-          }
-          if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')) {
-            return 'vendor-map'
           }
         },
       },
