@@ -1,3 +1,9 @@
+## [5.2.1](https://github.com/miiyuh/utilities.my/compare/v5.2.0...v5.2.1) (2026-10-18)
+
+### Bug Fixes
+
+* review fixes: settings, time zones, fonts, bundle size, tests and CI ([984aff5](https://github.com/miiyuh/utilities.my/commit/984aff5e845356553291444674174acb0c4e1dee))
+
 ## [5.2.0](https://github.com/miiyuh/utilities.my/compare/v5.1.0...v5.2.0) (2026-10-17)
 
 ### Features
