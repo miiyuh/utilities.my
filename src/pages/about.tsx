@@ -40,14 +40,16 @@ const MAINTAINER_PHOTO = 'https://miiyuh.com/_next/image?url=%2Fassets%2Fimg%2Fp
 function MaintainerCard() {
   return (
     <HoverCard>
-      <HoverCardTrigger asChild>
-        <button
-          type="button"
-          className="font-medium text-foreground underline decoration-border underline-offset-2 transition-colors duration-quick hover:decoration-foreground"
-        >
-          miiyuh
-        </button>
-      </HoverCardTrigger>
+      <HoverCardTrigger
+        render={
+          <button
+            type="button"
+            className="font-medium text-foreground underline decoration-border underline-offset-2 transition-colors duration-quick hover:decoration-foreground"
+          >
+            miiyuh
+          </button>
+        }
+      />
       <HoverCardContent align="start" className="space-y-3">
         <div className="flex items-center gap-3">
           {/* Served by miiyuh.com, so a new picture there shows up here too. The initials show while it loads or if it can't. */}
