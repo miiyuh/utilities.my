@@ -231,7 +231,7 @@ export default function About() {
                   <ul className="text-sm text-muted-foreground space-y-2">
                     <li className="flex items-center gap-2"><Code className="h-4 w-4 text-muted-foreground" /> Vite, React, TypeScript</li>
                     <li className="flex items-center gap-2"><Wind className="h-4 w-4 text-muted-foreground" /> Tailwind CSS</li>
-                    <li className="flex items-center gap-2"><Cube className="h-4 w-4 text-muted-foreground" /> Radix UI, shadcn/ui</li>
+                    <li className="flex items-center gap-2"><Cube className="h-4 w-4 text-muted-foreground" /> Base UI, shadcn/ui</li>
                     <li className="flex items-center gap-2"><Path className="h-4 w-4 text-muted-foreground" /> Phosphor icons</li>
                   </ul>
                 </div>

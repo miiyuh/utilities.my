@@ -57,7 +57,7 @@ export function CropEditor({ side, rotation, crop, onChange }: CropEditorProps) 
 
   const [rw, rh] = rotatedSize(side.width, side.height, rotation)
 
-  // Measure inside the observer, not on mount: the Radix dialog is still
+  // Measure inside the observer, not on mount: the dialog is still
   // animating in when this component first renders.
   useEffect(() => {
     const el = wrapRef.current
