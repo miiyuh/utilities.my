@@ -2,6 +2,7 @@ import * as React from "react"
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 
 import { cn } from "@/lib/utils"
+import { tapChangeDetails } from "@/lib/tap-details"
 
 function TooltipProvider({
   delay = 0,
@@ -20,7 +21,7 @@ function TooltipProvider({
 // unreachable. A tap on the trigger now opens the tooltip briefly; tapping
 // anywhere else (or waiting) closes it.
 const TOUCH_TOOLTIP_MS = 2500
-const TooltipTouchContext = React.createContext<(() => void) | null>(null)
+const TooltipTouchContext = React.createContext<((e: React.MouseEvent<HTMLElement>) => void) | null>(null)
 
 function Tooltip({
   open: openProp,
@@ -41,13 +42,15 @@ function Tooltip({
     [openProp, onOpenChange]
   )
 
-  // Tap opens and the timer closes are ours, not Base UI's, so they have no
-  // event details to report and only drive the uncontrolled state.
-  const openFromTap = React.useCallback(() => {
-    clearTimeout(timer.current)
-    setUncontrolledOpen(true)
-    timer.current = setTimeout(() => setUncontrolledOpen(false), TOUCH_TOOLTIP_MS)
-  }, [])
+  // Goes through handleOpenChange so a controlled `open` hears about taps too.
+  const openFromTap = React.useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      const details = tapChangeDetails<TooltipPrimitive.Root.ChangeEventDetails>(e)
+      handleOpenChange(true, details)
+      timer.current = setTimeout(() => handleOpenChange(false, details), TOUCH_TOOLTIP_MS)
+    },
+    [handleOpenChange]
+  )
 
   React.useEffect(() => () => clearTimeout(timer.current), [])
 
@@ -74,7 +77,7 @@ function TooltipTrigger({
       }}
       onClick={(e) => {
         onClick?.(e)
-        if (pointerType.current !== "mouse") openFromTap?.()
+        if (pointerType.current !== "mouse") openFromTap?.(e)
       }}
       {...props}
     />

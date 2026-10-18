@@ -2,12 +2,13 @@ import * as React from "react"
 import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card"
 
 import { cn } from "@/lib/utils"
+import { tapChangeDetails } from "@/lib/tap-details"
 
 /**
  * Base UI preview cards only respond to hover and focus. Like our tooltips,
  * this one also toggles on tap, so the card is reachable on touchscreens.
  */
-const HoverCardTapContext = React.createContext<(() => void) | null>(null)
+const HoverCardTapContext = React.createContext<((e: React.MouseEvent<HTMLElement>) => void) | null>(null)
 
 function HoverCard({
   open: openProp,
@@ -26,9 +27,12 @@ function HoverCard({
     [openProp, onOpenChange]
   )
 
-  // Taps are ours, not Base UI's, so they have no event details to report and
-  // only drive the uncontrolled state.
-  const toggle = React.useCallback(() => setUncontrolled((o) => !o), [])
+  // Goes through handleOpenChange so a controlled `open` hears about taps too.
+  const toggle = React.useCallback(
+    (e: React.MouseEvent<HTMLElement>) =>
+      handleOpenChange(!open, tapChangeDetails<PreviewCardPrimitive.Root.ChangeEventDetails>(e)),
+    [open, handleOpenChange]
+  )
 
   return (
     <HoverCardTapContext.Provider value={toggle}>
@@ -62,7 +66,7 @@ function HoverCardTrigger({
       }}
       onClick={(e) => {
         onClick?.(e)
-        if (pointerType.current !== "mouse") toggle?.()
+        if (pointerType.current !== "mouse") toggle?.(e)
       }}
       {...props}
     />
