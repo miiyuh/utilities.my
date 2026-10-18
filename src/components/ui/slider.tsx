@@ -13,10 +13,12 @@ function Slider<Value extends number | readonly number[]>({
   "aria-labelledby": ariaLabelledBy,
   ...props
 }: SliderPrimitive.Root.Props<Value>) {
-  const _values = Array.isArray(value)
-    ? value
-    : Array.isArray(defaultValue)
-      ? defaultValue
+  // One thumb per value; a plain number is a single-thumb slider.
+  const given = value ?? defaultValue
+  const _values: readonly number[] = Array.isArray(given)
+    ? given
+    : typeof given === "number"
+      ? [given]
       : [min, max]
 
   return (
@@ -51,7 +53,7 @@ function Slider<Value extends number | readonly number[]>({
               ariaLabel && _values.length > 1 ? `${ariaLabel} ${index + 1}` : ariaLabel
             }
             aria-labelledby={ariaLabelledBy}
-            className="block size-4 shrink-0 rounded-full bg-white shadow-md ring-1 ring-black/10 transition-[color,box-shadow] duration-quick select-none not-dark:bg-clip-padding hover:ring-4 hover:ring-ring/30 focus-visible:ring-4 focus-visible:ring-ring/30 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+            className="block size-4 shrink-0 rounded-full bg-white shadow-md ring-1 ring-black/10 transition-[color,box-shadow] duration-quick select-none not-dark:bg-clip-padding hover:ring-4 hover:ring-ring/30 focus-visible:ring-4 focus-visible:ring-ring/30 focus-visible:outline-hidden data-disabled:pointer-events-none"
           />
         ))}
       </SliderPrimitive.Control>
