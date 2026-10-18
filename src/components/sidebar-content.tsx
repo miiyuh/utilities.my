@@ -72,7 +72,7 @@ export function SidebarContent() {
             {sortedTools.map((tool) => (
               <SidebarMenuItem key={tool.path}>
                 <SidebarMenuButton
-                  asChild
+                  render={<Link to={tool.path} onClick={handleLinkClick} />}
                   isActive={pathname === tool.path}
                   className={cn(
                     "w-full justify-start group-data-[collapsible=icon]:justify-center",
@@ -82,12 +82,10 @@ export function SidebarContent() {
                   )}
                   tooltip={tool.name}
                 >
-                  <Link to={tool.path} onClick={handleLinkClick}>
-                    <div className="flex items-center">
-                      <tool.icon className="h-4 w-4 mr-3 group-data-[collapsible=icon]:mr-0" />
-                      <span className="group-data-[collapsible=icon]:hidden font-medium">{tool.name}</span>
-                    </div>
-                  </Link>
+                  <div className="flex items-center">
+                    <tool.icon className="h-4 w-4 mr-3 group-data-[collapsible=icon]:mr-0" />
+                    <span className="group-data-[collapsible=icon]:hidden font-medium">{tool.name}</span>
+                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
