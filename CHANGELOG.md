@@ -1,3 +1,9 @@
+## [5.2.2](https://github.com/miiyuh/utilities.my/compare/v5.2.1...v5.2.2) (2026-10-22)
+
+### Bug Fixes
+
+* **deps:** override vulnerable transitive dependencies ([fa864c1](https://github.com/miiyuh/utilities.my/commit/fa864c1417f88628cd705bfa0d7b9a5659d676c8))
+
 ## [5.2.1](https://github.com/miiyuh/utilities.my/compare/v5.2.0...v5.2.1) (2026-10-18)
 
 ### Bug Fixes
