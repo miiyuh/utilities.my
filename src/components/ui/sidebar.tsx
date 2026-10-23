@@ -299,18 +299,33 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   )
 }
 
-function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+function SidebarInset({ className, children, ...props }: React.ComponentProps<"main">) {
+  // The first child is the page header; everything after it is the body.
+  const [header, ...body] = React.Children.toArray(children)
+
   return (
     <main
       id="main"
       tabIndex={-1}
       data-slot="sidebar-inset"
       className={cn(
-        "relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-2xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
+        "relative flex w-full flex-1 flex-col bg-background",
+        // Inset: a rounded panel on the sidebar-coloured shell, locked to the
+        // viewport so the gutter shows on every side. The header stays put and
+        // only the body scrolls, so the scrollbar starts below the header.
+        "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:h-[calc(100svh-(--spacing(4)))] md:peer-data-[variant=inset]:overflow-hidden md:peer-data-[variant=inset]:rounded-2xl md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:shadow-sm",
         className
       )}
       {...props}
-    />
+    >
+      {header}
+      <div
+        data-slot="sidebar-inset-body"
+        className="flex flex-1 flex-col md:group-has-data-[variant=inset]/sidebar-wrapper:min-h-0 md:group-has-data-[variant=inset]/sidebar-wrapper:overflow-y-auto md:group-has-data-[variant=inset]/sidebar-wrapper:*:shrink-0"
+      >
+        {body}
+      </div>
+    </main>
   )
 }
 

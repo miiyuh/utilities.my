@@ -8,8 +8,14 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { SettingsProvider } from '@/contexts/settings-context'
 import { Analytics } from "@vercel/analytics/react"
 import { CommandPaletteProvider } from '@/components/command-palette'
+import { A11yProvider } from '@/components/a11y-provider'
+import { applyA11yPreferences, readA11yPreferences } from '@/lib/a11y-preferences'
 import App from './App'
 import './globals.css'
+import './a11y.css'
+
+// Before the first render, so text size, font and the rest never flash.
+applyA11yPreferences(readA11yPreferences())
 
 // Follow the site's resolved theme rather than the OS, so toasts match the
 // light/dark choice the user made with the toggle.
@@ -55,9 +61,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <TooltipProvider>
             <SidebarProvider>
               <CommandPaletteProvider>
+              <A11yProvider>
               <App />
               <ThemedToaster />
               <Analytics />
+              </A11yProvider>
               </CommandPaletteProvider>
             </SidebarProvider>
             </TooltipProvider>

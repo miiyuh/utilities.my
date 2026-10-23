@@ -5,7 +5,7 @@ import DOMPurify from 'dompurify';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { DownloadSimple, Eye, Article, Info, Columns, ArrowCounterClockwise, PencilSimple, TextAa, UploadSimple } from '@phosphor-icons/react';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { marked, Renderer, Tokens } from 'marked';
 import markedFootnote from 'marked-footnote';
@@ -387,9 +387,8 @@ export default function MarkdownPreviewerPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
   <PageHeader icon={Article} title="Markdown Previewer" />

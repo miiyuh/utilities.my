@@ -37,13 +37,15 @@ export function SidebarContent() {
   return (
     <>
       <SidebarHeader
-        className="border-b h-16 flex flex-row items-center justify-center px-4 group-data-[collapsible=icon]:px-2 relative"
+        // 65px on desktop so the border lines up with the page header's, which
+        // sits 1px lower inside the inset panel's border.
+        className="border-b h-16 md:h-[65px] flex flex-row items-center justify-start gap-2 px-6 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
       >
         {isMobile && (
           <button
             type="button"
             onClick={() => setOpenMobile(false)}
-            className="minimal-button-ghost absolute left-4 p-1.5"
+            className="minimal-button-ghost -ml-1.5 p-1.5"
             aria-label="Close sidebar"
           >
             <ArrowLeft className="h-5 w-5" />

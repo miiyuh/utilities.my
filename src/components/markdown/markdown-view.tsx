@@ -1,6 +1,7 @@
 import React from 'react';
 import { Marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { scrollToElement } from '@/lib/scroll-root';
 
 interface MarkdownViewProps {
   content: string;
@@ -82,15 +83,13 @@ function TableOfContents({ items }: { items: TocItem[] }) {
   const handleClick = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      const headerOffset = 100;
-      const offsetPosition = element.offsetTop - headerOffset;
-      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      scrollToElement(element);
       history.replaceState(null, '', `#${id}`);
     }
   };
 
   return (
-    <div className="sticky top-24 max-h-[calc(100vh-6rem)]">
+    <div className="sticky top-24 max-h-[calc(100vh-6rem)] md:top-8 md:max-h-[calc(100svh-6rem)]">
       <div className="p-4">
         <h4 className="text-sm font-medium text-muted-foreground mb-3">On this page</h4>
         <nav className="space-y-1">
@@ -118,13 +117,10 @@ function TableOfContents({ items }: { items: TocItem[] }) {
 }
 
 export function MarkdownView({ content }: MarkdownViewProps) {
-  const HEADER_OFFSET = 100;
-
   const scrollToId = (id: string) => {
     const element = document.getElementById(id);
     if (!element) return;
-    const offsetPosition = element.offsetTop - HEADER_OFFSET;
-    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    scrollToElement(element);
     history.replaceState(null, '', `#${id}`);
   };
 
@@ -146,9 +142,9 @@ export function MarkdownView({ content }: MarkdownViewProps) {
     }
   }, [tocItems]);
 
-  // Reset scroll on content change (navigating between markdown pages).
+  // Drop a stale #hash when the content changes. Scroll position is left to
+  // RouteScroll, which starts new pages at the top and restores Back/Forward.
   React.useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' });
     if (window.location.hash) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }

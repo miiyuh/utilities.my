@@ -12,7 +12,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { useToolSettings } from '@/hooks/use-tool-settings'
-import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar'
+import { Sidebar, SidebarInset } from '@/components/ui/sidebar'
 import { SidebarContent } from '@/components/sidebar-content'
 import { PageHeader } from '@/components/page-header'
 import { PageIntro } from '@/components/page-intro';
@@ -336,9 +336,8 @@ export default function PalangIc() {
 
   return (
     <TooltipProvider>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={IdentificationCard} title="Palang IC" />

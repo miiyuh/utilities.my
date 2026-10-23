@@ -1,5 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { House, MagnifyingGlass, ArrowLeft } from '@phosphor-icons/react'
+import { House, MagnifyingGlass, ArrowLeft, WarningCircle } from '@phosphor-icons/react'
+import { Sidebar, SidebarInset } from '@/components/ui/sidebar'
+import { SidebarContent } from '@/components/sidebar-content'
+import { PageHeader } from '@/components/page-header'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { tools } from '@/lib/tools'
 
@@ -13,52 +16,58 @@ export default function NotFound() {
 
   return (
     <>
-      <div className="min-h-screen w-full flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full flex flex-col items-center text-center space-y-8">
-          {/* 404 Header */}
-          <div className="space-y-4">
-            <h1 className="text-8xl font-bold text-primary">404</h1>
-            <h2 className="text-2xl font-semibold text-foreground">Page Not Found</h2>
-            <p className="text-muted-foreground text-lg">
-              Woah! The page you&apos;re looking for doesn&apos;t exist or has been moved.
-            </p>
-          </div>
+      <Sidebar collapsible="icon" variant="inset" side="left">
+        <SidebarContent />
+      </Sidebar>
+      <SidebarInset>
+        <PageHeader icon={WarningCircle} title="Page Not Found" />
+        <div className="flex w-full flex-1 items-center justify-center p-4 py-12">
+          <div className="max-w-2xl w-full flex flex-col items-center text-center space-y-8">
+            {/* 404 Header */}
+            <div className="space-y-4">
+              <h1 className="text-8xl font-bold text-primary">404</h1>
+              <h2 className="text-2xl font-semibold text-foreground">Page Not Found</h2>
+              <p className="text-muted-foreground text-lg">
+                Woah! The page you&apos;re looking for doesn&apos;t exist or has been moved.
+              </p>
+            </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/" className={buttonVariants({ size: 'lg' })}>
-              <House className="h-4 w-4 mr-2" />
-              Go to Homepage
-            </Link>
-            <Button variant="outline" size="lg" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Go Back
-            </Button>
-          </div>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/" className={buttonVariants({ size: 'lg' })}>
+                <House className="h-4 w-4 mr-2" />
+                Go to Homepage
+              </Link>
+              <Button variant="outline" size="lg" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Go Back
+              </Button>
+            </div>
 
-          {/* Suggested Tools */}
-          <div className="pt-8 border-t">
-            <h3 className="text-lg font-medium text-foreground mb-4 flex items-center justify-center gap-2">
-              <MagnifyingGlass className="h-5 w-5" />
-              Popular Tools
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {suggestedTools.map((tool) => (
-                <Link
-                  key={tool.path}
-                  to={tool.path}
-                  className="p-4 rounded-lg border bg-card hover:bg-accent transition-colors text-left group"
-                >
-                  <div className="flex items-center gap-3">
-                    <tool.icon className="h-5 w-5 text-muted-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-foreground">{tool.name}</span>
-                  </div>
-                </Link>
-              ))}
+            {/* Suggested Tools */}
+            <div className="pt-8 border-t">
+              <h3 className="text-lg font-medium text-foreground mb-4 flex items-center justify-center gap-2">
+                <MagnifyingGlass className="h-5 w-5" />
+                Popular Tools
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {suggestedTools.map((tool) => (
+                  <Link
+                    key={tool.path}
+                    to={tool.path}
+                    className="p-4 rounded-lg border bg-card hover:bg-accent transition-colors text-left group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <tool.icon className="h-5 w-5 text-muted-foreground group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-medium text-foreground">{tool.name}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </SidebarInset>
     </>
   )
 }

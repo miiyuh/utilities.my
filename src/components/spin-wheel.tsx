@@ -3,6 +3,7 @@ import { ArrowCounterClockwise, Play } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { randomInt } from '@/lib/random'
+import { useReducedMotion } from '@/lib/a11y-preferences'
 
 type ConfettiLauncher = (options?: Record<string, unknown>) => unknown
 
@@ -58,10 +59,8 @@ export function SpinWheel({ items, onSpin, disabled = false }: SpinWheelProps) {
   const confetti = React.useRef<ConfettiLauncher | null>(null)
   const wheelRef = React.useRef<HTMLDivElement>(null)
 
-  const reducedMotion = React.useMemo(
-    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    []
-  )
+  // Follows the OS setting and the "Reduce motion" toggle live.
+  const reducedMotion = useReducedMotion()
 
   React.useEffect(() => {
     void import('canvas-confetti').then((mod) => {
@@ -99,6 +98,12 @@ export function SpinWheel({ items, onSpin, disabled = false }: SpinWheelProps) {
     }
     onSpin(winner)
   }, [onSpin, reducedMotion])
+
+  // Turning on "Reduce motion" mid-spin drops the transition, so no
+  // transitionend will arrive: settle the spin now instead.
+  React.useEffect(() => {
+    if (spinning && reducedMotion) finish()
+  }, [spinning, reducedMotion, finish])
 
   const spin = () => {
     if (disabled || spinning || n < 2) return

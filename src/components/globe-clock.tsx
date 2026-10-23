@@ -18,6 +18,7 @@ import landTopo from 'world-atlas/land-110m.json';
 import { CITY_ZONES, findCityZone, type CityZone } from '@/lib/timezones';
 import { subsolarPoint, antipode, nightRing } from '@/lib/solar';
 import { cn } from '@/lib/utils';
+import { useReducedMotion } from '@/lib/a11y-preferences';
 
 /** d3-geo Euler rotation [λ, φ, γ] in degrees. */
 type EulerRotation = [number, number, number];
@@ -75,6 +76,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
   const [tzFeatures, setTzFeatures] = React.useState<FeatureCollection<Geometry, TzProps> | null>(null);
   const [tzLoading, setTzLoading] = React.useState(false);
   const [tzError, setTzError] = React.useState(false);
+  const reducedMotion = useReducedMotion();
   const [hoverZone, setHoverZone] = React.useState<number | null>(null);
   const [tooltip, setTooltip] = React.useState<TooltipState | null>(null);
   // On touch devices there's no hover, so tapping a region/city "pins" the
@@ -166,13 +168,13 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
   // --- idle auto-rotation (globe only, respects reduced motion) --------------
   React.useEffect(() => {
     if (view !== 'globe' || dragging) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (reducedMotion) return;
     const id = setInterval(() => {
       if (hoverPauseRef.current) return;
       setRotation(([l, p, g]) => [l + 0.15, p, g]);
     }, 66);
     return () => clearInterval(id);
-  }, [view, dragging]);
+  }, [view, dragging, reducedMotion]);
 
   // --- drag to rotate - locked to the polar axis (yaw + pitch only, no roll) -
   // A full trackball (quaternion) rotation lets the globe tumble so the poles

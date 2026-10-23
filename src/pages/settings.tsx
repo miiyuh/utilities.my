@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { ArrowCounterClockwise, Gear } from '@phosphor-icons/react'
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
 import { ThemeToggleButton } from "@/components/theme-toggle-button"
 import { useSettings, type DateFormat, type NumberFormat, type TimeFormat } from '@/contexts/settings-context'
@@ -33,9 +33,8 @@ export default function SettingsPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Gear} title="Settings" />

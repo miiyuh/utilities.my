@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { ThemeToggleButton } from '@/components/theme-toggle-button'
 import { SearchButton } from '@/components/command-palette'
+import { A11yButton } from '@/components/a11y-provider'
 import { cn } from '@/lib/utils'
 
 interface PageHeaderProps {
@@ -39,6 +40,7 @@ export function PageHeader({ icon: Icon, title, children }: PageHeaderProps) {
       <div className="flex items-center gap-2">
         {children}
         <SearchButton />
+        <A11yButton />
         <ThemeToggleButton />
       </div>
     </header>

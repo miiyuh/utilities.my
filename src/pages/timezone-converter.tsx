@@ -1,7 +1,7 @@
 import { Flag } from '@/components/flag';
 import React from 'react';
 import { addDays, addHours, differenceInCalendarDays, format, isSameDay, startOfDay } from 'date-fns';
-import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar';
+import { Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
 import { PageHeader } from '@/components/page-header';
 import { PageIntro } from '@/components/page-intro';
@@ -242,9 +242,8 @@ Planned with utilities.my/timezone-converter`,
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Globe} title="Timezone Converter" />
