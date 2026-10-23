@@ -1,3 +1,9 @@
+## [5.3.0](https://github.com/miiyuh/utilities.my/compare/v5.2.2...v5.3.0) (2026-10-23)
+
+### Features
+
+* inset layout and accessibility settings ([#31](https://github.com/miiyuh/utilities.my/issues/31)) ([6ab4434](https://github.com/miiyuh/utilities.my/commit/6ab4434a77c11a094a093b09865ccd068798fab1))
+
 ## [5.2.2](https://github.com/miiyuh/utilities.my/compare/v5.2.1...v5.2.2) (2026-10-22)
 
 ### Bug Fixes
