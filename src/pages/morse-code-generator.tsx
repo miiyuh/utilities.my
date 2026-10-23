@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { Play, Pause, Stop, SpeakerHigh, Lightning, Upload, Download, Eye, Translate, Code, Gear } from '@phosphor-icons/react';
 import { PageHeader } from "@/components/page-header";
@@ -370,9 +370,8 @@ export default function MorseCodeGeneratorPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Lightning} title="Morse Code Generator" />

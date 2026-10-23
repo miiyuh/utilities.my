@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Download, Gear, Upload, QrCode as QrCodeIcon, QrCode, DownloadSimple, ArrowClockwise, Info } from '@phosphor-icons/react';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { ColorPicker } from '@/components/ui/color-picker';
 import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
@@ -612,9 +612,8 @@ export default function QrCodeGeneratorPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
   <PageHeader icon={QrCode} title="QR Code Generator" />

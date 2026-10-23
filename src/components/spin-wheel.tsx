@@ -3,6 +3,7 @@ import { ArrowCounterClockwise, Play } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { randomInt } from '@/lib/random'
+import { prefersReducedMotion } from '@/lib/a11y-preferences'
 
 type ConfettiLauncher = (options?: Record<string, unknown>) => unknown
 
@@ -58,10 +59,8 @@ export function SpinWheel({ items, onSpin, disabled = false }: SpinWheelProps) {
   const confetti = React.useRef<ConfettiLauncher | null>(null)
   const wheelRef = React.useRef<HTMLDivElement>(null)
 
-  const reducedMotion = React.useMemo(
-    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    []
-  )
+  // Read on every render so turning on "Reduce motion" applies to the next spin.
+  const reducedMotion = prefersReducedMotion()
 
   React.useEffect(() => {
     void import('canvas-confetti').then((mod) => {

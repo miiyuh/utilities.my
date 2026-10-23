@@ -1,0 +1,92 @@
+/* Reading and accessibility preferences (src/lib/a11y-preferences.ts).
+   Each one is a data attribute on <html>, set by main.tsx before the first
+   render and by the accessibility panel. The site has to work with all of
+   these off; they only layer personal preferences on top. The OS settings
+   (prefers-reduced-motion, prefers-contrast) are followed without opting in. */
+
+/* ---------- Text size (WCAG 1.4.4): everything is rem-based ---------- */
+html[data-a11y-text-size="115"] { font-size: 115%; }
+html[data-a11y-text-size="130"] { font-size: 130%; }
+html[data-a11y-text-size="150"] { font-size: 150%; }
+
+/* ---------- Font ----------
+   Every family utility reads these variables, so swapping them on <html>
+   changes the whole site. Code stays monospaced. */
+html[data-a11y-font="legible"] {
+  --font-sans: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-body: var(--font-sans);
+  --font-serif: var(--font-sans);
+}
+html[data-a11y-font="dyslexic"] {
+  --font-sans: 'OpenDyslexic', system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-body: var(--font-sans);
+  --font-serif: var(--font-sans);
+}
+
+/* ---------- Text spacing (WCAG 1.4.12 values) ---------- */
+html[data-a11y-spacing] body :not(svg, svg *, code, code *, pre, pre *) {
+  line-height: 1.8 !important;
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.16em !important;
+}
+html[data-a11y-spacing] body p:not(:last-child) {
+  margin-bottom: 2em !important;
+}
+
+/* ---------- Underline links (don't rely on colour alone) ---------- */
+html[data-a11y-underline-links] a:not([data-sidebar="menu-button"]) {
+  text-decoration-line: underline !important;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.2em;
+}
+
+/* ---------- Higher contrast ---------- */
+html[data-a11y-contrast] {
+  --muted-foreground: oklch(0.36 0.02 60);
+  --border: oklch(0.7 0.02 70);
+  --input: oklch(0.7 0.02 70);
+  --sidebar-border: oklch(0.7 0.02 70);
+}
+html.dark[data-a11y-contrast] {
+  --muted-foreground: oklch(0.88 0.012 75);
+  --border: oklch(1 0 0 / 32%);
+  --input: oklch(1 0 0 / 32%);
+  --sidebar-border: oklch(1 0 0 / 32%);
+}
+
+@media (prefers-contrast: more) {
+  html:not(.dark) {
+    --muted-foreground: oklch(0.36 0.02 60);
+    --border: oklch(0.7 0.02 70);
+    --input: oklch(0.7 0.02 70);
+    --sidebar-border: oklch(0.7 0.02 70);
+  }
+  html.dark {
+    --muted-foreground: oklch(0.88 0.012 75);
+    --border: oklch(1 0 0 / 32%);
+    --input: oklch(1 0 0 / 32%);
+    --sidebar-border: oklch(1 0 0 / 32%);
+  }
+}
+
+/* ---------- Reduce motion (explicit opt-in, on top of the OS query).
+   Elements land on their end state instantly. ---------- */
+html[data-a11y-reduce-motion] {
+  scroll-behavior: auto !important;
+}
+html[data-a11y-reduce-motion] *,
+html[data-a11y-reduce-motion] *::before,
+html[data-a11y-reduce-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
+html[data-a11y-reduce-motion] .animate-pulse,
+html[data-a11y-reduce-motion] .animate-spin {
+  animation: none !important;
+}

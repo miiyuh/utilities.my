@@ -27,9 +27,10 @@ import { tools } from '@/lib/tools'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MOD_KEY } from '@/components/command-palette'
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar"
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
 import { PageHeader } from "@/components/page-header";
+import { prefersReducedMotion } from "@/lib/a11y-preferences";
 
 const slug = (path: string) => path.replace(/^\//, '')
 
@@ -99,7 +100,7 @@ function MethodologySection() {
     if (!id || !METHODOLOGY.some((m) => slug(m.path) === id)) return
     setOpen((prev) => (prev.includes(id) ? prev : [...prev, id]))
     // Wait for the lazy route and the opening item to lay out before scrolling.
-    const t = setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120)
+    const t = setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' }), 120)
     return () => clearTimeout(t)
   }, [hash])
 
@@ -140,9 +141,8 @@ function MethodologySection() {
 export default function About() {
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Info} title="About utilities.my" />

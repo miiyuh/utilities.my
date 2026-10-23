@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { AppWindow, Download, Archive, Upload, TextAa, Smiley, Image as ImageIcon, Warning, Moon } from '@phosphor-icons/react'
-import { Sidebar, SidebarInset, SidebarRail } from '@/components/ui/sidebar'
+import { Sidebar, SidebarInset } from '@/components/ui/sidebar'
 import { SidebarContent } from '@/components/sidebar-content'
 import { PageHeader } from '@/components/page-header'
 import { PageIntro } from '@/components/page-intro';
@@ -254,9 +254,8 @@ export default function FaviconGeneratorPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={AppWindow} title="Favicon Generator" />

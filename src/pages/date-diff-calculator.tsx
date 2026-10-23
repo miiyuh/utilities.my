@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar as CalendarIcon, ArrowCounterClockwise } from '@phosphor-icons/react';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { format, differenceInYears, differenceInMonths, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, isValid, startOfDay, addYears, addMonths, addDays, addHours, addMinutes, addWeeks } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
@@ -296,9 +296,8 @@ export default function DateDiffCalculatorPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={CalendarIcon} title="Date Difference Calculator" />

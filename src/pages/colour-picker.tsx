@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { parseColour } from '@/lib/colour-parse';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { PageHeader } from "@/components/page-header";
 import { PageIntro } from '@/components/page-intro';
@@ -932,9 +932,8 @@ export default function ColourPickerPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
   <PageHeader icon={Palette} title="Colour Picker" />

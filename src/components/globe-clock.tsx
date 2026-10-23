@@ -18,6 +18,7 @@ import landTopo from 'world-atlas/land-110m.json';
 import { CITY_ZONES, findCityZone, type CityZone } from '@/lib/timezones';
 import { subsolarPoint, antipode, nightRing } from '@/lib/solar';
 import { cn } from '@/lib/utils';
+import { prefersReducedMotion } from '@/lib/a11y-preferences';
 
 /** d3-geo Euler rotation [λ, φ, γ] in degrees. */
 type EulerRotation = [number, number, number];
@@ -166,7 +167,7 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
   // --- idle auto-rotation (globe only, respects reduced motion) --------------
   React.useEffect(() => {
     if (view !== 'globe' || dragging) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (prefersReducedMotion()) return;
     const id = setInterval(() => {
       if (hoverPauseRef.current) return;
       setRotation(([l, p, g]) => [l + 0.15, p, g]);

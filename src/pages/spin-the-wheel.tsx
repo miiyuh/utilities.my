@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowCounterClockwise, Plus, Disc, Shuffle, X, SortAscending, Upload, Download, ShareNetwork } from '@phosphor-icons/react';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { SpinWheel } from '@/components/spin-wheel';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -184,9 +184,8 @@ export default function SpinTheWheelPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Disc} title="Spin the Wheel" />

@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import {
   Sidebar,
   SidebarInset,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 import { SidebarContent } from "@/components/sidebar-content"
 import { Lightning, ArrowUpRight } from '@phosphor-icons/react'
@@ -45,9 +44,8 @@ const heroStagger = "animate-in fade-in-0 slide-in-from-bottom-2 duration-slow e
 export default function Home() {
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Lightning} title="Essential utilities for all!" />

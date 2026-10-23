@@ -1,6 +1,6 @@
 import { ClearButton } from '@/components/ui/clear-button';
 import React from "react";
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { Pulse, Ruler, Scales, Sparkle, Info, ArrowDown, Heart, TrendUp, Warning, ArrowCounterClockwise, ShareNetwork } from '@phosphor-icons/react';
 import { Card, CardContent } from "@/components/ui/card";
@@ -277,9 +277,8 @@ export default function BmiCalculatorPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Pulse} title="BMI Calculator" />

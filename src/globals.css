@@ -225,6 +225,15 @@
     scrollbar-gutter: stable;
   }
 
+  /* On desktop the inset panel never lets the window scroll (its body has
+     its own scrollbar), so the reserved gutter would only be an empty strip. */
+  @media (width >= 48rem) {
+    html:has([data-slot="sidebar"][data-variant="inset"]) {
+      overflow-y: hidden;
+      scrollbar-gutter: auto;
+    }
+  }
+
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;

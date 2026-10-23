@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Percent, Calculator, TrendUp, TrendDown, Divide, PlusCircle, MinusCircle, ArrowCounterClockwise } from '@phosphor-icons/react';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sidebar, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
 import { PageHeader } from "@/components/page-header";
 import { PageIntro } from '@/components/page-intro';
@@ -66,9 +66,8 @@ export default function PercentageCalculatorPage() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <Sidebar collapsible="icon" variant="inset" side="left">
         <SidebarContent />
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <PageHeader icon={Percent} title="Percentage Calculator" />
