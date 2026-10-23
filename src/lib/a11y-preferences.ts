@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react'
+
 // Reading and accessibility preferences. Each one is mirrored onto <html> as a
 // data attribute and styled purely in CSS (a11y.css), so nothing re-renders.
 // main.tsx applies the stored values before React's first render, and the app
@@ -76,13 +78,17 @@ function sanitize(raw: unknown): A11yPreferences {
 let cachedRaw: string | null | undefined
 let cachedPreferences = DEFAULT_A11Y_PREFERENCES
 
-export function readA11yPreferences(): A11yPreferences {
-  let raw: string | null = null
+function readRaw(): string | null {
   try {
-    raw = localStorage.getItem(STORAGE_KEY)
+    return localStorage.getItem(STORAGE_KEY)
   } catch {
     // Storage blocked (private mode, disabled cookies): fall back to defaults.
+    return null
   }
+}
+
+export function readA11yPreferences(): A11yPreferences {
+  const raw = readRaw()
   if (raw === cachedRaw) return cachedPreferences
   cachedRaw = raw
   try {
@@ -104,11 +110,18 @@ export function applyA11yPreferences(preferences: A11yPreferences) {
 }
 
 export function writeA11yPreferences(preferences: A11yPreferences) {
+  const raw = JSON.stringify(preferences)
+  let saved = true
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences))
+    localStorage.setItem(STORAGE_KEY, raw)
   } catch {
     // Not saved, but still applied for this visit.
+    saved = false
   }
+  // Keep the choice in memory too, so a failed save doesn't make the panel
+  // fall back to the stored value and undo it on the next change.
+  cachedPreferences = preferences
+  cachedRaw = saved ? raw : readRaw()
   applyA11yPreferences(preferences)
   window.dispatchEvent(new Event(CHANGE_EVENT))
 }
@@ -127,10 +140,27 @@ export function subscribeToA11yPreferences(onChange: () => void) {
   }
 }
 
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
+
 /** True when the OS asks for reduced motion or the user turned on "Reduce motion". */
 export function prefersReducedMotion(): boolean {
   return (
     document.documentElement.hasAttribute(ATTRIBUTES.reduceMotion) ||
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.matchMedia(REDUCED_MOTION_QUERY).matches
   )
+}
+
+function subscribeToReducedMotion(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION_QUERY)
+  query.addEventListener('change', onChange)
+  const unsubscribe = subscribeToA11yPreferences(onChange)
+  return () => {
+    query.removeEventListener('change', onChange)
+    unsubscribe()
+  }
+}
+
+/** prefersReducedMotion() as state, so components update when either setting changes. */
+export function useReducedMotion(): boolean {
+  return useSyncExternalStore(subscribeToReducedMotion, prefersReducedMotion)
 }
