@@ -1,7 +1,7 @@
 import React from 'react';
 import { Marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { getScrollRoot, scrollToElement } from '@/lib/scroll-root';
+import { scrollToElement } from '@/lib/scroll-root';
 
 interface MarkdownViewProps {
   content: string;
@@ -142,9 +142,9 @@ export function MarkdownView({ content }: MarkdownViewProps) {
     }
   }, [tocItems]);
 
-  // Reset scroll on content change (navigating between markdown pages).
+  // Drop a stale #hash when the content changes. Scroll position is left to
+  // RouteScroll, which starts new pages at the top and restores Back/Forward.
   React.useEffect(() => {
-    getScrollRoot().scrollTo({ top: 0, behavior: 'auto' });
     if (window.location.hash) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }

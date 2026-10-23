@@ -71,7 +71,7 @@ export default function A11yPanel({ open, onOpenChange }: { open: boolean; onOpe
               onValueChange={(value) => {
                 if (isTextSize(value)) update({ textSize: value })
               }}
-              className="grid grid-cols-4 gap-2"
+              className="grid grid-cols-2 gap-2 sm:grid-cols-4"
             >
               {TEXT_SIZES.map((size) => (
                 <Radio.Root key={size} value={size} className={cn(optionClass, 'min-h-11 items-center justify-center text-sm tabular-nums')}>
