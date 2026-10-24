@@ -1,3 +1,9 @@
+## [5.4.0](https://github.com/miiyuh/utilities.my/compare/v5.3.0...v5.4.0) (2026-10-24)
+
+### Features
+
+* **image-converter:** add GIF, BMP, TIFF and ICO output, and polish the layout ([#32](https://github.com/miiyuh/utilities.my/issues/32)) ([8abbca3](https://github.com/miiyuh/utilities.my/commit/8abbca320143ed82fd51db8b3a68ca764ffa05a7))
+
 ## [5.3.0](https://github.com/miiyuh/utilities.my/compare/v5.2.2...v5.3.0) (2026-10-23)
 
 ### Features
