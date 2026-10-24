@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GlobeClock, type GlobeView, type GlobeMode } from '@/components/globe-clock';
+import { StickyColumn } from '@/components/sticky-column';
 import { cn } from '@/lib/utils';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { ALL_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
@@ -245,23 +246,25 @@ export default function WorldClockPage() {
             </div>
 
             {/* Map + side panel */}
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <Card className="p-2 sm:p-4 overflow-hidden">
-                <GlobeClock
-                  zones={zones}
-                  view={view}
-                  mode={mode}
-                  now={now}
-                  use24h={use24h}
-                  onToggleCity={toggleZone}
-                />
-                <p className="mt-2 px-2 text-xs text-muted-foreground">
-                  {view === 'globe' ? 'Drag to spin the globe. ' : ''}
-                  {mode === 'cities'
-                    ? 'Hover a dot for the live local time; click to pin or unpin a city.'
-                    : 'Hover a region for its UTC offset and current time.'}
-                </p>
-              </Card>
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+              <StickyColumn>
+                <Card className="p-2 sm:p-4 overflow-hidden">
+                  <GlobeClock
+                    zones={zones}
+                    view={view}
+                    mode={mode}
+                    now={now}
+                    use24h={use24h}
+                    onToggleCity={toggleZone}
+                  />
+                  <p className="mt-2 px-2 text-xs text-muted-foreground">
+                    {view === 'globe' ? 'Drag to spin the globe. ' : ''}
+                    {mode === 'cities'
+                      ? 'Hover a dot for the live local time; click to pin or unpin a city.'
+                      : 'Hover a region for its UTC offset and current time.'}
+                  </p>
+                </Card>
+              </StickyColumn>
 
               {/* Side panel */}
               <Card className="p-4 space-y-3 self-start">

@@ -10,6 +10,7 @@ import { Chip } from '@/components/ui/chip';
 import { Label } from '@/components/ui/label';
 import { NumberInput } from '@/components/ui/number-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StickyColumn } from '@/components/sticky-column';
 import { SIZES, matchLength, type Category, type SizeSystem } from '@/lib/shoe-sizes';
 import { cn } from '@/lib/utils';
 
@@ -78,9 +79,9 @@ export default function FootSizeConverterPage() {
             <PageIntro title="Foot Size Converter">Find your shoe size in UK, EU or US sizes, from a size you know or from the length of your foot.</PageIntro>
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
-              <div className="space-y-6 lg:sticky lg:top-20">
+              <StickyColumn className="space-y-6">
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Find your size</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-5">
@@ -153,7 +154,7 @@ export default function FootSizeConverterPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline text-lg"><Ruler className="h-5 w-5" aria-hidden /> Measure your foot</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 text-sm">
@@ -171,10 +172,10 @@ export default function FootSizeConverterPage() {
                     </ul>
                   </CardContent>
                 </Card>
-              </div>
+              </StickyColumn>
 
               <Card className="minimal-card">
-                <CardHeader className="pb-3">
+                <CardHeader>
                   <CardTitle className="font-headline text-lg">Size chart: {CATEGORIES.find((c) => c.id === category)?.label}</CardTitle>
                   <p className="text-sm text-muted-foreground">Select a row to use that size.</p>
                 </CardHeader>

@@ -14,6 +14,7 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { StickyColumn } from '@/components/sticky-column';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { cn } from '@/lib/utils';
 
@@ -178,7 +179,7 @@ export default function UnixTimestampConverterPage() {
             <PageIntro title="Unix Timestamp Converter">Turn a Unix timestamp into a real date and time, or a date back into a timestamp, as you type.</PageIntro>
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
-              <div className="space-y-6 lg:sticky lg:top-20">
+              <StickyColumn className="space-y-6">
                 <Card className="minimal-card">
                   <CardContent className="flex flex-wrap items-center gap-3">
                     <Clock className="h-5 w-5 text-muted-foreground" aria-hidden />
@@ -192,7 +193,7 @@ export default function UnixTimestampConverterPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Timestamp</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -224,7 +225,7 @@ export default function UnixTimestampConverterPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Date and time</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -255,10 +256,10 @@ export default function UnixTimestampConverterPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </StickyColumn>
 
               <Card className="minimal-card">
-                <CardHeader className="pb-3">
+                <CardHeader>
                   <CardTitle className="font-headline text-lg">The same moment, in every format</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">

@@ -52,7 +52,7 @@ Not agreed yet. Each needs a yes or no first.
 - Reworked Text Case Converter, Foot Size Converter, Text Statistics, Sorter, Markdown Previewer, Percentage Calculator and Unit Converter
 - Favicon Generator: no-background option and home-screen previews on real wallpapers
 - Favicon Generator, with dark-mode variants and the full Unicode emoji set
-- Image Converter rebuild: crop/rotate/flip, metadata viewer with privacy controls, AVIF, JPEG XL (output and input, with lossless mode), target file size, presets, before/after comparison
+- Image Converter rebuild: crop/rotate/flip, metadata viewer with privacy controls, AVIF, JPEG XL (output and input, with lossless mode), GIF, BMP, TIFF and ICO output, target file size, presets, before/after comparison
 - Command palette (Ctrl/⌘ K) and keyboard shortcuts
 - Spin the Wheel rebuilt as SVG; Morse alphabet reference
 - "How this works" methodology for every tool

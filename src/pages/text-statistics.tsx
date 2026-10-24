@@ -12,6 +12,7 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { StickyColumn } from '@/components/sticky-column';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { LIMITS, computeStats, easeLabel, formatDuration, type StatsOptions } from '@/lib/text-stats';
 import { cn } from '@/lib/utils';
@@ -92,72 +93,74 @@ export default function TextStatisticsPage() {
             <PageIntro title="Text Statistics">Count words, characters and reading time as you type, and check your text fits the length a post or page allows.</PageIntro>
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start">
-              <Card className="minimal-card lg:sticky lg:top-20">
-                <CardHeader className="pb-3">
-                  <CardTitle className="font-headline text-lg">Your text</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      ref={fileRef}
-                      type="file"
-                      accept=".txt,.md,text/plain,text/markdown"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.currentTarget.files?.[0];
-                        if (f) void importFile(f);
-                        e.currentTarget.value = '';
-                      }}
-                    />
-                    <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                      <UploadSimple className="h-4 w-4" /> Open a text file
-                    </Button>
-                    <CopyButton value={summary} label="Copy summary" size="sm" toastTitle="Copied" toastDescription="The summary is on your clipboard." disabled={!text.trim()} />
-                    <ClearButton
-                      onClear={() => {
-                        setText('');
-                        setSelection([0, 0]);
-                      }}
-                      hasContent={Boolean(text.trim())}
-                      className="ml-auto"
-                      confirmTitle="Clear your text?"
-                      confirmDescription="This removes the text you entered. It can't be undone."
-                      confirmLabel="Clear text"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="stats-input" className="sr-only">Text to analyse</Label>
-                    <Textarea
-                      id="stats-input"
-                      value={text}
-                      onChange={(e) => setText(e.target.value)}
-                      onSelect={(e) => trackSelection(e.currentTarget)}
-                      placeholder="Paste or type your text here…"
-                      className="min-h-[320px] resize-y text-base sm:text-sm"
-                    />
-                    <p className="min-h-4 text-xs text-muted-foreground tabular-nums" aria-live="polite">
-                      {selStats ? `Selection: ${n(selStats.words)} ${selStats.words === 1 ? 'word' : 'words'} · ${n(selStats.characters)} characters` : 'Select part of the text to count just that part.'}
-                    </p>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <Switch id="stats-numbers" checked={opts.countNumbers} onCheckedChange={(v) => setOpts((p) => ({ ...p, countNumbers: v }))} className="mt-0.5" />
-                      <Label htmlFor="stats-numbers" className="cursor-pointer font-normal">Count numbers as words</Label>
+              <StickyColumn>
+                <Card className="minimal-card">
+                  <CardHeader>
+                    <CardTitle className="font-headline text-lg">Your text</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        accept=".txt,.md,text/plain,text/markdown"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.currentTarget.files?.[0];
+                          if (f) void importFile(f);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                      <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                        <UploadSimple className="h-4 w-4" /> Open a text file
+                      </Button>
+                      <CopyButton value={summary} label="Copy summary" size="sm" toastTitle="Copied" toastDescription="The summary is on your clipboard." disabled={!text.trim()} />
+                      <ClearButton
+                        onClear={() => {
+                          setText('');
+                          setSelection([0, 0]);
+                        }}
+                        hasContent={Boolean(text.trim())}
+                        className="ml-auto"
+                        confirmTitle="Clear your text?"
+                        confirmDescription="This removes the text you entered. It can't be undone."
+                        confirmLabel="Clear text"
+                      />
                     </div>
-                    <div className="flex items-start gap-3">
-                      <Switch id="stats-common" checked={opts.ignoreCommonWords} onCheckedChange={(v) => setOpts((p) => ({ ...p, ignoreCommonWords: v }))} className="mt-0.5" aria-describedby="stats-common-hint" />
-                      <div>
-                        <Label htmlFor="stats-common" className="cursor-pointer font-normal">Leave everyday words out of top words</Label>
-                        <p id="stats-common-hint" className="text-xs text-muted-foreground">Skips words like “the”, “and”, “yang” and “dan”. The word count is unaffected.</p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="stats-input" className="sr-only">Text to analyse</Label>
+                      <Textarea
+                        id="stats-input"
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        onSelect={(e) => trackSelection(e.currentTarget)}
+                        placeholder="Paste or type your text here…"
+                        className="min-h-[320px] resize-y text-base sm:text-sm"
+                      />
+                      <p className="min-h-4 text-xs text-muted-foreground tabular-nums" aria-live="polite">
+                        {selStats ? `Selection: ${n(selStats.words)} ${selStats.words === 1 ? 'word' : 'words'} · ${n(selStats.characters)} characters` : 'Select part of the text to count just that part.'}
+                      </p>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <Switch id="stats-numbers" checked={opts.countNumbers} onCheckedChange={(v) => setOpts((p) => ({ ...p, countNumbers: v }))} className="mt-0.5" />
+                        <Label htmlFor="stats-numbers" className="cursor-pointer font-normal">Count numbers as words</Label>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Switch id="stats-common" checked={opts.ignoreCommonWords} onCheckedChange={(v) => setOpts((p) => ({ ...p, ignoreCommonWords: v }))} className="mt-0.5" aria-describedby="stats-common-hint" />
+                        <div>
+                          <Label htmlFor="stats-common" className="cursor-pointer font-normal">Leave everyday words out of top words</Label>
+                          <p id="stats-common-hint" className="text-xs text-muted-foreground">Skips words like “the”, “and”, “yang” and “dan”. The word count is unaffected.</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </StickyColumn>
 
               <div className="space-y-6">
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">At a glance</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-5">
@@ -182,7 +185,7 @@ export default function TextStatisticsPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Will it fit?</CardTitle>
                     <p className="text-sm text-muted-foreground">Your {n(stats.characters)} characters against common limits.</p>
                   </CardHeader>
@@ -211,7 +214,7 @@ export default function TextStatisticsPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Top words</CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -235,7 +238,7 @@ export default function TextStatisticsPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Readability</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm">

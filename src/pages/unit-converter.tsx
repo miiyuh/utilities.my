@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label';
 import { NumberInput } from '@/components/ui/number-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { StickyColumn } from '@/components/sticky-column';
 import { useSettings } from '@/contexts/settings-context';
 import { groupDigits } from '@/lib/format';
 import { CATEGORIES, convert, roundForDisplay, type Category, type Unit } from '@/lib/units';
@@ -143,96 +144,98 @@ export default function UnitConverterPage() {
             </fieldset>
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start">
-              <Card className="minimal-card lg:sticky lg:top-20">
-                <CardHeader className="pb-3">
-                  <CardTitle className="font-headline text-lg">{category.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="uc-from">From</Label>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <NumberInput
-                        id="uc-from"
-                        value={fromValue}
-                        onValueChange={(v) => {
-                          setEditing('from');
-                          setRaw(v);
-                        }}
-                        placeholder="0"
-                        className="h-12 flex-1 font-code text-xl md:text-xl"
-                      />
-                      {unitSelect('uc-from-unit', fromId, setFromId, 'From unit')}
+              <StickyColumn>
+                <Card className="minimal-card">
+                  <CardHeader>
+                    <CardTitle className="font-headline text-lg">{category.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="uc-from">From</Label>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <NumberInput
+                          id="uc-from"
+                          value={fromValue}
+                          onValueChange={(v) => {
+                            setEditing('from');
+                            setRaw(v);
+                          }}
+                          placeholder="0"
+                          className="h-12 flex-1 font-code text-xl md:text-xl"
+                        />
+                        {unitSelect('uc-from-unit', fromId, setFromId, 'From unit')}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="h-px flex-1 bg-border" aria-hidden />
-                    <Button variant="outline" size="sm" onClick={swap}>
-                      <ArrowsDownUp className="h-4 w-4" /> Swap
-                    </Button>
-                    <span className="h-px flex-1 bg-border" aria-hidden />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="uc-to">To</Label>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <NumberInput
-                        id="uc-to"
-                        value={toValue}
-                        onValueChange={(v) => {
-                          setEditing('to');
-                          setRaw(v);
-                        }}
-                        placeholder="0"
-                        className="h-12 flex-1 font-code text-xl md:text-xl"
-                      />
-                      {unitSelect('uc-to-unit', toId, setToId, 'To unit')}
+                    <div className="flex items-center gap-3">
+                      <span className="h-px flex-1 bg-border" aria-hidden />
+                      <Button variant="outline" size="sm" onClick={swap}>
+                        <ArrowsDownUp className="h-4 w-4" /> Swap
+                      </Button>
+                      <span className="h-px flex-1 bg-border" aria-hidden />
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-3 rounded-md bg-muted p-4" aria-live="polite">
-                    <p className={cn('min-w-0 flex-1 break-words font-headline text-lg font-semibold tabular-nums sm:text-xl', !sentence && 'text-base font-normal text-muted-foreground')}>
-                      {sentence || 'Enter a number to convert.'}
-                    </p>
-                    {sentence && <CopyButton value={() => sentence} label="" size="icon-sm" aria-label="Copy the conversion" title="Copy" toastTitle="Copied" toastDescription={sentence} />}
-                  </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="uc-to">To</Label>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <NumberInput
+                          id="uc-to"
+                          value={toValue}
+                          onValueChange={(v) => {
+                            setEditing('to');
+                            setRaw(v);
+                          }}
+                          placeholder="0"
+                          className="h-12 flex-1 font-code text-xl md:text-xl"
+                        />
+                        {unitSelect('uc-to-unit', toId, setToId, 'To unit')}
+                      </div>
+                    </div>
 
-                  <div className="space-y-2">
-                    <span className="block text-sm font-medium">Common conversions</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {category.pairs.map((p) => {
-                        const active = p[0] === fromId && p[1] === toId;
-                        return (
-                          <Chip key={p.join('-')} active={active} onClick={() => applyPair(p)}>
-                            {findUnit(category, p[0]).symbol} to {findUnit(category, p[1]).symbol}
-                          </Chip>
-                        );
-                      })}
+                    <div className="flex items-center gap-3 rounded-md bg-muted p-4" aria-live="polite">
+                      <p className={cn('min-w-0 flex-1 break-words font-headline text-lg font-semibold tabular-nums sm:text-xl', !sentence && 'text-base font-normal text-muted-foreground')}>
+                        {sentence || 'Enter a number to convert.'}
+                      </p>
+                      {sentence && <CopyButton value={() => sentence} label="" size="icon-sm" aria-label="Copy the conversion" title="Copy" toastTitle="Copied" toastDescription={sentence} />}
                     </div>
-                  </div>
 
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-border pt-4">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="uc-decimals" className="font-normal">Decimal places</Label>
-                      <Select items={[0, 1, 2, 3, 4, 5, 6, 8, 10].map((d) => ({ value: String(d), label: d }))} value={String(decimals)} onValueChange={(v) => setDecimals(Number(v))}>
-                        <SelectTrigger id="uc-decimals" className="w-20"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {[0, 1, 2, 3, 4, 5, 6, 8, 10].map((d) => (
-                            <SelectItem key={d} value={String(d)}>{d}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="space-y-2">
+                      <span className="block text-sm font-medium">Common conversions</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {category.pairs.map((p) => {
+                          const active = p[0] === fromId && p[1] === toId;
+                          return (
+                            <Chip key={p.join('-')} active={active} onClick={() => applyPair(p)}>
+                              {findUnit(category, p[0]).symbol} to {findUnit(category, p[1]).symbol}
+                            </Chip>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Switch id="uc-zeros" checked={keepZeros} onCheckedChange={setKeepZeros} />
-                      <Label htmlFor="uc-zeros" className="cursor-pointer font-normal">Keep trailing zeros</Label>
+
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-border pt-4">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="uc-decimals" className="font-normal">Decimal places</Label>
+                        <Select items={[0, 1, 2, 3, 4, 5, 6, 8, 10].map((d) => ({ value: String(d), label: d }))} value={String(decimals)} onValueChange={(v) => setDecimals(Number(v))}>
+                          <SelectTrigger id="uc-decimals" className="w-20"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {[0, 1, 2, 3, 4, 5, 6, 8, 10].map((d) => (
+                              <SelectItem key={d} value={String(d)}>{d}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch id="uc-zeros" checked={keepZeros} onCheckedChange={setKeepZeros} />
+                        <Label htmlFor="uc-zeros" className="cursor-pointer font-normal">Keep trailing zeros</Label>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </StickyColumn>
 
               <Card className="minimal-card">
-                <CardHeader className="pb-3">
+                <CardHeader>
                   <CardTitle className="font-headline text-lg">
                     {Number.isFinite(fromNumber) ? `${g(fromValue)} ${from.symbol} in every unit` : 'Every unit'}
                   </CardTitle>

@@ -19,7 +19,7 @@ Small browser tools for everyday jobs: converting images, units and time zones, 
 - **Colour Picker**: pick a colour and copy its HEX, RGB, HSL or OKLCH code
 
 **Images and documents**
-- **Image Converter**: convert between PNG, JPEG, WebP, AVIF and JPEG XL, with crop, rotate, flip and resize. Shows the file size before you download, can aim for a size you set, reads and removes metadata such as location, and handles many files at once as a ZIP
+- **Image Converter**: convert between PNG, JPEG, WebP, AVIF, JPEG XL, GIF, BMP, TIFF and ICO, with crop, rotate, flip and resize. Shows the file size before you download, can aim for a size you set, reads and removes metadata such as location, and handles many files at once as a ZIP
 - **Palang IC**: stamp a purpose across a MyKad copy so it can't be reused, then export it as an A4 PDF or PNG
 
 **Date and time**
@@ -46,8 +46,14 @@ Small browser tools for everyday jobs: converting images, units and time zones, 
 | WebP | Smaller than JPEG at the same quality |
 | AVIF | Smallest files in most cases, slow to encode |
 | JPEG XL | Lossy or lossless. Lossless files are usually much smaller than PNG. Browser support is still uneven, so keep JPEG or WebP for files you plan to share |
+| GIF | Opens everywhere, but only 256 colours and on/off transparency. Best for simple graphics; saves a still image |
+| BMP | Uncompressed 24-bit, for older Windows apps. Very large files. No transparency |
+| TIFF | Lossless with transparency (RGBA, Deflate-compressed). For printing, scanning and photo editors |
+| ICO | Windows and website icons. Square PNG copies from 16 to 256 px in one file; non-square images are centred on a transparent square |
 
-JPEG XL files can also be opened as input. AVIF and JPEG XL use WebAssembly encoders ([jSquash](https://github.com/jamsinclair/jSquash)) that download only when you pick that format. If your browser can't display JPEG XL, the preview shows a PNG copy while the download is still a real `.jxl` file.
+Every format works in both single-image and many-images mode. JPEG and BMP have no transparency, so see-through areas become white.
+
+JPEG XL files can also be opened as input, along with BMP and ICO (and TIFF in Safari; elsewhere, uncompressed or Deflate RGB TIFFs such as the ones this tool saves). AVIF and JPEG XL use WebAssembly encoders ([jSquash](https://github.com/jamsinclair/jSquash)) and GIF uses [gifenc](https://github.com/mattdesl/gifenc); each downloads only when you pick that format. If your browser can't display JPEG XL or TIFF, the preview shows a PNG copy while the download is still the real file.
 
 ## Tech stack
 
@@ -56,7 +62,7 @@ JPEG XL files can also be opened as input. AVIF and JPEG XL use WebAssembly enco
 - React Router 7
 - Radix UI and Base UI components, with Phosphor icons
 - next-themes for the dark and light themes
-- Libraries used by individual tools: date-fns and @date-fns/tz (dates and time zones), marked and DOMPurify (Markdown), qrcode.react (QR codes), exifr (image metadata), pdf-lib and JSZip (PDF and ZIP export), d3-geo and world-atlas (the world clock globe), dnd-kit (drag and drop)
+- Libraries used by individual tools: date-fns and @date-fns/tz (dates and time zones), marked and DOMPurify (Markdown), qrcode.react (QR codes), exifr (image metadata), jSquash and gifenc (AVIF, JPEG XL and GIF encoding), pdf-lib and JSZip (PDF and ZIP export), d3-geo and world-atlas (the world clock globe), dnd-kit (drag and drop)
 - oxlint for linting, Husky and commitlint for commit checks, semantic-release for versioning
 
 ## Running it locally

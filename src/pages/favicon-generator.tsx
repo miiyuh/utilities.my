@@ -35,6 +35,7 @@ import {
 } from '@/lib/favicon'
 import { cn } from '@/lib/utils'
 import { EmojiPicker } from '@/components/emoji-picker'
+import { StickyColumn } from '@/components/sticky-column'
 
 const EMOJI_PICKS = ['⚡', '🔥', '🌿', '☕', '🚀', '💡', '🎯', '⭐', '📦', '🧭', '🍜', '🎨']
 const PREVIEW_SIZES = [16, 32, 48, 180, 192, 512]
@@ -266,7 +267,7 @@ export default function FaviconGeneratorPage() {
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start">
               <div className="space-y-6">
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Start from</CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -361,7 +362,7 @@ export default function FaviconGeneratorPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Style</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-5">
@@ -405,7 +406,7 @@ export default function FaviconGeneratorPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
+                  <CardHeader className="flex flex-row items-center justify-between gap-3">
                     <CardTitle className="flex items-center gap-2 font-headline text-lg">
                       <Moon className="h-4 w-4" /> Dark mode version
                     </CardTitle>
@@ -463,7 +464,7 @@ export default function FaviconGeneratorPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">App details</CardTitle>
                   </CardHeader>
                   <CardContent className="grid gap-4 sm:grid-cols-3">
@@ -489,9 +490,9 @@ export default function FaviconGeneratorPage() {
                 </Card>
               </div>
 
-              <div className="space-y-6 lg:sticky lg:top-20">
+              <StickyColumn className="space-y-6">
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Preview</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-5">
@@ -566,7 +567,7 @@ export default function FaviconGeneratorPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Download</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -591,7 +592,7 @@ export default function FaviconGeneratorPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </StickyColumn>
             </div>
           </div>
         </div>

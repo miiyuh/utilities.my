@@ -30,7 +30,7 @@ const KEYWORDS: Record<string, string[]> = {
   '/colour-picker': ['color', 'hex', 'rgb', 'hsl', 'oklch', 'cmyk', 'eyedropper', 'palette', 'contrast'],
   '/unit-converter': ['length', 'weight', 'temperature', 'celsius', 'fahrenheit', 'km', 'miles', 'kg', 'pounds'],
   '/bmi-calculator': ['body mass', 'weight', 'height', 'health'],
-  '/image-converter': ['png', 'jpg', 'jpeg', 'webp', 'avif', 'jxl', 'jpegxl', 'resize', 'compress', 'crop', 'exif'],
+  '/image-converter': ['png', 'jpg', 'jpeg', 'webp', 'avif', 'jxl', 'jpegxl', 'gif', 'bmp', 'tiff', 'tif', 'ico', 'icon', 'resize', 'compress', 'crop', 'exif'],
   '/markdown-previewer': ['md', 'editor', 'html', 'preview'],
   '/qr-code-generator': ['qr', 'barcode', 'link', 'wifi', 'url'],
   '/unix-timestamp-converter': ['epoch', 'unix', 'timestamp', 'seconds', 'milliseconds'],
