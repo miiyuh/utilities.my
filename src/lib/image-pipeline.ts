@@ -106,7 +106,7 @@ export function isTiff(file: Blob & { name?: string }): boolean {
 }
 
 export function isAcceptedImage(file: File): boolean {
-  return file.type.startsWith('image/') || isJxl(file)
+  return file.type.startsWith('image/') || isJxl(file) || isTiff(file)
 }
 
 export function outputFilename(original: string, format: OutputFormat): string {
@@ -147,9 +147,37 @@ async function decodeJxlPixels(blob: Blob): Promise<ImageData> {
   return data
 }
 
+/** Inflates a Deflate stream, giving up as soon as it grows past `limit` bytes. */
+async function inflateLimited(raw: Uint8Array<ArrayBuffer>, limit: number): Promise<Uint8Array> {
+  const reader = new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate')).getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  for (;;) {
+    // oxlint-disable-next-line no-await-in-loop
+    const { done, value } = await reader.read()
+    if (done) break
+    total += value.length
+    if (total > limit) {
+      void reader.cancel()
+      throw new Error('decode')
+    }
+    chunks.push(value)
+  }
+  const out = new Uint8Array(total)
+  let at = 0
+  for (const c of chunks) {
+    out.set(c, at)
+    at += c.length
+  }
+  return out
+}
+
 /**
  * Reads the TIFFs this tool writes, and others like them: 8-bit RGB or RGBA,
- * uncompressed or Deflate. Most browsers can't open TIFF at all.
+ * uncompressed or Deflate, one stored image. Most browsers can't open TIFF at
+ * all. Anything it can't convert faithfully (predictors, rotated or mirrored
+ * orientation, premultiplied alpha, tiles) is refused rather than shown with
+ * wrong colours, and sizes are checked before anything big is allocated.
  */
 async function decodeTiffPixels(blob: Blob): Promise<ImageData> {
   const buf = await blob.arrayBuffer()
@@ -164,6 +192,7 @@ async function decodeTiffPixels(blob: Blob): Promise<ImageData> {
     const e = ifd + 2 + n * 12
     const type = u16(e + 2)
     const count = u32(e + 4)
+    if (count > 65536) throw new Error('decode')
     const size = type === 3 ? 2 : 4
     const at = count * size > 4 ? u32(e + 8) : e + 8
     tags.set(u16(e), Array.from({ length: count }, (_, i) => (size === 2 ? u16(at + i * 2) : u32(at + i * 4))))
@@ -173,19 +202,25 @@ async function decodeTiffPixels(blob: Blob): Promise<ImageData> {
   const height = get(257)!
   const samples = get(277, 1)!
   const compression = get(259, 1)!
-  if (!width || !height || get(262) !== 2 || (samples !== 3 && samples !== 4) || get(284, 1) !== 1) throw new Error('decode')
+  if (!width || !height || width > MAX_DIMENSION || height > MAX_DIMENSION) throw new Error('decode')
+  if (get(262) !== 2 || (samples !== 3 && samples !== 4) || get(284, 1) !== 1) throw new Error('decode')
   if (tags.get(258)?.some((b) => b !== 8) || ![1, 8, 32946].includes(compression)) throw new Error('decode')
+  if (get(317, 1) !== 1 || get(274, 1) !== 1 || tags.has(322) || (samples === 4 && get(338, 2) === 1)) throw new Error('decode')
+  const expected = width * height * samples
   const offsets = tags.get(273) ?? []
   const counts = tags.get(279) ?? []
-  const strips = await Promise.all(
-    offsets.map(async (o, i) => {
-      const raw = new Uint8Array(buf, o, counts[i])
-      if (compression === 1) return raw
-      return new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer())
-    })
-  )
-  const src = new Uint8Array(strips.reduce((n, s) => n + s.length, 0))
-  strips.reduce((at, s) => (src.set(s, at), at + s.length), 0)
+  const src = new Uint8Array(expected)
+  let filled = 0
+  for (const [i, o] of offsets.entries()) {
+    if (o + counts[i] > buf.byteLength) throw new Error('decode')
+    const raw = new Uint8Array(buf, o, counts[i])
+    // oxlint-disable-next-line no-await-in-loop
+    const strip = compression === 1 ? raw : await inflateLimited(raw, expected - filled)
+    if (filled + strip.length > expected) throw new Error('decode')
+    src.set(strip, filled)
+    filled += strip.length
+  }
+  if (filled !== expected) throw new Error('decode')
   const out = new ImageData(width, height)
   for (let i = 0, j = 0; i < width * height; i++, j += samples) {
     out.data[i * 4] = src[j]
