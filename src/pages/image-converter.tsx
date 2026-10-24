@@ -36,6 +36,7 @@ import { ClearButton } from '@/components/ui/clear-button'
 import { Hint } from '@/components/ui/tooltip'
 import { ImageEditorDialog } from '@/components/image-editor-dialog'
 import { CompareSlider } from '@/components/compare-slider'
+import { StickyColumn } from '@/components/sticky-column'
 import { useToast } from '@/hooks/use-toast'
 import { downloadBlob, humanSize, isIOSOrSafari } from '@/lib/image-utils'
 import {
@@ -128,15 +129,21 @@ function SizeChange({ from, to, className }: { from: number; to: number; classNa
   )
 }
 
-/** Format, quality / target size and metadata controls, shared by both modes. */
+/**
+ * Output settings shared by both modes, most-changed first: format, then the
+ * quality controls that depend on it, then size (each mode brings its own),
+ * then metadata.
+ */
 function OutputControls({
   settings,
   onChange,
   metadataNote,
+  size,
 }: {
   settings: OutputSettings
   onChange: (patch: Partial<OutputSettings>) => void
   metadataNote: React.ReactNode
+  size: React.ReactNode
 }) {
   const isJxl = settings.format === 'image/jxl'
   const lossless = isJxl && settings.lossless
@@ -207,6 +214,8 @@ function OutputControls({
         </div>
       )}
 
+      {size}
+
       <div className="space-y-2">
         <Label htmlFor="meta-mode">Metadata in the output</Label>
         <Select items={META_OPTIONS} value={settings.metaMode} onValueChange={(v) => onChange({ metaMode: v as MetadataMode })}>
@@ -249,21 +258,23 @@ function MetadataPanel({ report, loading }: { report: MetadataReport | null; loa
           </p>
         </div>
       )}
-      <div className="grid gap-4">
-        {report.groups.map((g) => (
-          <section key={g.title} className="space-y-1.5">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</h4>
-            <dl className="space-y-1 text-sm">
-              {g.items.map((it) => (
-                <div key={it.label} className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">{it.label}</dt>
-                  <dd className="min-w-0 text-right font-medium break-words">{it.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        ))}
-      </div>
+      {report.groups.length > 0 && (
+        <div className="grid gap-4">
+          {report.groups.map((g) => (
+            <section key={g.title} className="space-y-1.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</h4>
+              <dl className="space-y-1 text-sm">
+                {g.items.map((it) => (
+                  <div key={it.label} className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">{it.label}</dt>
+                    <dd className="min-w-0 text-right font-medium break-words">{it.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ))}
+        </div>
+      )}
       <Accordion>
         <AccordionItem value="raw">
           <AccordionTrigger className="px-3 text-sm">All {report.raw.length} tags in this file</AccordionTrigger>
@@ -373,7 +384,7 @@ function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: 
       <div className="space-y-1">
         <p className="text-sm font-medium">{multiple ? 'Drop images here' : 'Drop an image here'}</p>
         <p className="text-xs text-muted-foreground">
-          or paste with {PASTE_KEY} V. PNG, JPEG, WebP, GIF, AVIF and JPEG XL, up to 50 MB.
+          or paste with {PASTE_KEY} V. PNG, JPEG, WebP, GIF, AVIF, JPEG XL, BMP and ICO, up to 50 MB.
         </p>
       </div>
       <span className="inline-flex h-8 items-center gap-2 rounded-full border border-border bg-background px-3 text-sm font-medium">
@@ -383,7 +394,7 @@ function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: 
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,.jxl"
+        accept="image/*,.jxl,.tif,.tiff"
         multiple={multiple}
         className="hidden"
         onChange={(e) => {
@@ -572,6 +583,12 @@ function SingleConverter({
     }
   }
 
+  // Changing format or quality by hand means the settings no longer match the preset.
+  const changeSettings = (patch: Partial<OutputSettings>) => {
+    setSettings((s) => ({ ...s, ...patch }))
+    if (Object.keys(patch).some((k) => k !== 'metaMode')) setPresetId('custom')
+  }
+
   const onWidth = (v: string) => {
     const w = Math.min(MAX_DIMENSION, Number(v.replace(/[^\d]/g, '')) || 0)
     setPresetId('custom')
@@ -602,7 +619,7 @@ function SingleConverter({
           setEncoding(true)
           setEncodeError(null)
           try {
-            const canvas = renderEdited(image, edits, width, height, settings.format === 'image/jpeg')
+            const canvas = renderEdited(image, edits, width, height, FORMATS[settings.format].opaque)
             const encoded = await encodeOutput(canvas, file, settings, { width, height })
             // Same crop, rotation and size as the output, losslessly, so the slider
             // compares compression alone, pixel for pixel.
@@ -642,7 +659,7 @@ function SingleConverter({
   if (!file || !image) {
     return (
       <Card className="minimal-card">
-        <CardContent className="space-y-4 pt-6">
+        <CardContent className="space-y-4">
           <DropZone multiple={false} onFiles={(fs) => fs[0] && void load(fs[0])} />
           {loading && (
             <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -662,10 +679,10 @@ function SingleConverter({
   const lossy = FORMATS[settings.format].lossy && !(settings.format === 'image/jxl' && settings.lossless)
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
       <div className="space-y-6">
         <Card className="minimal-card">
-          <CardHeader className="pb-3">
+          <CardHeader>
             <CardTitle className="font-headline text-lg">Your image</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -676,7 +693,7 @@ function SingleConverter({
                   <p className="truncate font-medium">{file.name}</p>
                 </Hint>
                 <p className="text-muted-foreground tabular-nums">
-                  {humanSize(file.size)} · {image.width} × {image.height} px · {file.type.replace('image/', '').toUpperCase()}
+                  {humanSize(file.size)} · {image.width} × {image.height} px · {FORMATS[file.type as OutputFormat]?.label ?? file.type.replace(/^image\/(x-|vnd\.)?/, '').toUpperCase()}
                 </p>
                 {hasEdits(edits) && (
                   <p className="text-xs text-primary tabular-nums">
@@ -705,7 +722,7 @@ function SingleConverter({
               <input
                 ref={replaceRef}
                 type="file"
-                accept="image/*,.jxl"
+                accept="image/*,.jxl,.tif,.tiff"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0]
@@ -718,7 +735,7 @@ function SingleConverter({
         </Card>
 
         <Card className="minimal-card">
-          <CardHeader className="pb-3">
+          <CardHeader>
             <CardTitle className="font-headline text-lg">What&apos;s in this file</CardTitle>
           </CardHeader>
           <CardContent>
@@ -727,12 +744,41 @@ function SingleConverter({
         </Card>
 
         <Card className="minimal-card">
-          <CardHeader className="pb-3">
+          <CardHeader>
             <CardTitle className="font-headline text-lg">Output</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
+            <OutputControls
+              settings={settings}
+              onChange={changeSettings}
+              metadataNote={metadataNote}
+              size={
+                <div className="space-y-2">
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1 space-y-1.5">
+                      <Label htmlFor="out-w">Width (px)</Label>
+                      <Input id="out-w" inputMode="numeric" value={width || ''} onChange={(e) => onWidth(e.target.value)} />
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <Label htmlFor="out-h">Height (px)</Label>
+                      <Input id="out-h" inputMode="numeric" value={height || ''} onChange={(e) => onHeight(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Switch id="lock-aspect" checked={lockAspect} onCheckedChange={setLockAspect} />
+                      <Label htmlFor="lock-aspect" className="cursor-pointer font-normal">Keep aspect ratio</Label>
+                    </div>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {ew ? Math.round((width / ew) * 100) : 100}% of {hasEdits(edits) ? 'edited' : 'original'} size
+                    </span>
+                  </div>
+                </div>
+              }
+            />
+
             <div className="space-y-2">
-              <Label htmlFor="preset">Preset</Label>
+              <Label htmlFor="preset">Or start from a preset</Label>
               <Select items={PRESETS.map((p) => ({ value: p.id, label: p.label }))} value={presetId} onValueChange={applyPreset}>
                 <SelectTrigger id="preset" className="w-full">
                   <SelectValue />
@@ -747,96 +793,74 @@ function SingleConverter({
               </Select>
               <p className="text-xs text-muted-foreground">{PRESETS.find((p) => p.id === presetId)?.hint}</p>
             </div>
-
-            <div className="space-y-2">
-              <div className="flex items-end gap-2">
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="out-w">Width (px)</Label>
-                  <Input id="out-w" inputMode="numeric" value={width || ''} onChange={(e) => onWidth(e.target.value)} />
-                </div>
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="out-h">Height (px)</Label>
-                  <Input id="out-h" inputMode="numeric" value={height || ''} onChange={(e) => onHeight(e.target.value)} />
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Switch id="lock-aspect" checked={lockAspect} onCheckedChange={setLockAspect} />
-                  <Label htmlFor="lock-aspect" className="cursor-pointer font-normal">Keep aspect ratio</Label>
-                </div>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {ew ? Math.round((width / ew) * 100) : 100}% of {hasEdits(edits) ? 'edited' : 'original'} size
-                </span>
-              </div>
-            </div>
-
-            <OutputControls settings={settings} onChange={(p) => setSettings((s) => ({ ...s, ...p }))} metadataNote={metadataNote} />
           </CardContent>
         </Card>
       </div>
 
-      <Card className="minimal-card lg:sticky lg:top-20">
-        <CardHeader className="pb-3">
-          <CardTitle className="font-headline text-lg">Preview</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {beforeUrl && afterUrl ? (
-            <CompareSlider before={beforeUrl} after={afterUrl} beforeLabel="Uncompressed" className="aspect-[4/3] w-full" />
-          ) : afterFailed ? (
-            <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-              <p className="flex items-center gap-2">
-                <Warning className="h-4 w-4 shrink-0 text-warning" /> Couldn&apos;t show the preview. Your download isn&apos;t affected.
-              </p>
-              <Button variant="outline" size="sm" onClick={retryAfter}>
-                Retry
-              </Button>
-            </div>
-          ) : (
-            <div className="flex aspect-[4/3] w-full items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
-              <Spinner className="mr-2 h-4 w-4 animate-spin" /> Preparing preview…
-            </div>
-          )}
-          <div className="rounded-md bg-muted/40 p-3 text-sm sm:p-4">
-            <div className="mb-1.5 text-xs text-muted-foreground">File size</div>
-            {preview && !encoding ? (
-              <SizeChange from={file.size} to={preview.blob.size} className="text-base" />
+      <StickyColumn>
+        <Card className="minimal-card">
+          <CardHeader>
+            <CardTitle className="font-headline text-lg">Preview</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {beforeUrl && afterUrl ? (
+              <CompareSlider before={beforeUrl} after={afterUrl} beforeLabel="Uncompressed" className="aspect-[4/3] w-full" />
+            ) : afterFailed ? (
+              <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+                <p className="flex items-center gap-2">
+                  <Warning className="h-4 w-4 shrink-0 text-warning" /> Couldn&apos;t show the preview. Your download isn&apos;t affected.
+                </p>
+                <Button variant="outline" size="sm" onClick={retryAfter}>
+                  Retry
+                </Button>
+              </div>
             ) : (
-              <span className="inline-flex items-center gap-2 text-muted-foreground">
-                <Spinner className="h-4 w-4 animate-spin" />
-                {settings.format === 'image/avif' || settings.format === 'image/jxl' ? `Encoding ${FORMATS[settings.format].label} (this takes a moment)…` : 'Calculating…'}
-              </span>
+              <div className="flex aspect-[4/3] w-full items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
+                <Spinner className="mr-2 h-4 w-4 animate-spin" /> Preparing preview…
+              </div>
             )}
-            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
-              <span>
-                Format: <span className="text-foreground">{FORMATS[settings.format].label}</span>
-              </span>
-              <span>
-                Size: <span className="text-foreground tabular-nums">{width} × {height}</span>
-              </span>
-              {lossy && preview && (
-                <span>
-                  Quality: <span className="text-foreground tabular-nums">{Math.round(preview.quality * 100)}%</span>
+            <div className="rounded-md bg-muted/40 p-3 text-sm sm:p-4">
+              <div className="mb-1.5 text-xs text-muted-foreground">File size</div>
+              {preview && !encoding ? (
+                <SizeChange from={file.size} to={preview.blob.size} className="text-base" />
+              ) : (
+                <span className="inline-flex items-center gap-2 text-muted-foreground">
+                  <Spinner className="h-4 w-4 animate-spin" />
+                  {settings.format === 'image/avif' || settings.format === 'image/jxl' ? `Encoding ${FORMATS[settings.format].label} (this takes a moment)…` : 'Calculating…'}
                 </span>
               )}
-              <span>
-                Metadata:{' '}
-                <span className="text-foreground">
-                  {settings.metaMode === 'strip' || !keepPossible ? 'removed' : settings.metaMode === 'keep-all' ? 'kept' : 'kept, no location'}
+              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+                <span>
+                  Format: <span className="text-foreground">{FORMATS[settings.format].label}</span>
                 </span>
-              </span>
+                <span>
+                  Size: <span className="text-foreground tabular-nums">{width} × {height}</span>
+                </span>
+                {lossy && preview && (
+                  <span>
+                    Quality: <span className="text-foreground tabular-nums">{Math.round(preview.quality * 100)}%</span>
+                  </span>
+                )}
+                <span>
+                  Metadata:{' '}
+                  <span className="text-foreground">
+                    {settings.metaMode === 'strip' || !keepPossible ? 'removed' : settings.metaMode === 'keep-all' ? 'kept' : 'kept, no location'}
+                  </span>
+                </span>
+              </div>
+              {preview && !preview.fits && (
+                <p className="mt-2 flex items-start gap-1.5 text-xs text-warning">
+                  <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Even at the lowest quality this is above {settings.targetKb} KB. Try smaller dimensions.
+                </p>
+              )}
+              {encodeError && <p className="mt-2 text-xs text-destructive">{encodeError}</p>}
             </div>
-            {preview && !preview.fits && (
-              <p className="mt-2 flex items-start gap-1.5 text-xs text-warning">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Even at the lowest quality this is above {settings.targetKb} KB. Try smaller dimensions.
-              </p>
-            )}
-            {encodeError && <p className="mt-2 text-xs text-destructive">{encodeError}</p>}
-          </div>
-          <Button onClick={download} disabled={!previewCurrent || encoding} size="xl" className="w-full">
-            <Download className="h-5 w-5" /> Download {FORMATS[settings.format].label}
-          </Button>
-        </CardContent>
-      </Card>
+            <Button onClick={download} disabled={!previewCurrent || encoding} size="xl" className="w-full">
+              <Download className="h-5 w-5" /> Download {FORMATS[settings.format].label}
+            </Button>
+          </CardContent>
+        </Card>
+      </StickyColumn>
 
       <ImageEditorDialog open={editorOpen} onOpenChange={setEditorOpen} image={image} initial={edits} onApply={applyEdits} name={file.name} />
     </div>
@@ -941,7 +965,7 @@ function BatchConverter({
         const img = await decodeImage(item.file)
         const [ew, eh] = editedSize(img.width, img.height, item.edits)
         const [w, h] = Number(longEdge) > 0 ? fitLongEdge(ew, eh, Number(longEdge)) : [ew, eh]
-        const canvas = renderEdited(img, item.edits, w, h, settings.format === 'image/jpeg')
+        const canvas = renderEdited(img, item.edits, w, h, FORMATS[settings.format].opaque)
         const { blob: output } = await encodeOutput(canvas, item.file, settings, { width: w, height: h })
         patch(item.id, { status: 'done', output, format: settings.format, key: outputKey(item) })
       } catch (e) {
@@ -983,9 +1007,9 @@ function BatchConverter({
   const editingItem = editing ? items.find((x) => x.id === editing.id) : undefined
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
       <Card className="minimal-card">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
           <CardTitle className="font-headline text-lg">
             Images ({items.length}/{MAX_BATCH})
           </CardTitle>
@@ -1063,50 +1087,58 @@ function BatchConverter({
         </CardContent>
       </Card>
 
-      <Card className="minimal-card lg:sticky lg:top-20">
-        <CardHeader className="pb-3">
-          <CardTitle className="font-headline text-lg">Output for all images</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="long-edge">Size</Label>
-            <Select items={LONG_EDGES} value={longEdge} onValueChange={setLongEdge}>
-              <SelectTrigger id="long-edge" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LONG_EDGES.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">Images are only ever shrunk, never enlarged. The aspect ratio is kept.</p>
-          </div>
-          <OutputControls settings={settings} onChange={(p) => setSettings((s) => ({ ...s, ...p }))} metadataNote={metadataNote} />
+      <StickyColumn>
+        <Card className="minimal-card">
+          <CardHeader>
+            <CardTitle className="font-headline text-lg">Output for all images</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <OutputControls
+              settings={settings}
+              onChange={(p) => setSettings((s) => ({ ...s, ...p }))}
+              metadataNote={metadataNote}
+              size={
+                <div className="space-y-2">
+                  <Label htmlFor="long-edge">Size</Label>
+                  <Select items={LONG_EDGES} value={longEdge} onValueChange={setLongEdge}>
+                    <SelectTrigger id="long-edge" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LONG_EDGES.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Images are only ever shrunk, never enlarged. The aspect ratio is kept.</p>
+                </div>
+              }
+            />
 
-          {(running || done.length > 0) && (
-            <div className="space-y-2">
-              <Progress value={progress} />
-              {done.length > 0 && (
-                <p className="text-sm">
-                  Total: <SizeChange from={totalIn} to={totalOut} />
-                </p>
-              )}
+            {(running || done.length > 0) && (
+              <div className="space-y-2">
+                <Progress value={progress} />
+                {done.length > 0 && (
+                  <p className="text-sm">
+                    Total: <SizeChange from={totalIn} to={totalOut} />
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button onClick={() => void convertAll()} disabled={!items.length || running} size="xl">
+                {running ? <Spinner className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                {running ? 'Converting…' : items.length ? `Convert ${items.length}` : 'Convert'}
+              </Button>
+              <Button variant="outline" onClick={() => void downloadZip()} disabled={!done.length || running} size="xl">
+                <Archive className="h-4 w-4" /> Download ZIP
+              </Button>
             </div>
-          )}
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Button onClick={() => void convertAll()} disabled={!items.length || running} size="xl">
-              {running ? <Spinner className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              {running ? 'Converting…' : items.length ? `Convert ${items.length}` : 'Convert'}
-            </Button>
-            <Button variant="outline" onClick={() => void downloadZip()} disabled={!done.length || running} size="xl">
-              <Archive className="h-4 w-4" /> Download ZIP
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </StickyColumn>
 
       {editing && (
         <ImageEditorDialog

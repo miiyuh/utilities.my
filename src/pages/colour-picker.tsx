@@ -18,6 +18,7 @@ import { PageIntro } from '@/components/page-intro';
 
 import { ToolMethodology } from '@/components/tool-methodology';
 import { Hint } from '@/components/ui/tooltip';
+import { StickyColumn } from '@/components/sticky-column';
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
@@ -782,7 +783,7 @@ export default function ColourPickerPage() {
 
   const detailsCard = (
               <Card className="minimal-card">
-                <CardHeader className="pb-3 md:pb-4">
+                <CardHeader>
                   <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Colour details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 md:space-y-5">
@@ -951,7 +952,7 @@ export default function ColourPickerPage() {
               <TabsContent value="input">
                 <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
               <Card className="minimal-card">
-                <CardHeader className="pb-3 md:pb-4">
+                <CardHeader>
                   <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Pick a colour</CardTitle>
                 </CardHeader>
                 <CardContent className="flex justify-center">
@@ -1348,7 +1349,7 @@ export default function ColourPickerPage() {
                   </div>{/* end space-y-4 wrapper */}
                 </CardContent>
               </Card>
-                  <div className="lg:sticky lg:top-20">{detailsCard}</div>
+                  <StickyColumn>{detailsCard}</StickyColumn>
                 </div>
               </TabsContent>
             </Tabs>

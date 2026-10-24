@@ -75,10 +75,10 @@ export const routes: RouteSeo[] = [
   },
   {
     path: '/image-converter',
-    title: 'Image Converter: PNG, JPG, WebP and Resize | utilities.my',
+    title: 'Image Converter: PNG, JPG, WebP, AVIF, ICO and Resize | utilities.my',
     h1: 'Image Converter',
     description:
-      "Change a picture's format or size and see exactly how much space you save, before you download. Converts PNG, JPEG and WebP without uploading a thing.",
+      "Change a picture's format or size and see exactly how much space you save, before you download. Converts PNG, JPEG, WebP, AVIF, JPEG XL, GIF, BMP, TIFF and ICO without uploading a thing.",
     kind: 'tool',
     priority: 0.8,
   },

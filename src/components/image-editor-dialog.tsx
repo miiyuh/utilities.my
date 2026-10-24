@@ -213,11 +213,12 @@ export function ImageEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="flex flex-col sm:max-w-[min(48rem,calc(100%-2rem))]">
         <DialogHeader>
           <DialogTitle>Edit image</DialogTitle>
-          <DialogDescription className="truncate">
-            {name ? `${name}: ` : ''}crop, rotate or flip. Drag the box or its corners; arrow keys work too (hold Shift for bigger steps).
+          <DialogDescription>
+            {name ? `${name}: ` : ''}crop, rotate or flip. Drag the box or its corners
+            <span className="hidden sm:inline">; arrow keys work too (hold Shift for bigger steps)</span>.
           </DialogDescription>
         </DialogHeader>
 
@@ -254,11 +255,16 @@ export function ImageEditorDialog({
           </fieldset>
         </div>
 
-        <div className="flex justify-center rounded-md bg-muted/40 p-2">
+        {/* Takes the height left over (up to 58% of the screen), so Apply stays on screen. */}
+        <div className="flex h-[58dvh] min-h-40 shrink items-center justify-center rounded-md bg-muted/40 p-2 [container-type:size]">
           <div
             ref={setWrapEl}
             className="relative overflow-hidden"
-            style={{ aspectRatio: `${rw} / ${rh}`, width: `min(100%, calc(58vh * ${rw / rh}))`, touchAction: 'none' }}
+            style={{
+              aspectRatio: `${rw} / ${rh}`,
+              width: `min(100cqw, calc(100cqh * ${rw / rh}))`,
+              touchAction: 'none',
+            }}
             onPointerMove={onPointerMove}
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
@@ -305,7 +311,7 @@ export function ImageEditorDialog({
           <p className="text-sm text-muted-foreground tabular-nums">
             Result: {outW} × {outH} px
           </p>
-          <div className="flex gap-2">
+          <div className="ml-auto flex gap-2">
             <Button
               variant="ghost"
               onClick={() => {

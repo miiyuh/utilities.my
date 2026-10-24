@@ -549,7 +549,7 @@ export default function MarkdownPreviewerPage() {
 
             {/* Markdown Quick Reference Card */}
             <Card className="shadow-lg">
-              <CardHeader className="pb-6">
+              <CardHeader>
                 <div className="flex items-center gap-2">
                   <Info className="h-5 w-5 text-muted-foreground" />
                   <CardTitle className="text-xl font-headline">Markdown cheat sheet</CardTitle>

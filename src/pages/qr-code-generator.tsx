@@ -21,6 +21,7 @@ import { PageHeader } from "@/components/page-header";
 import { PageIntro } from '@/components/page-intro';
 
 import { ToolMethodology } from '@/components/tool-methodology';
+import { StickyColumn } from '@/components/sticky-column';
 type PayloadType = "url" | "text" | "email" | "sms" | "tel" | "wifi";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type WifiEncryption = "WPA" | "WEP" | "nopass";
@@ -627,7 +628,7 @@ export default function QrCodeGeneratorPage() {
               {/* Left Panel: Inputs & Customization */}
               <div className="lg:col-span-2 space-y-8">
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3 md:pb-4">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Content & Data Type</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 md:space-y-5">
@@ -675,7 +676,7 @@ export default function QrCodeGeneratorPage() {
                 
                 {/* Customization Section */}
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3 md:pb-4">
+                  <CardHeader>
                     <CardTitle className="flex items-center font-headline text-lg md:text-xl tracking-tight"><Gear className="mr-2 h-5 w-5" /> Customization</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 md:space-y-5">
@@ -834,9 +835,9 @@ export default function QrCodeGeneratorPage() {
               </div>
 
               {/* Right Panel: Preview & Download */}
-              <div className="lg:col-span-1 space-y-8 lg:sticky lg:top-20">
+              <StickyColumn className="lg:col-span-1 space-y-8">
                 <Card className="h-fit minimal-card">
-                  <CardHeader className="pb-3 md:pb-4">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Preview</CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-col items-center space-y-4 md:space-y-5">
@@ -862,7 +863,7 @@ export default function QrCodeGeneratorPage() {
                 </Card>
 
                 <Card className="minimal-card @container">
-                  <CardHeader className="pb-3 md:pb-4">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Download</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 md:space-y-5">
@@ -904,7 +905,7 @@ export default function QrCodeGeneratorPage() {
           <p className="text-[11px] text-muted-foreground leading-snug">Tip: SVG stays vector for print; PNG is raster. Include a quiet zone for better scanning.</p>
                   </CardContent>
                 </Card>
-              </div>
+              </StickyColumn>
               </div>
             </div>
           </div>

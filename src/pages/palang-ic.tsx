@@ -67,6 +67,7 @@ import {
 import { SideUpload } from '@/components/palang-ic/side-upload'
 import { CropEditor } from '@/components/palang-ic/crop-editor'
 import { CardPreview } from '@/components/palang-ic/card-preview'
+import { StickyColumn } from '@/components/sticky-column'
 
 const SIDE_LABEL: Record<SideKey, 'Front' | 'Back'> = { front: 'Front', back: 'Back' }
 const QUICK_COLORS: Array<{ hex: string; name: string }> = [
@@ -350,7 +351,7 @@ export default function PalangIc() {
               {/* Left column: steps 1–3 */}
               <div className="space-y-6">
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3 md:pb-4">
+                  <CardHeader>
                     <StepTitle n={1}>Upload the card</StepTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -382,7 +383,7 @@ export default function PalangIc() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3 md:pb-4">
+                  <CardHeader>
                     <StepTitle n={2}>Write the purpose</StepTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -502,7 +503,7 @@ export default function PalangIc() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3 md:pb-4">
+                  <CardHeader>
                     <div className="flex items-center justify-between gap-2">
                       <StepTitle n={3}>Watermark style</StepTitle>
                       <Button type="button" variant="ghost" size="xs" onClick={resetStyle}>
@@ -564,9 +565,9 @@ export default function PalangIc() {
               </div>
 
               {/* Right column: preview & export */}
-              <div className="space-y-6 lg:sticky lg:top-20">
+              <StickyColumn className="space-y-6">
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3 md:pb-4">
+                  <CardHeader>
                     <StepTitle n={4}>Preview &amp; download</StepTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -647,13 +648,13 @@ export default function PalangIc() {
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
-              </div>
+              </StickyColumn>
             </div>
           </div>
         </div>
 
         <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
-          <DialogContent className="sm:max-w-3xl">
+          <DialogContent className="sm:max-w-[min(48rem,calc(100%-2rem))]">
             <DialogHeader>
               <DialogTitle>Crop &amp; rotate: {editing ? SIDE_LABEL[editing.key] : ''}</DialogTitle>
               <DialogDescription>

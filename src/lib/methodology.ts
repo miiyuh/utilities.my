@@ -238,12 +238,18 @@ export const METHODOLOGY: Method[] = [
       'Re-encoding writes only pixels, so metadata (camera, date, location) is removed by default. You can choose to keep it when converting JPEG to JPEG; keeping it without location deletes the GPS data and zeroes its bytes.',
       'Browsers cannot save AVIF from a canvas yet, so AVIF uses a WebAssembly encoder that downloads only when you choose AVIF.',
       'JPEG XL is encoded with libjxl (WebAssembly, effort 5), downloaded only when you choose it. Lossless mode keeps every pixel. If your browser cannot display JPEG XL, the preview shows a PNG of the same pixels while the download stays a real .jxl file. Existing .jxl files can be opened too.',
+      'GIF is reduced to a 256-colour palette (gifenc, downloaded only when you choose GIF). Pixels at least half see-through become fully transparent; the rest become solid.',
+      'BMP is written as uncompressed 24-bit, the variant every app opens. TIFF is written as 8-bit RGBA in one Deflate-compressed strip, using the built-in compression of the browser. Most browsers cannot display TIFF, so the preview shows a PNG of the same pixels. JPEG and BMP cannot store transparency, so see-through areas are filled with white.',
+      'ICO files hold PNG copies at 16, 24, 32, 48, 64, 128 and 256 px (skipping any larger than the image), each centred on a transparent square, so one file serves Windows and browser tabs.',
     ],
     sources: [
       { label: 'WHATWG HTML: canvas toBlob()', url: 'https://html.spec.whatwg.org/multipage/canvas.html#dom-canvas-toblob' },
       { label: 'CIPA DC-008: Exif 2.32 specification', url: 'https://www.cipa.jp/std/documents/download_e.html?DC-008-Translation-2023-E' },
       { label: 'exifr (metadata reader)', url: 'https://github.com/MikeKovarik/exifr' },
       { label: 'jSquash AVIF and JPEG XL codecs (libavif, libjxl via WebAssembly)', url: 'https://github.com/jamsinclair/jSquash' },
+      { label: 'gifenc (GIF encoder and colour quantiser)', url: 'https://github.com/mattdesl/gifenc' },
+      { label: 'Adobe: TIFF 6.0 specification', url: 'https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf' },
+      { label: 'Microsoft: ICO file format', url: 'https://learn.microsoft.com/en-us/previous-versions/ms997538(v=msdn.10)' },
     ],
   },
   {

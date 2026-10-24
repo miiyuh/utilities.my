@@ -27,6 +27,7 @@ import { Label } from '@/components/ui/label';
 import { NumberInput } from '@/components/ui/number-input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { StickyColumn } from '@/components/sticky-column';
 import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils';
 import {
   joinItems,
@@ -149,7 +150,7 @@ export default function SorterPage() {
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
               <Card className="minimal-card">
-                <CardHeader className="pb-3">
+                <CardHeader>
                   <CardTitle className="font-headline text-lg">Your list</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -209,9 +210,9 @@ export default function SorterPage() {
                 </CardContent>
               </Card>
 
-              <div className="space-y-6 lg:sticky lg:top-20">
+              <StickyColumn className="space-y-6">
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Sort</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -260,7 +261,7 @@ export default function SorterPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Tidy up</CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -275,7 +276,7 @@ export default function SorterPage() {
                 </Card>
 
                 <Card className="minimal-card">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="font-headline text-lg">Split or join</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -298,7 +299,7 @@ export default function SorterPage() {
                     <p className="text-xs text-muted-foreground">Turn “a, b, c” into a list, or a list back into “a, b, c” for a spreadsheet or an email.</p>
                   </CardContent>
                 </Card>
-              </div>
+              </StickyColumn>
             </div>
           </div>
         </div>

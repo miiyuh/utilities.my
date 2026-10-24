@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from "@/components/page-header";
 import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
+import { StickyColumn } from '@/components/sticky-column';
 import { shuffleInPlace } from '@/lib/random';
 const DEFAULT_ITEMS = [
   "Sushi", "Ramen", "Tempura", "Katsudon", "Takoyaki", "Okonomiyaki", // Japanese
@@ -196,37 +197,39 @@ export default function SpinTheWheelPage() {
             <PageIntro title="Spin the Wheel">Can&apos;t decide? Add your options and let the wheel pick one, fairly.</PageIntro>
 
             {/* Main Content */}
-            <div className="grid gap-8 lg:grid-cols-2">
+            <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
               {/* Wheel Section */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="flex items-center gap-2">
-                      <Disc className="h-5 w-5" aria-hidden />
-                      Wheel
-                    </CardTitle>
-                    <Badge variant="secondary">
-                      {items.length} {items.length === 1 ? 'option' : 'options'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-center items-center w-full">
-                    <SpinWheel 
-                      items={items}
-                      onSpin={handleSpin}
-                      disabled={items.length < 2}
-                    />
-                  </div>
-                  {items.length < 2 && (
-                    <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                      <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center">
-                        Add at least 2 items to spin the wheel.
-                      </p>
+              <StickyColumn>
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-2">
+                      <CardTitle className="flex items-center gap-2">
+                        <Disc className="h-5 w-5" aria-hidden />
+                        Wheel
+                      </CardTitle>
+                      <Badge variant="secondary">
+                        {items.length} {items.length === 1 ? 'option' : 'options'}
+                      </Badge>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-center items-center w-full">
+                      <SpinWheel 
+                        items={items}
+                        onSpin={handleSpin}
+                        disabled={items.length < 2}
+                      />
+                    </div>
+                    {items.length < 2 && (
+                      <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                        <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center">
+                          Add at least 2 items to spin the wheel.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </StickyColumn>
 
               {/* Controls Section */}
               <Card>
