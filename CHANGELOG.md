@@ -1,3 +1,9 @@
+## [5.4.1](https://github.com/miiyuh/utilities.my/compare/v5.4.0...v5.4.1) (2026-11-05)
+
+### Bug Fixes
+
+* update Rybbit analytics site ID ([2f8c5a6](https://github.com/miiyuh/utilities.my/commit/2f8c5a697e8517ac6a54b0ca3582cfca980b67fb))
+
 ## [5.4.0](https://github.com/miiyuh/utilities.my/compare/v5.3.0...v5.4.0) (2026-10-24)
 
 ### Features
