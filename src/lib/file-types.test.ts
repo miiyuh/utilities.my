@@ -40,7 +40,7 @@ describe('file searches', () => {
   test('a conversion finds the tools that open one type and save the other', () => {
     expect(toolsFor('png to ico')).toEqual(['Image Converter', 'Favicon Generator'])
     expect(toolsFor('jpeg → webp')).toEqual(['Image Converter'])
-    expect(toolsFor('convert jpg to pdf')).toEqual(['Palang IC'])
+    expect(toolsFor('convert png into ico')).toEqual(['Image Converter', 'Favicon Generator'])
   })
 
   test('.jpg and .jpeg are the same type', () => {
@@ -51,6 +51,8 @@ describe('file searches', () => {
   test('a conversion nothing can do finds nothing', () => {
     expect(toolsFor('heic to jpg')).toEqual([])
     expect(toolsFor('pdf to png')).toEqual([])
+    // Palang IC saves PDFs, but only of a stamped IC: it waits for the PDF tools.
+    expect(toolsFor('jpg to pdf')).toEqual([])
   })
 
   test('a single type puts tools that open and save it first', () => {

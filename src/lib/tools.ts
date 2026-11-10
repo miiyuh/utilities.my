@@ -131,6 +131,7 @@ export const tools: Tool[] = [
     description: "Make sure your IC copy can't be used for anything else.",
     keywords: ["mykad", "ic", "watermark", "identity card", "pdf"],
     accepts: [".png", ".jpg", ".jpeg", ".webp"],
-    produces: [".pdf", ".png"],
+    // No `produces`: its PDF and PNG are a stamped IC copy, not a converted file,
+    // so it shouldn't answer searches like "jpg to pdf".
   },
 ];
