@@ -17,7 +17,9 @@ import { ColorPicker } from '@/components/ui/color-picker'
 import { CopyButton } from '@/components/ui/copy-button'
 import { useToast } from '@/hooks/use-toast'
 import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils'
-import { decodeImage, isAcceptedImage } from '@/lib/image-pipeline'
+import { decodeImage } from '@/lib/image-pipeline'
+import { useFileIntake } from '@/hooks/use-file-intake'
+import { toolAccepts } from '@/lib/tools'
 import {
   FONT_CHOICES,
   buildHtmlSnippet,
@@ -36,6 +38,9 @@ import {
 import { cn } from '@/lib/utils'
 import { EmojiPicker } from '@/components/emoji-picker'
 import { StickyColumn } from '@/components/sticky-column'
+
+/** What this tool opens, from the tool list. */
+const ACCEPTS = toolAccepts('/favicon-generator')
 
 const EMOJI_PICKS = ['⚡', '🔥', '🌿', '☕', '🚀', '💡', '🎯', '⭐', '📦', '🧭', '🍜', '🎨']
 const PREVIEW_SIZES = [16, 32, 48, 180, 192, 512]
@@ -113,10 +118,8 @@ export default function FaviconGeneratorPage() {
   const [darkBg, setDarkBg] = useHex('#e6f4ee')
   const [darkTextColor, setDarkTextColor] = useHex('#155e46')
   const [darkImage, setDarkImage] = React.useState<{ image: ImageBitmap | HTMLImageElement; width: number; height: number; name: string } | null>(null)
-  const darkFileRef = React.useRef<HTMLInputElement>(null)
   const [previews, setPreviews] = React.useState<Record<string, string>>({})
   const [building, setBuilding] = React.useState(false)
-  const fileRef = React.useRef<HTMLInputElement>(null)
 
   const font = FONT_CHOICES.find((f) => f.id === fontId) ?? FONT_CHOICES[0]
 
@@ -163,10 +166,6 @@ export default function FaviconGeneratorPage() {
 
   const loadImage = async (file: File | undefined) => {
     if (!file) return
-    if (!isAcceptedImage(file) && file.type !== 'image/svg+xml') {
-      setImageError(`${file.name} isn't an image.`)
-      return
-    }
     try {
       const img = await decodeImage(file)
       setImage({ ...img, image: img.source, name: file.name })
@@ -195,16 +194,21 @@ export default function FaviconGeneratorPage() {
     }
   }
 
-  React.useEffect(() => {
-    const onPaste = (e: ClipboardEvent) => {
-      const f = Array.from(e.clipboardData?.files ?? []).find((x) => x.type.startsWith('image/'))
-      if (f) {
-        e.preventDefault()
-        void loadImage(f)
-      }
-    }
-    document.addEventListener('paste', onPaste)
-    return () => document.removeEventListener('paste', onPaste)
+  // Choose, drop or paste the main image; the dark-mode one is chosen or dropped.
+  const { dragging, dropTarget, open: chooseImage, inputProps } = useFileIntake({
+    accepts: ACCEPTS,
+    paste: true,
+    onFiles: (files, problems) => {
+      if (files[0]) void loadImage(files[0])
+      else if (problems[0]) setImageError(problems[0])
+    },
+  })
+  const { dragging: darkDragging, dropTarget: darkDropTarget, open: chooseDarkImage, inputProps: darkInputProps } = useFileIntake({
+    accepts: ACCEPTS,
+    onFiles: (files, problems) => {
+      if (files[0]) void loadDarkImage(files[0])
+      else if (problems[0]) setImageError(problems[0])
+    },
   })
 
   const svgAvailable = source ? canBuildSvg(source) : false
@@ -342,20 +346,28 @@ export default function FaviconGeneratorPage() {
                         </div>
                       </TabsContent>
 
-                      <TabsContent value="image" className="space-y-3">
+                      <TabsContent value="image">
+                        <div
+                          ref={dropTarget}
+                          className={cn(
+                            'space-y-3 rounded-md border-2 border-dashed p-4 transition-colors duration-quick',
+                            dragging ? 'border-primary bg-primary/5' : 'border-border'
+                          )}
+                        >
                         <div className="flex flex-wrap items-center gap-3">
-                          <Button variant="outline" onClick={() => fileRef.current?.click()}>
+                          <Button variant="outline" onClick={chooseImage}>
                             <Upload className="h-4 w-4" /> {image ? 'Choose another image' : 'Choose an image'}
                           </Button>
                           {image && <span className="truncate text-sm text-muted-foreground">{image.name} · {image.width} × {image.height} px</span>}
                         </div>
-                        <input ref={fileRef} type="file" accept="image/*,.svg" className="hidden" onChange={(e) => { void loadImage(e.target.files?.[0]); e.target.value = '' }} />
+                        <input {...inputProps} className="hidden" />
                         <p className="text-xs text-muted-foreground">
-                          A square image of at least 512 × 512 px works best. SVG, PNG, JPEG and WebP all work, and you can paste one too.
+                          A square image of at least 512 × 512 px works best. SVG, PNG, JPEG and WebP all work. You can also drop one here or paste it.
                         </p>
                         {imageError && (
                           <p className="flex items-start gap-2 text-sm text-destructive"><Warning className="mt-0.5 h-4 w-4 shrink-0" /> {imageError}</p>
                         )}
+                        </div>
                       </TabsContent>
                     </Tabs>
                   </CardContent>
@@ -420,9 +432,12 @@ export default function FaviconGeneratorPage() {
                     ) : (
                       <>
                         {kind === 'image' && (
-                          <div className="space-y-2">
+                          <div
+                            ref={darkDropTarget}
+                            className={cn('space-y-2 rounded-md transition-colors duration-quick', darkDragging && 'bg-primary/5 ring-2 ring-primary')}
+                          >
                             <div className="flex flex-wrap items-center gap-3">
-                              <Button variant="outline" size="sm" onClick={() => darkFileRef.current?.click()}>
+                              <Button variant="outline" size="sm" onClick={chooseDarkImage}>
                                 <Upload className="h-4 w-4" /> {darkImage ? 'Choose another dark image' : 'Use a different image in dark mode'}
                               </Button>
                               {darkImage && (
@@ -431,7 +446,7 @@ export default function FaviconGeneratorPage() {
                                 </Button>
                               )}
                             </div>
-                            <input ref={darkFileRef} type="file" accept="image/*,.svg" className="hidden" onChange={(e) => { void loadDarkImage(e.target.files?.[0]); e.target.value = '' }} />
+                            <input {...darkInputProps} className="hidden" />
                             <p className="text-xs text-muted-foreground">
                               {darkImage ? `Dark mode uses ${darkImage.name}.` : 'Handy when a dark logo would disappear on a dark tab bar: upload a light version.'}
                             </p>

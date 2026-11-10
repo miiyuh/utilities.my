@@ -38,11 +38,12 @@ import { ImageEditorDialog } from '@/components/image-editor-dialog'
 import { CompareSlider } from '@/components/compare-slider'
 import { StickyColumn } from '@/components/sticky-column'
 import { useToast } from '@/hooks/use-toast'
+import { useFileIntake, type FileIntake } from '@/hooks/use-file-intake'
+import { toolAccepts } from '@/lib/tools'
 import { downloadBlob, humanSize, isIOSOrSafari } from '@/lib/image-utils'
 import {
   FORMATS,
   MAX_DIMENSION,
-  MAX_FILE_BYTES,
   NO_EDITS,
   centredCrop,
   decodeImage,
@@ -52,8 +53,6 @@ import {
   encodeToTarget,
   fitLongEdge,
   hasEdits,
-  isAcceptedImage,
-  isHeic,
   outputFilename,
   renderEdited,
   type DecodedImage,
@@ -107,12 +106,8 @@ const META_OPTIONS: { value: MetadataMode; label: string }[] = [
 
 const PASTE_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
 
-function validate(file: File): string | null {
-  if (isHeic(file)) return `${file.name} is a HEIC photo, which isn't supported. Save it as JPEG on your iPhone (Settings → Camera → Formats → Most Compatible) or export it as JPEG first.`
-  if (!isAcceptedImage(file)) return `${file.name} isn't an image.`
-  if (file.size > MAX_FILE_BYTES) return `${file.name} is larger than 50 MB.`
-  return null
-}
+/** What this tool opens, from the tool list. */
+const ACCEPTS = toolAccepts('/image-converter')
 
 function SizeChange({ from, to, className }: { from: number; to: number; className?: string }) {
   const smaller = to <= from
@@ -335,49 +330,19 @@ function useDisplayUrl(blob: Blob | null): { url: string | null; failed: boolean
   return { url: useObjectUrl(shown), failed, retry: () => setAttempt((n) => n + 1) }
 }
 
-function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: (files: File[]) => void; compact?: boolean }) {
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  const zoneRef = React.useRef<HTMLButtonElement>(null)
-  const [over, setOver] = React.useState(false)
-  const onFilesRef = React.useRef(onFiles)
-  React.useEffect(() => {
-    onFilesRef.current = onFiles
-  })
-  // Drag-and-drop is a pointer convenience (the button is the accessible path),
-  // so the listeners are attached directly rather than as JSX handlers.
-  React.useEffect(() => {
-    const el = zoneRef.current
-    if (!el) return
-    const over = (e: DragEvent) => {
-      e.preventDefault()
-      setOver(true)
-    }
-    const leave = () => setOver(false)
-    const drop = (e: DragEvent) => {
-      e.preventDefault()
-      setOver(false)
-      onFilesRef.current(Array.from(e.dataTransfer?.files ?? []))
-    }
-    el.addEventListener('dragover', over)
-    el.addEventListener('dragleave', leave)
-    el.addEventListener('drop', drop)
-    return () => {
-      el.removeEventListener('dragover', over)
-      el.removeEventListener('dragleave', leave)
-      el.removeEventListener('drop', drop)
-    }
-  }, [])
+function DropZone({ intake, multiple, compact }: { intake: FileIntake; multiple: boolean; compact?: boolean }) {
+  const { dragging, dropTarget, open, inputProps } = intake
   return (
     <>
     {/* The whole box is the button: click, tap or press Enter anywhere inside it. */}
     <button
-      ref={zoneRef}
+      ref={dropTarget}
       type="button"
-      onClick={() => inputRef.current?.click()}
+      onClick={open}
       className={cn(
         'flex w-full flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed text-center transition-colors duration-quick outline-none hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-3 focus-visible:ring-ring/30',
         compact ? 'p-4' : 'p-8 sm:p-10',
-        over ? 'border-primary bg-primary/5' : 'border-border'
+        dragging ? 'border-primary bg-primary/5' : 'border-border'
       )}
     >
       {!compact && <Upload className="h-8 w-8 text-muted-foreground" />}
@@ -391,38 +356,9 @@ function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: 
         <Upload className="h-4 w-4" /> {multiple ? 'Choose images' : 'Choose an image'}
       </span>
     </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,.jxl,.tif,.tiff"
-        multiple={multiple}
-        className="hidden"
-        onChange={(e) => {
-          onFiles(Array.from(e.target.files ?? []))
-          e.target.value = ''
-        }}
-      />
+      <input {...inputProps} className="hidden" />
     </>
   )
-}
-
-/** Images on the clipboard (Ctrl/⌘ V anywhere on the page). */
-function usePasteImages(onFiles: (files: File[]) => void) {
-  const cb = React.useRef(onFiles)
-  React.useEffect(() => {
-    cb.current = onFiles
-  })
-  React.useEffect(() => {
-    const onPaste = (e: ClipboardEvent) => {
-      const files = Array.from(e.clipboardData?.files ?? []).filter(isAcceptedImage)
-      if (files.length) {
-        e.preventDefault()
-        cb.current(files)
-      }
-    }
-    document.addEventListener('paste', onPaste)
-    return () => document.removeEventListener('paste', onPaste)
-  }, [])
 }
 
 // ---------------------------------------------------------------------------
@@ -487,7 +423,6 @@ function SingleConverter({
   const generation = React.useRef(0)
   /** Latest load request; results from an earlier, slower load are ignored. */
   const loadId = React.useRef(0)
-  const replaceRef = React.useRef<HTMLInputElement>(null)
 
   const { url: thumbUrl } = useDisplayUrl(file)
   const { url: afterUrl, failed: afterFailed, retry: retryAfter } = useDisplayUrl(preview?.blob ?? null)
@@ -496,11 +431,6 @@ function SingleConverter({
   const [ew, eh] = image ? editedSize(image.width, image.height, edits) : [0, 0]
 
   const load = async (f: File) => {
-    const problem = validate(f)
-    if (problem) {
-      setError(problem)
-      return
-    }
     const id = ++loadId.current
     const current = () => id === loadId.current
     setError(null)
@@ -532,7 +462,15 @@ function SingleConverter({
     }
   }
 
-  usePasteImages((files) => void load(files[0]))
+  // Choose, drop or paste: the same checks for all three.
+  const intake = useFileIntake({
+    accepts: ACCEPTS,
+    paste: true,
+    onFiles: (files, problems) => {
+      if (files[0]) void load(files[0])
+      else if (problems[0]) setError(problems[0])
+    },
+  })
 
   const clear = () => {
     loadId.current++
@@ -660,7 +598,7 @@ function SingleConverter({
     return (
       <Card className="minimal-card">
         <CardContent className="space-y-4">
-          <DropZone multiple={false} onFiles={(fs) => fs[0] && void load(fs[0])} />
+          <DropZone intake={intake} multiple={false} />
           {loading && (
             <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Spinner className="h-4 w-4 animate-spin" /> Opening the image…
@@ -716,20 +654,10 @@ function SingleConverter({
               <Button variant="outline" size="sm" onClick={() => setEditorOpen(true)} className="w-full">
                 <PencilSimple className="h-4 w-4" /> Crop, rotate, flip
               </Button>
-              <Button variant="outline" size="sm" onClick={() => replaceRef.current?.click()} className="w-full">
+              <Button variant="outline" size="sm" onClick={intake.open} className="w-full">
                 <Upload className="h-4 w-4" /> Change image
               </Button>
-              <input
-                ref={replaceRef}
-                type="file"
-                accept="image/*,.jxl,.tif,.tiff"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) void load(f)
-                  e.target.value = ''
-                }}
-              />
+              <input {...intake.inputProps} className="hidden" />
             </div>
           </CardContent>
         </Card>
@@ -930,16 +858,13 @@ function BatchConverter({
 
   const patch = (id: string, p: Partial<BatchItem>) => setItems((prev) => prev.map((x) => (x.id === id ? { ...x, ...p } : x)))
 
-  const add = (files: File[]) => {
-    const problems: string[] = []
+  const add = (files: File[], turnedAway: string[]) => {
+    const problems = [...turnedAway]
     const room = MAX_BATCH - items.length
-    const accepted: BatchItem[] = []
-    for (const f of files) {
-      const p = validate(f)
-      if (p) problems.push(p)
-      else if (accepted.length < room) accepted.push({ id: crypto.randomUUID(), file: f, edits: NO_EDITS, status: 'queued' })
-    }
-    if (files.length - problems.length > room) problems.push(`Only ${MAX_BATCH} images fit in one batch.`)
+    const accepted: BatchItem[] = files
+      .slice(0, Math.max(0, room))
+      .map((f) => ({ id: crypto.randomUUID(), file: f, edits: NO_EDITS, status: 'queued' as const }))
+    if (files.length > room) problems.push(`Only ${MAX_BATCH} images fit in one batch.`)
     setNotice(problems.length ? problems.join(' ') : null)
     setItems((prev) => [...prev, ...accepted])
     for (const it of accepted) {
@@ -947,7 +872,7 @@ function BatchConverter({
     }
   }
 
-  usePasteImages(add)
+  const intake = useFileIntake({ accepts: ACCEPTS, multiple: true, paste: true, onFiles: add })
 
   const openEditor = async (item: BatchItem) => {
     try {
@@ -1024,7 +949,7 @@ function BatchConverter({
           />
         </CardHeader>
         <CardContent className="space-y-4">
-          <DropZone multiple onFiles={add} compact={items.length > 0} />
+          <DropZone intake={intake} multiple compact={items.length > 0} />
           {notice && <p className="text-sm text-warning">{notice}</p>}
           {withLocation > 0 && (
             <p className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">

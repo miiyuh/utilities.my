@@ -13,11 +13,10 @@ Changes across the whole site, so tools work together instead of one at a time. 
 - Each tool in `src/lib/tools.ts` lists the file types it opens and saves, and its search keywords, which used to live in `command-palette.tsx`.
 - Search reads "webp to jpg", "png to ico" and ".md" and finds the tools that can do it. A test checks that every listed type is real.
 
-**2. One way to bring files in**
+**2. One way to bring files in** ✅ done
 
-- A shared hook for choosing, dropping and pasting files, with the same messages for wrong types and files that are too big.
-- Image Converter, Favicon Generator and Palang IC use it. Palang IC can't take a pasted image yet, and pasting a photo of a MyKad from the phone is the likely way in.
-- Done when: all three tools take a file the same three ways, and their own code for it is gone.
+- A shared hook (`useFileIntake`) for choosing, dropping and pasting files, with the same messages for HEIC photos, wrong types and files over 50 MB.
+- Image Converter, Favicon Generator and Palang IC use it. Favicon Generator can now take a dropped image, and Palang IC a pasted one, which goes into the first empty side.
 
 **3. Drop a file anywhere**
 
@@ -284,6 +283,7 @@ Not agreed yet. Each needs a yes or no first.
 
 ## Done recently
 
+- One way to bring files into Image Converter, Favicon Generator and Palang IC: choose, drop or paste, with the same messages
 - Search finds tools by file type ("png to ico", ".md"), from the file types each tool now lists
 - Search answers typed values: "10 km to mi", "#1e90ff", a Unix timestamp or "20% of 150" gives an answer to copy, with a link to the tool
 - Reworked Text Case Converter, Foot Size Converter, Text Statistics, Sorter, Markdown Previewer, Percentage Calculator and Unit Converter

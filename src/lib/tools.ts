@@ -135,3 +135,8 @@ export const tools: Tool[] = [
     // so it shouldn't answer searches like "jpg to pdf".
   },
 ];
+
+/** The file types a tool opens, for its own file picker and checks. */
+export function toolAccepts(path: string): string[] {
+  return tools.find((t) => t.path === path)?.accepts ?? [];
+}

@@ -37,7 +37,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
-import { downloadBlob, isIOSOrSafari, validateImageFile } from '@/lib/image-utils'
+import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils'
+import { useFileIntake } from '@/hooks/use-file-intake'
+import { toolAccepts } from '@/lib/tools'
 import {
   DATE_STYLES,
   DEFAULT_COLOR,
@@ -182,11 +184,6 @@ export default function PalangIc() {
 
   const handleFile = useCallback(
     async (key: SideKey, file: File) => {
-      const check = validateImageFile(file)
-      if (!check.valid) {
-        toast({ title: 'Could not use that file', description: check.error, variant: 'destructive' })
-        return
-      }
       const seq = ++loadSeq.current[key]
       setLoadingSide(key)
       try {
@@ -226,6 +223,25 @@ export default function PalangIc() {
 
   const handleFront = useCallback((f: File) => void handleFile('front', f), [handleFile])
   const handleBack = useCallback((f: File) => void handleFile('back', f), [handleFile])
+  const showProblem = useCallback(
+    (message: string) => toast({ title: 'Could not use that file', description: message, variant: 'destructive' }),
+    [toast],
+  )
+
+  // A pasted photo goes into the first empty side, front before back.
+  useFileIntake({
+    accepts: toolAccepts('/palang-ic'),
+    paste: true,
+    onFiles: (files, problems) => {
+      if (!files[0]) {
+        if (problems[0]) showProblem(problems[0])
+        return
+      }
+      const empty: SideKey | null = !sides.front ? 'front' : !sides.back ? 'back' : null
+      if (empty) void handleFile(empty, files[0])
+      else toast({ title: 'Both sides already have a photo', description: 'Remove one, or use Change on the side you want to replace.' })
+    },
+  })
 
   const removeSide = (key: SideKey) => {
     // Invalidate any decode still in flight for this side so a replacement
@@ -362,6 +378,7 @@ export default function PalangIc() {
                         side={sides.front}
                         busy={loadingSide === 'front'}
                         onFile={handleFront}
+                        onProblem={showProblem}
                         onRemove={() => removeSide('front')}
                         onEdit={() => openEditor('front')}
                       />
@@ -371,13 +388,14 @@ export default function PalangIc() {
                         side={sides.back}
                         busy={loadingSide === 'back'}
                         onFile={handleBack}
+                        onProblem={showProblem}
                         onRemove={() => removeSide('back')}
                         onEdit={() => openEditor('back')}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
                       A phone photo is fine; you will crop it to the card edges next. Back is optional; add it if the
-                      form asks for both sides.
+                      form asks for both sides. You can also paste a photo; it goes into the first empty side.
                     </p>
                   </CardContent>
                 </Card>

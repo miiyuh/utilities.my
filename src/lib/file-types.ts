@@ -55,13 +55,16 @@ function listed(list: string[] | undefined, ext: string): boolean {
 export const canOpen = (tool: FileTyped, ext: string) => listed(tool.accepts, ext)
 export const canMake = (tool: FileTyped, ext: string) => listed(tool.produces, ext)
 
-/** Whether the tool opens this file, by its name or, for pasted files with no name, its MIME type. */
-export function acceptsFile(tool: FileTyped, file: { name: string; type: string }): boolean {
+/** Whether a file is one of the types, by its extension or, for pasted files with no extension, its MIME type. */
+export function isAccepted(file: { name: string; type: string }, accepts: string[]): boolean {
   const ext = /\.[^.]+$/.exec(file.name)?.[0]
   const known = ext && extensionFor(ext)
-  if (known) return canOpen(tool, known)
-  return !!file.type && !!tool.accepts?.some((e) => MIME[e] === file.type.toLowerCase())
+  if (known) return listed(accepts, known)
+  return !!file.type && accepts.some((e) => MIME[e] === file.type.toLowerCase())
 }
+
+/** Whether the tool opens this file. */
+export const acceptsFile = (tool: FileTyped, file: { name: string; type: string }) => isAccepted(file, tool.accepts ?? [])
 
 export type FileQuery = { from: string; to: string } | { type: string }
 
