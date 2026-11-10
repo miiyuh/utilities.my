@@ -143,7 +143,10 @@ export default function PalangIc() {
   const [sides, setSides] = useState<Sides>({ front: null, back: null })
   const [options, setOptions] = useState<WatermarkOptions>(loadPersisted)
   const [editing, setEditing] = useState<EditingState | null>(null)
-  const [loadingSide, setLoadingSide] = useState<SideKey | null>(null)
+  // Each side loads on its own, so both can be busy at once.
+  const [loadingSides, setLoadingSides] = useState<Record<SideKey, boolean>>({ front: false, back: false })
+  /** A side that finished loading while the editor was open on the other one. */
+  const queuedEdit = useRef<SideKey | null>(null)
   const [exporting, setExporting] = useState<'pdf' | SideKey | null>(null)
   const [fontsReady, setFontsReady] = useState(false)
   // Free-typed hex; only valid values are pushed into options.
@@ -185,7 +188,7 @@ export default function PalangIc() {
   const handleFile = useCallback(
     async (key: SideKey, file: File) => {
       const seq = ++loadSeq.current[key]
-      setLoadingSide(key)
+      setLoadingSides((l) => ({ ...l, [key]: true }))
       try {
         const loaded = await loadCardSource(file)
         if (seq !== loadSeq.current[key]) {
@@ -205,8 +208,15 @@ export default function PalangIc() {
           releaseSide(s[key])
           return { ...s, [key]: side }
         })
-        // A phone photo almost always needs cropping, so go straight there.
-        setEditing({ key, rotation: side.rotation, crop: side.crop })
+        // A phone photo almost always needs cropping, so go straight there,
+        // or next if the other side is being cropped now.
+        setEditing((e) => {
+          if (e && e.key !== key) {
+            queuedEdit.current = key
+            return e
+          }
+          return { key, rotation: side.rotation, crop: side.crop }
+        })
       } catch (error) {
         if (seq !== loadSeq.current[key]) return
         toast({
@@ -215,7 +225,7 @@ export default function PalangIc() {
           variant: 'destructive',
         })
       } finally {
-        if (seq === loadSeq.current[key]) setLoadingSide(null)
+        if (seq === loadSeq.current[key]) setLoadingSides((l) => ({ ...l, [key]: false }))
       }
     },
     [toast],
@@ -247,7 +257,8 @@ export default function PalangIc() {
     // Invalidate any decode still in flight for this side so a replacement
     // that finishes after Remove cannot bring the image back.
     loadSeq.current[key]++
-    setLoadingSide((l) => (l === key ? null : l))
+    if (queuedEdit.current === key) queuedEdit.current = null
+    setLoadingSides((l) => ({ ...l, [key]: false }))
     setSides((s) => {
       releaseSide(s[key])
       return { ...s, [key]: null }
@@ -259,11 +270,19 @@ export default function PalangIc() {
     if (side) setEditing({ key, rotation: side.rotation, crop: side.crop })
   }
 
+  /** Closes the editor, or moves it to a side that was waiting to be cropped. */
+  const closeEditor = () => {
+    const next = queuedEdit.current
+    queuedEdit.current = null
+    const side = next ? sides[next] : null
+    setEditing(next && side ? { key: next, rotation: side.rotation, crop: side.crop } : null)
+  }
+
   const applyEdit = () => {
     if (!editing) return
     const { key, rotation, crop } = editing
     setSides((s) => (s[key] ? { ...s, [key]: { ...s[key], rotation, crop } } : s))
-    setEditing(null)
+    closeEditor()
   }
 
   // `site` follows the Settings date preset; the renderer only knows concrete styles.
@@ -376,7 +395,7 @@ export default function PalangIc() {
                         label="Front"
                         hint="Required for most forms"
                         side={sides.front}
-                        busy={loadingSide === 'front'}
+                        busy={loadingSides.front}
                         onFile={handleFront}
                         onProblem={showProblem}
                         onRemove={() => removeSide('front')}
@@ -386,7 +405,7 @@ export default function PalangIc() {
                         label="Back"
                         hint="Optional"
                         side={sides.back}
-                        busy={loadingSide === 'back'}
+                        busy={loadingSides.back}
                         onFile={handleBack}
                         onProblem={showProblem}
                         onRemove={() => removeSide('back')}
@@ -671,7 +690,7 @@ export default function PalangIc() {
           </div>
         </div>
 
-        <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
+        <Dialog open={editing !== null} onOpenChange={(open) => !open && closeEditor()}>
           <DialogContent className="sm:max-w-[min(48rem,calc(100%-2rem))]">
             <DialogHeader>
               <DialogTitle>Crop &amp; rotate: {editing ? SIDE_LABEL[editing.key] : ''}</DialogTitle>
@@ -681,6 +700,7 @@ export default function PalangIc() {
             </DialogHeader>
             {editing && editingSide && (
               <CropEditor
+                key={editing.key}
                 side={editingSide}
                 rotation={editing.rotation}
                 crop={editing.crop}
@@ -688,7 +708,7 @@ export default function PalangIc() {
               />
             )}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditing(null)}>
+              <Button type="button" variant="outline" onClick={closeEditor}>
                 Cancel
               </Button>
               <Button type="button" onClick={applyEdit}>
