@@ -6,7 +6,9 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Palette, Shuffle, X, Image as ImageIcon } from '@phosphor-icons/react';
+import { Upload, Palette, Shuffle, X, Image as ImageIcon, QrCode } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
+import { hexForLink } from '@/lib/link-params';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { parseColour } from '@/lib/colour-parse';
 import { cn } from '@/lib/utils';
@@ -125,6 +127,7 @@ function loadColourHistory(): string[] {
 
 export default function ColourPickerPage() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [hexColour, setHexColour] = useState('#1a1a1a');
   // The hex input holds partial values while the user types ("#1a"), so the
   // previews and conversions follow the last fully valid colour rather than
@@ -821,6 +824,13 @@ export default function ColourPickerPage() {
                             ? `Read as ${colourFormat}. It's outside the sRGB range, so the nearest displayable colour is shown.`
                             : `Read as ${colourFormat}. HEX, RGB, HSL, HWB, OKLCH, OKLab, CMYK and colour names all work.`}
                     </p>
+                  </div>
+                  {/* Send the colour on: the QR Code Generator reads it from the link. */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">Send to</span>
+                    <Button variant="outline" size="sm" onClick={() => void navigate(`/qr-code-generator?fg=${hexForLink(lastValidHex)}`)}>
+                      <QrCode className="h-4 w-4" /> QR code colour
+                    </Button>
                   </div>
                     {/* Right: Derived Colour Codes */}
                     <div className="flex flex-col gap-2 md:gap-3">

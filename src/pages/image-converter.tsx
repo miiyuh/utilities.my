@@ -41,6 +41,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useFileIntake, type FileIntake } from '@/hooks/use-file-intake'
 import { toolAccepts } from '@/lib/tools'
 import { handoffCount } from '@/lib/file-handoff'
+import { SendTo } from '@/components/send-to'
 import { downloadBlob, humanSize, isIOSOrSafari } from '@/lib/image-utils'
 import {
   FORMATS,
@@ -594,6 +595,12 @@ function SingleConverter({
     return () => window.clearTimeout(timer)
   }, [image, file, edits, width, height, settings, inputsKey])
 
+  // The converted image as a file, for sending to another tool.
+  const output = React.useMemo(
+    () => (preview && file && previewCurrent ? new File([preview.blob], outputFilename(file.name, settings.format), { type: preview.blob.type }) : null),
+    [preview, file, previewCurrent, settings.format]
+  )
+
   const download = () => {
     if (!preview || !file || !previewCurrent) return
     const name = outputFilename(file.name, settings.format)
@@ -813,6 +820,7 @@ function SingleConverter({
             <Button onClick={download} disabled={!previewCurrent || encoding} size="xl" className="w-full">
               <Download className="h-5 w-5" /> Download {FORMATS[settings.format].label}
             </Button>
+            <SendTo file={output} from="/image-converter" disabled={encoding} />
           </CardContent>
         </Card>
       </StickyColumn>

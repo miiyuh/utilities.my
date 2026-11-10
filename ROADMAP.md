@@ -24,11 +24,11 @@ Changes across the whole site, so tools work together instead of one at a time. 
 - Picking one opens the tool with the file already loaded. The file is handed over in memory, so nothing is stored or uploaded. Several images open in Image Converter's batch tab.
 - On every other page, a file dropped outside a drop area is caught, so the browser no longer leaves the site to show it.
 
-**4. Send work from one tool to the next**
+**4. Send work from one tool to the next** ✅ first part done
 
-- A "Send to" button on results: Image Converter to Favicon Generator or Palang IC, Colour Picker to QR Code Generator (as its colour) or Contrast Checker.
-- Files go through the same in-memory hand-off as step 3. Small values, such as a colour, go in the link (`/qr-code-generator?fg=3eaf86`), so the link can also be shared or bookmarked.
-- Decide tool by tool which settings belong in the link. This also answers the Size Visualiser's question about shareable links.
+- Image Converter's result has a "Send to" row: Favicon Generator or Palang IC, when they can open the format chosen. Files go through the same in-memory hand-off as step 3.
+- QR Code Generator reads `?fg=`, `?bg=`, `?url=` and `?text=` from its link, and Colour Picker has a "Send to: QR code colour" button that uses it.
+- Still to do: Colour Picker and the text tools picking up handed-over files (Text Case, Text Statistics, Sorter, Spin the Wheel, Morse, Markdown), so they can appear in "Open with" and "Send to"; Contrast Checker once it exists; and deciding tool by tool which settings belong in the link. This also answers the Size Visualiser's question about shareable links.
 
 **5. Work offline**
 
@@ -283,6 +283,7 @@ Not agreed yet. Each needs a yes or no first.
 
 ## Done recently
 
+- Send to: Image Converter's result goes straight to Favicon Generator or Palang IC, and a colour from Colour Picker to QR Code Generator
 - Drop or paste a file on the home page or into search to find the tools that open it
 - One way to bring files into Image Converter, Favicon Generator and Palang IC: choose, drop or paste, with the same messages
 - Search finds tools by file type ("png to ico", ".md"), from the file types each tool now lists

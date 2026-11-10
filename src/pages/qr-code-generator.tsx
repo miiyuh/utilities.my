@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'react-router-dom';
+import { readQrLink } from '@/lib/link-params';
 import { Download, Gear, Upload, QrCode as QrCodeIcon, QrCode, DownloadSimple, ArrowClockwise, Info } from '@phosphor-icons/react';
 import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
@@ -65,11 +67,15 @@ const isValidHexColor = (color: string): boolean => {
 export default function QrCodeGeneratorPage() {
   const { toast } = useToast();
   
+  // A link can start the generator with colours and content: ?fg=, ?bg=, ?url= or ?text=.
+  const [searchParams] = useSearchParams();
+  const [linked] = useState(() => readQrLink(searchParams));
+
   // QR Value and Payload States
   const [qrValue, setQrValue] = useState(''); 
-  const [payloadType, setPayloadType] = useState<PayloadType>('url');
-  const [urlInput, setUrlInput] = useState('');
-  const [plainTextInput, setPlainTextInput] = useState('');
+  const [payloadType, setPayloadType] = useState<PayloadType>(linked.text ? 'text' : 'url');
+  const [urlInput, setUrlInput] = useState(linked.url ?? '');
+  const [plainTextInput, setPlainTextInput] = useState(linked.text ?? '');
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
@@ -82,8 +88,8 @@ export default function QrCodeGeneratorPage() {
 
   // Customization States
   const [qrSize, setQrSize] = useState(256);
-  const [fgColor, setFgColor] = useState('#000000');
-  const [bgColorHex, setBgColorHex] = useState('#FFFFFF');
+  const [fgColor, setFgColor] = useState(linked.fg ?? '#000000');
+  const [bgColorHex, setBgColorHex] = useState(linked.bg ?? '#FFFFFF');
   const [bgTransparent, setBgTransparent] = useState(false);
   const [errorCorrectionLevel, setErrorCorrectionLevel] = useState<ErrorCorrectionLevel>('M');
   
