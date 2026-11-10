@@ -254,8 +254,12 @@ export default function MorseCodeGeneratorPage() {
   // Start, pause, or resume playback
   const togglePlayback = () => {
     if (status === 'playing') pausePlayback();
-    else if (status === 'paused') resumePlayback();
-    else playMorseSequence(currentSequence);
+    // Resume only the message that was paused; if it was edited during playback, start the new one.
+    else if (status === 'paused' && currentSequence === morseSequenceRef.current) resumePlayback();
+    else {
+      stopPlayback();
+      playMorseSequence(currentSequence);
+    }
   };
 
   // Stop playback
