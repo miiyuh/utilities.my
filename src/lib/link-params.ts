@@ -9,6 +9,15 @@ export function hexParam(value: string | null): string | null {
   return `#${hex.toUpperCase()}`
 }
 
+/** Whether a "#RRGGBB" colour is light, by its relative luminance (WCAG). */
+export function isLight(hex: string): boolean {
+  const channel = (i: number) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5) > 0.5
+}
+
 /** A colour as it goes in a link: six hex digits, no "#". */
 export const hexForLink = (hex: string) => hex.replace(/^#/, '').toLowerCase()
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { hexForLink, hexParam, readQrLink } from './link-params'
+import { hexForLink, hexParam, isLight, readQrLink } from './link-params'
 
 describe('hexParam', () => {
   test.each([
@@ -32,5 +32,14 @@ describe('readQrLink', () => {
     expect(readQrLink(new URLSearchParams('fg=nope&text=hello'))).toEqual({ text: 'hello' })
     expect(readQrLink(new URLSearchParams('url=a&text=b'))).toEqual({ url: 'a' })
     expect(readQrLink(new URLSearchParams(''))).toEqual({})
+  })
+})
+
+describe('isLight', () => {
+  test('tells light colours from dark ones', () => {
+    expect(isLight('#FFFFFF')).toBe(true)
+    expect(isLight('#FFEB3B')).toBe(true)
+    expect(isLight('#000000')).toBe(false)
+    expect(isLight('#3EAF86')).toBe(false)
   })
 })

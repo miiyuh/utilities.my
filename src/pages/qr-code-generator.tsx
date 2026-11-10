@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'react-router-dom';
-import { readQrLink } from '@/lib/link-params';
+import { isLight, readQrLink } from '@/lib/link-params';
 import { Download, Gear, Upload, QrCode as QrCodeIcon, QrCode, DownloadSimple, ArrowClockwise, Info } from '@phosphor-icons/react';
 import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarContent } from "@/components/sidebar-content";
@@ -25,6 +25,9 @@ import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { StickyColumn } from '@/components/sticky-column';
 type PayloadType = "url" | "text" | "email" | "sms" | "tel" | "wifi";
+
+/** Bytes a QR code holds at each error correction level (version 40, byte mode). */
+const QR_CAPACITY: Record<ErrorCorrectionLevel, number> = { L: 2953, M: 2331, Q: 1663, H: 1273 };
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type WifiEncryption = "WPA" | "WEP" | "nopass";
 type OutputFormat = "png" | "svg";
@@ -89,7 +92,8 @@ export default function QrCodeGeneratorPage() {
   // Customization States
   const [qrSize, setQrSize] = useState(256);
   const [fgColor, setFgColor] = useState(linked.fg ?? '#000000');
-  const [bgColorHex, setBgColorHex] = useState(linked.bg ?? '#FFFFFF');
+  // A light colour sent without a background gets a dark one, so the code isn't white on white.
+  const [bgColorHex, setBgColorHex] = useState(linked.bg ?? (linked.fg && isLight(linked.fg) ? '#000000' : '#FFFFFF'));
   const [bgTransparent, setBgTransparent] = useState(false);
   const [errorCorrectionLevel, setErrorCorrectionLevel] = useState<ErrorCorrectionLevel>('M');
   
@@ -127,8 +131,13 @@ export default function QrCodeGeneratorPage() {
   }, [marginSize]);
 
   // Validation helpers and payload limits
-  const MAX_PAYLOAD_BYTES = 2048; // 2 KiB limit (tunable)
-  const [payloadTooLarge, setPayloadTooLarge] = useState(false);
+  // The most bytes a QR code holds at each error correction level (version 40,
+  // byte mode). Past this the encoder throws while rendering, so the preview
+  // and download are held back instead.
+  const payloadTooLarge = useMemo(
+    () => new TextEncoder().encode(qrValue).length > QR_CAPACITY[errorCorrectionLevel],
+    [qrValue, errorCorrectionLevel]
+  );
 
   const isValidUrl = (v: string) => {
     if (!v) return false;
@@ -210,8 +219,6 @@ export default function QrCodeGeneratorPage() {
     // Debounce the final value to avoid frequent re-renders
     const handle = window.setTimeout(() => {
       setQrValue(newQrValue);
-      const bytes = new TextEncoder().encode(newQrValue || '').length;
-      setPayloadTooLarge(bytes > MAX_PAYLOAD_BYTES);
       
       // Update suggested filename based on new QR value
       if (!manualFilenameEdited) {
@@ -847,7 +854,11 @@ export default function QrCodeGeneratorPage() {
                     <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Preview</CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-col items-center space-y-4 md:space-y-5">
-                    {qrValue ? (
+                    {qrValue && payloadTooLarge ? (
+                      <div role="alert" className="w-full max-w-[288px] aspect-square rounded-sm flex flex-col items-center justify-center gap-2 p-4 text-center text-sm text-destructive border border-dashed border-destructive/50">
+                        Too long for a QR code at error correction {errorCorrectionLevel}. Shorten it to under {QR_CAPACITY[errorCorrectionLevel].toLocaleString()} bytes, or choose a lower error correction level.
+                      </div>
+                    ) : qrValue ? (
                       <div style={previewOuterStyle} className={`p-4 rounded-sm inline-block border border-border ${bgTransparent? 'bg-[linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%),linear-gradient(45deg,#eee_25%,transparent_25%,transparent_75%,#eee_75%)] bg-[length:12px_12px] bg-[0_0,6px_6px] dark:bg-[linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%),linear-gradient(45deg,#333_25%,transparent_25%,transparent_75%,#333_75%)] dark:bg-[length:12px_12px] dark:bg-[0_0,6px_6px]':''} bg-background relative`}> 
                         {outputFormat === 'png' ? (
                           <div ref={qrCanvasRef} className="relative inline-block" style={previewQuietZoneStyle}>
@@ -918,7 +929,7 @@ export default function QrCodeGeneratorPage() {
         </div>
         
         {/* Hidden high-resolution SVG for download */}
-        {outputFormat === 'svg' && (
+        {outputFormat === 'svg' && !payloadTooLarge && (
           <div className="hidden">
             <QRCodeSVG {...svgQrPropsDownload} ref={qrSvgDownloadRef} />
           </div>
