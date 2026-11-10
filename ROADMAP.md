@@ -38,15 +38,14 @@ Changes across the whole site, so tools work together instead of one at a time. 
 - A new version shows a notice with a Reload button instead of swapping in mid-task; if it's ignored, the update applies on the next visit. `sw.js` is never cached by Vercel.
 - Still to check by hand: after one visit, every tool opens in airplane mode, and a new deploy shows the notice.
 
-**6. What's new**
+**6. What's new** ✅ done
 
-- A short list of changes in plain words, shown from a button in the header with a dot when there's something you haven't seen. No popup.
-- Written by hand in one file, because `CHANGELOG.md` is generated from commit messages and reads like them.
+- A "What's new" button in the header opens a short list of changes in plain words, with a dot until the newest one has been opened. It never opens by itself.
+- Written by hand in `src/lib/whats-new.ts`, newest first, because `CHANGELOG.md` is generated from commit messages and reads like them. Add an entry there with each release people would notice.
 
 **Open questions**
 
-- Should step 3's "Open with" list also appear when a file is dropped on a tool that can't open it?
-- Is a reload notice enough for step 5, or should updates apply silently on the next visit?
+- Should step 3's "Open with" list also appear when a file is dropped outside a tool's drop area? For now the drop is only caught there, so the browser doesn't leave the site.
 
 ### Design guide and tool checks
 
@@ -284,6 +283,7 @@ Not agreed yet. Each needs a yes or no first.
 
 ## Done recently
 
+- What's new: a header button with the latest changes in plain words
 - Works offline after the first visit, with a notice when a new version is ready
 - Send to: Image Converter's result goes straight to Favicon Generator or Palang IC, and a colour from Colour Picker to QR Code Generator
 - Drop or paste a file on the home page or into search to find the tools that open it
