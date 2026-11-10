@@ -238,12 +238,12 @@ See how big something really is before you buy, print or hang it. Enter its meas
 ### Braille Converter
 
 - Text to braille cells and back, as Unicode braille you can copy, with each cell's dot numbers
-- Grade 1 (letter by letter) to start; Grade 2 contractions later if needed
+- Uncontracted (letter by letter) first, following Unified English Braille, which Malaysia's Ministry of Education has adopted for English. Malay uses the same letters, so Malay text comes out right letter by letter. Labelled "Uncontracted braille (UEB)", not as the Malay code.
 - A picture of the cells to save, for signs and printing
 
-**Open questions**
+**Later**
 
-- Malay braille uses the same letters, but numbers and some punctuation differ by standard. Which one to follow, and where to source it?
+- The Malay code (Kod Braille Bahasa Melayu, amended in 2020 by NCBM and the Ministry's Special Education Division) for Malay numbers, punctuation and Grade 2 contractions. Needs the 2020 document: ask NCBM or the Special Education Division. Write the rules ourselves rather than copying their tables.
 
 ### NATO Phonetic
 
