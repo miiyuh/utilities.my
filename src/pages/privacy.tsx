@@ -3,7 +3,7 @@ import { MarkdownPage } from '@/components/markdown/markdown-page';
 
 const PRIVACY_CONTENT = `# Privacy Policy
 
-*Last Updated: 2026-10-17*
+*Last Updated: 2026-11-10*
 
 utilities.my is a collection of free tools that run in your browser. This policy explains what happens to your data when you use them. The short version: what you type, upload or calculate stays on your device, and the only things that leave it are anonymous visit statistics and the requests your browser makes to load the site.
 

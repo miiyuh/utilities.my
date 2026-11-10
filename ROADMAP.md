@@ -21,7 +21,7 @@ Changes across the whole site, so tools work together instead of one at a time. 
 **3. Drop a file anywhere** ✅ done
 
 - Drop or paste a file on the home page, or into search, and search lists the tools that can open it. HEIC photos and files no tool opens get a plain message.
-- Picking one opens the tool with the file already loaded. The file is handed over in memory, so nothing is stored or uploaded. Several images open in Image Converter's batch tab.
+- Picking one opens the tool with the file already loaded. The hand-off happens in memory and nothing is uploaded; the tool then treats the file like one you opened yourself, so a tool that keeps drafts in the browser (Text Statistics, Markdown Previewer) keeps its text too. Several images open in Image Converter's batch tab.
 - On every other page, a file dropped outside a drop area is caught, so the browser no longer leaves the site to show it.
 
 **4. Send work from one tool to the next** ✅ done
@@ -77,7 +77,7 @@ Ideas from how delphitools' tools work, not how they look: delphitools is square
 
 **Remembering and protecting work**
 
-- **Remember settings between visits, in every tool**, so you never have to guess which tools remember. Only lasting choices are kept: QR colours, size and margin; image format and quality; the last units; favicon shape and colours; Sorter options. What belongs to one job is not kept: the text or link, the number typed, the picture, its crop and rotation. That also keeps the promise that nothing you enter is stored. Tools that forget everything now come first: QR Code Generator, Favicon Generator, Image Converter, Text Case Converter, Sorter and Morse Code Generator.
+- **Remember settings between visits, in every tool**, so you never have to guess which tools remember. Only lasting choices are kept: QR colours, size and margin; image format and quality; the last units; favicon shape and colours; Sorter options. What belongs to one job is not kept: the text or link, the number typed, the picture, its crop and rotation. Tools that already keep a draft (Text Statistics, Markdown Previewer, Spin the Wheel) keep doing so, as the privacy page lists. Tools that forget everything now come first: QR Code Generator, Favicon Generator, Image Converter, Text Case Converter, Sorter and Morse Code Generator.
 - **Reset to defaults**: a button in each tool, and a "Reset all tools" button in Settings.
 - **Ask before leaving** when work would be lost: a batch still converting in Image Converter, an unsaved Palang IC stamp, a long Markdown draft.
 
