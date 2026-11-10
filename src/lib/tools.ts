@@ -17,6 +17,8 @@ export interface Tool extends FileTyped {
 
 /** Pictures every browser can open. */
 const PHOTOS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif"];
+/** Everything `decodeImage` in image-pipeline.ts reads, with its own JPEG XL and TIFF decoders. */
+const DECODABLE = [...PHOTOS, ".jxl", ".bmp", ".ico", ".tif", ".tiff", ".svg"];
 
 export const tools: Tool[] = [
   { name: "Home", path: "/", icon: House, description: "Return to the main dashboard." },
@@ -48,7 +50,7 @@ export const tools: Tool[] = [
     name: "Image Converter", path: "/image-converter", icon: Image,
     description: "Change a picture's format or size, and see how much space you save.",
     keywords: ["png", "jpg", "jpeg", "webp", "avif", "jxl", "jpegxl", "gif", "bmp", "tiff", "tif", "ico", "icon", "resize", "compress", "crop", "exif"],
-    accepts: [...PHOTOS, ".jxl", ".bmp", ".ico", ".tif", ".tiff"],
+    accepts: DECODABLE,
     produces: [".png", ".jpg", ".jpeg", ".webp", ".avif", ".jxl", ".gif", ".bmp", ".tif", ".tiff", ".ico", ".zip"],
     takesMany: true,
     receivesFiles: true,
@@ -132,7 +134,7 @@ export const tools: Tool[] = [
     name: "Favicon Generator", path: "/favicon-generator", icon: AppWindow,
     description: "Turn a letter, emoji or image into every icon your site needs.",
     keywords: ["favicon", "icon", "ico", "apple touch", "manifest", "pwa"],
-    accepts: [...PHOTOS, ".svg"],
+    accepts: DECODABLE,
     produces: [".ico", ".png", ".svg", ".webmanifest", ".zip"],
     receivesFiles: true,
   },

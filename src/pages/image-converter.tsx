@@ -362,7 +362,7 @@ function DropZone({ intake, multiple, compact }: { intake: FileIntake; multiple:
       <div className="space-y-1">
         <p className="text-sm font-medium">{multiple ? 'Drop images here' : 'Drop an image here'}</p>
         <p className="text-xs text-muted-foreground">
-          or paste with {PASTE_KEY} V. PNG, JPEG, WebP, GIF, AVIF, JPEG XL, BMP and ICO, up to 50 MB.
+          or paste with {PASTE_KEY} V. PNG, JPEG, WebP, GIF, AVIF, JPEG XL, BMP, ICO, TIFF and SVG, up to 50 MB.
         </p>
       </div>
       <span className="inline-flex h-8 items-center gap-2 rounded-full border border-border bg-background px-3 text-sm font-medium">
