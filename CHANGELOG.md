@@ -1,3 +1,36 @@
+## [5.5.0](https://github.com/miiyuh/utilities.my/compare/v5.4.1...v5.5.0) (2026-11-10)
+
+### Features
+
+* drop or paste a file to find the tools that open it ([b897851](https://github.com/miiyuh/utilities.my/commit/b8978513120683474dd947ecc43d67e00ccd51a5))
+* every file tool receives handed-over files ([8d6bc19](https://github.com/miiyuh/utilities.my/commit/8d6bc19edde0119f0869475bfb7fc3898fee0343))
+* one way to bring files into the image tools ([3beef1e](https://github.com/miiyuh/utilities.my/commit/3beef1eb3fbb1da085ceb773d9c6675ea0f7393b))
+* **search:** answer typed values in the command palette ([5eff1be](https://github.com/miiyuh/utilities.my/commit/5eff1be548f5049cbd8aa18c9b9c0833fbeb9383)), closes [#1e90ff](https://github.com/miiyuh/utilities.my/issues/1e90ff)
+* **search:** find tools by the file types they open and save ([d003ec7](https://github.com/miiyuh/utilities.my/commit/d003ec7cec31bfbc3a04c6a2265689f9f2e7eddb))
+* send results from one tool to the next ([ad03b39](https://github.com/miiyuh/utilities.my/commit/ad03b3974faa4edda517e9a3136bc1441baf0859))
+* what's new, from a button in the header ([b6ccd40](https://github.com/miiyuh/utilities.my/commit/b6ccd40da84b2478af2654ed28a1da01a1b37068))
+* work offline after the first visit ([d3b8923](https://github.com/miiyuh/utilities.my/commit/d3b89230da7023d2f1d324d4c3eb38fada88d48d))
+
+### Bug Fixes
+
+* accept every image format the image tools can read ([3126920](https://github.com/miiyuh/utilities.my/commit/3126920f2d2126be742e558657dbebfb452ab14b))
+* commit the service worker template ([dd3884c](https://github.com/miiyuh/utilities.my/commit/dd3884c628daf2b0d8b77f84048bfd7856828b15))
+* **emoji-picker:** let the emoji list load again after a failure ([bc50a1d](https://github.com/miiyuh/utilities.my/commit/bc50a1d5a66be028fe2855c6eecca7208337cfc4))
+* hand files to a tool that's already open, and don't double-handle pastes ([264139a](https://github.com/miiyuh/utilities.my/commit/264139a6f52c3cb84424be83c0c2cc79a7169793))
+* **image-converter:** keep metadata for the image on screen ([12c4154](https://github.com/miiyuh/utilities.my/commit/12c41546cdec7e0f77785523d7b1fa4b99fd73ef))
+* **image-converter:** keep the open image until a new one is ready ([9fca9ac](https://github.com/miiyuh/utilities.my/commit/9fca9ac19a2b4fa6905cb45495fe1afd6d815a14))
+* **image-converter:** show when metadata can't be read ([a586891](https://github.com/miiyuh/utilities.my/commit/a586891751105103f301653b830c65afd5255d27))
+* **morse:** give playback one status, and apply sound changes mid-message ([5f15a9b](https://github.com/miiyuh/utilities.my/commit/5f15a9b031ef806b6cd5a7f59a0ac12c55bda7fb))
+* **morse:** resume only the message that was paused ([8785a7d](https://github.com/miiyuh/utilities.my/commit/8785a7db722d2c6ae0f8cd3a1df6582fc69293ce))
+* **offline:** keep the previous build for other tabs, and skip server errors ([ebfc660](https://github.com/miiyuh/utilities.my/commit/ebfc6606b26cc72172a5b8ddcf8102401038ad19))
+* **offline:** prefer this build's stored files, and warn on a large store ([3c6f1d8](https://github.com/miiyuh/utilities.my/commit/3c6f1d839b8844ca9695e6904285439e7b88abfe))
+* **palang-ic:** don't paste over a side that's still loading ([f1dab6c](https://github.com/miiyuh/utilities.my/commit/f1dab6ca62766f5a0d960b753e3dc543ccbd42de))
+* **palang-ic:** track loading for each side, and queue the crop editor ([892bf67](https://github.com/miiyuh/utilities.my/commit/892bf6770419cdbcbf599090bf6c094e9a0dbac8))
+* **qr:** hold back content too long to encode, and avoid white on white ([9b3e60d](https://github.com/miiyuh/utilities.my/commit/9b3e60df546d546ce79c1660acf0201f28f99756))
+* **search:** keep Palang IC out of file conversion searches ([c1dc04a](https://github.com/miiyuh/utilities.my/commit/c1dc04a3c025c20f6195bf2f3f2217716e988db4))
+* **search:** only offer tools that pick up handed-over files ([24985fd](https://github.com/miiyuh/utilities.my/commit/24985fd38e5a87ba990c710b9d5ab249ad4305f3))
+* **world-clock:** stop the time zone layer retrying forever after a failed load ([dea1c19](https://github.com/miiyuh/utilities.my/commit/dea1c196d22e3ec017ce869b2863a0c2444c9856))
+
 ## [5.4.1](https://github.com/miiyuh/utilities.my/compare/v5.4.0...v5.4.1) (2026-11-05)
 
 ### Bug Fixes
