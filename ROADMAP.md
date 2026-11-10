@@ -8,11 +8,10 @@ What's next for utilities.my. Nothing here is promised or dated; it's a shared l
 
 Changes across the whole site, so tools work together instead of one at a time. Each step can ship on its own, but the order matters: the early steps build what the later ones need.
 
-**1. Describe what each tool takes and makes**
+**1. Describe what each tool takes and makes** ✅ done
 
-- Give each tool in `src/lib/tools.ts` the file types it accepts and produces (for example `image/*` in, PNG, WebP, ICO and the rest out), plus its search keywords. The keywords now live in `command-palette.tsx`, so this gives them one home.
-- Search learns to read "heic to jpg" and "png to ico" and finds the tools that can do it.
-- Done when: every tool has the new fields, search uses them, and a test checks that each listed type is real.
+- Each tool in `src/lib/tools.ts` lists the file types it opens and saves, and its search keywords, which used to live in `command-palette.tsx`.
+- Search reads "webp to jpg", "png to ico" and ".md" and finds the tools that can do it. A test checks that every listed type is real.
 
 **2. One way to bring files in**
 
@@ -285,6 +284,7 @@ Not agreed yet. Each needs a yes or no first.
 
 ## Done recently
 
+- Search finds tools by file type ("png to ico", ".md"), from the file types each tool now lists
 - Search answers typed values: "10 km to mi", "#1e90ff", a Unix timestamp or "20% of 150" gives an answer to copy, with a link to the tool
 - Reworked Text Case Converter, Foot Size Converter, Text Statistics, Sorter, Markdown Previewer, Percentage Calculator and Unit Converter
 - Favicon Generator: no-background option and home-screen previews on real wallpapers

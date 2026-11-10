@@ -20,34 +20,12 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { tools } from '@/lib/tools'
 import { quickAnswers } from '@/lib/quick-answers'
+import { fileMatch, parseFileQuery, type FileTyped } from '@/lib/file-types'
 import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
 // Search data
 // ---------------------------------------------------------------------------
-
-/** Extra words people might type for each tool (synonyms, units, use cases). */
-const KEYWORDS: Record<string, string[]> = {
-  '/text-case': ['uppercase', 'lowercase', 'title', 'camel', 'snake', 'kebab', 'capitalise'],
-  '/colour-picker': ['color', 'hex', 'rgb', 'hsl', 'oklch', 'cmyk', 'eyedropper', 'palette', 'contrast'],
-  '/unit-converter': ['length', 'weight', 'temperature', 'celsius', 'fahrenheit', 'km', 'miles', 'kg', 'pounds'],
-  '/bmi-calculator': ['body mass', 'weight', 'height', 'health'],
-  '/image-converter': ['png', 'jpg', 'jpeg', 'webp', 'avif', 'jxl', 'jpegxl', 'gif', 'bmp', 'tiff', 'tif', 'ico', 'icon', 'resize', 'compress', 'crop', 'exif'],
-  '/markdown-previewer': ['md', 'editor', 'html', 'preview'],
-  '/qr-code-generator': ['qr', 'barcode', 'link', 'wifi', 'url'],
-  '/unix-timestamp-converter': ['epoch', 'unix', 'timestamp', 'seconds', 'milliseconds'],
-  '/timezone-converter': ['time zone', 'meeting', 'gmt', 'utc', 'schedule'],
-  '/world-clock': ['globe', 'map', 'time', 'cities', 'day night'],
-  '/date-diff-calculator': ['days between', 'age', 'countdown', 'duration'],
-  '/text-statistics': ['word count', 'character count', 'reading time'],
-  '/sorter': ['sort', 'alphabetical', 'shuffle', 'dedupe', 'list'],
-  '/spin-the-wheel': ['random', 'picker', 'decide', 'raffle', 'roulette'],
-  '/morse-code-generator': ['morse', 'sos', 'dots', 'dashes', 'translate'],
-  '/percentage-calculator': ['percent', 'discount', 'tip', 'increase', 'decrease'],
-  '/foot-size-converter': ['shoe', 'size', 'us', 'uk', 'eu'],
-  '/palang-ic': ['mykad', 'ic', 'watermark', 'identity card', 'pdf'],
-  '/favicon-generator': ['favicon', 'icon', 'ico', 'apple touch', 'manifest', 'pwa'],
-}
 
 const RECENTS_KEY = 'utilities.my-recent-tools'
 const MAX_RECENTS = 5
@@ -188,6 +166,8 @@ interface Entry {
   /** A colour shown in place of the icon. */
   swatch?: string
   keywords: string[]
+  /** File types, for searches like "png to ico". */
+  files?: FileTyped
   shortcut?: string
   run: () => void
 }
@@ -234,7 +214,8 @@ function PaletteDialog({
         label: t.name,
         hint: t.description,
         icon: t.icon,
-        keywords: KEYWORDS[t.path] ?? [],
+        keywords: t.keywords ?? [],
+        files: t,
         run: () => go(t.path),
       }))
     const pages: Entry[] = [
@@ -316,8 +297,14 @@ function PaletteDialog({
       .map((path) => entries.find((e) => e.id === path))
       .filter((e): e is Entry => Boolean(e))
       .map((e) => ({ ...e, id: `answer-tool:${e.id}`, group: 'Answer' as const, label: `Open ${e.label}` }))
+    // "png to ico" ranks the tools that can do it above loose keyword matches.
+    const fileQuery = parseFileQuery(q)
+    const fileScore = (e: Entry) => {
+      const fit = fileQuery && e.files ? fileMatch(e.files, fileQuery) : 0
+      return fit === 2 ? 95 : fit === 1 ? 90 : 0
+    }
     const matches = entries
-      .map((e) => ({ e, s: score(q, e.label, e.keywords) }))
+      .map((e) => ({ e, s: Math.max(score(q, e.label, e.keywords), fileScore(e)) }))
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.e)
