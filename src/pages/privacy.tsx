@@ -18,7 +18,7 @@ Every tool does its work inside your browser. Text you convert, images you resiz
 Some tools save things in your browser's local storage so they are still there next time. This data never leaves your device, and we cannot see it. It includes:
 
 - **Preferences**: light or dark theme, your Settings choices (date, time and number formats), and the newest "What's new" update you've opened
-- **Tool drafts and lists**: for example the text in Text Statistics, your Spin the Wheel items and winners, your pinned World Clock and Timezone Converter cities, your BMI measurements, and your recent colours in the Colour Picker
+- **Tool drafts and lists**: for example the text in Text Statistics, your Markdown Previewer document, your Spin the Wheel items and winners, your pinned World Clock and Timezone Converter cities, your BMI measurements, and your recent colours in the Colour Picker
 - **Tool options**: for example the Unix timestamp display format, and Palang IC's wording and watermark style
 
 Palang IC deliberately **never** stores card images or the date. Images exist only in memory for as long as the tab is open.
