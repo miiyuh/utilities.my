@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { tools } from '@/lib/tools'
 import { quickAnswers } from '@/lib/quick-answers'
-import { acceptsFile, fileMatch, parseFileQuery, type FileTyped } from '@/lib/file-types'
+import { canReceive, fileMatch, parseFileQuery, type FileTyped } from '@/lib/file-types'
 import { isHeic } from '@/lib/file-intake'
 import { handOff } from '@/lib/file-handoff'
 import { FileDropCatcher } from '@/components/file-drop-catcher'
@@ -297,7 +297,7 @@ function PaletteDialog({
     // A file to open: only the tools that can open every file, filtered by what's typed.
     if (files.length) {
       return entries
-        .filter((e) => e.group === 'Tools' && e.files && files.every((f) => acceptsFile(e.files!, f)))
+        .filter((e) => e.group === 'Tools' && e.files && files.every((f) => canReceive(e.files!, f)))
         .filter((e) => !q || score(q, e.label, e.keywords) > 0)
         .map((e) => ({
           ...e,

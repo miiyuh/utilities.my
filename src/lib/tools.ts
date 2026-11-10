@@ -49,6 +49,7 @@ export const tools: Tool[] = [
     accepts: [...PHOTOS, ".jxl", ".bmp", ".ico", ".tif", ".tiff"],
     produces: [".png", ".jpg", ".jpeg", ".webp", ".avif", ".jxl", ".gif", ".bmp", ".tif", ".tiff", ".ico", ".zip"],
     takesMany: true,
+    receivesFiles: true,
   },
   {
     name: "Markdown Previewer", path: "/markdown-previewer", icon: Article,
@@ -126,12 +127,14 @@ export const tools: Tool[] = [
     keywords: ["favicon", "icon", "ico", "apple touch", "manifest", "pwa"],
     accepts: [...PHOTOS, ".svg"],
     produces: [".ico", ".png", ".svg", ".webmanifest", ".zip"],
+    receivesFiles: true,
   },
   {
     name: "Palang IC", path: "/palang-ic", icon: IdentificationCard,
     description: "Make sure your IC copy can't be used for anything else.",
     keywords: ["mykad", "ic", "watermark", "identity card", "pdf"],
     accepts: [".png", ".jpg", ".jpeg", ".webp"],
+    receivesFiles: true,
     // No `produces`: its PDF and PNG are a stamped IC copy, not a converted file,
     // so it shouldn't answer searches like "jpg to pdf".
   },

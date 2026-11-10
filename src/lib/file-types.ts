@@ -39,7 +39,13 @@ export interface FileTyped {
   produces?: string[]
   /** It can work on several files at once. */
   takesMany?: boolean
+  /** It picks up files handed over from another page (its file intake has `handoff` set). */
+  receivesFiles?: boolean
 }
+
+/** Whether a file can be handed to this tool: it opens the type and picks up hand-offs. */
+export const canReceive = (tool: FileTyped, file: { name: string; type: string }) =>
+  Boolean(tool.receivesFiles) && acceptsFile(tool, file)
 
 /** ".PNG", "png" or "jpeg xl" → the extension we know it by; null for anything else. */
 export function extensionFor(word: string): string | null {
