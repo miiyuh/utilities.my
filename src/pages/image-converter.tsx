@@ -435,6 +435,11 @@ function SingleConverter({
   const generation = React.useRef(0)
   /** Latest load request; results from an earlier, slower load are ignored. */
   const loadId = React.useRef(0)
+  /**
+   * The file on screen. Its metadata is kept even if a later file is tried
+   * and fails, so this is tracked apart from `loadId`.
+   */
+  const shownFile = React.useRef<File | null>(null)
 
   const { url: thumbUrl } = useDisplayUrl(file)
   const { url: afterUrl, failed: afterFailed, retry: retryAfter } = useDisplayUrl(preview?.blob ?? null)
@@ -467,9 +472,11 @@ function SingleConverter({
       setPreview(null)
       setEncodeError(null)
       setMeta({ status: 'loading' })
+      shownFile.current = f
+      const stillShown = () => shownFile.current === f
       void metaRead.then(
-        (report) => current() && setMeta({ status: 'done', report }),
-        () => current() && setMeta({ status: 'failed' })
+        (report) => stillShown() && setMeta({ status: 'done', report }),
+        () => stillShown() && setMeta({ status: 'failed' })
       )
     } catch (e) {
       if (!current()) return
@@ -492,6 +499,7 @@ function SingleConverter({
 
   const clear = () => {
     loadId.current++
+    shownFile.current = null
     setFile(null)
     setImage(null)
     setMeta({ status: 'idle' })
