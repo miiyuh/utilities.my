@@ -248,7 +248,9 @@ export default function PalangIc() {
         if (problems[0]) showProblem(problems[0])
         return
       }
-      const empty: SideKey | null = !sides.front ? 'front' : !sides.back ? 'back' : null
+      // A side that's still loading counts as taken, or this photo would replace it.
+      const free = (key: SideKey) => !sides[key] && !loadingSides[key]
+      const empty: SideKey | null = free('front') ? 'front' : free('back') ? 'back' : null
       if (empty) void handleFile(empty, files[0])
       else toast({ title: 'Both sides already have a photo', description: 'Remove one, or use Change on the side you want to replace.' })
     },
