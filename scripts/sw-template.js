@@ -87,9 +87,15 @@ async function page(request, url) {
   }
 }
 
-/** Hashed files never change, so a stored copy is always right. */
+/**
+ * Stored copies first. This build's cache is searched before the others, because
+ * files without a hash in their name (data, icons) may differ in an older build
+ * that's kept for other tabs; those tabs still find their own hashed files.
+ */
 async function storedFirst(request) {
-  const hit = await caches.match(request, { ignoreSearch: true })
+  const current = await caches.open(PRECACHE)
+  const hit =
+    (await current.match(request, { ignoreSearch: true })) ?? (await caches.match(request, { ignoreSearch: true }))
   if (hit) return hit
   const response = await fetch(request)
   if (response.ok) {

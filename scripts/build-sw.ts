@@ -13,6 +13,9 @@ import { fileURLToPath } from 'node:url'
 
 import { routes } from '../src/lib/seo'
 
+/** A warning past this: everything here downloads on the first visit, and one failed file fails the install. */
+const BUDGET_BYTES = 8 * 1024 * 1024
+
 /** Single files outside the folders below that the app uses. */
 const ROOT_FILES = new Set(['/manifest.json', '/favicon.ico', '/apple-touch-icon.png'])
 
@@ -74,6 +77,12 @@ async function main() {
   await writeFile(join(dist, 'sw.js'), sw)
 
   const bytes = contents.reduce((n, b) => n + b.length, 0)
+  if (bytes > BUDGET_BYTES) {
+    console.warn(
+      `[build-sw] Warning: ${(bytes / 1024 / 1024).toFixed(1)} MB is stored on the first visit, over the ` +
+        `${BUDGET_BYTES / 1024 / 1024} MB budget. Check what planPrecache picks up.`
+    )
+  }
   console.log(
     `[build-sw] sw.js version ${manifest.version}: ${plan.pages.length} pages and ${plan.files.length} files ` +
       `(${(bytes / 1024 / 1024).toFixed(1)} MB with the pages) stored for offline use.`
