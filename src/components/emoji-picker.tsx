@@ -21,10 +21,16 @@ interface EmojiData {
 
 let cache: Promise<EmojiData> | null = null
 function loadEmoji(): Promise<EmojiData> {
-  cache ??= fetch('/data/emoji.json').then((r) => {
-    if (!r.ok) throw new Error('Could not load the emoji list.')
-    return r.json() as Promise<EmojiData>
-  })
+  cache ??= fetch('/data/emoji.json')
+    .then((r) => {
+      if (!r.ok) throw new Error('Could not load the emoji list.')
+      return r.json() as Promise<EmojiData>
+    })
+    .catch((e: unknown) => {
+      // Forget the failure, so the next try fetches again.
+      cache = null
+      throw e
+    })
   return cache
 }
 
@@ -45,10 +51,18 @@ export function EmojiPicker({ value, onChange }: { value: string; onChange: (emo
   const [tone, setTone] = React.useState(0)
   const [hovered, setHovered] = React.useState<EmojiItem | null>(null)
 
+  const load = React.useCallback(() => {
+    loadEmoji().then(
+      (d) => {
+        setData(d)
+        setError(null)
+      },
+      (e: unknown) => setError(e instanceof Error ? e.message : 'Could not load emoji.')
+    )
+  }, [])
   React.useEffect(() => {
-    if (!open || data) return
-    loadEmoji().then(setData, (e: unknown) => setError(e instanceof Error ? e.message : 'Could not load emoji.'))
-  }, [open, data])
+    if (open && !data) load()
+  }, [open, data, load])
 
   const withTone = (it: EmojiItem) => (tone > 0 && it.t ? it.t[tone - 1] : it.e)
 
@@ -109,7 +123,20 @@ export function EmojiPicker({ value, onChange }: { value: string; onChange: (emo
           </div>
         )}
         <div className="h-72 overflow-y-auto p-1.5">
-          {error && <p className="p-4 text-sm text-destructive">{error}</p>}
+          {error && (
+            <p className="p-4 text-sm text-destructive">
+              {error}{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null)
+                  load()
+                }}
+                className="font-medium underline underline-offset-2">
+                Try again
+              </button>
+            </p>
+          )}
           {!data && !error && (
             <p className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground">
               <Spinner className="h-4 w-4 animate-spin" /> Loading emoji…

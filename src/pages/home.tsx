@@ -67,7 +67,7 @@ export default function Home() {
                   runs in your browser and stays there. Go ahead, use it, and if it helps, share it with a friend!
                 </p>
                 <p className={`text-sm text-muted-foreground/80 ${heroStagger} [animation-delay:calc(var(--duration-stagger)*4)]`}>
-                  {sortedTools.length} tools · Free forever · No accounts · Runs in your browser
+                  {sortedTools.length} tools · Free forever · No accounts · Runs in your browser · Works offline · Drop a file anywhere to find a tool for it
                 </p>
               </div>
             </div>

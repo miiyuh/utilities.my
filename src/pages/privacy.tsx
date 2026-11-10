@@ -3,7 +3,7 @@ import { MarkdownPage } from '@/components/markdown/markdown-page';
 
 const PRIVACY_CONTENT = `# Privacy Policy
 
-*Last Updated: 2026-10-17*
+*Last Updated: 2026-11-10*
 
 utilities.my is a collection of free tools that run in your browser. This policy explains what happens to your data when you use them. The short version: what you type, upload or calculate stays on your device, and the only things that leave it are anonymous visit statistics and the requests your browser makes to load the site.
 
@@ -17,11 +17,13 @@ Every tool does its work inside your browser. Text you convert, images you resiz
 
 Some tools save things in your browser's local storage so they are still there next time. This data never leaves your device, and we cannot see it. It includes:
 
-- **Preferences**: light or dark theme, and your Settings choices (date, time and number formats)
-- **Tool drafts and lists**: for example the text in Text Statistics, your Spin the Wheel items and winners, your pinned World Clock and Timezone Converter cities, your BMI measurements, and your recent colours in the Colour Picker
+- **Preferences**: light or dark theme, your Settings choices (date, time and number formats), and the newest "What's new" update you've opened
+- **Tool drafts and lists**: for example the text in Text Statistics, your Markdown Previewer document, your Spin the Wheel items and winners, your pinned World Clock and Timezone Converter cities, your BMI measurements, and your recent colours in the Colour Picker
 - **Tool options**: for example the Unix timestamp display format, and Palang IC's wording and watermark style
 
 Palang IC deliberately **never** stores card images or the date. Images exist only in memory for as long as the tab is open.
+
+To keep working without an internet connection, the site also stores its own files in your browser after your first visit: its pages, code, fonts and icons, and the image encoders once you use them. That is a copy of the website, not of anything you enter, and it updates when the site does.
 
 You can remove all of this at any time by clearing this site's data in your browser settings.
 

@@ -91,4 +91,6 @@ firestore-debug.log
 vite.config.js
 vite.config.d.ts
 scripts/**/*.js
+# Hand-written: the service worker that build-sw.ts fills in
+!scripts/sw-template.js
 scripts/**/*.d.ts

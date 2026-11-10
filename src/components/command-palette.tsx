@@ -12,40 +12,25 @@ import {
   Link as LinkIcon,
   Keyboard,
   ClockCounterClockwise,
+  Copy,
+  Paperclip,
+  X,
   type Icon,
 } from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { tools } from '@/lib/tools'
+import { quickAnswers } from '@/lib/quick-answers'
+import { canReceive, fileMatch, parseFileQuery, type FileTyped } from '@/lib/file-types'
+import { isHeic } from '@/lib/file-intake'
+import { handOff } from '@/lib/file-handoff'
+import { FileDropCatcher } from '@/components/file-drop-catcher'
 import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
 // Search data
 // ---------------------------------------------------------------------------
-
-/** Extra words people might type for each tool (synonyms, units, use cases). */
-const KEYWORDS: Record<string, string[]> = {
-  '/text-case': ['uppercase', 'lowercase', 'title', 'camel', 'snake', 'kebab', 'capitalise'],
-  '/colour-picker': ['color', 'hex', 'rgb', 'hsl', 'oklch', 'cmyk', 'eyedropper', 'palette', 'contrast'],
-  '/unit-converter': ['length', 'weight', 'temperature', 'celsius', 'fahrenheit', 'km', 'miles', 'kg', 'pounds'],
-  '/bmi-calculator': ['body mass', 'weight', 'height', 'health'],
-  '/image-converter': ['png', 'jpg', 'jpeg', 'webp', 'avif', 'jxl', 'jpegxl', 'gif', 'bmp', 'tiff', 'tif', 'ico', 'icon', 'resize', 'compress', 'crop', 'exif'],
-  '/markdown-previewer': ['md', 'editor', 'html', 'preview'],
-  '/qr-code-generator': ['qr', 'barcode', 'link', 'wifi', 'url'],
-  '/unix-timestamp-converter': ['epoch', 'unix', 'timestamp', 'seconds', 'milliseconds'],
-  '/timezone-converter': ['time zone', 'meeting', 'gmt', 'utc', 'schedule'],
-  '/world-clock': ['globe', 'map', 'time', 'cities', 'day night'],
-  '/date-diff-calculator': ['days between', 'age', 'countdown', 'duration'],
-  '/text-statistics': ['word count', 'character count', 'reading time'],
-  '/sorter': ['sort', 'alphabetical', 'shuffle', 'dedupe', 'list'],
-  '/spin-the-wheel': ['random', 'picker', 'decide', 'raffle', 'roulette'],
-  '/morse-code-generator': ['morse', 'sos', 'dots', 'dashes', 'translate'],
-  '/percentage-calculator': ['percent', 'discount', 'tip', 'increase', 'decrease'],
-  '/foot-size-converter': ['shoe', 'size', 'us', 'uk', 'eu'],
-  '/palang-ic': ['mykad', 'ic', 'watermark', 'identity card', 'pdf'],
-  '/favicon-generator': ['favicon', 'icon', 'ico', 'apple touch', 'manifest', 'pwa'],
-}
 
 const RECENTS_KEY = 'utilities.my-recent-tools'
 const MAX_RECENTS = 5
@@ -92,6 +77,8 @@ function score(query: string, name: string, extra: string[]): number {
 interface PaletteContext {
   openPalette: () => void
   openShortcuts: () => void
+  /** Open search showing the tools that can open these files. */
+  openWithFiles: (files: File[]) => void
 }
 
 const Ctx = React.createContext<PaletteContext | null>(null)
@@ -116,6 +103,8 @@ function isTypingTarget(el: EventTarget | null): boolean {
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = React.useState(false)
+  /** Files dropped or pasted to open with a tool; empty for a normal search. */
+  const [files, setFiles] = React.useState<File[]>([])
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false)
   const { resolvedTheme, setTheme } = useTheme()
   const { pathname } = useLocation()
@@ -153,16 +142,30 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
   }, [resolvedTheme, setTheme])
 
   const value = React.useMemo(
-    () => ({ openPalette: () => setPaletteOpen(true), openShortcuts: () => setShortcutsOpen(true) }),
+    () => ({
+      openPalette: () => setPaletteOpen(true),
+      openShortcuts: () => setShortcutsOpen(true),
+      openWithFiles: (next: File[]) => {
+        setShortcutsOpen(false)
+        setFiles(next)
+        setPaletteOpen(true)
+      },
+    }),
     []
   )
 
   return (
     <Ctx.Provider value={value}>
       {children}
+      <FileDropCatcher onFiles={value.openWithFiles} />
       <PaletteDialog
         open={paletteOpen}
-        onOpenChange={setPaletteOpen}
+        onOpenChange={(o) => {
+          setPaletteOpen(o)
+          if (!o) setFiles([])
+        }}
+        files={files}
+        onFiles={setFiles}
         onShowShortcuts={() => {
           setPaletteOpen(false)
           setShortcutsOpen(true)
@@ -179,11 +182,15 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
 
 interface Entry {
   id: string
-  group: 'Recent' | 'Tools' | 'Pages' | 'Actions'
+  group: 'Open with' | 'Answer' | 'Recent' | 'Tools' | 'Pages' | 'Actions'
   label: string
   hint?: string
   icon: Icon
+  /** A colour shown in place of the icon. */
+  swatch?: string
   keywords: string[]
+  /** File types, for searches like "png to ico". */
+  files?: FileTyped
   shortcut?: string
   run: () => void
 }
@@ -191,10 +198,14 @@ interface Entry {
 function PaletteDialog({
   open,
   onOpenChange,
+  files,
+  onFiles,
   onShowShortcuts,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  files: File[]
+  onFiles: (files: File[]) => void
   onShowShortcuts: () => void
 }) {
   const navigate = useNavigate()
@@ -230,7 +241,8 @@ function PaletteDialog({
         label: t.name,
         hint: t.description,
         icon: t.icon,
-        keywords: KEYWORDS[t.path] ?? [],
+        keywords: t.keywords ?? [],
+        files: t,
         run: () => go(t.path),
       }))
     const pages: Entry[] = [
@@ -282,6 +294,23 @@ function PaletteDialog({
 
   const results = React.useMemo<Entry[]>(() => {
     const q = query.trim()
+    // A file to open: only the tools that can open every file, filtered by what's typed.
+    if (files.length) {
+      return entries
+        .filter((e) => e.group === 'Tools' && e.files && files.every((f) => canReceive(e.files!, f)))
+        .filter((e) => !q || score(q, e.label, e.keywords) > 0)
+        .map((e) => ({
+          ...e,
+          id: `open:${e.id}`,
+          group: 'Open with' as const,
+          label: e.label,
+          hint: files.length > 1 && !e.files?.takesMany ? `Opens the first file. ${e.hint ?? ''}` : e.hint,
+          run: () => {
+            handOff(e.id, files)
+            go(e.id)
+          },
+        }))
+    }
     if (!q) {
       const recent = recents
         .map((p) => entries.find((e) => e.id === p && e.group === 'Tools'))
@@ -289,14 +318,44 @@ function PaletteDialog({
         .map((e) => ({ ...e, id: `recent:${e.id}`, group: 'Recent' as const, icon: e.icon }))
       return [...recent, ...entries]
     }
-    return entries
-      .map((e) => ({ e, s: score(q, e.label, e.keywords) }))
+    // Typed values ("10 km to mi", "#1e90ff") get an answer to copy, then the tool that made it.
+    const answers = quickAnswers(q)
+    const answerEntries: Entry[] = answers.map((a, i) => ({
+      id: `answer:${i}`,
+      group: 'Answer',
+      label: a.value,
+      hint: a.detail,
+      icon: Copy,
+      swatch: a.swatch,
+      keywords: [],
+      shortcut: '↵ copy',
+      run: () => {
+        onOpenChange(false)
+        void navigator.clipboard.writeText(a.value).then(
+          () => toast({ title: 'Copied', description: a.value }),
+          () => toast({ title: 'Copy failed', description: 'Unable to copy to clipboard.', variant: 'destructive' })
+        )
+      },
+    }))
+    const answerTools = [...new Set(answers.map((a) => a.toolPath))]
+      .map((path) => entries.find((e) => e.id === path))
+      .filter((e): e is Entry => Boolean(e))
+      .map((e) => ({ ...e, id: `answer-tool:${e.id}`, group: 'Answer' as const, label: `Open ${e.label}` }))
+    // "png to ico" ranks the tools that can do it above loose keyword matches.
+    const fileQuery = parseFileQuery(q)
+    const fileScore = (e: Entry) => {
+      const fit = fileQuery && e.files ? fileMatch(e.files, fileQuery) : 0
+      return fit === 2 ? 95 : fit === 1 ? 90 : 0
+    }
+    const matches = entries
+      .map((e) => ({ e, s: Math.max(score(q, e.label, e.keywords), fileScore(e)) }))
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.e)
-  }, [query, entries, recents])
+    return [...answerEntries, ...answerTools, ...matches]
+  }, [query, entries, recents, files, go, onOpenChange, toast])
 
-  React.useEffect(() => setActive(0), [query])
+  React.useEffect(() => setActive(0), [query, files])
 
   React.useEffect(() => {
     listRef.current?.querySelector(`[data-index="${active}"]`)?.scrollIntoView({ block: 'nearest' })
@@ -327,7 +386,20 @@ function PaletteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="top-[15%] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-xl" showCloseButton={false}>
+      <DialogContent
+        className="top-[15%] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-xl"
+        showCloseButton={false}
+        // Drop a file on search to see which tools open it.
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes('Files')) e.preventDefault()
+        }}
+        onDrop={(e) => {
+          const dropped = Array.from(e.dataTransfer.files)
+          if (!dropped.length) return
+          e.preventDefault()
+          onFiles(dropped)
+        }}
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>Search tools and actions</DialogTitle>
           <DialogDescription>Type to filter, use the arrow keys to move, Enter to open.</DialogDescription>
@@ -339,7 +411,13 @@ function PaletteDialog({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search tools and actions…"
+            onPaste={(e) => {
+              const pasted = Array.from(e.clipboardData.files)
+              if (!pasted.length) return
+              e.preventDefault()
+              onFiles(pasted)
+            }}
+            placeholder={files.length ? 'Filter the tools that can open it…' : 'Search tools, or type 10 km to mi, #1e90ff…'}
             className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             role="combobox"
             aria-expanded="true"
@@ -349,6 +427,22 @@ function PaletteDialog({
           />
           <kbd className="hidden rounded-md border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">Esc</kbd>
         </div>
+        {files.length > 0 && (
+          // After the input, so the input stays the first thing focused.
+          <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-sm">
+            <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1 truncate">
+              {files.length === 1 ? files[0].name || 'Pasted file' : `${files.length} files`}
+            </span>
+            <button
+              type="button"
+              onClick={() => onFiles([])}
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" /> Search instead
+            </button>
+          </div>
+        )}
         <div
           ref={listRef}
           id="palette-list"
@@ -358,7 +452,11 @@ function PaletteDialog({
           aria-label="Results" className="max-h-[min(60vh,26rem)] overflow-y-auto p-2">
           {results.length === 0 && (
             <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-              Nothing matches “{query}”. Try a tool name or what you want to do, like “resize” or “epoch”.
+              {files.length && !query.trim()
+                ? files.some(isHeic)
+                  ? "HEIC photos aren't supported yet. Save it as JPEG on your iPhone (Settings → Camera → Formats → Most Compatible) or export it as JPEG first."
+                  : `No tool here opens ${files.length === 1 ? files[0].name || 'this file' : 'all of these files'} yet.`
+                : `Nothing matches “${query}”. Try a tool name or what you want to do, like “resize” or “epoch”.`}
             </p>
           )}
           {rows.map(({ entry, header }, i) => {
@@ -387,9 +485,15 @@ function PaletteDialog({
                     i === active ? 'bg-accent text-accent-foreground' : 'text-foreground'
                   )}
                 >
-                  <EntryIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  {entry.swatch ? (
+                    <span aria-hidden className="h-4 w-4 shrink-0 rounded-sm border border-border" style={{ backgroundColor: entry.swatch }} />
+                  ) : (
+                    <EntryIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{entry.label}</div>
+                    <div className={cn('truncate font-medium', entry.group === 'Answer' && entry.id.startsWith('answer:') && 'font-mono tabular-nums')}>
+                      {entry.label}
+                    </div>
                     {entry.hint && <div className="truncate text-xs text-muted-foreground">{entry.hint}</div>}
                   </div>
                   {entry.shortcut && (

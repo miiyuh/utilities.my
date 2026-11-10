@@ -21,6 +21,8 @@ import { Switch } from '@/components/ui/switch';
 import { downloadBlob, isIOSOrSafari } from '@/lib/image-utils';
 
 import { ToolMethodology } from '@/components/tool-methodology';
+import { useFileIntake } from '@/hooks/use-file-intake';
+import { toolAccepts } from '@/lib/tools';
 // Fallback simple icons for actions not present in the icon set
 const CodeIconFallback = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
@@ -175,7 +177,6 @@ export default function MarkdownPreviewerPage() {
   const draggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const LS_KEY = 'markdown-previewer-content';
-  const fileRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
 
   // Keep the draft between visits. Blocked storage (a private window) just means it isn't kept.
@@ -221,6 +222,15 @@ export default function MarkdownPreviewerPage() {
     // Keep anything typed or cleared while the file was being read.
     setMarkdownText((current) => (current === before ? t : current));
   };
+  // Choose a file, or receive one from another tool, with the same checks everywhere.
+  const { open: chooseFile, inputProps: fileInputProps } = useFileIntake({
+    accepts: toolAccepts('/markdown-previewer'),
+    handoff: '/markdown-previewer',
+    onFiles: (files, problems) => {
+      if (files[0]) void openFile(files[0]);
+      else if (problems[0]) toast({ title: "Couldn't open that file", description: problems[0], variant: 'destructive' });
+    },
+  });
 
   /** The current Markdown as safe HTML, rendered on demand (the preview itself updates after a short delay). */
   const renderNow = () => DOMPurify.sanitize(marked.parse(markdownText) as string);
@@ -415,18 +425,8 @@ export default function MarkdownPreviewerPage() {
                 ))}
               </fieldset>
               <span className="mx-1 h-6 w-px bg-border" aria-hidden />
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".md,.markdown,.txt,text/markdown,text/plain"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.currentTarget.files?.[0];
-                  if (f) void openFile(f);
-                  e.currentTarget.value = '';
-                }}
-              />
-              <Button variant="outline" size="icon" onClick={() => fileRef.current?.click()} title="Open a .md file">
+              <input {...fileInputProps} className="hidden" />
+              <Button variant="outline" size="icon" onClick={chooseFile} title="Open a .md file">
                 <UploadSimple className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="icon" onClick={() => void copyFormatted()} disabled={!markdownText.trim()} title="Copy formatted (for email and documents)">

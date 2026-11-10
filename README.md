@@ -2,7 +2,7 @@
 
 ---
 
-Small browser tools for everyday jobs: converting images, units and time zones, checking text, and a few others. Everything runs in your browser. Nothing you enter or drop in is uploaded.
+Small browser tools for everyday jobs: converting images, units and time zones, checking text, and a few others. Everything runs in your browser. Nothing you enter or drop in is uploaded, and after your first visit the site works offline too.
 
 ## Tools
 
@@ -81,7 +81,7 @@ Then open `http://localhost:5173`.
 | Command | What it does |
 |---------|--------------|
 | `bun run dev` | Start the dev server on port 5173 |
-| `bun run build` | Typecheck, build, then prerender each route's HTML, the sitemap and the social cards |
+| `bun run build` | Typecheck, build, then prerender each route's HTML, the sitemap and the social cards, and write the offline service worker (`dist/sw.js`) |
 | `bun run preview` | Serve the production build locally |
 | `bun run lint` | Run oxlint, including type-aware rules |
 | `bun run test` | Run the tests with bun test |

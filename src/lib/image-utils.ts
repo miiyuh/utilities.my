@@ -19,21 +19,6 @@ export function loadImage(src: string, timeout = 10000): Promise<HTMLImageElemen
 }
 
 /**
- * Validate a file for image conversion
- */
-export function validateImageFile(file: File): { valid: boolean; error?: string } {
-  if (!file.type.startsWith('image/')) {
-    return { valid: false, error: 'Not a valid image file' }
-  }
-  
-  if (file.size > 50 * 1024 * 1024) {
-    return { valid: false, error: 'File size exceeds 50MB limit' }
-  }
-  
-  return { valid: true }
-}
-
-/**
  * Download a blob file with mobile compatibility
  */
 export function downloadBlob(

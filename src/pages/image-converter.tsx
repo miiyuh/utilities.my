@@ -38,11 +38,14 @@ import { ImageEditorDialog } from '@/components/image-editor-dialog'
 import { CompareSlider } from '@/components/compare-slider'
 import { StickyColumn } from '@/components/sticky-column'
 import { useToast } from '@/hooks/use-toast'
+import { useFileIntake, type FileIntake } from '@/hooks/use-file-intake'
+import { toolAccepts } from '@/lib/tools'
+import { handoffCount } from '@/lib/file-handoff'
+import { SendTo } from '@/components/send-to'
 import { downloadBlob, humanSize, isIOSOrSafari } from '@/lib/image-utils'
 import {
   FORMATS,
   MAX_DIMENSION,
-  MAX_FILE_BYTES,
   NO_EDITS,
   centredCrop,
   decodeImage,
@@ -52,8 +55,6 @@ import {
   encodeToTarget,
   fitLongEdge,
   hasEdits,
-  isAcceptedImage,
-  isHeic,
   outputFilename,
   renderEdited,
   type DecodedImage,
@@ -107,12 +108,8 @@ const META_OPTIONS: { value: MetadataMode; label: string }[] = [
 
 const PASTE_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
 
-function validate(file: File): string | null {
-  if (isHeic(file)) return `${file.name} is a HEIC photo, which isn't supported. Save it as JPEG on your iPhone (Settings → Camera → Formats → Most Compatible) or export it as JPEG first.`
-  if (!isAcceptedImage(file)) return `${file.name} isn't an image.`
-  if (file.size > MAX_FILE_BYTES) return `${file.name} is larger than 50 MB.`
-  return null
-}
+/** What this tool opens, from the tool list. */
+const ACCEPTS = toolAccepts('/image-converter')
 
 function SizeChange({ from, to, className }: { from: number; to: number; className?: string }) {
   const smaller = to <= from
@@ -236,14 +233,25 @@ function OutputControls({
   )
 }
 
-function MetadataPanel({ report, loading }: { report: MetadataReport | null; loading: boolean }) {
-  if (loading) {
+/** Reading a file's metadata: one status, so a failed read can't look like "still reading" or "none found". */
+type MetaState = { status: 'idle' } | { status: 'loading' } | { status: 'done'; report: MetadataReport | null } | { status: 'failed' }
+
+function MetadataPanel({ meta }: { meta: MetaState }) {
+  if (meta.status === 'failed') {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Couldn&apos;t read this file&apos;s camera, date and location details. Check your connection, then open the image again.
+      </p>
+    )
+  }
+  if (meta.status !== 'done') {
     return (
       <p className="flex items-center gap-2 text-sm text-muted-foreground">
         <Spinner className="h-4 w-4 animate-spin" /> Reading the file…
       </p>
     )
   }
+  const { report } = meta
   if (!report) {
     return <p className="text-sm text-muted-foreground">No metadata found. This file doesn&apos;t carry camera, date or location details.</p>
   }
@@ -335,94 +343,35 @@ function useDisplayUrl(blob: Blob | null): { url: string | null; failed: boolean
   return { url: useObjectUrl(shown), failed, retry: () => setAttempt((n) => n + 1) }
 }
 
-function DropZone({ multiple, onFiles, compact }: { multiple: boolean; onFiles: (files: File[]) => void; compact?: boolean }) {
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  const zoneRef = React.useRef<HTMLButtonElement>(null)
-  const [over, setOver] = React.useState(false)
-  const onFilesRef = React.useRef(onFiles)
-  React.useEffect(() => {
-    onFilesRef.current = onFiles
-  })
-  // Drag-and-drop is a pointer convenience (the button is the accessible path),
-  // so the listeners are attached directly rather than as JSX handlers.
-  React.useEffect(() => {
-    const el = zoneRef.current
-    if (!el) return
-    const over = (e: DragEvent) => {
-      e.preventDefault()
-      setOver(true)
-    }
-    const leave = () => setOver(false)
-    const drop = (e: DragEvent) => {
-      e.preventDefault()
-      setOver(false)
-      onFilesRef.current(Array.from(e.dataTransfer?.files ?? []))
-    }
-    el.addEventListener('dragover', over)
-    el.addEventListener('dragleave', leave)
-    el.addEventListener('drop', drop)
-    return () => {
-      el.removeEventListener('dragover', over)
-      el.removeEventListener('dragleave', leave)
-      el.removeEventListener('drop', drop)
-    }
-  }, [])
+function DropZone({ intake, multiple, compact }: { intake: FileIntake; multiple: boolean; compact?: boolean }) {
+  const { dragging, dropTarget, open, inputProps } = intake
   return (
     <>
     {/* The whole box is the button: click, tap or press Enter anywhere inside it. */}
     <button
-      ref={zoneRef}
+      ref={dropTarget}
       type="button"
-      onClick={() => inputRef.current?.click()}
+      onClick={open}
       className={cn(
         'flex w-full flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed text-center transition-colors duration-quick outline-none hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-3 focus-visible:ring-ring/30',
         compact ? 'p-4' : 'p-8 sm:p-10',
-        over ? 'border-primary bg-primary/5' : 'border-border'
+        dragging ? 'border-primary bg-primary/5' : 'border-border'
       )}
     >
       {!compact && <Upload className="h-8 w-8 text-muted-foreground" />}
       <div className="space-y-1">
         <p className="text-sm font-medium">{multiple ? 'Drop images here' : 'Drop an image here'}</p>
         <p className="text-xs text-muted-foreground">
-          or paste with {PASTE_KEY} V. PNG, JPEG, WebP, GIF, AVIF, JPEG XL, BMP and ICO, up to 50 MB.
+          or paste with {PASTE_KEY} V. PNG, JPEG, WebP, GIF, AVIF, JPEG XL, BMP, ICO, TIFF and SVG, up to 50 MB.
         </p>
       </div>
       <span className="inline-flex h-8 items-center gap-2 rounded-full border border-border bg-background px-3 text-sm font-medium">
         <Upload className="h-4 w-4" /> {multiple ? 'Choose images' : 'Choose an image'}
       </span>
     </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,.jxl,.tif,.tiff"
-        multiple={multiple}
-        className="hidden"
-        onChange={(e) => {
-          onFiles(Array.from(e.target.files ?? []))
-          e.target.value = ''
-        }}
-      />
+      <input {...inputProps} className="hidden" />
     </>
   )
-}
-
-/** Images on the clipboard (Ctrl/⌘ V anywhere on the page). */
-function usePasteImages(onFiles: (files: File[]) => void) {
-  const cb = React.useRef(onFiles)
-  React.useEffect(() => {
-    cb.current = onFiles
-  })
-  React.useEffect(() => {
-    const onPaste = (e: ClipboardEvent) => {
-      const files = Array.from(e.clipboardData?.files ?? []).filter(isAcceptedImage)
-      if (files.length) {
-        e.preventDefault()
-        cb.current(files)
-      }
-    }
-    document.addEventListener('paste', onPaste)
-    return () => document.removeEventListener('paste', onPaste)
-  }, [])
 }
 
 // ---------------------------------------------------------------------------
@@ -479,15 +428,18 @@ function SingleConverter({
   const [height, setHeight] = React.useState(0)
   const [lockAspect, setLockAspect] = React.useState(true)
   const [presetId, setPresetId] = React.useState('custom')
-  const [meta, setMeta] = React.useState<MetadataReport | null>(null)
-  const [metaLoading, setMetaLoading] = React.useState(false)
+  const [meta, setMeta] = React.useState<MetaState>({ status: 'idle' })
   const [preview, setPreview] = React.useState<PreviewResult | null>(null)
   const [encoding, setEncoding] = React.useState(false)
   const [encodeError, setEncodeError] = React.useState<string | null>(null)
   const generation = React.useRef(0)
   /** Latest load request; results from an earlier, slower load are ignored. */
   const loadId = React.useRef(0)
-  const replaceRef = React.useRef<HTMLInputElement>(null)
+  /**
+   * The file on screen. Its metadata is kept even if a later file is tried
+   * and fails, so this is tracked apart from `loadId`.
+   */
+  const shownFile = React.useRef<File | null>(null)
 
   const { url: thumbUrl } = useDisplayUrl(file)
   const { url: afterUrl, failed: afterFailed, retry: retryAfter } = useDisplayUrl(preview?.blob ?? null)
@@ -495,50 +447,62 @@ function SingleConverter({
 
   const [ew, eh] = image ? editedSize(image.width, image.height, edits) : [0, 0]
 
+  /**
+   * Opens a file. A picture already open stays on screen, with its settings,
+   * until the new one is ready, and stays if the new one can't be opened.
+   */
   const load = async (f: File) => {
-    const problem = validate(f)
-    if (problem) {
-      setError(problem)
-      return
-    }
     const id = ++loadId.current
     const current = () => id === loadId.current
     setError(null)
     setLoading(true)
-    setMeta(null)
-    setMetaLoading(true)
-    setPreview(null)
-    setEdits(NO_EDITS)
-    setPresetId('custom')
-    void readMetadata(f).then((r) => {
-      if (!current()) return
-      setMeta(r)
-      setMetaLoading(false)
-    })
+    // Start reading metadata alongside the decode; it's only shown if the decode works.
+    const metaRead = readMetadata(f)
+    metaRead.catch(() => undefined)
     try {
       const img = await decodeImage(f)
       if (!current()) return
+      // Everything switches to the new image at once.
       setFile(f)
       setImage(img)
       setWidth(img.width)
       setHeight(img.height)
+      setEdits(NO_EDITS)
+      setPresetId('custom')
+      setPreview(null)
+      setEncodeError(null)
+      setMeta({ status: 'loading' })
+      shownFile.current = f
+      const stillShown = () => shownFile.current === f
+      void metaRead.then(
+        (report) => stillShown() && setMeta({ status: 'done', report }),
+        () => stillShown() && setMeta({ status: 'failed' })
+      )
     } catch (e) {
       if (!current()) return
-      setImage(null)
-      setFile(null)
       setError(e instanceof Error ? e.message : 'This image could not be opened.')
     } finally {
       if (current()) setLoading(false)
     }
   }
 
-  usePasteImages((files) => void load(files[0]))
+  // Choose, drop or paste: the same checks for all three.
+  const intake = useFileIntake({
+    accepts: ACCEPTS,
+    paste: true,
+    handoff: '/image-converter',
+    onFiles: (files, problems) => {
+      if (files[0]) void load(files[0])
+      else if (problems[0]) setError(problems[0])
+    },
+  })
 
   const clear = () => {
     loadId.current++
+    shownFile.current = null
     setFile(null)
     setImage(null)
-    setMeta(null)
+    setMeta({ status: 'idle' })
     setPreview(null)
     setEdits(NO_EDITS)
     setError(null)
@@ -639,6 +603,12 @@ function SingleConverter({
     return () => window.clearTimeout(timer)
   }, [image, file, edits, width, height, settings, inputsKey])
 
+  // The converted image as a file, for sending to another tool.
+  const output = React.useMemo(
+    () => (preview && file && previewCurrent ? new File([preview.blob], outputFilename(file.name, settings.format), { type: preview.blob.type }) : null),
+    [preview, file, previewCurrent, settings.format]
+  )
+
   const download = () => {
     if (!preview || !file || !previewCurrent) return
     const name = outputFilename(file.name, settings.format)
@@ -660,7 +630,7 @@ function SingleConverter({
     return (
       <Card className="minimal-card">
         <CardContent className="space-y-4">
-          <DropZone multiple={false} onFiles={(fs) => fs[0] && void load(fs[0])} />
+          <DropZone intake={intake} multiple={false} />
           {loading && (
             <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Spinner className="h-4 w-4 animate-spin" /> Opening the image…
@@ -716,21 +686,21 @@ function SingleConverter({
               <Button variant="outline" size="sm" onClick={() => setEditorOpen(true)} className="w-full">
                 <PencilSimple className="h-4 w-4" /> Crop, rotate, flip
               </Button>
-              <Button variant="outline" size="sm" onClick={() => replaceRef.current?.click()} className="w-full">
+              <Button variant="outline" size="sm" onClick={intake.open} className="w-full">
                 <Upload className="h-4 w-4" /> Change image
               </Button>
-              <input
-                ref={replaceRef}
-                type="file"
-                accept="image/*,.jxl,.tif,.tiff"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) void load(f)
-                  e.target.value = ''
-                }}
-              />
+              <input {...intake.inputProps} className="hidden" />
             </div>
+            {loading && (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Spinner className="h-4 w-4 animate-spin" /> Opening the new image…
+              </p>
+            )}
+            {error && (
+              <p className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                <Warning className="mt-0.5 h-4 w-4 shrink-0" /> {error} The image above is still open.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -739,7 +709,7 @@ function SingleConverter({
             <CardTitle className="font-headline text-lg">What&apos;s in this file</CardTitle>
           </CardHeader>
           <CardContent>
-            <MetadataPanel report={meta} loading={metaLoading} />
+            <MetadataPanel meta={meta} />
           </CardContent>
         </Card>
 
@@ -858,6 +828,7 @@ function SingleConverter({
             <Button onClick={download} disabled={!previewCurrent || encoding} size="xl" className="w-full">
               <Download className="h-5 w-5" /> Download {FORMATS[settings.format].label}
             </Button>
+            <SendTo file={output} from="/image-converter" disabled={encoding} />
           </CardContent>
         </Card>
       </StickyColumn>
@@ -930,24 +901,25 @@ function BatchConverter({
 
   const patch = (id: string, p: Partial<BatchItem>) => setItems((prev) => prev.map((x) => (x.id === id ? { ...x, ...p } : x)))
 
-  const add = (files: File[]) => {
-    const problems: string[] = []
+  const add = (files: File[], turnedAway: string[]) => {
+    const problems = [...turnedAway]
     const room = MAX_BATCH - items.length
-    const accepted: BatchItem[] = []
-    for (const f of files) {
-      const p = validate(f)
-      if (p) problems.push(p)
-      else if (accepted.length < room) accepted.push({ id: crypto.randomUUID(), file: f, edits: NO_EDITS, status: 'queued' })
-    }
-    if (files.length - problems.length > room) problems.push(`Only ${MAX_BATCH} images fit in one batch.`)
+    const accepted: BatchItem[] = files
+      .slice(0, Math.max(0, room))
+      .map((f) => ({ id: crypto.randomUUID(), file: f, edits: NO_EDITS, status: 'queued' as const }))
+    if (files.length > room) problems.push(`Only ${MAX_BATCH} images fit in one batch.`)
     setNotice(problems.length ? problems.join(' ') : null)
     setItems((prev) => [...prev, ...accepted])
     for (const it of accepted) {
-      void readMetadata(it.file).then((r) => patch(it.id, { hasLocation: Boolean(r?.hasLocation) }))
+      // A failed read leaves the location flag off; the batch still converts.
+      void readMetadata(it.file).then(
+        (r) => patch(it.id, { hasLocation: Boolean(r?.hasLocation) }),
+        () => undefined
+      )
     }
   }
 
-  usePasteImages(add)
+  const intake = useFileIntake({ accepts: ACCEPTS, multiple: true, paste: true, handoff: '/image-converter', onFiles: add })
 
   const openEditor = async (item: BatchItem) => {
     try {
@@ -1024,7 +996,7 @@ function BatchConverter({
           />
         </CardHeader>
         <CardContent className="space-y-4">
-          <DropZone multiple onFiles={add} compact={items.length > 0} />
+          <DropZone intake={intake} multiple compact={items.length > 0} />
           {notice && <p className="text-sm text-warning">{notice}</p>}
           {withLocation > 0 && (
             <p className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
@@ -1159,7 +1131,8 @@ function BatchConverter({
 // ---------------------------------------------------------------------------
 
 export default function ImageConverterPage() {
-  const [mode, setMode] = React.useState<'single' | 'batch'>('single')
+  // Several files handed over from another page open in the batch tab.
+  const [mode, setMode] = React.useState<'single' | 'batch'>(() => (handoffCount('/image-converter') > 1 ? 'batch' : 'single'))
   const [settings, setSettings] = React.useState<OutputSettings>({
     format: 'image/webp',
     quality: 0.85,

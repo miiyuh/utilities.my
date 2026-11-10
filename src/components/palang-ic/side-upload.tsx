@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { UploadSimple, Crop, Trash, ArrowsClockwise } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { humanSize } from '@/lib/image-utils'
 import type { CardSide } from '@/lib/palang-ic'
 import { Hint } from '@/components/ui/tooltip'
+import { useFileIntake } from '@/hooks/use-file-intake'
+import { toolAccepts } from '@/lib/tools'
+
+const ACCEPTS = toolAccepts('/palang-ic')
 
 interface SideUploadProps {
   label: 'Front' | 'Back'
@@ -11,58 +14,25 @@ interface SideUploadProps {
   side: CardSide | null
   busy?: boolean
   onFile: (file: File) => void
+  /** Why a chosen or dropped file was turned away. */
+  onProblem: (message: string) => void
   onRemove: () => void
   onEdit: () => void
 }
 
 /**
- * One drop zone for a card side. Each instance owns its hidden file input so
- * two can live on the same page (the Image Converter's getElementById
- * pattern cannot).
+ * One drop zone for a card side. Each instance has its own file input, so two
+ * can live on the same page. Pasting is handled by the page, which knows which
+ * side is still empty.
  */
-export function SideUpload({ label, hint, side, busy = false, onFile, onRemove, onEdit }: SideUploadProps) {
-  const dropRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [isDragOver, setIsDragOver] = useState(false)
-
-  useEffect(() => {
-    const el = dropRef.current
-    if (!el) return
-    const prevent = (ev: DragEvent) => {
-      ev.preventDefault()
-      ev.stopPropagation()
-    }
-    const onDrop = (ev: DragEvent) => {
-      prevent(ev)
-      setIsDragOver(false)
-      const f = ev.dataTransfer?.files?.[0]
-      if (f) onFile(f)
-    }
-    const onDragOver = (ev: DragEvent) => {
-      prevent(ev)
-      setIsDragOver(true)
-    }
-    const onDragLeave = (ev: DragEvent) => {
-      prevent(ev)
-      if (!el.contains(ev.relatedTarget as Node)) setIsDragOver(false)
-    }
-    el.addEventListener('dragenter', prevent)
-    el.addEventListener('dragover', onDragOver)
-    el.addEventListener('dragleave', onDragLeave)
-    el.addEventListener('drop', onDrop)
-    return () => {
-      el.removeEventListener('dragenter', prevent)
-      el.removeEventListener('dragover', onDragOver)
-      el.removeEventListener('dragleave', onDragLeave)
-      el.removeEventListener('drop', onDrop)
-    }
-  }, [onFile])
-
-  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    if (f) onFile(f)
-    e.currentTarget.value = ''
-  }
+export function SideUpload({ label, hint, side, busy = false, onFile, onProblem, onRemove, onEdit }: SideUploadProps) {
+  const { dragging, dropTarget, open, inputProps } = useFileIntake({
+    accepts: ACCEPTS,
+    onFiles: (files, problems) => {
+      if (files[0]) onFile(files[0])
+      else if (problems[0]) onProblem(problems[0])
+    },
+  })
 
   const rotationClass =
     side?.rotation === 90 ? 'rotate-90' : side?.rotation === 180 ? 'rotate-180' : side?.rotation === 270 ? '-rotate-90' : ''
@@ -74,9 +44,9 @@ export function SideUpload({ label, hint, side, busy = false, onFile, onRemove, 
         <span className="text-xs text-muted-foreground">{hint}</span>
       </div>
       <div
-        ref={dropRef}
+        ref={dropTarget}
         className={`relative rounded-lg border-2 border-dashed transition-all duration-quick ${
-          isDragOver ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-muted-foreground/25'
+          dragging ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-muted-foreground/25'
         } ${!side ? 'hover:border-primary/50 hover:bg-accent/50' : ''}`}
       >
         {!side ? (
@@ -84,12 +54,12 @@ export function SideUpload({ label, hint, side, busy = false, onFile, onRemove, 
             type="button"
             aria-label={`Drop the ${label.toLowerCase()} of the card here or click to choose a photo`}
             className="flex min-h-[132px] w-full flex-col items-center justify-center gap-2 p-4 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-lg"
-            onClick={() => inputRef.current?.click()}
+            onClick={open}
             disabled={busy}
           >
             <UploadSimple className="h-6 w-6 text-muted-foreground" />
             <span className="text-sm text-foreground">{busy ? 'Reading photo…' : 'Drop a photo or click to choose'}</span>
-            <span className="text-xs text-muted-foreground">JPG or PNG, up to 50 MB</span>
+            <span className="text-xs text-muted-foreground">JPEG, PNG or WebP, up to 50 MB</span>
           </button>
         ) : (
           <div className="space-y-2 p-3">
@@ -114,7 +84,7 @@ export function SideUpload({ label, hint, side, busy = false, onFile, onRemove, 
                   <Crop className="h-3.5 w-3.5" />
                   Crop &amp; rotate
                 </Button>
-                <Button type="button" size="xs" variant="ghost" onClick={() => inputRef.current?.click()} disabled={busy}>
+                <Button type="button" size="xs" variant="ghost" onClick={open} disabled={busy}>
                   <ArrowsClockwise className="h-3.5 w-3.5" />
                   Change
                 </Button>
@@ -126,15 +96,7 @@ export function SideUpload({ label, hint, side, busy = false, onFile, onRemove, 
             </div>
           </div>
         )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          tabIndex={-1}
-          aria-hidden="true"
-          onChange={onInputChange}
-        />
+        <input {...inputProps} className="sr-only" tabIndex={-1} aria-hidden="true" />
       </div>
     </div>
   )

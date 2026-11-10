@@ -6,7 +6,11 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Palette, Shuffle, X, Image as ImageIcon } from '@phosphor-icons/react';
+import { Upload, Palette, Shuffle, X, Image as ImageIcon, QrCode } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
+import { hexForLink } from '@/lib/link-params';
+import { useFileIntake } from '@/hooks/use-file-intake';
+import { toolAccepts } from '@/lib/tools';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { parseColour } from '@/lib/colour-parse';
 import { cn } from '@/lib/utils';
@@ -125,6 +129,7 @@ function loadColourHistory(): string[] {
 
 export default function ColourPickerPage() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [hexColour, setHexColour] = useState('#1a1a1a');
   // The hex input holds partial values while the user types ("#1a"), so the
   // previews and conversions follow the last fully valid colour rather than
@@ -155,7 +160,6 @@ export default function ColourPickerPage() {
   const [previousHex, setPreviousHex] = useState<string>('#1a1a1a');
   const [contrast, setContrast] = useState<{ ratio:number; whiteRatio:number; blackRatio:number; recommended:'#FFFFFF'|'#000000'; passesAA:boolean; passesAAA:boolean }>({ratio:1,whiteRatio:1,blackRatio:1,recommended:'#FFFFFF',passesAA:false,passesAAA:false});
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [magnifierVisible, setMagnifierVisible] = useState(false);
   const [magnifierSize, setMagnifierSize] = useState<number>(MAGNIFIER_SIZE);
@@ -203,7 +207,6 @@ export default function ColourPickerPage() {
   const dragStartRef = useRef<{x:number;y:number;panX:number;panY:number}|null>(null);
   const DRAG_THRESHOLD = 3; // px distance to distinguish click vs drag
   // Drag and drop for image upload
-  const [isDragOver, setIsDragOver] = useState(false);
   function clampPan(p: {x:number;y:number}, scl: number){
     const container = canvasContainerRef.current;
     if(!container || !imageSizeRef.current.w) return p;
@@ -420,47 +423,12 @@ export default function ColourPickerPage() {
     setUploadedImage(null);
     setImagePalette([]);
     setMagnifierVisible(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
     toast({ 
       title: 'Image Removed', 
       description: 'Canvas cleared successfully',
       duration: 2000 
     });
   };
-
-  // Clipboard paste functionality (always active)
-  useEffect(() => {
-    const handlePaste = async (e: ClipboardEvent) => {
-      
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const blob = items[i].getAsFile();
-          if (blob) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              setUploadedImage(event.target?.result as string);
-              setTab('image');
-              setMagnifierVisible(false);
-              toast({ 
-                title: 'Image Pasted!', 
-                description: 'Click on the image to pick colours',
-                duration: 3000 
-              });
-            };
-            reader.readAsDataURL(blob);
-          }
-          break;
-        }
-      }
-    };
-    document.addEventListener('paste', handlePaste);
-    return () => document.removeEventListener('paste', handlePaste);
-  }, [toast]);
 
   // Precise single-pixel colour sampling (no averaging) to reflect exact clicked pixel
   const getPixelColour = useCallback((canvas: HTMLCanvasElement, offsetX: number, offsetY: number) => {
@@ -619,14 +587,6 @@ export default function ColourPickerPage() {
   }, [uploadedImage]);
 
   const processImageFile = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Invalid File',
-        description: 'Please upload an image file (JPG, PNG, GIF, WebP)',
-        duration: 2000
-      });
-      return;
-    }
     const reader = new FileReader();
     reader.onload = (e) => {
       setUploadedImage(e.target?.result as string);
@@ -641,30 +601,16 @@ export default function ColourPickerPage() {
     reader.readAsDataURL(file);
   }, [toast]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) processImageFile(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processImageFile(file);
-  };
+  // Choose, drop or paste an image, or receive one from another tool: the same checks for all.
+  const { dragging: isDragOver, dropTarget, open: chooseImage, inputProps: imageInputProps } = useFileIntake({
+    accepts: toolAccepts('/colour-picker'),
+    paste: true,
+    handoff: '/colour-picker',
+    onFiles: (files, problems) => {
+      if (files[0]) processImageFile(files[0]);
+      else if (problems[0]) toast({ title: "Couldn't open that file", description: problems[0], variant: 'destructive' });
+    },
+  });
 
   useEffect(() => {
     if (uploadedImage && canvasRef.current) {
@@ -821,6 +767,13 @@ export default function ColourPickerPage() {
                             ? `Read as ${colourFormat}. It's outside the sRGB range, so the nearest displayable colour is shown.`
                             : `Read as ${colourFormat}. HEX, RGB, HSL, HWB, OKLCH, OKLab, CMYK and colour names all work.`}
                     </p>
+                  </div>
+                  {/* Send the colour on: the QR Code Generator reads it from the link. */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">Send to</span>
+                    <Button variant="outline" size="sm" onClick={() => void navigate(`/qr-code-generator?fg=${hexForLink(lastValidHex)}`)}>
+                      <QrCode className="h-4 w-4" /> QR code colour
+                    </Button>
                   </div>
                     {/* Right: Derived Colour Codes */}
                     <div className="flex flex-col gap-2 md:gap-3">
@@ -1071,7 +1024,7 @@ export default function ColourPickerPage() {
                       <Button
                         id="image-upload-button"
                         variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={chooseImage}
                         
                       >
                         <Upload className="mr-2 h-4 w-4" /> Upload
@@ -1089,13 +1042,7 @@ export default function ColourPickerPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">Upload (or paste) an image, then: wheel to zoom, drag to pan, click to pick, hover for loupe, arrows to step pixel (Shift for x10). Lock swatches you want to keep.</p>
-                  <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                    className="hidden"
-                  />
+                  <input {...imageInputProps} className="hidden" />
                 </CardHeader>
                 <CardContent className="space-y-4 md:space-y-6">
                   <div className="space-y-3 md:space-y-4">
@@ -1229,10 +1176,8 @@ export default function ColourPickerPage() {
                   ) : (
                     <button
                       type="button"
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      onClick={() => fileInputRef.current?.click()}
+                      ref={dropTarget}
+                      onClick={chooseImage}
                       className={`flex w-full items-center justify-center h-40 md:h-48 border-2 border-dashed rounded-lg text-center px-4 cursor-pointer transition-all duration-quick focus:outline-none focus:ring-2 focus:ring-primary/40 ${
                         isDragOver 
                           ? 'border-primary bg-primary/10 shadow-md' 

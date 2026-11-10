@@ -32,6 +32,12 @@ interface TzProps {
   tz_name1st: string | null;
 }
 
+type TzLayer =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'loaded'; features: FeatureCollection<Geometry, TzProps> }
+  | { status: 'failed' };
+
 interface GlobeClockProps {
   zones: string[];
   view: GlobeView;
@@ -73,9 +79,10 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
     home ? [-home.lon, -home.lat / 2, 0] : [0, -15, 0]
   );
 
-  const [tzFeatures, setTzFeatures] = React.useState<FeatureCollection<Geometry, TzProps> | null>(null);
-  const [tzLoading, setTzLoading] = React.useState(false);
-  const [tzError, setTzError] = React.useState(false);
+  // One status for the time zone layer, so a failed load stays failed instead
+  // of looking "not loading" and starting again.
+  const [tz, setTz] = React.useState<TzLayer>({ status: 'idle' });
+  const tzFeatures = tz.status === 'loaded' ? tz.features : null;
   const reducedMotion = useReducedMotion();
   const [hoverZone, setHoverZone] = React.useState<number | null>(null);
   const [tooltip, setTooltip] = React.useState<TooltipState | null>(null);
@@ -149,8 +156,8 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
 
   // --- lazy timezone polygons -----------------------------------------------
   React.useEffect(() => {
-    if (mode !== 'timezones' || tzFeatures || tzLoading) return;
-    setTzLoading(true);
+    if (mode !== 'timezones' || tz.status !== 'idle') return;
+    setTz({ status: 'loading' });
     fetch('/data/timezones.topo.json')
       .then((r) => {
         if (!r.ok) throw new Error(String(r.status));
@@ -159,11 +166,10 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
       .then((topo: Topology) => {
         const key = Object.keys(topo.objects)[0];
         const loaded = feature(topo, topo.objects[key] as GeometryCollection<TzProps>) as FeatureCollection<Geometry, TzProps>;
-        setTzFeatures(loaded);
+        setTz({ status: 'loaded', features: loaded });
       })
-      .catch(() => setTzError(true))
-      .finally(() => setTzLoading(false));
-  }, [mode, tzFeatures, tzLoading]);
+      .catch(() => setTz({ status: 'failed' }));
+  }, [mode, tz.status]);
 
   // --- idle auto-rotation (globe only, respects reduced motion) --------------
   React.useEffect(() => {
@@ -435,14 +441,17 @@ export function GlobeClock({ zones, view, mode, now, use24h, onToggleCity }: Glo
       </p>
 
       {/* Loading / error states for the timezone layer */}
-      {mode === 'timezones' && tzLoading && (
+      {mode === 'timezones' && tz.status === 'loading' && (
         <div className="absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-background/80 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
           Loading timezone boundaries…
         </div>
       )}
-      {mode === 'timezones' && tzError && (
-        <div className="absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-destructive/10 px-3 py-1 text-xs text-destructive">
+      {mode === 'timezones' && tz.status === 'failed' && (
+        <div className="absolute inset-x-0 top-3 mx-auto flex w-fit items-center gap-2 rounded-full bg-destructive/10 px-3 py-1 text-xs text-destructive">
           Couldn’t load timezone boundaries.
+          <button type="button" onClick={() => setTz({ status: 'idle' })} className="font-medium underline underline-offset-2">
+            Try again
+          </button>
         </div>
       )}
 
