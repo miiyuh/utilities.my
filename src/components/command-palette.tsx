@@ -12,12 +12,14 @@ import {
   Link as LinkIcon,
   Keyboard,
   ClockCounterClockwise,
+  Copy,
   type Icon,
 } from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { tools } from '@/lib/tools'
+import { quickAnswers } from '@/lib/quick-answers'
 import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
@@ -179,10 +181,12 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
 
 interface Entry {
   id: string
-  group: 'Recent' | 'Tools' | 'Pages' | 'Actions'
+  group: 'Answer' | 'Recent' | 'Tools' | 'Pages' | 'Actions'
   label: string
   hint?: string
   icon: Icon
+  /** A colour shown in place of the icon. */
+  swatch?: string
   keywords: string[]
   shortcut?: string
   run: () => void
@@ -289,12 +293,36 @@ function PaletteDialog({
         .map((e) => ({ ...e, id: `recent:${e.id}`, group: 'Recent' as const, icon: e.icon }))
       return [...recent, ...entries]
     }
-    return entries
+    // Typed values ("10 km to mi", "#1e90ff") get an answer to copy, then the tool that made it.
+    const answers = quickAnswers(q)
+    const answerEntries: Entry[] = answers.map((a, i) => ({
+      id: `answer:${i}`,
+      group: 'Answer',
+      label: a.value,
+      hint: a.detail,
+      icon: Copy,
+      swatch: a.swatch,
+      keywords: [],
+      shortcut: '↵ copy',
+      run: () => {
+        onOpenChange(false)
+        void navigator.clipboard.writeText(a.value).then(
+          () => toast({ title: 'Copied', description: a.value }),
+          () => toast({ title: 'Copy failed', description: 'Unable to copy to clipboard.', variant: 'destructive' })
+        )
+      },
+    }))
+    const answerTools = [...new Set(answers.map((a) => a.toolPath))]
+      .map((path) => entries.find((e) => e.id === path))
+      .filter((e): e is Entry => Boolean(e))
+      .map((e) => ({ ...e, id: `answer-tool:${e.id}`, group: 'Answer' as const, label: `Open ${e.label}` }))
+    const matches = entries
       .map((e) => ({ e, s: score(q, e.label, e.keywords) }))
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.e)
-  }, [query, entries, recents])
+    return [...answerEntries, ...answerTools, ...matches]
+  }, [query, entries, recents, onOpenChange, toast])
 
   React.useEffect(() => setActive(0), [query])
 
@@ -339,7 +367,7 @@ function PaletteDialog({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search tools and actions…"
+            placeholder="Search tools, or type 10 km to mi, #1e90ff…"
             className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             role="combobox"
             aria-expanded="true"
@@ -387,9 +415,15 @@ function PaletteDialog({
                     i === active ? 'bg-accent text-accent-foreground' : 'text-foreground'
                   )}
                 >
-                  <EntryIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  {entry.swatch ? (
+                    <span aria-hidden className="h-4 w-4 shrink-0 rounded-sm border border-border" style={{ backgroundColor: entry.swatch }} />
+                  ) : (
+                    <EntryIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{entry.label}</div>
+                    <div className={cn('truncate font-medium', entry.group === 'Answer' && entry.id.startsWith('answer:') && 'font-mono tabular-nums')}>
+                      {entry.label}
+                    </div>
                     {entry.hint && <div className="truncate text-xs text-muted-foreground">{entry.hint}</div>}
                   </div>
                   {entry.shortcut && (
