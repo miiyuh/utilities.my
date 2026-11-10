@@ -65,13 +65,15 @@ function morseToText(morse: string): string {
     .join(' ');
 }
 
+/** Playback is one of these, never two at once. */
+type PlayStatus = 'stopped' | 'playing' | 'paused';
+
 export default function MorseCodeGeneratorPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-morse');
   const [inputText, setInputText] = useState('');
   const [inputMorse, setInputMorse] = useState('');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [status, setStatusState] = useState<PlayStatus>('stopped');
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [visualEnabled, setVisualEnabled] = useState(true);
   const [volume, setVolume] = useState(0.5);
@@ -82,8 +84,13 @@ export default function MorseCodeGeneratorPage() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const playTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isPlayingRef = useRef(false);
-  const isPausedRef = useRef(false);
+  // The timers that play each symbol outlive the render that started them, so
+  // they read the status and the sound settings from refs.
+  const statusRef = useRef<PlayStatus>('stopped');
+  const settingsRef = useRef({ speed, audioEnabled, visualEnabled, pitch, volume });
+  useEffect(() => {
+    settingsRef.current = { speed, audioEnabled, visualEnabled, pitch, volume };
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const visualRef = useRef<HTMLDivElement>(null);
   const pausedPositionRef = useRef(0);
@@ -121,7 +128,13 @@ export default function MorseCodeGeneratorPage() {
     } else {
       setInputMorse((m) => (m && !/\s$/.test(m) ? `${m} ` : m) + code);
     }
-    if (!isPlayingRef.current) playMorseSequence(code);
+    // Only when nothing is playing or paused, so a paused message isn't lost.
+    if (statusRef.current === 'stopped') playMorseSequence(code);
+  };
+
+  const setStatus = (next: PlayStatus) => {
+    statusRef.current = next;
+    setStatusState(next);
   };
 
   // Play audio beep
@@ -131,26 +144,21 @@ export default function MorseCodeGeneratorPage() {
       if (!audioContextConstructor) return;
       audioContextRef.current = new audioContextConstructor();
     }
-    
+
     const audioContext = audioContextRef.current;
-    
-    if (oscillatorRef.current) {
-      oscillatorRef.current.stop();
-    }
-    
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    
+
     oscillator.type = 'sine';
-    oscillator.frequency.value = pitch;
-    gainNode.gain.value = volume;
-    
+    oscillator.frequency.value = settingsRef.current.pitch;
+    gainNode.gain.value = settingsRef.current.volume;
+
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
+
     oscillator.start();
     oscillator.stop(audioContext.currentTime + duration / 1000);
-    
+
     oscillatorRef.current = oscillator;
   };
 
@@ -164,111 +172,75 @@ export default function MorseCodeGeneratorPage() {
     }
   };
 
-  // Play a single Morse code symbol
+  // Play a single Morse code symbol, with the settings as they are right now.
   const playSymbol = (symbol: string, callback: () => void) => {
-    const adjustedDot = DOT_DURATION / speed;
-    const adjustedDash = DASH_DURATION / speed;
-    const adjustedGap = SYMBOL_GAP / speed;
-    
-    if (symbol === '.') {
-      if (audioEnabled) playBeep(adjustedDot);
-      if (visualEnabled) {
-        visualSignal(adjustedDot);
-      }
-      
-      playTimeoutRef.current = setTimeout(() => {
-        callback();
-      }, adjustedDot + adjustedGap);
-    } else if (symbol === '-') {
-      if (audioEnabled) playBeep(adjustedDash);
-      if (visualEnabled) {
-        visualSignal(adjustedDash);
-      }
-      
-      playTimeoutRef.current = setTimeout(() => {
-        callback();
-      }, adjustedDash + adjustedGap);
-    } else {
-      // Gap between symbols
-      playTimeoutRef.current = setTimeout(() => {
-        callback();
-      }, adjustedGap);
+    const now = settingsRef.current;
+    const length = symbol === '.' ? DOT_DURATION / now.speed : symbol === '-' ? DASH_DURATION / now.speed : 0;
+    if (length > 0) {
+      if (now.audioEnabled) playBeep(length);
+      if (now.visualEnabled) visualSignal(length);
     }
+    playTimeoutRef.current = setTimeout(callback, length + SYMBOL_GAP / now.speed);
+  };
+
+  /** Stops the sound and light and the next scheduled symbol. */
+  const silence = () => {
+    if (playTimeoutRef.current) {
+      clearTimeout(playTimeoutRef.current);
+      playTimeoutRef.current = null;
+    }
+    if (oscillatorRef.current) {
+      oscillatorRef.current.stop();
+      oscillatorRef.current = null;
+    }
+    setVisualActive(false);
   };
 
   // Play entire Morse code sequence
   const playMorseSequence = (morse: string, startPosition: number = 0) => {
-    if (!morse || (isPlayingRef.current && !isPausedRef.current)) return;
-    
-    // Store the sequence for pause/resume
+    if (!morse || statusRef.current === 'playing') return;
+
+    // Kept for Resume, and to notice when the text changes while paused.
     morseSequenceRef.current = morse;
-    
-    isPlayingRef.current = true;
-    isPausedRef.current = false;
-    setIsPlaying(true);
-    setIsPaused(false);
-    
+    setStatus('playing');
+
     const symbols = morse.replace(/\s+/g, ' ').split('');
     let i = startPosition;
-    
+
     const playNext = () => {
-      // Store current position for pause/resume
+      // Paused or stopped: this chain of timers ends here.
+      if (statusRef.current !== 'playing') return;
+      // Resume starts again from the symbol that was playing.
       pausedPositionRef.current = i;
-      
-      if (i >= symbols.length || !isPlayingRef.current) {
-        isPlayingRef.current = false;
-        isPausedRef.current = false;
-        setIsPlaying(false);
-        setIsPaused(false);
+      if (i >= symbols.length) {
+        pausedPositionRef.current = 0;
+        setStatus('stopped');
         return;
       }
-      
-      // Check if we're paused
-      if (isPausedRef.current) {
-        return;
-      }
-      
+
       const symbol = symbols[i];
       i++;
-      
+      const rate = settingsRef.current.speed;
       if (symbol === ' ') {
         // Word gap
-        playTimeoutRef.current = setTimeout(() => {
-          playNext();
-        }, WORD_GAP / speed);
+        playTimeoutRef.current = setTimeout(playNext, WORD_GAP / rate);
       } else if (symbol === '/') {
         // Letter gap
-        playTimeoutRef.current = setTimeout(() => {
-          playNext();
-        }, LETTER_GAP / speed);
+        playTimeoutRef.current = setTimeout(playNext, LETTER_GAP / rate);
       } else {
         // Dot or dash
         playSymbol(symbol, playNext);
       }
     };
-    
+
     playNext();
   };
 
   // Pause playback
   const pausePlayback = () => {
-    isPlayingRef.current = false;
-    isPausedRef.current = true;
-    setIsPlaying(false);
-    setIsPaused(true);
-    
-    if (playTimeoutRef.current) {
-      clearTimeout(playTimeoutRef.current);
-      playTimeoutRef.current = null;
-    }
-    
-    if (oscillatorRef.current) {
-      oscillatorRef.current.stop();
-      oscillatorRef.current = null;
-    }
-    
-    // Stop visual signal
-    setVisualActive(false);
+    if (statusRef.current !== 'playing') return;
+    setStatus('paused');
+    silence();
   };
 
   // Resume playback
@@ -276,40 +248,29 @@ export default function MorseCodeGeneratorPage() {
     playMorseSequence(morseSequenceRef.current, pausedPositionRef.current);
   };
 
-  // Start, pause, or stop playback
+  const currentSequence = activeTab === 'text-to-morse' ? outputMorse : inputMorse;
+
+  // Start, pause, or resume playback
   const togglePlayback = () => {
-    if (isPlaying) {
-      pausePlayback();
-    } else if (isPaused) {
-      resumePlayback();
-    } else {
-      playMorseSequence(activeTab === 'text-to-morse' ? outputMorse : inputMorse);
-    }
+    if (status === 'playing') pausePlayback();
+    else if (status === 'paused') resumePlayback();
+    else playMorseSequence(currentSequence);
   };
 
   // Stop playback
   const stopPlayback = () => {
-    isPlayingRef.current = false;
-    isPausedRef.current = false;
-    setIsPlaying(false);
-    setIsPaused(false);
-    
-    if (playTimeoutRef.current) {
-      clearTimeout(playTimeoutRef.current);
-      playTimeoutRef.current = null;
-    }
-    
-    if (oscillatorRef.current) {
-      oscillatorRef.current.stop();
-      oscillatorRef.current = null;
-    }
-    
-    // Stop visual signal
-    setVisualActive(false);
-    
-    // Reset position
+    setStatus('stopped');
+    silence();
     pausedPositionRef.current = 0;
   };
+
+  // Changing the text (or the tab) while paused stops playback, so Resume
+  // never plays a message that's no longer on screen.
+  useEffect(() => {
+    if (statusRef.current === 'paused' && currentSequence !== morseSequenceRef.current) stopPlayback();
+    // Runs only when the text changes; stopPlayback works through refs and setters.
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies
+  }, [currentSequence]);
 
   // Clear all fields
   const handleClear = () => {
@@ -515,11 +476,11 @@ export default function MorseCodeGeneratorPage() {
                       disabled={activeTab === 'text-to-morse' ? !outputMorse : !inputMorse}
                       className="flex items-center gap-2"
                     >
-                      {isPlaying ? (
+                      {status === 'playing' ? (
                         <>
                           <Pause className="h-4 w-4" /> Pause
                         </>
-                      ) : isPaused ? (
+                      ) : status === 'paused' ? (
                         <>
                           <Play className="h-4 w-4" /> Resume
                         </>
@@ -532,7 +493,7 @@ export default function MorseCodeGeneratorPage() {
                     
                     <Button 
                       onClick={stopPlayback} 
-                      disabled={!isPlaying && !isPaused}
+                      disabled={status === 'stopped'}
                       variant="outline"
                       className="flex items-center gap-2"
                     >
