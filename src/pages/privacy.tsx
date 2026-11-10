@@ -23,6 +23,8 @@ Some tools save things in your browser's local storage so they are still there n
 
 Palang IC deliberately **never** stores card images or the date. Images exist only in memory for as long as the tab is open.
 
+To keep working without an internet connection, the site also stores its own files in your browser after your first visit: its pages, code, fonts and icons, and the image encoders once you use them. That is a copy of the website, not of anything you enter, and it updates when the site does.
+
 You can remove all of this at any time by clearing this site's data in your browser settings.
 
 ## 2. What leaves your device

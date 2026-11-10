@@ -14,5 +14,7 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "scripts/**/*.ts", "src/lib/seo.ts"]
+  "include": ["vite.config.ts", "scripts/**/*.ts", "src/lib/seo.ts"],
+  // Tests run under bun test, with Bun's types rather than Node's.
+  "exclude": ["scripts/**/*.test.ts"]
 }

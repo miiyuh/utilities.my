@@ -31,12 +31,12 @@ Changes across the whole site, so tools work together instead of one at a time. 
 - Every tool that opens files now uses the shared intake and picks up handed-over files: the image tools, Colour Picker, Text Case, Text Statistics, Sorter, Spin the Wheel, Morse and Markdown. A test checks that the tool list matches the code.
 - Later: Contrast Checker once it exists, and deciding tool by tool which other settings belong in the link. That also answers the Size Visualiser's question about shareable links.
 
-**5. Work offline**
+**5. Work offline** ✅ done
 
-- A service worker that stores the app, each tool's page and the fonts, so the site opens and works without a connection after the first visit. The AVIF, JPEG XL and GIF encoders are stored the first time they're used.
-- When a new version is ready, a small notice offers to reload instead of swapping it in mid-task.
-- Watch out for: every route is its own prerendered page with no single-page fallback, so each one must be stored; `sw.js` must never be cached by Vercel; the World Clock's city list and anything else fetched later needs its own rule.
-- Done when: after one visit, every tool opens and works in airplane mode, and a new deploy is picked up on the next visit.
+- A service worker (`scripts/sw-template.js`, written to `dist/sw.js` by `scripts/build-sw.ts`) stores every page, the app's code, the fonts, icons and data on the first visit: about 4 MB. The AVIF and JPEG XL encoders and the World Clock's city time zone list are stored the first time they're used.
+- Pages come from the network when it answers within 3 seconds, and from storage otherwise. Hashed files always come from storage.
+- A new version shows a notice with a Reload button instead of swapping in mid-task; if it's ignored, the update applies on the next visit. `sw.js` is never cached by Vercel.
+- Still to check by hand: after one visit, every tool opens in airplane mode, and a new deploy shows the notice.
 
 **6. What's new**
 
@@ -284,6 +284,7 @@ Not agreed yet. Each needs a yes or no first.
 
 ## Done recently
 
+- Works offline after the first visit, with a notice when a new version is ready
 - Send to: Image Converter's result goes straight to Favicon Generator or Palang IC, and a colour from Colour Picker to QR Code Generator
 - Drop or paste a file on the home page or into search to find the tools that open it
 - One way to bring files into Image Converter, Favicon Generator and Palang IC: choose, drop or paste, with the same messages

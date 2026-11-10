@@ -31,6 +31,12 @@
       ]
     },
     {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate" }
+      ]
+    },
+    {
       "source": "/.well-known/security.txt",
       "headers": [
         { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
