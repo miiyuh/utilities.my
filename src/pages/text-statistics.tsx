@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { ChartBar, UploadSimple } from '@phosphor-icons/react';
 import { Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
@@ -16,6 +16,9 @@ import { StickyColumn } from '@/components/sticky-column';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { LIMITS, computeStats, easeLabel, formatDuration, type StatsOptions } from '@/lib/text-stats';
 import { cn } from '@/lib/utils';
+import { useFileIntake } from '@/hooks/use-file-intake';
+import { toolAccepts } from '@/lib/tools';
+import { useToast } from '@/hooks/use-toast';
 
 const STORAGE_KEY = 'textstats.input';
 
@@ -33,7 +36,6 @@ export default function TextStatisticsPage() {
   const [text, setText] = useState(loadDraft);
   const [opts, setOpts] = useState<StatsOptions>({ countNumbers: true, ignoreCommonWords: true });
   const [selection, setSelection] = useState<[number, number]>([0, 0]);
-  const fileRef = useRef<HTMLInputElement>(null);
   const deferred = useDeferredValue(text);
 
   useEffect(() => {
@@ -53,6 +55,16 @@ export default function TextStatisticsPage() {
     setText((await file.text()).replace(/\r\n?/g, '\n'));
     setSelection([0, 0]);
   };
+  const { toast } = useToast();
+  // Choose a file, or receive one from another tool, with the same checks everywhere.
+  const { open: chooseFile, inputProps: fileInputProps } = useFileIntake({
+    accepts: toolAccepts('/text-statistics'),
+    handoff: '/text-statistics',
+    onFiles: (files, problems) => {
+      if (files[0]) void importFile(files[0]);
+      else if (problems[0]) toast({ title: "Couldn't open that file", description: problems[0], variant: 'destructive' });
+    },
+  });
 
   const summary = () =>
     [
@@ -100,18 +112,8 @@ export default function TextStatisticsPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        accept=".txt,.md,text/plain,text/markdown"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.currentTarget.files?.[0];
-                          if (f) void importFile(f);
-                          e.currentTarget.value = '';
-                        }}
-                      />
-                      <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                      <input {...fileInputProps} className="hidden" />
+                      <Button variant="outline" size="sm" onClick={chooseFile}>
                         <UploadSimple className="h-4 w-4" /> Open a text file
                       </Button>
                       <CopyButton value={summary} label="Copy summary" size="sm" toastTitle="Copied" toastDescription="The summary is on your clipboard." disabled={!text.trim()} />

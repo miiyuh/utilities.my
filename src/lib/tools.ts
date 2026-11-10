@@ -25,12 +25,14 @@ export const tools: Tool[] = [
     description: "See your text in every case at once, then copy the one you need.",
     keywords: ["uppercase", "lowercase", "title", "camel", "snake", "kebab", "capitalise"],
     accepts: [".txt"],
+    receivesFiles: true,
   },
   {
     name: "Colour Picker", path: "/colour-picker", icon: Palette,
     description: "Pick any colour and grab its HEX, RGB, HSL or OKLCH code.",
     keywords: ["color", "hex", "rgb", "hsl", "oklch", "cmyk", "eyedropper", "palette", "contrast"],
-    accepts: [...PHOTOS, ".bmp"],
+    accepts: [...PHOTOS, ".bmp", ".svg"],
+    receivesFiles: true,
   },
   {
     name: "Unit Converter", path: "/unit-converter", icon: Ruler,
@@ -57,6 +59,7 @@ export const tools: Tool[] = [
     keywords: ["md", "editor", "html", "preview"],
     accepts: [".md", ".markdown", ".txt"],
     produces: [".md"],
+    receivesFiles: true,
   },
   {
     name: "QR Code Generator", path: "/qr-code-generator", icon: QrCode,
@@ -89,6 +92,7 @@ export const tools: Tool[] = [
     description: "Count words and reading time, and check your post will fit.",
     keywords: ["word count", "character count", "reading time"],
     accepts: [".txt", ".md"],
+    receivesFiles: true,
   },
   {
     name: "Sorter", path: "/sorter", icon: SortAscending,
@@ -96,6 +100,7 @@ export const tools: Tool[] = [
     keywords: ["sort", "alphabetical", "shuffle", "dedupe", "list"],
     accepts: [".txt", ".csv"],
     produces: [".txt"],
+    receivesFiles: true,
   },
   {
     name: "Spin the Wheel", path: "/spin-the-wheel", icon: Disc,
@@ -103,6 +108,7 @@ export const tools: Tool[] = [
     keywords: ["random", "picker", "decide", "raffle", "roulette"],
     accepts: [".txt", ".csv", ".tsv"],
     produces: [".txt", ".csv"],
+    receivesFiles: true,
   },
   {
     name: "Morse Code Generator", path: "/morse-code-generator", icon: Lightning,
@@ -110,6 +116,7 @@ export const tools: Tool[] = [
     keywords: ["morse", "sos", "dots", "dashes", "translate"],
     accepts: [".txt"],
     produces: [".txt"],
+    receivesFiles: true,
   },
   {
     name: "Percentage Calculator", path: "/percentage-calculator", icon: Percent,

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ArrowCounterClockwise,
   ArrowsDownUp,
@@ -44,6 +44,8 @@ import {
   type SortBy,
 } from '@/lib/list-tools';
 import { shuffleInPlace } from '@/lib/random';
+import { useFileIntake } from '@/hooks/use-file-intake';
+import { toolAccepts } from '@/lib/tools';
 
 const SORT_BY: { id: SortBy; label: string }[] = [
   { id: 'text', label: 'Text' },
@@ -77,7 +79,6 @@ export default function SorterPage() {
   const [column, setColumn] = useState('1');
   const [delimiter, setDelimiter] = useState('');
   const [separator, setSeparator] = useState(',');
-  const fileRef = useRef<HTMLInputElement>(null);
   // True while the person is typing; the first keystroke after an action saves an undo step,
   // so Undo brings back their edits' starting point instead of discarding them.
   const [typing, setTyping] = useState(false);
@@ -125,6 +126,15 @@ export default function SorterPage() {
     setText(t);
     setMessage(`Opened ${file.name}.`);
   };
+  // Choose a file, or receive one from another tool, with the same checks everywhere.
+  const { open: chooseFile, inputProps: fileInputProps } = useFileIntake({
+    accepts: toolAccepts('/sorter'),
+    handoff: '/sorter',
+    onFiles: (files, problems) => {
+      if (files[0]) void importFile(files[0]);
+      else if (problems[0]) setMessage(problems[0]);
+    },
+  });
 
   const download = () => downloadBlob(new Blob([text], { type: 'text/plain;charset=utf-8' }), 'list.txt', isIOSOrSafari());
 
@@ -155,18 +165,8 @@ export default function SorterPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      ref={fileRef}
-                      type="file"
-                      accept=".txt,.csv,text/plain,text/csv"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.currentTarget.files?.[0];
-                        if (f) void importFile(f);
-                        e.currentTarget.value = '';
-                      }}
-                    />
-                    <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                    <input {...fileInputProps} className="hidden" />
+                    <Button variant="outline" size="sm" onClick={chooseFile}>
                       <UploadSimple className="h-4 w-4" /> Open a file
                     </Button>
                     <Button variant="outline" size="sm" onClick={undo} disabled={!history.length}>

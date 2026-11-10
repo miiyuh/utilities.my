@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { TextAa, UploadSimple } from '@phosphor-icons/react';
 import { Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarContent } from '@/components/sidebar-content';
@@ -15,6 +15,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { StickyColumn } from '@/components/sticky-column';
 import { CASES, convertAll, type CaseOptions } from '@/lib/text-case';
 import { cn } from '@/lib/utils';
+import { useFileIntake } from '@/hooks/use-file-intake';
+import { toolAccepts } from '@/lib/tools';
+import { useToast } from '@/hooks/use-toast';
 
 const EXAMPLE = 'Nasi lemak and teh tarik for the KL office';
 
@@ -27,13 +30,22 @@ const OPTIONS: { key: keyof CaseOptions; label: string; hint: string }[] = [
 export default function TextCaseConverterPage() {
   const [text, setText] = useState('');
   const [opts, setOpts] = useState<CaseOptions>({ smartTitle: true, keepAcronyms: true, tidySpaces: true });
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const isEmpty = text.trim() === '';
   const results = useMemo(() => convertAll(isEmpty ? EXAMPLE : text, opts), [text, isEmpty, opts]);
   const words = isEmpty ? 0 : text.trim().split(/\s+/).length;
 
   const importFile = async (file: File) => setText((await file.text()).replace(/\r\n?/g, '\n'));
+  const { toast } = useToast();
+  // Choose a file, or receive one from another tool, with the same checks everywhere.
+  const { open: chooseFile, inputProps: fileInputProps } = useFileIntake({
+    accepts: toolAccepts('/text-case'),
+    handoff: '/text-case',
+    onFiles: (files, problems) => {
+      if (files[0]) void importFile(files[0]);
+      else if (problems[0]) toast({ title: "Couldn't open that file", description: problems[0], variant: 'destructive' });
+    },
+  });
 
   return (
     <>
@@ -54,18 +66,8 @@ export default function TextCaseConverterPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        accept=".txt,text/plain"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.currentTarget.files?.[0];
-                          if (f) void importFile(f);
-                          e.currentTarget.value = '';
-                        }}
-                      />
-                      <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                      <input {...fileInputProps} className="hidden" />
+                      <Button variant="outline" size="sm" onClick={chooseFile}>
                         <UploadSimple className="h-4 w-4" /> Open a .txt file
                       </Button>
                       <ClearButton

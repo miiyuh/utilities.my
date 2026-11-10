@@ -17,6 +17,8 @@ import { PageHeader } from "@/components/page-header";
 import { PageIntro } from '@/components/page-intro';
 
 import { ToolMethodology } from '@/components/tool-methodology';
+import { useFileIntake } from '@/hooks/use-file-intake';
+import { toolAccepts } from '@/lib/tools';
 // Morse code alphabet
 const MORSE_CODE_MAP: { [key: string]: string } = {
   'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....',
@@ -91,7 +93,6 @@ export default function MorseCodeGeneratorPage() {
   useEffect(() => {
     settingsRef.current = { speed, audioEnabled, visualEnabled, pitch, volume };
   });
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const visualRef = useRef<HTMLDivElement>(null);
   const pausedPositionRef = useRef(0);
   const morseSequenceRef = useRef<string>('');
@@ -286,28 +287,33 @@ export default function MorseCodeGeneratorPage() {
   // does not close over it while it is still being initialised.
   useEffect(() => () => stopPlayback(), []);
 
-  // Import text from file
-  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
+  // Import a text file. A file of dots and dashes opens in "Morse to text",
+  // anything else in "Text to Morse", whichever tab it came from.
+  const importFile = async (file: File) => {
     try {
-      const text = await file.text();
-      if (activeTab === 'text-to-morse') {
-        setInputText(text.replace(/\r\n?/g, '\n'));
+      const text = (await file.text()).replace(/\r\n?/g, '\n');
+      if (/^[.\-/\s]+$/.test(text) && /[.-]/.test(text)) {
+        setActiveTab('morse-to-text');
+        setInputMorse(text);
       } else {
-        setInputMorse(text.replace(/\r\n?/g, '\n'));
+        setActiveTab('text-to-morse');
+        setInputText(text);
       }
       toast({ title: 'File imported successfully' });
     } catch {
       toast({ title: 'Import failed', description: 'Could not read the file.', variant: 'destructive' });
     }
-    
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
+
+  // Choose a file, or receive one from another tool, with the same checks everywhere.
+  const { open: chooseFile, inputProps: fileInputProps } = useFileIntake({
+    accepts: toolAccepts('/morse-code-generator'),
+    handoff: '/morse-code-generator',
+    onFiles: (files, problems) => {
+      if (files[0]) void importFile(files[0]);
+      else if (problems[0]) toast({ title: "Couldn't open that file", description: problems[0], variant: 'destructive' });
+    },
+  });
 
   // Export output to file
   const handleExport = () => {
@@ -370,16 +376,10 @@ export default function MorseCodeGeneratorPage() {
                         className="resize-none min-h-[200px]" 
                       />
                       <div className="flex flex-wrap gap-2">
-                        <input 
-                          ref={fileInputRef}
-                          type="file" 
-                          accept=".txt,text/plain" 
-                          className="hidden" 
-                          onChange={handleImport} 
-                        />
+                        <input {...fileInputProps} className="hidden" />
                         <Button 
                           variant="outline" 
-                          onClick={() => fileInputRef.current?.click()}
+                          onClick={chooseFile}
                         >
                           <Upload className="h-4 w-4 mr-2" /> Import
                         </Button>
@@ -422,16 +422,10 @@ export default function MorseCodeGeneratorPage() {
                         className="resize-none min-h-[200px] font-mono" 
                       />
                       <div className="flex flex-wrap gap-2">
-                        <input 
-                          ref={fileInputRef}
-                          type="file" 
-                          accept=".txt,text/plain" 
-                          className="hidden" 
-                          onChange={handleImport} 
-                        />
+                        <input {...fileInputProps} className="hidden" />
                         <Button 
                           variant="outline" 
-                          onClick={() => fileInputRef.current?.click()}
+                          onClick={chooseFile}
                         >
                           <Upload className="h-4 w-4 mr-2" /> Import
                         </Button>

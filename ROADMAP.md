@@ -24,11 +24,12 @@ Changes across the whole site, so tools work together instead of one at a time. 
 - Picking one opens the tool with the file already loaded. The file is handed over in memory, so nothing is stored or uploaded. Several images open in Image Converter's batch tab.
 - On every other page, a file dropped outside a drop area is caught, so the browser no longer leaves the site to show it.
 
-**4. Send work from one tool to the next** ✅ first part done
+**4. Send work from one tool to the next** ✅ done
 
-- Image Converter's result has a "Send to" row: Favicon Generator or Palang IC, when they can open the format chosen. Files go through the same in-memory hand-off as step 3.
+- Image Converter's result has a "Send to" row for the tools that can open the format chosen: Favicon Generator, Palang IC and Colour Picker. Files go through the same in-memory hand-off as step 3.
 - QR Code Generator reads `?fg=`, `?bg=`, `?url=` and `?text=` from its link, and Colour Picker has a "Send to: QR code colour" button that uses it.
-- Still to do: Colour Picker and the text tools picking up handed-over files (Text Case, Text Statistics, Sorter, Spin the Wheel, Morse, Markdown), so they can appear in "Open with" and "Send to"; Contrast Checker once it exists; and deciding tool by tool which settings belong in the link. This also answers the Size Visualiser's question about shareable links.
+- Every tool that opens files now uses the shared intake and picks up handed-over files: the image tools, Colour Picker, Text Case, Text Statistics, Sorter, Spin the Wheel, Morse and Markdown. A test checks that the tool list matches the code.
+- Later: Contrast Checker once it exists, and deciding tool by tool which other settings belong in the link. That also answers the Size Visualiser's question about shareable links.
 
 **5. Work offline**
 

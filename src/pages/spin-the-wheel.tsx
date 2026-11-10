@@ -1,5 +1,5 @@
 import { ClearButton } from '@/components/ui/clear-button';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import { PageIntro } from '@/components/page-intro';
 import { ToolMethodology } from '@/components/tool-methodology';
 import { StickyColumn } from '@/components/sticky-column';
 import { shuffleInPlace } from '@/lib/random';
+import { useFileIntake } from '@/hooks/use-file-intake';
+import { toolAccepts } from '@/lib/tools';
 const DEFAULT_ITEMS = [
   "Sushi", "Ramen", "Tempura", "Katsudon", "Takoyaki", "Okonomiyaki", // Japanese
   "Nasi Lemak", "Char Kuey Teow", "Roti Canai", "Satay", "Laksa", "Hainanese Chicken Rice" // Malaysian
@@ -31,7 +33,6 @@ const PRESETS: Record<string,string[]> = {
 export default function SpinTheWheelPage() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const fileInputRef = useRef<HTMLInputElement|null>(null);
   const [itemsInput, setItemsInput] = useState(DEFAULT_ITEMS.join("\n"));
   const [winners, setWinners] = useState<string[]>([]);
   const [removeAfterWin, setRemoveAfterWin] = useState(false);
@@ -163,6 +164,15 @@ export default function SpinTheWheelPage() {
     setItemsInput(text.replace(/\r\n?/g,'\n'));
     toast({ title: 'List imported', description: `${text.split(/\r?\n/).length} lines` });
   };
+  // Choose a file, or receive one from another tool, with the same checks everywhere.
+  const { open: chooseFile, inputProps: fileInputProps } = useFileIntake({
+    accepts: toolAccepts('/spin-the-wheel'),
+    handoff: '/spin-the-wheel',
+    onFiles: (files, problems) => {
+      if (files[0]) void handleImport(files[0]);
+      else if (problems[0]) toast({ title: "Couldn't open that file", description: problems[0], variant: 'destructive' });
+    },
+  });
   const handleExport = () => {
     const blob = new Blob([items.join('\n')], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -239,18 +249,8 @@ export default function SpinTheWheelPage() {
                 <CardContent className="space-y-6">
                   {/* Import/Export/Share Actions */}
                   <div className="flex flex-wrap items-center gap-2">
-                    <input 
-                      ref={fileInputRef} 
-                      type="file" 
-                      accept=".txt,.csv,.tsv,text/plain" 
-                      className="hidden" 
-                      onChange={(e)=>{
-                        const f=e.currentTarget.files?.[0]; 
-                        if (f) void handleImport(f); 
-                        e.currentTarget.value='';
-                      }} 
-                    />
-                    <Button variant="outline" size="sm" onClick={()=> fileInputRef.current?.click()}>
+                    <input {...fileInputProps} className="hidden" />
+                    <Button variant="outline" size="sm" onClick={chooseFile}>
                       <Download className="w-4 h-4 mr-2" /> Import
                     </Button>
                     <Button variant="outline" size="sm" onClick={handleExport} disabled={!items.length}>
