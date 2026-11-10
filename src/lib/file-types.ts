@@ -37,6 +37,8 @@ export interface FileTyped {
   accepts?: string[]
   /** Extensions it saves. */
   produces?: string[]
+  /** It can work on several files at once. */
+  takesMany?: boolean
 }
 
 /** ".PNG", "png" or "jpeg xl" → the extension we know it by; null for anything else. */

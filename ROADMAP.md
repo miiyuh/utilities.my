@@ -18,11 +18,11 @@ Changes across the whole site, so tools work together instead of one at a time. 
 - A shared hook (`useFileIntake`) for choosing, dropping and pasting files, with the same messages for HEIC photos, wrong types and files over 50 MB.
 - Image Converter, Favicon Generator and Palang IC use it. Favicon Generator can now take a dropped image, and Palang IC a pasted one, which goes into the first empty side.
 
-**3. Drop a file anywhere**
+**3. Drop a file anywhere** ✅ done
 
-- Drop or paste a file on the home page, or into search, and get the tools that can open it ("Open with Image Converter, Favicon Generator, Palang IC").
-- Picking one opens the tool with the file already loaded. The file is handed over in memory, so nothing is stored or uploaded.
-- Done when: an image dropped on the home page lands in each image tool, and a file no tool can open says so.
+- Drop or paste a file on the home page, or into search, and search lists the tools that can open it. HEIC photos and files no tool opens get a plain message.
+- Picking one opens the tool with the file already loaded. The file is handed over in memory, so nothing is stored or uploaded. Several images open in Image Converter's batch tab.
+- On every other page, a file dropped outside a drop area is caught, so the browser no longer leaves the site to show it.
 
 **4. Send work from one tool to the next**
 
@@ -283,6 +283,7 @@ Not agreed yet. Each needs a yes or no first.
 
 ## Done recently
 
+- Drop or paste a file on the home page or into search to find the tools that open it
 - One way to bring files into Image Converter, Favicon Generator and Palang IC: choose, drop or paste, with the same messages
 - Search finds tools by file type ("png to ico", ".md"), from the file types each tool now lists
 - Search answers typed values: "10 km to mi", "#1e90ff", a Unix timestamp or "20% of 150" gives an answer to copy, with a link to the tool

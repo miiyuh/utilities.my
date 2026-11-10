@@ -1,11 +1,14 @@
 import * as React from 'react'
 import { pickerAccept, sortFiles, type IntakeRules } from '@/lib/file-intake'
+import { takeHandoff } from '@/lib/file-handoff'
 
 export interface FileIntakeOptions extends IntakeRules {
   /** Take several files at once. When false, only the first usable file is passed on. */
   multiple?: boolean
   /** Take files pasted anywhere on the page with Ctrl/⌘ V. Only one intake on a page should. */
   paste?: boolean
+  /** The tool's path: files handed over from another page (see file-handoff) arrive here when it opens. */
+  handoff?: string
   /** Files that passed the checks, and why any others were turned away. */
   onFiles: (files: File[], problems: string[]) => void
 }
@@ -73,6 +76,13 @@ export function useFileIntake(options: FileIntakeOptions): FileIntake {
       zone.removeEventListener('drop', drop)
     }
   }, [zone, take])
+
+  const handoff = options.handoff
+  React.useEffect(() => {
+    if (!handoff) return
+    const files = takeHandoff(handoff)
+    if (files) take(files)
+  }, [handoff, take])
 
   const paste = Boolean(options.paste)
   React.useEffect(() => {

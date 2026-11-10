@@ -242,6 +242,7 @@ export default function PalangIc() {
   useFileIntake({
     accepts: toolAccepts('/palang-ic'),
     paste: true,
+    handoff: '/palang-ic',
     onFiles: (files, problems) => {
       if (!files[0]) {
         if (problems[0]) showProblem(problems[0])

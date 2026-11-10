@@ -40,6 +40,7 @@ import { StickyColumn } from '@/components/sticky-column'
 import { useToast } from '@/hooks/use-toast'
 import { useFileIntake, type FileIntake } from '@/hooks/use-file-intake'
 import { toolAccepts } from '@/lib/tools'
+import { handoffCount } from '@/lib/file-handoff'
 import { downloadBlob, humanSize, isIOSOrSafari } from '@/lib/image-utils'
 import {
   FORMATS,
@@ -474,6 +475,7 @@ function SingleConverter({
   const intake = useFileIntake({
     accepts: ACCEPTS,
     paste: true,
+    handoff: '/image-converter',
     onFiles: (files, problems) => {
       if (files[0]) void load(files[0])
       else if (problems[0]) setError(problems[0])
@@ -884,7 +886,7 @@ function BatchConverter({
     }
   }
 
-  const intake = useFileIntake({ accepts: ACCEPTS, multiple: true, paste: true, onFiles: add })
+  const intake = useFileIntake({ accepts: ACCEPTS, multiple: true, paste: true, handoff: '/image-converter', onFiles: add })
 
   const openEditor = async (item: BatchItem) => {
     try {
@@ -1096,7 +1098,8 @@ function BatchConverter({
 // ---------------------------------------------------------------------------
 
 export default function ImageConverterPage() {
-  const [mode, setMode] = React.useState<'single' | 'batch'>('single')
+  // Several files handed over from another page open in the batch tab.
+  const [mode, setMode] = React.useState<'single' | 'batch'>(() => (handoffCount('/image-converter') > 1 ? 'batch' : 'single'))
   const [settings, setSettings] = React.useState<OutputSettings>({
     format: 'image/webp',
     quality: 0.85,

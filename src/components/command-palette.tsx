@@ -13,6 +13,8 @@ import {
   Keyboard,
   ClockCounterClockwise,
   Copy,
+  Paperclip,
+  X,
   type Icon,
 } from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -20,7 +22,10 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { tools } from '@/lib/tools'
 import { quickAnswers } from '@/lib/quick-answers'
-import { fileMatch, parseFileQuery, type FileTyped } from '@/lib/file-types'
+import { acceptsFile, fileMatch, parseFileQuery, type FileTyped } from '@/lib/file-types'
+import { isHeic } from '@/lib/file-intake'
+import { handOff } from '@/lib/file-handoff'
+import { FileDropCatcher } from '@/components/file-drop-catcher'
 import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
@@ -72,6 +77,8 @@ function score(query: string, name: string, extra: string[]): number {
 interface PaletteContext {
   openPalette: () => void
   openShortcuts: () => void
+  /** Open search showing the tools that can open these files. */
+  openWithFiles: (files: File[]) => void
 }
 
 const Ctx = React.createContext<PaletteContext | null>(null)
@@ -96,6 +103,8 @@ function isTypingTarget(el: EventTarget | null): boolean {
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = React.useState(false)
+  /** Files dropped or pasted to open with a tool; empty for a normal search. */
+  const [files, setFiles] = React.useState<File[]>([])
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false)
   const { resolvedTheme, setTheme } = useTheme()
   const { pathname } = useLocation()
@@ -133,16 +142,30 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
   }, [resolvedTheme, setTheme])
 
   const value = React.useMemo(
-    () => ({ openPalette: () => setPaletteOpen(true), openShortcuts: () => setShortcutsOpen(true) }),
+    () => ({
+      openPalette: () => setPaletteOpen(true),
+      openShortcuts: () => setShortcutsOpen(true),
+      openWithFiles: (next: File[]) => {
+        setShortcutsOpen(false)
+        setFiles(next)
+        setPaletteOpen(true)
+      },
+    }),
     []
   )
 
   return (
     <Ctx.Provider value={value}>
       {children}
+      <FileDropCatcher onFiles={value.openWithFiles} />
       <PaletteDialog
         open={paletteOpen}
-        onOpenChange={setPaletteOpen}
+        onOpenChange={(o) => {
+          setPaletteOpen(o)
+          if (!o) setFiles([])
+        }}
+        files={files}
+        onFiles={setFiles}
         onShowShortcuts={() => {
           setPaletteOpen(false)
           setShortcutsOpen(true)
@@ -159,7 +182,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
 
 interface Entry {
   id: string
-  group: 'Answer' | 'Recent' | 'Tools' | 'Pages' | 'Actions'
+  group: 'Open with' | 'Answer' | 'Recent' | 'Tools' | 'Pages' | 'Actions'
   label: string
   hint?: string
   icon: Icon
@@ -175,10 +198,14 @@ interface Entry {
 function PaletteDialog({
   open,
   onOpenChange,
+  files,
+  onFiles,
   onShowShortcuts,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  files: File[]
+  onFiles: (files: File[]) => void
   onShowShortcuts: () => void
 }) {
   const navigate = useNavigate()
@@ -267,6 +294,23 @@ function PaletteDialog({
 
   const results = React.useMemo<Entry[]>(() => {
     const q = query.trim()
+    // A file to open: only the tools that can open every file, filtered by what's typed.
+    if (files.length) {
+      return entries
+        .filter((e) => e.group === 'Tools' && e.files && files.every((f) => acceptsFile(e.files!, f)))
+        .filter((e) => !q || score(q, e.label, e.keywords) > 0)
+        .map((e) => ({
+          ...e,
+          id: `open:${e.id}`,
+          group: 'Open with' as const,
+          label: e.label,
+          hint: files.length > 1 && !e.files?.takesMany ? `Opens the first file. ${e.hint ?? ''}` : e.hint,
+          run: () => {
+            handOff(e.id, files)
+            go(e.id)
+          },
+        }))
+    }
     if (!q) {
       const recent = recents
         .map((p) => entries.find((e) => e.id === p && e.group === 'Tools'))
@@ -309,9 +353,9 @@ function PaletteDialog({
       .sort((a, b) => b.s - a.s)
       .map((x) => x.e)
     return [...answerEntries, ...answerTools, ...matches]
-  }, [query, entries, recents, onOpenChange, toast])
+  }, [query, entries, recents, files, go, onOpenChange, toast])
 
-  React.useEffect(() => setActive(0), [query])
+  React.useEffect(() => setActive(0), [query, files])
 
   React.useEffect(() => {
     listRef.current?.querySelector(`[data-index="${active}"]`)?.scrollIntoView({ block: 'nearest' })
@@ -342,7 +386,20 @@ function PaletteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="top-[15%] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-xl" showCloseButton={false}>
+      <DialogContent
+        className="top-[15%] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-xl"
+        showCloseButton={false}
+        // Drop a file on search to see which tools open it.
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes('Files')) e.preventDefault()
+        }}
+        onDrop={(e) => {
+          const dropped = Array.from(e.dataTransfer.files)
+          if (!dropped.length) return
+          e.preventDefault()
+          onFiles(dropped)
+        }}
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>Search tools and actions</DialogTitle>
           <DialogDescription>Type to filter, use the arrow keys to move, Enter to open.</DialogDescription>
@@ -354,7 +411,13 @@ function PaletteDialog({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search tools, or type 10 km to mi, #1e90ff…"
+            onPaste={(e) => {
+              const pasted = Array.from(e.clipboardData.files)
+              if (!pasted.length) return
+              e.preventDefault()
+              onFiles(pasted)
+            }}
+            placeholder={files.length ? 'Filter the tools that can open it…' : 'Search tools, or type 10 km to mi, #1e90ff…'}
             className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             role="combobox"
             aria-expanded="true"
@@ -364,6 +427,22 @@ function PaletteDialog({
           />
           <kbd className="hidden rounded-md border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">Esc</kbd>
         </div>
+        {files.length > 0 && (
+          // After the input, so the input stays the first thing focused.
+          <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-sm">
+            <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1 truncate">
+              {files.length === 1 ? files[0].name || 'Pasted file' : `${files.length} files`}
+            </span>
+            <button
+              type="button"
+              onClick={() => onFiles([])}
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" /> Search instead
+            </button>
+          </div>
+        )}
         <div
           ref={listRef}
           id="palette-list"
@@ -373,7 +452,11 @@ function PaletteDialog({
           aria-label="Results" className="max-h-[min(60vh,26rem)] overflow-y-auto p-2">
           {results.length === 0 && (
             <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-              Nothing matches “{query}”. Try a tool name or what you want to do, like “resize” or “epoch”.
+              {files.length && !query.trim()
+                ? files.some(isHeic)
+                  ? "HEIC photos aren't supported yet. Save it as JPEG on your iPhone (Settings → Camera → Formats → Most Compatible) or export it as JPEG first."
+                  : `No tool here opens ${files.length === 1 ? files[0].name || 'this file' : 'all of these files'} yet.`
+                : `Nothing matches “${query}”. Try a tool name or what you want to do, like “resize” or “epoch”.`}
             </p>
           )}
           {rows.map(({ entry, header }, i) => {

@@ -48,6 +48,7 @@ export const tools: Tool[] = [
     keywords: ["png", "jpg", "jpeg", "webp", "avif", "jxl", "jpegxl", "gif", "bmp", "tiff", "tif", "ico", "icon", "resize", "compress", "crop", "exif"],
     accepts: [...PHOTOS, ".jxl", ".bmp", ".ico", ".tif", ".tiff"],
     produces: [".png", ".jpg", ".jpeg", ".webp", ".avif", ".jxl", ".gif", ".bmp", ".tif", ".tiff", ".ico", ".zip"],
+    takesMany: true,
   },
   {
     name: "Markdown Previewer", path: "/markdown-previewer", icon: Article,

@@ -198,6 +198,7 @@ export default function FaviconGeneratorPage() {
   const { dragging, dropTarget, open: chooseImage, inputProps } = useFileIntake({
     accepts: ACCEPTS,
     paste: true,
+    handoff: '/favicon-generator',
     onFiles: (files, problems) => {
       if (files[0]) void loadImage(files[0])
       else if (problems[0]) setImageError(problems[0])
