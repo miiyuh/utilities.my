@@ -441,30 +441,37 @@ function SingleConverter({
 
   const [ew, eh] = image ? editedSize(image.width, image.height, edits) : [0, 0]
 
+  /**
+   * Opens a file. A picture already open stays on screen, with its settings,
+   * until the new one is ready, and stays if the new one can't be opened.
+   */
   const load = async (f: File) => {
     const id = ++loadId.current
     const current = () => id === loadId.current
     setError(null)
     setLoading(true)
-    setMeta({ status: 'loading' })
-    setPreview(null)
-    setEdits(NO_EDITS)
-    setPresetId('custom')
-    void readMetadata(f).then(
-      (report) => current() && setMeta({ status: 'done', report }),
-      () => current() && setMeta({ status: 'failed' })
-    )
+    // Start reading metadata alongside the decode; it's only shown if the decode works.
+    const metaRead = readMetadata(f)
+    metaRead.catch(() => undefined)
     try {
       const img = await decodeImage(f)
       if (!current()) return
+      // Everything switches to the new image at once.
       setFile(f)
       setImage(img)
       setWidth(img.width)
       setHeight(img.height)
+      setEdits(NO_EDITS)
+      setPresetId('custom')
+      setPreview(null)
+      setEncodeError(null)
+      setMeta({ status: 'loading' })
+      void metaRead.then(
+        (report) => current() && setMeta({ status: 'done', report }),
+        () => current() && setMeta({ status: 'failed' })
+      )
     } catch (e) {
       if (!current()) return
-      setImage(null)
-      setFile(null)
       setError(e instanceof Error ? e.message : 'This image could not be opened.')
     } finally {
       if (current()) setLoading(false)
@@ -669,6 +676,16 @@ function SingleConverter({
               </Button>
               <input {...intake.inputProps} className="hidden" />
             </div>
+            {loading && (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Spinner className="h-4 w-4 animate-spin" /> Opening the new image…
+              </p>
+            )}
+            {error && (
+              <p className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                <Warning className="mt-0.5 h-4 w-4 shrink-0" /> {error} The image above is still open.
+              </p>
+            )}
           </CardContent>
         </Card>
 
