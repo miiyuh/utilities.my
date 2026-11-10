@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { pickerAccept, sortFiles, type IntakeRules } from '@/lib/file-intake'
-import { takeHandoff } from '@/lib/file-handoff'
+import { onHandoff, takeHandoff } from '@/lib/file-handoff'
 
 export interface FileIntakeOptions extends IntakeRules {
   /** Take several files at once. When false, only the first usable file is passed on. */
@@ -79,15 +79,25 @@ export function useFileIntake(options: FileIntakeOptions): FileIntake {
 
   const handoff = options.handoff
   React.useEffect(() => {
-    if (!handoff) return
-    const files = takeHandoff(handoff)
-    if (files) take(files)
+    if (!handoff) return undefined
+    const pickUp = () => {
+      const files = takeHandoff(handoff)
+      if (files) take(files)
+    }
+    // Files left before this tool opened, then any sent while it's open.
+    pickUp()
+    const stop = onHandoff(pickUp)
+    return () => {
+      stop()
+    }
   }, [handoff, take])
 
   const paste = Boolean(options.paste)
   React.useEffect(() => {
     if (!paste) return undefined
     const onPaste = (e: ClipboardEvent) => {
+      // Already taken, for example by search's "Open with".
+      if (e.defaultPrevented) return
       const files = Array.from(e.clipboardData?.files ?? [])
       if (!files.length) return
       e.preventDefault()

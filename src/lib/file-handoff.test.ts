@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { handOff, handoffCount, takeHandoff } from './file-handoff'
+import { handOff, handoffCount, onHandoff, takeHandoff } from './file-handoff'
 import { tools } from './tools'
 
 const file = (name: string) => new File(['x'], name)
@@ -41,5 +41,21 @@ describe('tools that receive files', () => {
         picksUp: Boolean(tool.receivesFiles),
       })
     }
+  })
+})
+
+describe('hand-off to a tool that is already open', () => {
+  test('tells listeners, so the open tool takes its files straight away', () => {
+    const taken: string[] = []
+    const stop = onHandoff(() => {
+      const files = takeHandoff('/sorter')
+      if (files) taken.push(files[0].name)
+    })
+    handOff('/image-converter', [file('a.png')])
+    handOff('/sorter', [file('list.txt')])
+    stop()
+    handOff('/sorter', [file('later.txt')])
+    expect(taken).toEqual(['list.txt'])
+    expect(takeHandoff('/sorter')?.[0]?.name).toBe('later.txt')
   })
 })
