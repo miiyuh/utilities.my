@@ -231,14 +231,25 @@ function OutputControls({
   )
 }
 
-function MetadataPanel({ report, loading }: { report: MetadataReport | null; loading: boolean }) {
-  if (loading) {
+/** Reading a file's metadata: one status, so a failed read can't look like "still reading" or "none found". */
+type MetaState = { status: 'idle' } | { status: 'loading' } | { status: 'done'; report: MetadataReport | null } | { status: 'failed' }
+
+function MetadataPanel({ meta }: { meta: MetaState }) {
+  if (meta.status === 'failed') {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Couldn&apos;t read this file&apos;s camera, date and location details. Check your connection, then open the image again.
+      </p>
+    )
+  }
+  if (meta.status !== 'done') {
     return (
       <p className="flex items-center gap-2 text-sm text-muted-foreground">
         <Spinner className="h-4 w-4 animate-spin" /> Reading the file…
       </p>
     )
   }
+  const { report } = meta
   if (!report) {
     return <p className="text-sm text-muted-foreground">No metadata found. This file doesn&apos;t carry camera, date or location details.</p>
   }
@@ -415,8 +426,7 @@ function SingleConverter({
   const [height, setHeight] = React.useState(0)
   const [lockAspect, setLockAspect] = React.useState(true)
   const [presetId, setPresetId] = React.useState('custom')
-  const [meta, setMeta] = React.useState<MetadataReport | null>(null)
-  const [metaLoading, setMetaLoading] = React.useState(false)
+  const [meta, setMeta] = React.useState<MetaState>({ status: 'idle' })
   const [preview, setPreview] = React.useState<PreviewResult | null>(null)
   const [encoding, setEncoding] = React.useState(false)
   const [encodeError, setEncodeError] = React.useState<string | null>(null)
@@ -435,16 +445,14 @@ function SingleConverter({
     const current = () => id === loadId.current
     setError(null)
     setLoading(true)
-    setMeta(null)
-    setMetaLoading(true)
+    setMeta({ status: 'loading' })
     setPreview(null)
     setEdits(NO_EDITS)
     setPresetId('custom')
-    void readMetadata(f).then((r) => {
-      if (!current()) return
-      setMeta(r)
-      setMetaLoading(false)
-    })
+    void readMetadata(f).then(
+      (report) => current() && setMeta({ status: 'done', report }),
+      () => current() && setMeta({ status: 'failed' })
+    )
     try {
       const img = await decodeImage(f)
       if (!current()) return
@@ -476,7 +484,7 @@ function SingleConverter({
     loadId.current++
     setFile(null)
     setImage(null)
-    setMeta(null)
+    setMeta({ status: 'idle' })
     setPreview(null)
     setEdits(NO_EDITS)
     setError(null)
@@ -667,7 +675,7 @@ function SingleConverter({
             <CardTitle className="font-headline text-lg">What&apos;s in this file</CardTitle>
           </CardHeader>
           <CardContent>
-            <MetadataPanel report={meta} loading={metaLoading} />
+            <MetadataPanel meta={meta} />
           </CardContent>
         </Card>
 
@@ -868,7 +876,11 @@ function BatchConverter({
     setNotice(problems.length ? problems.join(' ') : null)
     setItems((prev) => [...prev, ...accepted])
     for (const it of accepted) {
-      void readMetadata(it.file).then((r) => patch(it.id, { hasLocation: Boolean(r?.hasLocation) }))
+      // A failed read leaves the location flag off; the batch still converts.
+      void readMetadata(it.file).then(
+        (r) => patch(it.id, { hasLocation: Boolean(r?.hasLocation) }),
+        () => undefined
+      )
     }
   }
 
