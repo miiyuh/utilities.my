@@ -13,8 +13,18 @@ export function registerServiceWorker(): void {
 
   // Reload only when the person chose to, not when the first install takes control.
   let reloadWanted = false
+  // With no controller yet, the next change is the first install, not an update.
+  let updating = Boolean(navigator.serviceWorker.controller)
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (reloadWanted) window.location.reload()
+    // The update was accepted in another tab. This tab still runs the old version, so offer to reload it too.
+    else if (updating)
+      toast('utilities.my was updated in another tab', {
+        description: "Reload this tab to use the new version. Anything you haven't saved on this page will be cleared.",
+        duration: Infinity,
+        action: { label: 'Reload', onClick: () => window.location.reload() },
+      })
+    updating = true
   })
 
   const offer = (worker: ServiceWorker) => {

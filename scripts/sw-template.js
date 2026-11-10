@@ -28,8 +28,13 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      for (const name of await caches.keys()) {
-        if (name.startsWith('utilities-') && name !== PRECACHE && name !== RUNTIME) await caches.delete(name)
+      // Keep this build and the one before it: a tab still running the older
+      // build (the update was accepted in another tab) loads its remaining
+      // pages from there. Cache names are listed oldest first.
+      const builds = (await caches.keys()).filter((name) => name.startsWith('utilities-') && name !== RUNTIME)
+      const keep = new Set([PRECACHE, ...builds.filter((name) => name !== PRECACHE).slice(-1)])
+      for (const name of builds) {
+        if (!keep.has(name)) await caches.delete(name)
       }
       // Stored copies of files this build no longer has, such as an older encoder.
       const runtime = await caches.open(RUNTIME)
@@ -68,8 +73,12 @@ async function page(request, url) {
   const cache = await caches.open(PRECACHE)
   // Every page runs the same app, which draws the right route, so home stands in for a page that isn't stored.
   const stored = (await cache.match(PAGES.has(path) ? path : '/')) ?? null
-  const network = fetch(request)
-  if (!stored) return network
+  if (!stored) return fetch(request)
+  // A server error counts as no answer, so a stored page beats an error page.
+  const network = fetch(request).then((response) => {
+    if (response.status >= 500) throw new Error(`Server error ${response.status}`)
+    return response
+  })
   network.catch(() => undefined)
   try {
     return await Promise.race([network, wait(PAGE_TIMEOUT_MS).then(() => stored)])
