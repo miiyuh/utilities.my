@@ -241,7 +241,8 @@ function ProgressBar({ label, progress, onCancel }: { label: string; progress: n
         <span className="tabular-nums text-muted-foreground">{Math.round(progress * 100)}%</span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-        <div className="h-full rounded-full bg-primary origin-left transition-transform duration-quick ease-smooth-out" style={{ transform: `scaleX(${Math.max(0, Math.min(1, progress))})` }} />
+        {/* Slides in from the left (not scaleX) so the rounded end keeps its shape. */}
+        <div className="h-full w-full rounded-full bg-primary transition-transform duration-quick ease-smooth-out" style={{ transform: `translateX(${(Math.max(0, Math.min(1, progress)) - 1) * 100}%)` }} />
       </div>
       <Button variant="ghost" size="sm" onClick={onCancel}>
         <XIcon className="h-4 w-4" aria-hidden /> Cancel
