@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import { fileURLToPath } from 'node:url'
 
 /**
@@ -50,8 +51,11 @@ function singleThreadEncoders(): Plugin {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss(), devApi(), singleThreadEncoders()],
+export default defineConfig(({ mode }) => ({
+  // `bun run dev:https` serves the dev site over https with a throwaway
+  // certificate, so phones on the same network count it as secure. Safari only
+  // offers sharing (and some other browser features) on secure pages.
+  plugins: [react(), tailwindcss(), devApi(), singleThreadEncoders(), mode === 'https' && basicSsl()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -95,4 +99,4 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1500,
   },
-})
+}))
