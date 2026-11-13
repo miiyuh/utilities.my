@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, test } from 'bun:test'
 import { mediaFilename, parsePostId, variantExtension, variantLabel } from './twitter-media'
-import { originalPhoto, syndicationToken, toPost } from '../../api/twitter-post'
+import { GET, originalPhoto, syndicationToken, toPost } from '../../api/twitter-post'
 
 describe('parsePostId', () => {
   test.each([
@@ -96,5 +96,25 @@ describe('api/twitter-post', () => {
   test('a tombstone or empty answer is not a post', () => {
     expect(toPost({ __typename: 'TweetTombstone' })).toBeNull()
     expect(toPost({})).toBeNull()
+  })
+})
+
+describe('GET /api/twitter-post when Twitter misbehaves', () => {
+  const realFetch = globalThis.fetch
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  test('a reply that times out or isn’t JSON is an uncached 502, not a cached 404', async () => {
+    globalThis.fetch = (async () => new Response('not json', { status: 200 })) as unknown as typeof fetch
+    const res = await GET(new Request('http://x/api/twitter-post?id=123'))
+    expect(res.status).toBe(502)
+    expect(res.headers.get('Cache-Control')).toBe('no-store')
+  })
+
+  test('a missing tweet is a briefly cached 404', async () => {
+    globalThis.fetch = (async () => new Response('', { status: 404 })) as unknown as typeof fetch
+    const res = await GET(new Request('http://x/api/twitter-post?id=123'))
+    expect(res.status).toBe(404)
   })
 })

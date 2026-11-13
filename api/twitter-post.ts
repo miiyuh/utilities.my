@@ -134,21 +134,20 @@ export async function GET(request: Request): Promise<Response> {
   if (!/^\d{1,20}$/.test(id)) return json({ error: 'That isn’t a tweet link.' }, 400, NO_STORE)
 
   let upstream: Response
+  let raw: RawTweet
   try {
     const url = `${SYNDICATION}?id=${id}&lang=en&token=${syndicationToken(id)}`
+    // The timeout covers reading the body as well as the headers.
     upstream = await fetch(url, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(8000) })
+    if (upstream.status === 404) {
+      return json({ error: 'That tweet doesn’t exist, was deleted, or is from a private account.' }, 404, 'public, s-maxage=60')
+    }
+    if (!upstream.ok) return json({ error: 'Twitter didn’t answer. Try again in a moment.' }, 502, NO_STORE)
+    raw = (await upstream.json()) as RawTweet
   } catch {
+    // A network error, the timeout, or a reply that isn't JSON: not cached, so a retry asks again.
     return json({ error: 'Twitter didn’t answer. Try again in a moment.' }, 502, NO_STORE)
   }
-
-  if (upstream.status === 404) {
-    return json({ error: 'That tweet doesn’t exist, was deleted, or is from a private account.' }, 404, 'public, s-maxage=60')
-  }
-  if (!upstream.ok) {
-    return json({ error: 'Twitter didn’t answer. Try again in a moment.' }, 502, NO_STORE)
-  }
-
-  const raw = (await upstream.json().catch(() => ({}))) as RawTweet
   if (raw.__typename === 'TweetTombstone') {
     return json({ error: 'Twitter only shows this tweet to signed-in people, often because it’s marked sensitive.' }, 404, 'public, s-maxage=60')
   }
