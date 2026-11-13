@@ -414,9 +414,10 @@ function GifMaker({ post, media, index, total, getBlob }: { post: XPost; media: 
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground tabular-nums">
-            {outWidth} × {outHeight} · {frames} frames
+            {duration ? `${outWidth} × ${outHeight} · ${frames} frames` : 'Reading the clip’s length…'}
           </p>
-          <Button onClick={() => void make()} variant={result && !stale ? 'outline' : 'default'} className="max-sm:h-10 max-sm:w-full">
+          {/* Until the length is known (Twitter rarely gives it for GIFs), the range is a guess. */}
+          <Button onClick={() => void make()} disabled={!duration} variant={result && !stale ? 'outline' : 'default'} className="max-sm:h-10 max-sm:w-full">
             {result ? <ArrowClockwise className="h-4 w-4" aria-hidden /> : <MagicWand className="h-4 w-4" aria-hidden />}
             {result ? 'Make GIF again' : 'Make GIF'}
           </Button>

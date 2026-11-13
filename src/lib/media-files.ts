@@ -94,7 +94,8 @@ export async function videoToGif(video: Blob, opts: GifOptions): Promise<Blob> {
     if (!ctx) throw new Error('Canvas is not available in this browser.')
 
     const last = Math.max(0, (el.duration || end) - 0.01)
-    const frames = gifFrameCount({ start, end, fps })
+    // The settings may ask for more than the video holds; stop at its real end.
+    const frames = gifFrameCount({ start, end: Math.min(end, el.duration || end), fps })
     // GIF delays are in hundredths of a second, so round to tens of milliseconds.
     const delay = Math.max(20, Math.round(100 / fps) * 10)
     const gif = GIFEncoder()
