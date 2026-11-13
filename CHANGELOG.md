@@ -1,3 +1,10 @@
+## [5.6.1](https://github.com/miiyuh/utilities.my/compare/v5.6.0...v5.6.1) (2026-11-13)
+
+### Bug Fixes
+
+* **home:** open the twitter note on tap and for screen readers ([0cd3de2](https://github.com/miiyuh/utilities.my/commit/0cd3de2034b37d7ca1dd2db595784ff56937c4db))
+* **progress:** slide bars instead of scaling them ([3477028](https://github.com/miiyuh/utilities.my/commit/3477028817b403b4334caa97735742c2f5453435))
+
 ## [5.6.0](https://github.com/miiyuh/utilities.my/compare/v5.5.0...v5.6.0) (2026-11-13)
 
 ### Features
