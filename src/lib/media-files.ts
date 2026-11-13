@@ -55,6 +55,17 @@ export function gifFrameCount({ start, end, fps }: Pick<GifSettings, 'start' | '
   return Math.max(1, Math.floor(seconds * fps))
 }
 
+/**
+ * How long frame `i` shows, in milliseconds. GIF delays are whole hundredths
+ * of a second, so each frame gets the gap between rounded running times: at
+ * 15 fps that's 70, 60, 70 ms…, which adds up to the clip's real length where
+ * a flat 70 ms would play about 5% slow.
+ */
+export function frameDelay(i: number, fps: number): number {
+  const at = (n: number) => Math.round((n * 100) / fps) * 10
+  return Math.max(20, at(i + 1) - at(i))
+}
+
 function seek(video: HTMLVideoElement, time: number): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('The video stopped responding while making the GIF.')), 10_000)
@@ -96,8 +107,6 @@ export async function videoToGif(video: Blob, opts: GifOptions): Promise<Blob> {
     const last = Math.max(0, (el.duration || end) - 0.01)
     // The settings may ask for more than the video holds; stop at its real end.
     const frames = gifFrameCount({ start, end: Math.min(end, el.duration || end), fps })
-    // GIF delays are in hundredths of a second, so round to tens of milliseconds.
-    const delay = Math.max(20, Math.round(100 / fps) * 10)
     const gif = GIFEncoder()
     for (let i = 0; i < frames; i++) {
       signal?.throwIfAborted()
@@ -109,7 +118,7 @@ export async function videoToGif(video: Blob, opts: GifOptions): Promise<Blob> {
       ctx.drawImage(el, 0, 0, width, height)
       const { data } = ctx.getImageData(0, 0, width, height)
       const palette = quantize(data, colors)
-      gif.writeFrame(applyPalette(data, palette), width, height, { palette, delay })
+      gif.writeFrame(applyPalette(data, palette), width, height, { palette, delay: frameDelay(i, fps) })
       onProgress?.((i + 1) / frames)
     }
     gif.finish()

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { mediaFilename, parsePostId, variantExtension, variantLabel } from './twitter-media'
 import { GET, originalPhoto, syndicationToken, toPost } from '../../api/twitter-post'
+import { frameDelay } from './media-files'
 
 describe('parsePostId', () => {
   test.each([
@@ -116,5 +117,17 @@ describe('GET /api/twitter-post when Twitter misbehaves', () => {
     globalThis.fetch = (async () => new Response('', { status: 404 })) as unknown as typeof fetch
     const res = await GET(new Request('http://x/api/twitter-post?id=123'))
     expect(res.status).toBe(404)
+  })
+})
+
+describe('frameDelay', () => {
+  test.each([10, 15, 20, 25])('%i fps adds up to the real length', (fps) => {
+    const frames = fps * 30
+    const total = Array.from({ length: frames }, (_, i) => frameDelay(i, fps)).reduce((a, b) => a + b, 0)
+    expect(total).toBe(30_000)
+  })
+
+  test('every delay is a whole number of hundredths', () => {
+    for (let i = 0; i < 45; i++) expect(frameDelay(i, 15) % 10).toBe(0)
   })
 })
