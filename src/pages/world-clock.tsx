@@ -15,7 +15,6 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GlobeClock, type GlobeView, type GlobeMode } from '@/components/globe-clock';
 import { StickyColumn } from '@/components/sticky-column';
-import { cn } from '@/lib/utils';
 import { useToolSettings } from '@/hooks/use-tool-settings';
 import { ALL_ZONES, findCityZone, zoneLabel } from '@/lib/timezones';
 import { Clock, Sun, Moon, X, MagnifyingGlass, DotsSixVertical } from '@phosphor-icons/react';
@@ -78,16 +77,13 @@ function PinnedCityRow({ tz, isHome, isDay, flag, timeLabel, dateLabel, onRemove
         <div className="flex items-center gap-1.5">
           <span className="truncate text-sm font-medium">{zoneLabel(tz)}</span>
           {isHome && (
-            <span className="text-[9px] uppercase tracking-wide text-primary font-semibold">You</span>
+            <span className="text-[11px] text-primary font-semibold">You</span>
           )}
         </div>
-        <div className="text-[10px] text-muted-foreground tabular-nums">{dateLabel}</div>
+        <div className="text-[11px] text-muted-foreground tabular-nums">{dateLabel}</div>
       </div>
       <span
-        className={cn(
-          'shrink-0 rounded-full p-1',
-          isDay ? 'bg-amber-400/15 text-amber-500' : 'bg-indigo-400/15 text-indigo-400'
-        )}
+        className="shrink-0 rounded-full bg-muted p-1 text-muted-foreground"
       >
         {isDay ? <Sun className="h-3 w-3" weight="fill" /> : <Moon className="h-3 w-3" weight="fill" />}
       </span>

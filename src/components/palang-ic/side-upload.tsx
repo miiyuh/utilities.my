@@ -45,7 +45,7 @@ export function SideUpload({ label, hint, side, busy = false, onFile, onProblem,
       </div>
       <div
         ref={dropTarget}
-        className={`relative rounded-lg border-2 border-dashed transition-all duration-quick ${
+        className={`relative rounded-lg border-2 border-dashed transition-[color,background-color,border-color,box-shadow] duration-quick ${
           dragging ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-muted-foreground/25'
         } ${!side ? 'hover:border-primary/50 hover:bg-accent/50' : ''}`}
       >

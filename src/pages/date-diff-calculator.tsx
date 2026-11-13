@@ -332,8 +332,8 @@ export default function DateDiffCalculatorPage() {
                     <div className="flex items-center justify-between mb-1.5">
                       <Label htmlFor="startDateInput">Start Date {includeTime && "& Time"}</Label>
                       <div className="flex gap-1">
-                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('today', true)}>Today</Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('tomorrow', true)}>Tomorrow</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[11px] px-1.5" onClick={() => handleQuickSelect('today', true)}>Today</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[11px] px-1.5" onClick={() => handleQuickSelect('tomorrow', true)}>Tomorrow</Button>
                       </div>
                     </div>
                     <Popover open={isStartOpen} onOpenChange={setIsStartOpen}>
@@ -364,9 +364,9 @@ export default function DateDiffCalculatorPage() {
                     <div className="flex items-center justify-between mb-1.5">
                       <Label htmlFor="endDateInput">End Date {includeTime && "& Time"}</Label>
                       <div className="flex gap-1">
-                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('next-week', false)}>+1W</Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('next-month', false)}>+1M</Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-1.5" onClick={() => handleQuickSelect('next-year', false)}>+1Y</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[11px] px-1.5" onClick={() => handleQuickSelect('next-week', false)}>+1W</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[11px] px-1.5" onClick={() => handleQuickSelect('next-month', false)}>+1M</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[11px] px-1.5" onClick={() => handleQuickSelect('next-year', false)}>+1Y</Button>
                       </div>
                     </div>
                     <Popover open={isEndOpen} onOpenChange={setIsEndOpen}>
@@ -427,7 +427,7 @@ export default function DateDiffCalculatorPage() {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider">Breakdown</h4>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-3">Breakdown</h4>
                           {breakdownRows.map((r) => (
                             <div
                               key={r.label}
@@ -442,7 +442,7 @@ export default function DateDiffCalculatorPage() {
                         </div>
 
                         <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider">Totals</h4>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-3">Totals</h4>
                           {totalRows.map((r) => (
                             <div
                               key={r.label}

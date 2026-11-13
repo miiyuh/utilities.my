@@ -207,7 +207,7 @@ export function CropEditor({ side, rotation, crop, onChange }: CropEditorProps) 
                 type="button"
                 aria-label={`Resize from ${CORNER_LABELS[corner]} corner. Arrow keys grow or shrink.`}
                 className={[
-                  'absolute h-7 w-7 rounded-full border-2 border-white bg-primary shadow-md transition-transform duration-quick hover:scale-110',
+                  'absolute h-7 w-7 rounded-full border-2 border-white bg-primary shadow-md transition-[border-color,box-shadow] duration-quick hover:ring-2 hover:ring-ring/50',
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
                   sx < 0 ? '-left-3.5' : '-right-3.5',
                   sy < 0 ? '-top-3.5' : '-bottom-3.5',

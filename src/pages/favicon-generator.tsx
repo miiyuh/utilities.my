@@ -536,7 +536,7 @@ export default function FaviconGeneratorPage() {
                                         <span className={cn('aspect-square w-full bg-white/25 backdrop-blur-sm', p.iconClass)} aria-hidden />
                                       )}
                                       {i === 1 ? (
-                                        <span className="max-w-full truncate text-[9px] leading-tight text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">{shortName || appName}</span>
+                                        <span className="max-w-full truncate text-[11px] leading-tight text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">{shortName || appName}</span>
                                       ) : (
                                         <span className="h-1.5 w-3/4 rounded-full bg-white/40" aria-hidden />
                                       )}
@@ -571,7 +571,7 @@ export default function FaviconGeneratorPage() {
                           {PREVIEW_SIZES.slice(0, 4).map((s) => (
                             <figure key={s} className="flex flex-col items-center gap-1">
                               <img src={previews[s]} alt="" width={Math.min(s, 64)} height={Math.min(s, 64)} style={{ imageRendering: s <= 32 ? 'pixelated' : 'auto' }} />
-                              <figcaption className="text-[10px] text-muted-foreground tabular-nums">{s}px</figcaption>
+                              <figcaption className="text-[11px] text-muted-foreground tabular-nums">{s}px</figcaption>
                             </figure>
                           ))}
                         </div>

@@ -526,7 +526,7 @@ export default function PalangIc() {
                     )}
 
                     <div className="rounded-md border border-border bg-muted/40 px-3 py-2">
-                      <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      <p className="mb-1 text-xs font-medium text-muted-foreground">
                         Text on the copy
                       </p>
                       {lines.length ? (
@@ -590,7 +590,7 @@ export default function PalangIc() {
                               type="button"
                               aria-label={c.name}
                               onClick={() => setColor(c.hex)}
-                              className={`h-7 w-7 rounded-full border-2 transition-transform duration-quick hover:scale-110 ${
+                              className={`h-7 w-7 rounded-full border-2 transition-[border-color,box-shadow] duration-quick hover:ring-2 hover:ring-ring/50 ${
                                 options.color.toLowerCase() === c.hex ? 'border-primary' : 'border-border'
                               }`}
                               style={{ backgroundColor: c.hex }}

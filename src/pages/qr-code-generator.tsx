@@ -356,7 +356,7 @@ export default function QrCodeGeneratorPage() {
     }
     const canvas = qrCanvasRef.current.querySelector('canvas');
     if (!canvas) {
-      toast({ title: 'Copy Failed', description: 'Canvas not found.', variant: 'destructive' });
+      toast({ title: 'Copy failed', description: 'Canvas not found.', variant: 'destructive' });
       return;
     }
     try {
@@ -365,7 +365,7 @@ export default function QrCodeGeneratorPage() {
         if (blob) {
           const item = new (window as any).ClipboardItem({ 'image/png': blob });
           await navigator.clipboard.write([item]);
-          toast({ title: 'Copied!', description: 'QR PNG copied to clipboard.' });
+          toast({ title: 'Copied', description: 'QR PNG copied to clipboard.' });
           return;
         }
       }
@@ -373,7 +373,7 @@ export default function QrCodeGeneratorPage() {
       await navigator.clipboard.writeText(dataUrl);
       toast({ title: 'Copied (Data URL)', description: 'PNG data URL copied.' });
     } catch (e) {
-      toast({ title: 'Copy Failed', description: String(e), variant: 'destructive' });
+      toast({ title: 'Copy failed', description: String(e), variant: 'destructive' });
     }
   }, [outputFormat, qrValue, qrCanvasRef, toast]);
 
@@ -642,7 +642,7 @@ export default function QrCodeGeneratorPage() {
               <div className="lg:col-span-2 space-y-8">
                 <Card className="minimal-card">
                   <CardHeader>
-                    <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Content & Data Type</CardTitle>
+                    <CardTitle className="font-headline text-lg md:text-xl tracking-tight">Content and data type</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 md:space-y-5">
                     <div className="space-y-2">
@@ -665,7 +665,7 @@ export default function QrCodeGeneratorPage() {
                             size="sm"
                             disabled={!qrValue}
                             className="h-8"
-                            toastTitle="HTML Embed Copied!"
+                            toastTitle="HTML embed copied"
                             toastDescription={`${outputFormat === 'svg' ? '<svg> markup' : '<img> tag'} copied to clipboard.`}
                           />
                           <Button type="button" variant="outline" size="sm" disabled={!qrValue || outputFormat!=='png'} onClick={copyPngToClipboard} className="h-8 px-3">
@@ -675,12 +675,12 @@ export default function QrCodeGeneratorPage() {
                             <ArrowClockwise className="h-3.5 w-3.5 mr-1" /> Reset
                           </Button>
                         </div>
-                        <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-muted-foreground">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <span>{qrByteLength} bytes</span>
                           <span>Error Correction: {errorCorrectionLevel}</span>
                         </div>
                         <div className="w-full h-1 bg-border/60 rounded overflow-hidden">
-                          <div className={`h-full transition-all ${qrByteLength<150?'bg-primary':qrByteLength<500?'bg-amber-500':'bg-destructive'}`} style={{width: `${Math.min(100, (qrByteLength/600)*100)}%`}} />
+                          <div className={`h-full origin-left transition-transform duration-quick ease-smooth-out ${qrByteLength<150?'bg-primary':qrByteLength<500?'bg-warning':'bg-destructive'}`} style={{transform: `scaleX(${Math.min(1, qrByteLength/600)})`}} />
                         </div>
                         <p className="text-[11px] leading-snug text-muted-foreground">{complexityHint}</p>
                     </div>
@@ -873,7 +873,7 @@ export default function QrCodeGeneratorPage() {
                     ) : (
                       <div className="w-full max-w-[288px] aspect-square rounded-sm flex flex-col items-center justify-center text-muted-foreground p-4 border border-dashed border-border/70 bg-background/40">
                         <QrCodeIcon className="h-10 w-10 mb-2 opacity-60" />
-                        <span className="text-xs text-center tracking-wide uppercase">Enter data to generate</span>
+                        <span className="text-xs text-center">Enter data to generate</span>
                       </div>
                     )}
                   </CardContent>
@@ -912,7 +912,7 @@ export default function QrCodeGeneratorPage() {
                         label="HTML Embed"
                         disabled={!qrValue}
                         className="w-full min-w-0"
-                        toastTitle="HTML Embed Copied!"
+                        toastTitle="HTML embed copied"
                         toastDescription={`${outputFormat === 'svg' ? '<svg> markup' : '<img> tag'} copied to clipboard.`}
                       />
                       <Button onClick={handleDownload} disabled={!qrValue} className="w-full min-w-0">

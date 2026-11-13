@@ -150,7 +150,7 @@ export default function About() {
           <div className="w-full max-w-6xl mx-auto space-y-10">
             {/* Hero */}
             <section className="relative overflow-hidden rounded-md border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
+
               <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
                 <div className="shrink-0">
                   <img
@@ -162,7 +162,7 @@ export default function About() {
                   />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">A small toolbox for everyday jobs</h2>
+                  <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">A small toolbox for everyday jobs</h2>
                   <p className="text-muted-foreground text-base md:text-lg">
                     Converting, calculating, counting and tidying, all in one calm place and all in your browser.
                     No accounts, no uploads, no fuss.

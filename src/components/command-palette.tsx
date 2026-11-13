@@ -425,7 +425,7 @@ function PaletteDialog({
             aria-activedescendant={results[active] ? `palette-${results[active].id}` : undefined}
             aria-autocomplete="list"
           />
-          <kbd className="hidden rounded-md border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">Esc</kbd>
+          <kbd className="hidden rounded-md border border-border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground sm:inline">Esc</kbd>
         </div>
         {files.length > 0 && (
           // After the input, so the input stays the first thing focused.
@@ -464,7 +464,7 @@ function PaletteDialog({
             return (
               <React.Fragment key={entry.id}>
                 {header && (
-                  <div className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground first:pt-1">
+                  <div className="px-3 pt-3 pb-1 text-xs font-semibold text-muted-foreground first:pt-1">
                     {header}
                   </div>
                 )}
@@ -497,7 +497,7 @@ function PaletteDialog({
                     {entry.hint && <div className="truncate text-xs text-muted-foreground">{entry.hint}</div>}
                   </div>
                   {entry.shortcut && (
-                    <kbd className="shrink-0 rounded-md border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                    <kbd className="shrink-0 rounded-md border border-border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                       {entry.shortcut}
                     </kbd>
                   )}
@@ -580,7 +580,7 @@ export function SearchButton() {
       >
         <MagnifyingGlass className="h-4 w-4" />
         <span className="text-sm">Search</span>
-        <kbd className="rounded-full border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">{MOD_KEY} K</kbd>
+        <kbd className="rounded-full border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px]">{MOD_KEY} K</kbd>
       </Button>
       {/* Phones only: bordered like the theme switch beside it, and no tooltip, since a tap opens search straight away. */}
       <Button variant="outline" size="icon-sm" onClick={openPalette} className="size-8 sm:hidden" aria-label="Search tools">

@@ -20,7 +20,7 @@ export function MethodologyBody({ method }: { method: Method }) {
       )}
       {method.sources.length > 0 && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">Sources</p>
+          <p className="text-xs font-semibold text-muted-foreground mb-1.5">Sources</p>
           <ul className="space-y-1">
             {method.sources.map((src) => (
               <li key={src.url}>

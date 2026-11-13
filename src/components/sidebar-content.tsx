@@ -56,7 +56,7 @@ export function SidebarContent() {
           alt="utilities.my"
           width={120}
           height={24}
-          className="object-contain transition-all duration-quick group-data-[collapsible=icon]:scale-90 group-data-[collapsible=icon]:hidden"
+          className="object-contain group-data-[collapsible=icon]:hidden"
         />
         {/* Compact mark shown only when collapsed: just the "u", no background tile. */}
         <img
@@ -70,7 +70,7 @@ export function SidebarContent() {
       <SidebarScrollableContent className="flex-1 overscroll-contain p-3 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
         {/* SidebarContent is the native scroll container; its scrollbar is hidden but it still scrolls. */}
         <nav aria-label="Tools">
-          <SidebarMenu className="space-y-1.5 group-data-[collapsible=icon]:items-center">
+          <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
             {sortedTools.map((tool) => (
               <SidebarMenuItem key={tool.path}>
                 <SidebarMenuButton

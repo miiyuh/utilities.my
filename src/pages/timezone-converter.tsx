@@ -314,7 +314,7 @@ Planned with utilities.my/timezone-converter`,
                       <div
                         key={h}
                         className={cn(
-                          'flex-1 text-center py-2 text-[10px] tabular-nums text-muted-foreground',
+                          'flex-1 text-center py-2 text-[11px] tabular-nums text-muted-foreground',
                           h === nowColumn && 'text-foreground font-semibold'
                         )}
                       >
@@ -340,7 +340,7 @@ Planned with utilities.my/timezone-converter`,
                             <Flag emoji={city?.flag} />
                             <span className="text-sm font-medium truncate">{zoneLabel(tz)}</span>
                             {idx === 0 && (
-                              <span className="text-[9px] uppercase tracking-wide text-primary font-semibold">Home</span>
+                              <span className="text-[11px] text-primary font-semibold">Home</span>
                             )}
                           </div>
                           {rangeStart && rangeEnd ? (

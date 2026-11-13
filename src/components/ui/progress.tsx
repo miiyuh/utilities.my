@@ -42,8 +42,13 @@ function ProgressIndicator({
 }: ProgressPrimitive.Indicator.Props) {
   return (
     <ProgressPrimitive.Indicator
+      render={(indicatorProps) => <div {...indicatorProps} style={{
+        ...indicatorProps.style,
+        width: '100%',
+        transform: `scaleX(${Math.max(0, Math.min(1, parseFloat(String(indicatorProps.style?.width ?? '100')) / 100))})`,
+      }} />}
       data-slot="progress-indicator"
-      className={cn("h-full bg-primary transition-all", className)}
+      className={cn("h-full origin-left bg-primary transition-transform duration-quick ease-smooth-out", className)}
       {...props}
     />
   )

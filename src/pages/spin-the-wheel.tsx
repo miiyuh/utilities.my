@@ -87,8 +87,8 @@ export default function SpinTheWheelPage() {
     
     // Show celebration toast
     toast({
-      title: "🎉 Winner!",
-      description: `${winner} has been selected!`,
+      title: "Winner",
+      description: `${winner} was selected`,
       duration: 4000,
     });
 
@@ -231,7 +231,7 @@ export default function SpinTheWheelPage() {
                       />
                     </div>
                     {items.length < 2 && (
-                      <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <div className="mt-6 p-4 bg-warning/10 border border-warning/30 rounded-lg">
                         <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center">
                           Add at least 2 items to spin the wheel.
                         </p>
@@ -244,7 +244,7 @@ export default function SpinTheWheelPage() {
               {/* Controls Section */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Items & Controls</CardTitle>
+                  <CardTitle>Items and controls</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Import/Export/Share Actions */}
@@ -368,7 +368,7 @@ export default function SpinTheWheelPage() {
                       <Badge
                         key={index}
                         variant="secondary"
-                        className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
+                        className="bg-primary/10 text-primary"
                       >
                         #{index + 1} {winner}
                       </Badge>

@@ -249,8 +249,10 @@
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      transition-delay: 0ms !important;
       scroll-behavior: auto !important;
     }
   }
@@ -262,20 +264,20 @@
 @layer components {
   /* BUTTON UTILITIES - aligned to the preset button language (rounded-2xl, ring-3 focus) */
   .minimal-button {
-    @apply inline-flex items-center justify-center bg-primary text-primary-foreground px-5 py-2.5 rounded-2xl font-medium transition-all outline-none hover:bg-primary/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 active:translate-y-px;
+    @apply inline-flex items-center justify-center bg-primary text-primary-foreground px-5 py-2.5 rounded-2xl font-medium transition-[color,background-color,border-color,box-shadow] outline-none hover:bg-primary/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 active:translate-y-px;
   }
 
   .minimal-button-secondary {
-    @apply inline-flex items-center justify-center bg-secondary text-secondary-foreground px-5 py-2.5 rounded-2xl font-medium transition-all outline-none hover:bg-secondary/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 active:translate-y-px;
+    @apply inline-flex items-center justify-center bg-secondary text-secondary-foreground px-5 py-2.5 rounded-2xl font-medium transition-[color,background-color,border-color,box-shadow] outline-none hover:bg-secondary/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 active:translate-y-px;
   }
 
   .minimal-button-ghost {
-    @apply inline-flex items-center justify-center text-foreground px-3 py-2 rounded-full transition-all outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/30;
+    @apply inline-flex items-center justify-center text-foreground px-3 py-2 rounded-full transition-[color,background-color,border-color,box-shadow] outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/30;
   }
 
   /* CARD & SURFACES - match the Card component (shared radius, subtle ring, soft shadow) */
   .minimal-card {
-    @apply bg-card text-card-foreground rounded-md shadow-sm ring-1 ring-foreground/5 dark:ring-foreground/10 transition-all duration-[var(--duration-quick)] ease-[var(--ease-smooth-out)] hover:shadow-md hover:ring-primary/30 relative z-10;
+    @apply bg-card text-card-foreground rounded-md shadow-sm ring-1 ring-foreground/5 dark:ring-foreground/10 transition-[color,background-color,border-color,box-shadow] duration-[var(--duration-quick)] ease-[var(--ease-smooth-out)] hover:shadow-md hover:ring-primary/30 relative z-10;
   }
 
   /* ICON & INTERACTIVE ELEMENTS */
@@ -299,7 +301,7 @@
 
   /* TYPOGRAPHY */
   .text-heading-1 {
-    @apply text-3xl font-bold tracking-tight leading-tight;
+    @apply text-3xl font-semibold tracking-tight leading-tight;
   }
   .text-heading-2 {
     @apply text-2xl font-semibold tracking-tight leading-tight;
@@ -423,7 +425,7 @@
 
   .markdown-preview h1 {
     font-size: 2.25rem;
-    font-weight: 700;
+    font-weight: 600;
     border-bottom: 1px solid var(--border);
     padding-bottom: 1rem;
     margin-bottom: 1rem;
@@ -666,3 +668,17 @@
     color: var(--muted-foreground);
   }
 }
+
+/* One entrance per surface. No opacity gate or delayed interactive content. */
+.surface-enter {
+  animation: surface-enter var(--duration-fast) var(--ease-smooth-out) both;
+}
+.surface-enter-grid { --entrance-distance: 3px; }
+@keyframes surface-enter {
+  from { transform: translateY(var(--entrance-distance, 6px)); }
+  to { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface-enter { animation: none !important; }
+}
+html[data-a11y-reduce-motion] .surface-enter { animation: none !important; }

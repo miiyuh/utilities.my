@@ -146,7 +146,7 @@ export default function PercentageCalculatorPage() {
                     {Number.isFinite(percentOfResult) && (
                       <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">
-                          <div className="text-3xl font-bold text-primary tabular-nums">{fmt(percentOfResult)}</div>
+                          <div className="text-3xl font-medium text-primary tabular-nums">{fmt(percentOfResult)}</div>
                           <div className="text-sm text-muted-foreground">
                             {g(percentOf.percent)}% of {g(percentOf.value)} is <span className="font-medium text-foreground">{fmt(percentOfResult)}</span>
                           </div>
@@ -186,7 +186,7 @@ export default function PercentageCalculatorPage() {
                     {Number.isFinite(whatPercentResult) && (
                       <div className="p-5 bg-muted/40 border border-border rounded-2xl">
                         <div className="flex flex-wrap items-center gap-4">
-                          <div className="text-3xl font-bold text-primary tabular-nums">{fmt(whatPercentResult)}%</div>
+                          <div className="text-3xl font-medium text-primary tabular-nums">{fmt(whatPercentResult)}%</div>
                           <div className="text-sm text-muted-foreground">
                             {g(isWhatPercent.part)} is <span className="font-medium text-foreground">{fmt(whatPercentResult)}%</span> of {g(isWhatPercent.whole)}
                           </div>
@@ -231,7 +231,7 @@ export default function PercentageCalculatorPage() {
                           ) : (
                             <TrendDown className="h-6 w-6 text-primary shrink-0" aria-hidden />
                           )}
-                          <div className="text-3xl font-bold tabular-nums text-foreground">
+                          <div className="text-3xl font-medium tabular-nums text-foreground">
                             {changeResult.percent >= 0 ? '+' : ''}{fmt(changeResult.percent)}%
                           </div>
                           <div className="text-sm text-muted-foreground">
@@ -301,7 +301,7 @@ export default function PercentageCalculatorPage() {
                             <PlusCircle className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
                             <div>
                               <div className="text-xs text-muted-foreground mb-0.5">Increase by {adjustByPercent.percent}%</div>
-                              <div className="text-2xl font-bold text-foreground tabular-nums">{fmt(adjustResult.increase)}</div>
+                              <div className="text-2xl font-medium text-foreground tabular-nums">{fmt(adjustResult.increase)}</div>
                             </div>
                             <div className="ml-auto">
                               <CopyButton size="sm" value={fmt(adjustResult.increase)} />
@@ -313,7 +313,7 @@ export default function PercentageCalculatorPage() {
                             <MinusCircle className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
                             <div>
                               <div className="text-xs text-muted-foreground mb-0.5">Decrease by {adjustByPercent.percent}%</div>
-                              <div className="text-2xl font-bold text-foreground tabular-nums">{fmt(adjustResult.decrease)}</div>
+                              <div className="text-2xl font-medium text-foreground tabular-nums">{fmt(adjustResult.decrease)}</div>
                             </div>
                             <div className="ml-auto">
                               <CopyButton size="sm" value={fmt(adjustResult.decrease)} />

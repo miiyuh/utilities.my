@@ -356,13 +356,13 @@ export default function ColourPickerPage() {
     try {
       await navigator.clipboard.writeText(text);
       toast({ 
-        title: `${label} Copied!`, 
+        title: `${label} copied`,
         description: `${text} copied to clipboard.`,
         duration: 2000 
       });
   } catch {
       toast({ 
-        title: 'Copy Failed', 
+        title: 'Copy failed',
         description: `Could not copy ${label}.`, 
         variant: 'destructive' 
       });
@@ -374,7 +374,7 @@ export default function ColourPickerPage() {
   setPreviousHex(hexColour);
   setHexColour(randomHex);
     toast({ 
-      title: 'Random Colour Generated!', 
+      title: 'Random colour generated',
       description: `New colour: ${randomHex}`,
       duration: 2000 
     });
@@ -424,7 +424,7 @@ export default function ColourPickerPage() {
     setImagePalette([]);
     setMagnifierVisible(false);
     toast({ 
-      title: 'Image Removed', 
+      title: 'Image removed',
       description: 'Canvas cleared successfully',
       duration: 2000 
     });
@@ -512,7 +512,7 @@ export default function ColourPickerPage() {
           setHexColour(colourData.hex);
           setMagnifiedColour(colourData.hex);
           addToColorHistory(colourData.hex);
-          toast({ title: 'Colour Picked!', description: `Selected colour: ${colourData.hex}`, duration: 1600 });
+          toast({ title: 'Colour picked', description: `Selected colour: ${colourData.hex}`, duration: 1600 });
           const fx = Math.floor(offsetX); const fy = Math.floor(offsetY);
           setCrosshair({ x: fx, y: fy });
           setLastSamplePos({ x: fx, y: fy });
@@ -593,7 +593,7 @@ export default function ColourPickerPage() {
       setTab('image');
       setMagnifierVisible(false);
       toast({ 
-        title: 'Image Uploaded!', 
+        title: 'Image opened',
         description: 'Click on the image to pick colours',
         duration: 3000 
       });
@@ -735,7 +735,7 @@ export default function ColourPickerPage() {
                 <CardContent className="space-y-4 md:space-y-5">
                   {/* Universal colour input */}
                   <div className="space-y-1.5">
-                    <Label htmlFor="colour-value-input" className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Colour value</Label>
+                    <Label htmlFor="colour-value-input" className="text-xs text-muted-foreground font-semibold">Colour value</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         id="colour-value-input"
@@ -753,7 +753,7 @@ export default function ColourPickerPage() {
                         label=""
                         size="sm"
                         title="Copy HEX"
-                        toastTitle="HEX Copied!"
+                        toastTitle="HEX copied"
                         toastDescription={`${lastValidHex} copied to clipboard.`}
                       />
                       <Button variant="outline" size="sm" disabled={previousHex===lastValidHex} onClick={()=>{ const cur=lastValidHex; colourTyping.current = false; setHexColour(previousHex); setPreviousHex(cur); }} title="Swap with previous colour">↺</Button>
@@ -775,19 +775,19 @@ export default function ColourPickerPage() {
                       <QrCode className="h-4 w-4" /> QR code colour
                     </Button>
                   </div>
-                    {/* Right: Derived Colour Codes */}
+                    {/* Right: Derived Colour codes */}
                     <div className="flex flex-col gap-2 md:gap-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Colour Codes</p>
+                      <p className="text-xs text-muted-foreground font-semibold">Colour codes</p>
                       <div className="grid gap-2 grid-cols-2">
                         {/* RGB */}
                         <button
                           type="button"
                           disabled={!rgbColour}
                           onClick={()=> copyToClipboard(rgbColour?`rgb(${rgbColour.r}, ${rgbColour.g}, ${rgbColour.b})`:'','RGB')}
-                          className="group relative min-h-12 sm:min-h-14 border border-border rounded-sm text-[10px] sm:text-[11px] font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-colors"
+                          className="group relative min-h-12 sm:min-h-14 border border-border rounded-sm text-[11px] sm:text-[11px] font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-colors"
                           aria-label={rgbColour?`Copy RGB ${`rgb(${rgbColour.r}, ${rgbColour.g}, ${rgbColour.b})`}`:'RGB unavailable'}
                         >
-                          <span className="absolute top-1 left-1 text-[10px] tracking-wide font-semibold opacity-70">RGB</span>
+                          <span className="absolute top-1 left-1 text-[11px] tracking-wide font-semibold opacity-70">RGB</span>
                           <span className="w-full break-words pt-3 text-[11px] sm:text-[12px] leading-tight">{rgbColour?`${rgbColour.r},${rgbColour.g},${rgbColour.b}`:'-'}</span>
                         </button>
                         {/* HSL */}
@@ -795,10 +795,10 @@ export default function ColourPickerPage() {
                           type="button"
                           disabled={!hslColour}
                           onClick={()=> copyToClipboard(hslColour?`hsl(${hslColour.h}, ${hslColour.s}%, ${hslColour.l}%)`:'','HSL')}
-                          className="group relative min-h-12 sm:min-h-14 border border-border rounded-sm text-[10px] sm:text-[11px] font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-colors"
+                          className="group relative min-h-12 sm:min-h-14 border border-border rounded-sm text-[11px] sm:text-[11px] font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-colors"
                           aria-label={hslColour?`Copy HSL ${`hsl(${hslColour.h}, ${hslColour.s}%, ${hslColour.l}%)`}`:'HSL unavailable'}
                         >
-                          <span className="absolute top-1 left-1 text-[10px] tracking-wide font-semibold opacity-70">HSL</span>
+                          <span className="absolute top-1 left-1 text-[11px] tracking-wide font-semibold opacity-70">HSL</span>
                           <span className="w-full break-words pt-3 text-[11px] sm:text-[12px] leading-tight">{hslColour?`${hslColour.h}°,${hslColour.s}%,${hslColour.l}%`:'-'}</span>
                         </button>
                         {/* CMYK */}
@@ -806,10 +806,10 @@ export default function ColourPickerPage() {
                           type="button"
                           disabled={!cmykColour}
                           onClick={()=> copyToClipboard(cmykColour?`cmyk(${cmykColour.c}%, ${cmykColour.m}%, ${cmykColour.y}%, ${cmykColour.k}%)`:'','CMYK')}
-                          className="group relative min-h-12 sm:min-h-14 border border-border rounded-sm text-[10px] sm:text-[11px] font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-colors"
+                          className="group relative min-h-12 sm:min-h-14 border border-border rounded-sm text-[11px] sm:text-[11px] font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-colors"
                           aria-label={cmykColour?`Copy CMYK ${`cmyk(${cmykColour.c}%, ${cmykColour.m}%, ${cmykColour.y}%, ${cmykColour.k}%)`}`:'CMYK unavailable'}
                         >
-                          <span className="absolute top-1 left-1 text-[10px] tracking-wide font-semibold opacity-70">CMYK</span>
+                          <span className="absolute top-1 left-1 text-[11px] tracking-wide font-semibold opacity-70">CMYK</span>
                           <span className="w-full break-words pt-3 text-[11px] sm:text-[12px] leading-tight">{cmykColour?`${cmykColour.c},${cmykColour.m},${cmykColour.y},${cmykColour.k}`:'-'}</span>
                         </button>
                         {/* OKLCH */}
@@ -817,10 +817,10 @@ export default function ColourPickerPage() {
                           type="button"
                           disabled={!oklchColour}
                           onClick={()=> copyToClipboard(oklchString,'OKLCH')}
-                          className="group relative min-h-12 sm:min-h-14 border border-border rounded-sm text-[10px] sm:text-[11px] font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-colors"
+                          className="group relative min-h-12 sm:min-h-14 border border-border rounded-sm text-[11px] sm:text-[11px] font-mono px-2 flex flex-col justify-center items-center text-center hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-colors"
                           aria-label={oklchColour?`Copy OKLCH ${oklchString}`:'OKLCH unavailable'}
                         >
-                          <span className="absolute top-1 left-1 text-[10px] tracking-wide font-semibold opacity-70">OKLCH</span>
+                          <span className="absolute top-1 left-1 text-[11px] tracking-wide font-semibold opacity-70">OKLCH</span>
                           <span className="w-full break-words pt-3 text-[11px] sm:text-[12px] leading-tight">{oklchColour?`${oklchColour.l}%,${oklchColour.c},${oklchColour.h}°`:'-'}</span>
                         </button>
                         {/* Colour preview */}
@@ -845,18 +845,18 @@ export default function ColourPickerPage() {
                     </div>
                     <div className={"space-y-3 md:space-y-4 " + (showMobileA11y? 'block':'hidden md:block')}>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-3">
-                      <h4 className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Accessibility & Preview</h4>
+                      <h4 className="text-xs font-semibold text-muted-foreground">Accessibility and preview</h4>
                       <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                        <span className="px-2 py-0.5 rounded bg-secondary/50 border border-border/60 text-[10px] md:text-[11px] font-mono">{contrast.ratio}:1</span>
-                        <span className={`text-[10px] md:text-[11px] font-semibold ${contrast.passesAAA ? 'text-green-600' : contrast.passesAA ? 'text-yellow-600' : 'text-red-600'}`}>
+                        <span className="px-2 py-0.5 rounded bg-secondary/50 border border-border/60 text-[11px] md:text-[11px] font-mono">{contrast.ratio}:1</span>
+                        <span className={`text-[11px] md:text-[11px] font-semibold ${contrast.passesAAA ? 'text-green-600' : contrast.passesAA ? 'text-yellow-600' : 'text-red-600'}`}>
                           {contrast.passesAAA ? 'AAA' : contrast.passesAA ? 'AA' : 'Fail'}
                         </span>
                         <CopyButton
                           value={() => JSON.stringify({ hex: hexColour, rgb: rgbColour, hsl: hslColour, cmyk: cmykColour, oklch: oklchColour, hsv }, null, 2)}
                           label="Copy All"
                           size="sm"
-                          className="h-6 md:h-7 px-2 text-[10px] md:text-[11px] touch-manipulation ml-auto sm:ml-0"
-                          toastTitle="All Formats Copied!"
+                          className="h-6 md:h-7 px-2 text-[11px] md:text-[11px] touch-manipulation ml-auto sm:ml-0"
+                          toastTitle="All formats copied"
                         />
                       </div>
                     </div>
@@ -870,11 +870,11 @@ export default function ColourPickerPage() {
                       <div className="rounded-md border border-border overflow-hidden grid grid-cols-2 text-xs font-mono">
                         <div style={{background:lastValidHex,color:contrast.recommended}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
                           <span className="text-sm">Lorem Ipsum</span>
-                          <span className="text-[10px] opacity-70">{contrast.recommended}</span>
+                          <span className="text-[11px] opacity-70">{contrast.recommended}</span>
                         </div>
                         <div style={{background:contrast.recommended,color:lastValidHex}} className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5">
                           <span className="text-sm">Lorem Ipsum</span>
-                          <span className="text-[10px] opacity-70">{lastValidHex}</span>
+                          <span className="text-[11px] opacity-70">{lastValidHex}</span>
                         </div>
                       </div>
                     </div>
@@ -956,10 +956,10 @@ export default function ColourPickerPage() {
                           <div className="absolute inset-0 rounded-full" style={{background:'linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)'}} />
                           <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white shadow pointer-events-none" style={{background:`hsl(${hsv.h} 100% 50%)`, left:`calc(${(hsv.h/360)*100}% - 8px)`,boxShadow:'0 0 0 1px rgba(0,0,0,0.4)'}} />
                         </div>
-                        <div className="flex items-center justify-between text-[10px] mt-1 text-muted-foreground">
+                        <div className="flex items-center justify-between text-[11px] mt-1 text-muted-foreground">
                           <span>SV</span><span>Hue</span>
                         </div>
-                        <div className="flex items-center justify-between mt-1 text-[10px]">
+                        <div className="flex items-center justify-between mt-1 text-[11px]">
                           <div className="flex gap-2">
                             <Hint label={showAdvancedHSV? 'Hide HSV numeric inputs':'Show HSV numeric inputs'}>
                               <button
@@ -969,7 +969,7 @@ export default function ColourPickerPage() {
                               className="px-2 h-6 inline-flex items-center gap-1 rounded-sm border border-border/70 bg-background/40 hover:bg-accent/30 hover:border-primary/60 transition-colors font-medium tracking-wide"
                             >
                               <span className="font-mono">HSV</span>
-                              <span className="text-[9px] opacity-70">{showAdvancedHSV?'–':'+'}</span>
+                              <span className="text-[11px] opacity-70">{showAdvancedHSV?'–':'+'}</span>
                             </button>
                             </Hint>
                             <Hint label="Reset to default (#1A1A1A)">
@@ -1000,7 +1000,7 @@ export default function ColourPickerPage() {
                           <div className="grid grid-cols-3 gap-1 mt-2">
                             {(['h','s','v'] as const).map(key=> (
                               <div key={key} className="flex flex-col gap-0.5">
-                                <Label className="text-[9px] uppercase tracking-wide">{key}</Label>
+                                <Label className="text-[11px]">{key}</Label>
                                 <Input type="number" min={0} max={key==='h'?360:100} value={hsv[key]} onChange={(e)=>{ const val=Math.max(0,Math.min(key==='h'?360:100,parseInt(e.target.value||'0',10))); const next={...hsv,[key]:val}; setHsv(next); updateHexFromHsv(next); }} className="h-7 text-[11px] font-mono" />
                               </div>
                             ))}
@@ -1019,7 +1019,7 @@ export default function ColourPickerPage() {
               <Card className="minimal-card">
                 <CardHeader className="flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-3 md:gap-4 flex-wrap">
-                    <CardTitle className="shrink-0 font-headline text-lg md:text-xl tracking-tight">Pick Colour from Image</CardTitle>
+                    <CardTitle className="shrink-0 font-headline text-lg md:text-xl tracking-tight">Pick a colour from an image</CardTitle>
                     <div className="flex gap-2">
                       <Button
                         id="image-upload-button"
@@ -1068,7 +1068,7 @@ export default function ColourPickerPage() {
                           </div>
                           <span className="text-[11px] tabular-nums w-12 text-right text-muted-foreground">{(scale*100).toFixed(0)}%</span>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2 md:gap-3 text-[10px] md:text-[11px]">
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3 text-[11px] md:text-[11px]">
                           <div className="flex items-center gap-1">
                             <Label className="text-[11px]">Mode</Label>
                             <select className="bg-input border rounded px-1 py-1" value={samplingMode} onChange={(e)=> setSamplingMode(e.target.value as 'point' | 'average')}>
@@ -1178,7 +1178,7 @@ export default function ColourPickerPage() {
                       type="button"
                       ref={dropTarget}
                       onClick={chooseImage}
-                      className={`flex w-full items-center justify-center h-40 md:h-48 border-2 border-dashed rounded-lg text-center px-4 cursor-pointer transition-all duration-quick focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                      className={`flex w-full items-center justify-center h-40 md:h-48 border-2 border-dashed rounded-lg text-center px-4 cursor-pointer transition-[color,background-color,border-color,box-shadow] duration-quick focus:outline-none focus:ring-2 focus:ring-primary/40 ${
                         isDragOver 
                           ? 'border-primary bg-primary/10 shadow-md' 
                           : 'border-muted-foreground/25 hover:border-muted-foreground/40'
@@ -1257,11 +1257,11 @@ export default function ColourPickerPage() {
                             aria-label={`Locked sample ${c}. Click to copy. Right-click to remove.`}
                           >
                             <span className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/10 transition-colors duration-quick" />
-                            <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 text-[10px] font-mono bg-black/80 text-white px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">{c}</span>
+                            <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 text-[11px] font-mono bg-black/80 text-white px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">{c}</span>
                           </button>
                         ))}
                       </div>
-                      <p className="text-[10px] text-muted-foreground">Right-click a swatch to remove. Locked swatches capture current sampling mode.</p>
+                      <p className="text-[11px] text-muted-foreground">Right-click a swatch to remove. Locked swatches capture current sampling mode.</p>
                     </div>
                   )}
                   {colorHistory.length > 0 && (
@@ -1284,11 +1284,11 @@ export default function ColourPickerPage() {
                             aria-label={`Recent colour ${c}. Click to use and copy.`}
                           >
                             <span className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/10 transition-colors duration-quick" />
-                            <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 text-[10px] font-mono bg-black/80 text-white px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">{c}</span>
+                            <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 text-[11px] font-mono bg-black/80 text-white px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">{c}</span>
                           </button>
                         ))}
                       </div>
-                      <p className="text-[10px] text-muted-foreground">Click a colour to use it. Colours persist across sessions.</p>
+                      <p className="text-[11px] text-muted-foreground">Click a colour to use it. Colours persist across sessions.</p>
                     </div>
                   )}
                   </div>{/* end space-y-4 wrapper */}
