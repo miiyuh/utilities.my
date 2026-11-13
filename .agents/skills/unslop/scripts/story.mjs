@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { dirname, extname, join, normalize, resolve } from "node:path";
+import { dirname, extname, join, normalize, resolve, sep } from "node:path";
 
 const usage = "usage: node story.mjs <story.html> <out.mp4> [--wide], or node story.mjs <story.html> --play to watch it live in a browser window";
 const args = process.argv.slice(2);
@@ -385,7 +385,10 @@ const server = createServer((request, response) => {
     return response.end(stage);
   }
   const target = normalize(join(root, path.replace(/^\/__story\//, "/")));
-  if (!target.startsWith(root) || !existsSync(target)) {
+  // Inside the story folder only: a bare prefix check would also let through
+  // sibling folders whose names start the same, like "story-private".
+  const inside = target === root || target.startsWith(root.endsWith(sep) ? root : root + sep);
+  if (!inside || !existsSync(target)) {
     response.writeHead(404);
     return response.end();
   }
