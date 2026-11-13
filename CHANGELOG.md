@@ -1,3 +1,21 @@
+## [5.6.0](https://github.com/miiyuh/utilities.my/compare/v5.5.0...v5.6.0) (2026-11-13)
+
+### Features
+
+* save videos, GIFs and photos from tweets ([3b876a7](https://github.com/miiyuh/utilities.my/commit/3b876a77150316d9ae10d3d583706c8b61276f2c))
+
+### Bug Fixes
+
+* **api:** answer a slow or broken reply from Twitter with an uncached 502 ([2c88b88](https://github.com/miiyuh/utilities.my/commit/2c88b88e4cc1bb115ce7828a2945de3227f03788))
+* **copy-button:** copy inside tooltips, and crossfade to the check ([fdbed79](https://github.com/miiyuh/utilities.my/commit/fdbed7922cf81e419a6f7e7a0fd206e8bee149e2))
+* **gif:** make frame delays add up to the clip's real length ([9a8f1b2](https://github.com/miiyuh/utilities.my/commit/9a8f1b259b2df30cf2057b33fb75158629a9f4d8))
+* **sidebar:** widen it so long tool names fit ([7a8ff9b](https://github.com/miiyuh/utilities.my/commit/7a8ff9b16d695f7dccff2766cc1c57886c8e9189))
+* **skills:** keep the unslop story server inside its folder ([d768e1d](https://github.com/miiyuh/utilities.my/commit/d768e1db10d06689f388d0362b8b09305d60679a))
+* **twitter:** cancel previews when leaving, so their videos are freed ([6a469c2](https://github.com/miiyuh/utilities.my/commit/6a469c29376db6ad732d006f4031b7dd0ee7c966))
+* **twitter:** let Enter retry with any link the tool accepts ([d926f1c](https://github.com/miiyuh/utilities.my/commit/d926f1c77e2954b2aa98fdb72c73f8fa9cc94cec))
+* **twitter:** send only the tweet's number, not its full link ([772e393](https://github.com/miiyuh/utilities.my/commit/772e393ec7300133cbb3fb080bf0ebd4b5f59474))
+* **twitter:** wait for a GIF's length before making one ([8508093](https://github.com/miiyuh/utilities.my/commit/8508093b3f93a76dedb98ba0c5659091a70c2bd3))
+
 ## [5.5.0](https://github.com/miiyuh/utilities.my/compare/v5.4.1...v5.5.0) (2026-11-10)
 
 ### Features
