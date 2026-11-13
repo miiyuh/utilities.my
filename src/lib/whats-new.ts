@@ -22,7 +22,7 @@ export const UPDATES: Update[] = [
     items: [
       'Closer sidebar rows, clearer labels and softer colours around your tools.',
       'The home page and tweet results appear together, with no waiting for each card. Both reduced-motion settings skip entrances.',
-      'An asterisk on the home page explains how the Twitter downloader uses the server. Hover, focus or tap it to read more.',
+      'An asterisk on the home page explains how the Twitter downloader uses the server. Hover over it or tap it to read more.',
     ],
   },
   {
