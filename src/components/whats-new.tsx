@@ -36,7 +36,7 @@ export function WhatsNewButton() {
         <Sparkle aria-hidden className="size-4" />
         {unseen && <span aria-hidden className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-primary ring-2 ring-background" />}
       </PopoverTrigger>
-      <PopoverContent align="end" className="max-h-[min(70vh,32rem)] w-[min(22rem,calc(100vw-2rem))] gap-0 overflow-y-auto p-0 [--tw-enter-scale:1] [--tw-exit-scale:1] [--tw-enter-translate-y:0px] [--tw-enter-translate-x:0px]">
+      <PopoverContent align="end" className="max-h-[min(70vh,32rem)] w-[min(22rem,calc(100vw-2rem))] gap-0 overflow-y-auto p-0 [--tw-enter-scale:1] [--tw-exit-scale:1]">
         <PopoverHeader className="sticky top-0 border-b border-border bg-popover px-4 py-3">
           <PopoverTitle>What&apos;s new</PopoverTitle>
           <PopoverDescription>Recent changes to utilities.my.</PopoverDescription>
