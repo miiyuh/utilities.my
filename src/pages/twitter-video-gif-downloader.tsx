@@ -120,14 +120,22 @@ function MotionPreview({ media, index, getBlob }: { media: PostMedia; index: num
   useEffect(() => () => {
     if (src) URL.revokeObjectURL(src);
   }, [src]);
+  // Leaving (or looking up another tweet) cancels a preview still loading, so
+  // no object URL is made after the cleanup above has run.
+  const abort = useRef<AbortController | null>(null);
+  useEffect(() => () => abort.current?.abort(), []);
   const isGif = media.kind === 'gif';
   const label = `${KIND_LABEL[media.kind]} ${index + 1} from the tweet`;
   const aspectRatio = media.width && media.height ? `${media.width} / ${media.height}` : undefined;
 
   const play = async () => {
+    abort.current?.abort();
+    const controller = new AbortController();
+    abort.current = controller;
     setLoading(0);
     try {
-      const blob = await getBlob(media.variants[media.variants.length - 1].url, setLoading);
+      const blob = await getBlob(media.variants[media.variants.length - 1].url, setLoading, controller.signal);
+      controller.signal.throwIfAborted();
       setSrc(URL.createObjectURL(blob));
     } catch (err) {
       const message = friendlyError(err);
@@ -339,6 +347,7 @@ function GifMaker({ post, media, index, total, getBlob }: { post: XPost; media: 
         const fetchShare = 0.3;
         const video = await getBlob(variant.url, (p) => report('Downloading the video', p * fetchShare), signal);
         const gif = await videoToGif(video, { ...settings, signal, onProgress: (p) => report('Making GIF', fetchShare + p * (1 - fetchShare)) });
+        signal.throwIfAborted();
         const file = new File([gif], mediaFilename(post, index, total, 'gif'), { type: 'image/gif' });
         setResult({ file, url: URL.createObjectURL(file), width: outWidth, height: outHeight, key });
       });
