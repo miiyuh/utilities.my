@@ -6,7 +6,7 @@ import {
 import { SidebarContent } from "@/components/sidebar-content"
 import { Lightning, ArrowUpRight } from '@phosphor-icons/react'
 import { tools } from "@/lib/tools"
-import { Hint } from "@/components/ui/tooltip"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { PageHeader } from "@/components/page-header";
 
 // Most-used tools first (exact names from tools.ts); anything missing sorts to the end.
@@ -63,15 +63,21 @@ export default function Home() {
                   Privacy matters more than ever, and it shouldn&apos;t cost you usability. Everything here
                   runs in your browser and stays <span className="whitespace-nowrap">
                     there
-                    <Hint label="The Twitter downloader sends the tweet’s number to our server to find its media. Downloads need an internet connection. GIF creation runs in your browser.">
-                      <button
-                        type="button"
+                    {/* A popover, not a tooltip: tooltips never open on tap and
+                        their text doesn't reach screen readers. */}
+                    <Popover>
+                      <PopoverTrigger
+                        openOnHover
+                        delay={150}
                         aria-label="About the Twitter downloader exception"
-                        className="relative inline rounded-sm px-1 text-primary after:absolute after:-inset-2 focus-visible:outline-2 focus-visible:outline-ring"
+                        className="relative inline rounded-sm pl-0.5 text-primary after:absolute after:-inset-2 focus-visible:outline-2 focus-visible:outline-ring"
                       >
                         *
-                      </button>
-                    </Hint>.
+                      </PopoverTrigger>
+                      <PopoverContent side="bottom" className="w-[min(18rem,calc(100vw-2rem))] p-3 text-sm text-muted-foreground">
+                        The Twitter downloader sends the tweet’s number to our server to find its media. Downloads need an internet connection. GIF creation runs in your browser.
+                      </PopoverContent>
+                    </Popover>.
                   </span> If it helps, share it with a friend.
                 </p>
                 <p className="text-sm text-muted-foreground">
