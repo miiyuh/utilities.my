@@ -279,6 +279,20 @@ export const METHODOLOGY: Method[] = [
     ],
   },
   {
+    path: '/twitter-video-gif-downloader',
+    summary:
+      "Twitter lets only its own pages read a tweet's details from a browser, so this tool asks Twitter's public embed service for the tweet through a small function on our server. That function passes back the tweet's media links and keeps nothing. Your browser then downloads the files straight from Twitter's servers.",
+    notes: [
+      'Videos come in every size Twitter offers, largest first. The sizes shown are estimates from the bitrate Twitter reports.',
+      'Twitter stores GIFs as short, silent MP4 videos. Making a GIF draws that video frame by frame on your device at the frame rate and width you choose, then reduces each frame to a palette of up to 256 colours. Fewer colours and frames make a smaller file. Up to 30 seconds can go into one GIF; for a longer video, pick the part you want.',
+      'Photos are saved at their original size, the largest copy Twitter keeps.',
+      'Only public tweets work. Tweets from private accounts, and tweets Twitter shows only to signed-in people (often ones marked sensitive), can’t be read without an account.',
+    ],
+    sources: [
+      { label: 'gifenc (GIF encoder and colour quantiser)', url: 'https://github.com/mattdesl/gifenc' },
+    ],
+  },
+  {
     path: '/markdown-previewer',
     summary: 'Markdown is rendered with the marked parser, using GitHub Flavored Markdown (tables, task lists, strikethrough) with line breaks preserved.',
     sources: [

@@ -4,6 +4,9 @@
   "ignoreCommand": "echo \"$VERCEL_GIT_COMMIT_MESSAGE\" | grep -qF '[skip ci]'",
   "outputDirectory": "dist",
   "framework": "vite",
+  "functions": {
+    "api/*.ts": { "maxDuration": 10 }
+  },
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
@@ -15,7 +18,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://rybbit.miiyuh.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' blob: https://rybbit.miiyuh.com https://vitals.vercel-insights.com https://raw.githubusercontent.com; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://rybbit.miiyuh.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' blob: https://rybbit.miiyuh.com https://vitals.vercel-insights.com https://raw.githubusercontent.com https://video.twimg.com https://pbs.twimg.com; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
         },
         { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },

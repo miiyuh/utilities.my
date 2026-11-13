@@ -4,6 +4,32 @@ import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath } from 'node:url'
 
 /**
+ * Runs the Vercel functions in api/ under the dev server, so /api/twitter-post
+ * works locally the way it does once deployed. Each file exports GET.
+ */
+function devApi(): Plugin {
+  return {
+    name: 'dev-api',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/api', (req, res, next) => {
+        const name = (req.url ?? '').split('?')[0].replace(/^\//, '')
+        if (req.method !== 'GET' || !/^[a-z0-9-]+$/.test(name)) return next()
+        const run = async () => {
+          const mod = (await server.ssrLoadModule(`/api/${name}.ts`)) as { GET?: (r: Request) => Promise<Response> }
+          if (!mod.GET) return next()
+          const response = await mod.GET(new Request(new URL(req.originalUrl ?? req.url ?? '/', 'http://localhost')))
+          res.statusCode = response.status
+          response.headers.forEach((value, key) => res.setHeader(key, value))
+          res.end(Buffer.from(await response.arrayBuffer()))
+        }
+        run().catch(next)
+      })
+    },
+  }
+}
+
+/**
  * The AVIF and JPEG XL encoders pick a multi-threaded build only when
  * SharedArrayBuffer exists, which needs cross-origin isolation (COEP). The
  * site can't turn that on without blocking cross-origin images, so those
@@ -25,7 +51,7 @@ function singleThreadEncoders(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), singleThreadEncoders()],
+  plugins: [react(), tailwindcss(), devApi(), singleThreadEncoders()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

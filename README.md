@@ -21,6 +21,7 @@ Small browser tools for everyday jobs: converting images, units and time zones, 
 **Images and documents**
 - **Image Converter**: convert between PNG, JPEG, WebP, AVIF, JPEG XL, GIF, BMP, TIFF and ICO, with crop, rotate, flip and resize. Shows the file size before you download, can aim for a size you set, reads and removes metadata such as location, and handles many files at once as a ZIP
 - **Palang IC**: stamp a purpose across a MyKad copy so it can't be reused, then export it as an A4 PDF or PNG
+- **Twitter Video/GIF Downloader**: save the videos, GIFs and photos from a public tweet at the best quality, or turn a GIF or clip into a real .gif with your choice of frame rate, size, colours and length, then download it. The one tool that needs a server: it looks the tweet up through a small function that keeps nothing
 
 **Date and time**
 - **Unix Timestamp Converter**: epoch numbers to dates and back

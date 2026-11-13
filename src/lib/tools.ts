@@ -2,7 +2,7 @@
 import type { Icon } from '@phosphor-icons/react';
 import {
   PersonSimpleWalk, TextAa, Palette, Ruler, House,
-  Article, QrCode, Timer, Globe, Calendar, ChartBar, SortAscending, Disc, Pulse, Image, Lightning, Clock, Percent, IdentificationCard, AppWindow
+  Article, QrCode, Timer, Globe, Calendar, ChartBar, SortAscending, Disc, Pulse, Image, Lightning, Clock, Percent, IdentificationCard, AppWindow, FilmStrip
 } from '@phosphor-icons/react';
 import type { FileTyped } from './file-types';
 
@@ -146,6 +146,12 @@ export const tools: Tool[] = [
     receivesFiles: true,
     // No `produces`: its PDF and PNG are a stamped IC copy, not a converted file,
     // so it shouldn't answer searches like "jpg to pdf".
+  },
+  {
+    name: "Twitter Video/GIF Downloader", path: "/twitter-video-gif-downloader", icon: FilmStrip,
+    description: "Save videos, GIFs and photos from any tweet.",
+    keywords: ["twitter", "tweet", "x.com", "video", "gif", "mp4", "download", "save", "media"],
+    // No `produces`: it saves files from Twitter, it doesn't convert files you bring.
   },
 ];
 
