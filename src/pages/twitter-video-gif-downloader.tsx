@@ -669,7 +669,7 @@ export default function TwitterVideoGifDownloaderPage() {
                   <div className="relative">
                     <Input
                       id="post-link"
-                      type="url"
+                      type="text"
                       inputMode="url"
                       autoComplete="off"
                       spellCheck={false}
