@@ -28,6 +28,7 @@ const PercentageCalculator = lazy(() => import('./pages/percentage-calculator'))
 const FootSizeConverter = lazy(() => import('./pages/footsize-converter'))
 const PalangIc = lazy(() => import('./pages/palang-ic'))
 const FaviconGenerator = lazy(() => import('./pages/favicon-generator'))
+const TwitterVideoGifDownloader = lazy(() => import('./pages/twitter-video-gif-downloader'))
 const About = lazy(() => import('./pages/about'))
 const Privacy = lazy(() => import('./pages/privacy'))
 const Terms = lazy(() => import('./pages/terms'))
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="/foot-size-converter" element={<FootSizeConverter />} />
           <Route path="/palang-ic" element={<PalangIc />} />
           <Route path="/favicon-generator" element={<FaviconGenerator />} />
+          <Route path="/twitter-video-gif-downloader" element={<TwitterVideoGifDownloader />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />

@@ -13,11 +13,15 @@ export function getScrollTop(root: HTMLElement | Window = getScrollRoot()): numb
   return root instanceof Window ? root.scrollY : root.scrollTop
 }
 
-/** Scroll the page so `el` sits a little below the top of what's visible. */
-export function scrollToElement(el: HTMLElement, behavior: ScrollBehavior = prefersReducedMotion() ? 'auto' : 'smooth') {
+/**
+ * Scroll the page so `el` sits a little below the top of what's visible.
+ * `space` is the room left above it (36px by default); make it smaller than
+ * the gap above `el` to keep what comes before it out of view.
+ */
+export function scrollToElement(el: HTMLElement, behavior: ScrollBehavior = prefersReducedMotion() ? 'auto' : 'smooth', space = 36) {
   const root = getScrollRoot()
-  // The window scrolls under the sticky header; the inset body starts below it.
-  const gap = root instanceof Window ? 100 : 36
+  // The window scrolls under the 64px sticky header; the inset body starts below it.
+  const gap = root instanceof Window ? 64 + space : space
   const rootTop = root instanceof Window ? 0 : root.getBoundingClientRect().top
   root.scrollTo({ top: el.getBoundingClientRect().top - rootTop + getScrollTop(root) - gap, behavior })
 }

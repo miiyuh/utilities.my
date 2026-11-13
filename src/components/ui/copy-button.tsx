@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { VariantProps } from "class-variance-authority"
 
 interface CopyButtonProps
-  extends Omit<React.ComponentProps<"button">, "onClick" | "children" | "value">,
+  extends Omit<React.ComponentProps<"button">, "children" | "value">,
     VariantProps<typeof buttonVariants> {
   /** Text to copy, or a function returning it (evaluated at click time). */
   value: string | (() => string)
@@ -22,9 +22,18 @@ interface CopyButtonProps
   icon?: React.ReactNode
 }
 
+// Both icons stay mounted and crossfade: the leaving one shrinks, blurs and
+// fades while the arriving one grows in, in both directions. Opacity, scale and
+// a 2px blur only, so it stays on the compositor and reads as one change.
+const SWAP = "inline-flex items-center justify-center transition-[opacity,scale,filter] duration-quick ease-smooth-out motion-reduce:transition-none [&_svg]:size-4"
+const SHOWN = "opacity-100 scale-100 blur-none"
+const HIDDEN = "opacity-0 scale-50 blur-[2px]"
+
 /**
- * Standard copy-to-clipboard button: white check-icon pop on success, fixed
- * width so the label swap doesn't resize the button, toast confirmation.
+ * Standard copy-to-clipboard button: the icon turns into a check on success,
+ * fixed width so the label swap doesn't resize the button, toast confirmation.
+ * Works inside a tooltip trigger: a click handler passed in (Base UI's, which
+ * closes the tooltip) runs as well as the copy, instead of replacing it.
  */
 function CopyButton({
   value,
@@ -38,13 +47,16 @@ function CopyButton({
   size = "default",
   className,
   disabled,
+  onClick,
   ...props
 }: CopyButtonProps) {
   const { toast } = useToast()
   const [copied, setCopied] = React.useState(false)
+  const timer = React.useRef<ReturnType<typeof setTimeout>>(undefined)
+  React.useEffect(() => () => clearTimeout(timer.current), [])
   const iconOnly = label === ""
 
-  const handleClick = async () => {
+  const copy = async () => {
     const text = typeof value === "function" ? value() : value
     if (!text) return
     try {
@@ -52,7 +64,9 @@ function CopyButton({
       toast({ title: toastTitle, description: toastDescription })
       setCopied(true)
       onCopied?.()
-      setTimeout(() => setCopied(false), 2000)
+      // A second copy within 2s restarts the check's time rather than cutting it short.
+      clearTimeout(timer.current)
+      timer.current = setTimeout(() => setCopied(false), 2000)
     } catch {
       toast({ title: "Copy failed", description: "Unable to copy to clipboard.", variant: "destructive" })
     }
@@ -66,18 +80,18 @@ function CopyButton({
       variant={variant}
       size={size}
       disabled={disabled}
-      onClick={handleClick}
       className={cn(className)}
       style={!iconOnly ? { minWidth: `calc(${longest.length}ch + 2.75rem)` } : undefined}
       {...props}
+      onClick={(e) => {
+        onClick?.(e)
+        void copy()
+      }}
     >
-      {copied ? (
-        <Check key="check" className="h-4 w-4 shrink-0 animate-in zoom-in-50 duration-quick ease-bounce" />
-      ) : icon ? (
-        <span key="custom-icon" className="inline-flex h-4 w-4 shrink-0 items-center justify-center [&_svg]:h-4 [&_svg]:w-4 animate-in zoom-in-50 duration-quick ease-bounce">{icon}</span>
-      ) : (
-        <Copy key="copy" className="h-4 w-4 shrink-0 animate-in zoom-in-50 duration-quick ease-bounce" />
-      )}
+      <span className="relative inline-flex size-4 shrink-0 items-center justify-center" aria-hidden>
+        <span className={cn(SWAP, copied ? HIDDEN : SHOWN)}>{icon ?? <Copy />}</span>
+        <span className={cn(SWAP, "absolute inset-0", copied ? SHOWN : HIDDEN)}><Check weight="bold" /></span>
+      </span>
       {!iconOnly && <span>{copied ? copiedLabel : label}</span>}
       {iconOnly && <span className="sr-only">{copied ? copiedLabel : label || "Copy"}</span>}
     </Button>

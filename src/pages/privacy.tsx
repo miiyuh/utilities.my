@@ -3,15 +3,15 @@ import { MarkdownPage } from '@/components/markdown/markdown-page';
 
 const PRIVACY_CONTENT = `# Privacy Policy
 
-*Last Updated: 2026-11-10*
+*Last Updated: 2026-11-13*
 
-utilities.my is a collection of free tools that run in your browser. This policy explains what happens to your data when you use them. The short version: what you type, upload or calculate stays on your device, and the only things that leave it are anonymous visit statistics and the requests your browser makes to load the site.
+utilities.my is a collection of free tools that run in your browser. This policy explains what happens to your data when you use them. The short version: what you type, upload or calculate stays on your device, and the only things that leave it are anonymous visit statistics, the requests your browser makes to load the site, and the tweet links you give the Twitter Video/GIF Downloader.
 
 ## 1. What stays on your device
 
 ### 1.1 Everything you put into a tool
 
-Every tool does its work inside your browser. Text you convert, images you resize, photos of your MyKad in Palang IC, numbers you calculate and colours you pick are processed on your device and are **never uploaded** to us or anyone else. There is no server-side processing, and there are no accounts.
+Every tool does its work inside your browser. Text you convert, images you resize, photos of your MyKad in Palang IC, numbers you calculate and colours you pick are processed on your device and are **never uploaded** to us or anyone else. There are no accounts. The one exception is the Twitter Video/GIF Downloader, described in section 2.3, which has to ask Twitter about the tweet you link to.
 
 ### 1.2 What the site remembers in your browser
 
@@ -48,13 +48,23 @@ Like any website, loading utilities.my means your browser contacts these service
 
 Each of these handles that information under its own privacy policy.
 
+### 2.3 Twitter Video/GIF Downloader
+
+Twitter (now X) lets only its own pages read a tweet's details from a browser, so this one tool needs help from a server:
+
+- **The tweet's number** from the link you paste goes to a small function on our host, Vercel, which asks **Twitter** for that tweet and passes back its media links. The function stores nothing and keeps no log of which tweets are looked up. Vercel may briefly cache the answer for a public tweet so Twitter isn't asked again, and like any request, Vercel can see your IP address.
+- **The videos and photos** then download straight from Twitter's servers (video.twimg.com and pbs.twimg.com) to your browser, so Twitter sees your IP address, as it would if you watched the tweet on Twitter.
+- **GIFs you make** are made on your device and never uploaded.
+
+Nothing else you do on the site is sent this way, and nothing is sent until you look up a tweet.
+
 ## 3. What we don't do
 
 - No accounts, sign-ups or email collection
 - No advertising, ad networks or data brokers
 - No tracking cookies or cross-site tracking
 - No selling or sharing of personal data
-- No uploading of the content you work with
+- No uploading of the content you work with (the Twitter Video/GIF Downloader sends only the link you give it, as section 2.3 explains)
 
 ## 4. Security
 

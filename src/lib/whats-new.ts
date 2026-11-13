@@ -16,6 +16,14 @@ export interface Update {
 
 export const UPDATES: Update[] = [
   {
+    id: '2026-11-twitter-video-gif-downloader',
+    date: '2026-11-13',
+    title: 'Save videos and GIFs from Twitter',
+    items: [
+      'New: Twitter Video/GIF Downloader. Paste a tweet link and save its videos in the quality you choose, its photos at full size, and its GIFs as MP4 or a real .gif. Pick the frame rate, size and part of the clip before you download it.',
+    ],
+  },
+  {
     id: '2026-11-tools-together',
     date: '2026-11-10',
     title: 'Tools that work together',

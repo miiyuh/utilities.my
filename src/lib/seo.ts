@@ -200,6 +200,15 @@ export const routes: RouteSeo[] = [
     priority: 0.8,
   },
   {
+    path: '/twitter-video-gif-downloader',
+    title: 'Twitter Video and GIF Downloader: MP4 and GIF | utilities.my',
+    h1: 'Twitter Video/GIF Downloader',
+    description:
+      'Paste a tweet link and save its videos in the quality you choose, its GIFs as MP4 or a real .gif you can trim and resize, and its photos at full size. Free.',
+    kind: 'tool',
+    priority: 0.8,
+  },
+  {
     path: '/palang-ic',
     title: 'Palang IC: Watermark Your MyKad Copy | utilities.my',
     h1: 'Palang IC',

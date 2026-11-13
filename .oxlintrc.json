@@ -18,5 +18,5 @@
     "react/set-state-in-effect": "warn",
     "jsx-a11y/no-autofocus": ["error", { "ignoreNonDOM": true }]
   },
-  "ignorePatterns": ["dist", "node_modules", ".next", "public"]
+  "ignorePatterns": ["dist", "node_modules", ".next", "public", ".agents"]
 }

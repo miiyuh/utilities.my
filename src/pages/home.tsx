@@ -23,6 +23,7 @@ const TOOL_ORDER = [
   'Colour Picker',
   'Image Converter',
   'Favicon Generator',
+  'Twitter Video/GIF Downloader',
   'Markdown Previewer',
   'Morse Code Generator',
   'Sorter',
