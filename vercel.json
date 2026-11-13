@@ -1,6 +1,7 @@
 {
   "buildCommand": "bun run build",
   "installCommand": "bun install",
+  "ignoreCommand": "echo \"$VERCEL_GIT_COMMIT_MESSAGE\" | grep -qF '[skip ci]'",
   "outputDirectory": "dist",
   "framework": "vite",
   "cleanUrls": true,
