@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   ArrowClockwise, DownloadSimple, FileArchive, FilmStrip, GifIcon, LinkSimple, MagicWand,
   Play, ShareNetwork, ShieldCheck, SpinnerGap, X as XIcon,
@@ -558,8 +558,7 @@ function MediaCard({ post, media, index, total }: { post: XPost; media: PostMedi
 
 export default function TwitterVideoGifDownloaderPage() {
   const { toast } = useToast();
-  const [params] = useSearchParams();
-  const [link, setLink] = useState(() => params.get('url') ?? '');
+  const [link, setLink] = useState('');
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' });
   const [zipping, setZipping] = useState(false);
   const request = useRef<AbortController | null>(null);
@@ -578,7 +577,8 @@ export default function TwitterVideoGifDownloaderPage() {
     request.current = controller;
     setLookup({ state: 'loading', id });
     try {
-      const response = await fetch(`/api/twitter-post?id=${id}`, { signal: controller.signal });
+      // No referrer: only the tweet's number goes to the server, not this page's address.
+      const response = await fetch(`/api/twitter-post?id=${id}`, { signal: controller.signal, referrerPolicy: 'no-referrer' });
       const body: unknown = await response.json().catch(() => null);
       const error = body && typeof body === 'object' && 'error' in body ? String(body.error) : null;
       if (!response.ok || !body || error) throw new Error(error ?? 'Twitter didn’t answer. Try again in a moment.');
@@ -591,15 +591,9 @@ export default function TwitterVideoGifDownloaderPage() {
     }
   }, []);
 
-  // A link handed over in the address (?url=…) is looked up straight away.
-  // Only once: later changes to the address come from this page, not a new link.
-  const tookLink = useRef(false);
-  useEffect(() => {
-    if (tookLink.current) return;
-    tookLink.current = true;
-    const initial = params.get('url');
-    if (initial && parsePostId(initial)) void find(initial);
-  }, [find, params]);
+  // Deliberately no ?url= link handoff: the full link, tracking parameters and
+  // all, would reach the server and analytics with the page request, when only
+  // the tweet's number is meant to leave the device.
   useEffect(() => () => request.current?.abort(), []);
 
   // There's no button: a pasted link is looked up at once (onPaste below), and
