@@ -42,8 +42,16 @@ function ProgressIndicator({
 }: ProgressPrimitive.Indicator.Props) {
   return (
     <ProgressPrimitive.Indicator
+      // Base UI sizes the bar with `width`; slide a full-width bar instead so
+      // only transform animates. No value (indeterminate) keeps Base UI's style.
+      render={(indicatorProps) => {
+        const width = indicatorProps.style?.width
+        if (width == null) return <div {...indicatorProps} />
+        const pct = Math.max(0, Math.min(100, parseFloat(String(width)) || 0))
+        return <div {...indicatorProps} style={{ ...indicatorProps.style, width: '100%', transform: `translateX(${pct - 100}%)` }} />
+      }}
       data-slot="progress-indicator"
-      className={cn("h-full bg-primary transition-all", className)}
+      className={cn("h-full bg-primary transition-transform duration-quick ease-smooth-out", className)}
       {...props}
     />
   )

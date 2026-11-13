@@ -52,7 +52,7 @@ export function MorseReference({
       </div>
       {GROUPS.map((group) => (
         <section key={group.title} className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</h3>
+          <h3 className="text-xs font-semibold text-muted-foreground">{group.title}</h3>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2">
             {entries
               .filter(([char]) => group.test(char))

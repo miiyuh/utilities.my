@@ -25,10 +25,10 @@ export default function NotFound() {
           <div className="max-w-2xl w-full flex flex-col items-center text-center space-y-8">
             {/* 404 Header */}
             <div className="space-y-4">
-              <h1 className="text-8xl font-bold text-primary">404</h1>
+              <h1 className="text-8xl font-semibold text-primary">404</h1>
               <h2 className="text-2xl font-semibold text-foreground">Page Not Found</h2>
               <p className="text-muted-foreground text-lg">
-                Woah! The page you&apos;re looking for doesn&apos;t exist or has been moved.
+                The page you&apos;re looking for doesn&apos;t exist or has been moved.
               </p>
             </div>
 
@@ -58,7 +58,7 @@ export default function NotFound() {
                     className="p-4 rounded-lg border bg-card hover:bg-accent transition-colors text-left group"
                   >
                     <div className="flex items-center gap-3">
-                      <tool.icon className="h-5 w-5 text-muted-foreground group-hover:scale-110 transition-transform" />
+                      <tool.icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                       <span className="text-sm font-medium text-foreground">{tool.name}</span>
                     </div>
                   </Link>

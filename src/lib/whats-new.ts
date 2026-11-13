@@ -16,6 +16,16 @@ export interface Update {
 
 export const UPDATES: Update[] = [
   {
+    id: '2026-11-quieter-tools',
+    date: '2026-11-14',
+    title: 'A quieter toolbox',
+    items: [
+      'Closer sidebar rows, clearer labels and softer colours around your tools.',
+      'The home page and tweet results appear together, with no waiting for each card. Both reduced-motion settings skip entrances.',
+      'An asterisk on the home page explains how the Twitter downloader uses the server. Hover over it or tap it to read more.',
+    ],
+  },
+  {
     id: '2026-11-twitter-video-gif-downloader',
     date: '2026-11-13',
     title: 'Save videos and GIFs from Twitter',

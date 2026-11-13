@@ -69,7 +69,7 @@ const EditorPane: React.FC<EditorPaneProps> = ({ markdownText, setMarkdownText, 
   return (
   <div className="flex flex-col h-full min-h-0 md:min-h-[400px]">
     <div className="flex items-center justify-between px-3 py-2 border-b bg-background/70">
-      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Markdown</span>
+      <span className="text-xs font-medium text-muted-foreground">Markdown</span>
     </div>
     <Textarea
       value={markdownText}
@@ -84,7 +84,7 @@ const EditorPane: React.FC<EditorPaneProps> = ({ markdownText, setMarkdownText, 
 const PreviewPane: React.FC<{ htmlOutput: string }> = ({ htmlOutput }) => (
   <div className="flex flex-col h-full min-h-0 md:min-h-[400px]">
     <div className="flex items-center justify-between px-3 py-2 border-b bg-background/70">
-      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Preview</span>
+      <span className="text-xs font-medium text-muted-foreground">Preview</span>
     </div>
     <div className="flex-1 overflow-auto p-4">
       <div className="markdown-preview" dangerouslySetInnerHTML={{ __html: htmlOutput }} />

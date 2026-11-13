@@ -270,7 +270,7 @@ function MetadataPanel({ meta }: { meta: MetaState }) {
         <div className="grid gap-4">
           {report.groups.map((g) => (
             <section key={g.title} className="space-y-1.5">
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</h4>
+              <h4 className="text-xs font-semibold text-muted-foreground">{g.title}</h4>
               <dl className="space-y-1 text-sm">
                 {g.items.map((it) => (
                   <div key={it.label} className="flex justify-between gap-3">
@@ -1015,12 +1015,12 @@ function BatchConverter({
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                     {it.status === 'done' && it.output ? <SizeChange from={it.file.size} to={it.output.size} /> : <span className="tabular-nums">{humanSize(it.file.size)}</span>}
                     {it.hasLocation && (
-                      <Badge variant="outline" className="gap-1 border-warning/50 text-[10px] text-warning">
+                      <Badge variant="outline" className="gap-1 border-warning/50 text-[11px] text-warning">
                         <MapPin className="h-3 w-3" /> Location
                       </Badge>
                     )}
                     {hasEdits(it.edits) && (
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge variant="secondary" className="text-[11px]">
                         Edited
                       </Badge>
                     )}

@@ -593,7 +593,7 @@ export default function MorseCodeGeneratorPage() {
                       aria-hidden
                     >
                       <span
-                        className={`size-14 rounded-full border-2 transition-all duration-micro ${
+                        className={`size-14 rounded-full border-2 transition-[background-color,border-color,box-shadow] duration-micro ${
                           visualActive
                             ? 'border-primary bg-primary shadow-[0_0_28px_6px_var(--primary)]'
                             : 'border-border bg-background'

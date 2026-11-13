@@ -97,7 +97,7 @@ export function Combobox({
             "hover:border-primary/60",
             "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
             "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted",
-            "transition-all duration-quick shadow-sm",
+            "transition-[color,background-color,border-color,box-shadow] duration-quick shadow-sm",
             "pr-10",
             inputClassName
           )}

@@ -43,10 +43,10 @@ const BMI_STANDARDS: Record<BmiStandard, { label: string; short: string; underwe
 function classifyBMI(bmi: number, standard: BmiStandard) {
   const t = BMI_STANDARDS[standard];
   if (!isFinite(bmi) || bmi <= 0) return { label: "-", color: "", hint: "Enter height and weight", icon: null };
-  if (bmi < t.underweight) return { label: "Underweight", color: "text-blue-500", hint: "Below healthy range", icon: ArrowDown };
-  if (bmi < t.overweight) return { label: "Healthy", color: "text-green-500", hint: "Within healthy range", icon: Heart };
-  if (bmi < t.obese) return { label: "Overweight", color: "text-amber-500", hint: "Above healthy range", icon: TrendUp };
-  return { label: "Obesity", color: "text-red-500", hint: "Significantly above healthy range", icon: Warning };
+  if (bmi < t.underweight) return { label: "Underweight", color: "text-chart-3", hint: "Below healthy range", icon: ArrowDown };
+  if (bmi < t.overweight) return { label: "Healthy", color: "text-primary", hint: "Within healthy range", icon: Heart };
+  if (bmi < t.obese) return { label: "Overweight", color: "text-warning", hint: "Above healthy range", icon: TrendUp };
+  return { label: "Obesity", color: "text-destructive", hint: "Significantly above healthy range", icon: Warning };
 }
 
 const STORAGE_KEY = "utilities.bmi-calculator";
@@ -182,10 +182,10 @@ export default function BmiCalculatorPage() {
   const deltaFromMid = isFinite(weightKgVal) && isFinite(midpoint) ? weightKgVal - midpoint : NaN;
 
   const bands = [
-    { label: "Underweight", from: 0, to: t.underweight, color: "bg-blue-500/70" },
-    { label: "Healthy", from: t.underweight, to: t.overweight, color: "bg-green-500/70" },
-    { label: "Overweight", from: t.overweight, to: t.obese, color: "bg-amber-500/70" },
-    { label: "Obesity", from: t.obese, to: 40, color: "bg-red-500/70" },
+    { label: "Underweight", from: 0, to: t.underweight, color: "bg-chart-3/70" },
+    { label: "Healthy", from: t.underweight, to: t.overweight, color: "bg-primary/70" },
+    { label: "Overweight", from: t.overweight, to: t.obese, color: "bg-warning/70" },
+    { label: "Obesity", from: t.obese, to: 40, color: "bg-destructive/70" },
   ];
 
   const warnings: string[] = [];
@@ -359,7 +359,7 @@ export default function BmiCalculatorPage() {
 
                   <div className="space-y-5">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums">{Number.isFinite(rounded) ? formatNumber(rounded, 1, 1) : "-"}</div>
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-medium tabular-nums">{Number.isFinite(rounded) ? formatNumber(rounded, 1, 1) : "-"}</div>
                       <Badge variant="secondary" className="text-xs md:text-sm flex items-center gap-1">
                         {cls.icon && React.createElement(cls.icon, { className: "h-3.5 w-3.5" })}
                         <span>{cls.label}</span>
@@ -383,15 +383,10 @@ export default function BmiCalculatorPage() {
                           {bands.map((band) => (
                             <div key={band.label} className={cn("absolute inset-y-0", band.color)} style={{ left: `${(band.from/40)*100}%`, width: `${((band.to-band.from)/40)*100}%` }} />
                           ))}
-                          <div className="pointer-events-none absolute inset-0 hidden sm:flex text-[12px] text-black/80 dark:text-white/80">
-                            {bands.map((band) => (
-                              <div key={band.label} className="flex items-center justify-center" style={{ width: `${((band.to-band.from)/40)*100}%` }}>{band.label}</div>
-                            ))}
-                          </div>
                         </div>
                         <div className="absolute top-[-4px] sm:top-[-5px] bottom-[-4px] sm:bottom-[-5px] w-0.5 bg-foreground/80" style={{ left: `calc(${pct}% - 1px)` }} aria-hidden />
                       </div>
-                      <div className="relative h-4 text-[10px] text-muted-foreground">
+                      <div className="relative h-4 text-[11px] text-muted-foreground">
                         {[0, t.underweight, t.overweight, t.obese, 40].map((value) => ({ value, label: value === 40 ? '40+' : formatNumber(value, 1) })).map((tick) => {
                           const left = clamp((tick.value / 40) * 100, 0, 100);
                           const transform = left === 0 ? 'translateX(0%)' : left === 100 ? 'translateX(-100%)' : 'translateX(-50%)';
@@ -405,6 +400,15 @@ export default function BmiCalculatorPage() {
                       </div>
                     </div>
 
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {bands.map((band) => (
+                        <span key={band.label} className="inline-flex items-center gap-1.5">
+                          <span aria-hidden className={cn("size-2 rounded-full", band.color)} />
+                          {band.label}
+                        </span>
+                      ))}
+                    </div>
+
                     <p className="text-xs text-muted-foreground flex items-center gap-2">
                       <Info className="h-3.5 w-3.5" />
                       Healthy BMI range ({t.short} cut-offs): {formatNumber(t.underweight, 1)} – {formatNumber(healthyMax, 1)}. BMI is a screening tool and does not directly measure body fat or health.
@@ -412,7 +416,7 @@ export default function BmiCalculatorPage() {
 
                     {warnings.length>0 && (
                       <div className="space-y-1">
-                        {warnings.map((w,i)=>(<p key={i} className="text-[11px] text-amber-600 dark:text-amber-400">{w}</p>))}
+                        {warnings.map((w,i)=>(<p key={i} className="text-[11px] text-warning">{w}</p>))}
                       </div>
                     )}
 

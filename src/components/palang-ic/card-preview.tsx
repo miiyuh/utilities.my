@@ -64,7 +64,7 @@ export function CardPreview({ label, side, options, fontsReady }: CardPreviewPro
 
   return (
     <div className="space-y-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <div
         ref={wrapRef}
         className="relative w-full overflow-hidden rounded-lg border border-border bg-muted/40"
