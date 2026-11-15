@@ -43,10 +43,21 @@ const FONTS = ['SpaceGrotesk-Bold.ttf', 'SpaceGrotesk-Medium.ttf'].map((file) =>
 const SEO_BLOCK = /<!-- SEO:START -->[\s\S]*?<!-- SEO:END -->/
 const ROOT_BLOCK = /<!-- ROOT:START -->[\s\S]*?<!-- ROOT:END -->/
 
-// Card palette, matching the dark theme in src/globals.css.
-const CARD_BG = '#110f0d'
-const CARD_FG = '#faf4ec'
-const CARD_ACCENT = '#3eaf86'
+// Card palette: the light theme tokens in src/globals.css, converted to hex
+// because resvg does not understand oklch().
+const CARD_BG = '#faf4ec' // --background
+const CARD_FG = '#201914' // --foreground
+const CARD_MUTED = '#6c6158' // --muted-foreground
+const CARD_PAD = 80
+
+/** The inner markup of an SVG in public/assets/img, for inlining into a card. */
+async function svgBody(file: string) {
+  const svg = await readFile(join(ROOT, 'public', 'assets', 'img', file), 'utf8')
+  return svg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')
+}
+
+const LOGO = await svgBody('utilities-my_logo.svg') // 32x32
+const WORDMARK = (await svgBody('utilities-my_text.svg')).replaceAll('#CAA07F', CARD_FG) // 2288x512
 
 function escapeHtml(value: string) {
   return value
@@ -172,32 +183,36 @@ function wrap(text: string, max: number, maxLines = Number.POSITIVE_INFINITY) {
   return kept
 }
 
+/**
+ * Light paper card: the logo blown up and cropped off the top right edge, the
+ * title and description top left, and a small wordmark bottom left.
+ */
 function cardSvg(route: RouteSeo) {
   const isHome = route.path === '/'
-  const heading = isHome ? SITE_NAME : route.h1
-  const headingLines = wrap(heading, 22)
-  const fontSize = headingLines.length > 1 ? 86 : 104
-  const lineHeight = fontSize * 1.12
-  const headingTop = 300 - ((headingLines.length - 1) * lineHeight) / 2
+  const heading = isHome ? 'Free online tools' : route.h1
+  const description = isHome ? 'Converters, calculators and generators. No signup, no tracking.' : route.description
 
-  const subtitle = wrap(isHome ? 'Free online tools. No signup, no tracking.' : route.description, 58, 2)
-  const subtitleTop = headingTop + (headingLines.length - 1) * lineHeight + 92
+  // The text column stops short of the logo, which starts at x=740.
+  const lineHeight = 80
+  const headingLines = wrap(heading, 17, 3)
+  const descLines = wrap(description, 38, 3)
+  const headingTop = CARD_PAD + 60
+  const descTop = headingTop + (headingLines.length - 1) * lineHeight + 72
 
-  const headingTspans = headingLines
-    .map((line, index) => `<tspan x="80" y="${headingTop + index * lineHeight}">${escapeHtml(line)}</tspan>`)
-    .join('')
-  const subtitleTspans = subtitle
-    .map((line, index) => `<tspan x="80" y="${subtitleTop + index * 44}">${escapeHtml(line)}</tspan>`)
-    .join('')
+  const tspans = (lines: string[], top: number, step: number) =>
+    lines
+      .map((line, index) => `<tspan x="${CARD_PAD}" y="${top + index * step}">${escapeHtml(line)}</tspan>`)
+      .join('')
+
+  const wordmarkHeight = 32
+  const wordmarkWidth = Math.round((wordmarkHeight * 2288) / 512)
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="${CARD_BG}"/>
-  <rect x="0" y="0" width="1200" height="10" fill="${CARD_ACCENT}"/>
-  <circle cx="1080" cy="520" r="220" fill="${CARD_ACCENT}" opacity="0.10"/>
-  <text x="80" y="118" font-family="Space Grotesk" font-size="30" font-weight="500" fill="${CARD_ACCENT}" letter-spacing="3">${escapeHtml(SITE_NAME.toUpperCase())}</text>
-  <text font-family="Space Grotesk" font-size="${fontSize}" font-weight="700" fill="${CARD_FG}">${headingTspans}</text>
-  <text font-family="Space Grotesk" font-size="32" font-weight="400" fill="${CARD_FG}" opacity="0.72">${subtitleTspans}</text>
-  <text x="80" y="562" font-family="Space Grotesk" font-size="28" font-weight="500" fill="${CARD_ACCENT}">${escapeHtml(canonicalUrl(route.path).replace('https://', ''))}</text>
+  <svg x="740" y="-60" width="620" height="620" viewBox="0 0 32 32">${LOGO}</svg>
+  <text font-family="Space Grotesk" font-size="76" font-weight="700" fill="${CARD_FG}" letter-spacing="-1.5">${tspans(headingLines, headingTop, lineHeight)}</text>
+  <text font-family="Space Grotesk" font-size="30" font-weight="500" fill="${CARD_MUTED}">${tspans(descLines, descTop, 42)}</text>
+  <svg x="${CARD_PAD}" y="${630 - CARD_PAD - wordmarkHeight}" width="${wordmarkWidth}" height="${wordmarkHeight}" viewBox="0 0 2288 512">${WORDMARK}</svg>
 </svg>`
 }
 
